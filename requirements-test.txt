@@ -9,3 +9,16 @@ codecov
 mypy
 gitchangelog
 mkdocs
+multiqc
+scipy
+scanpy
+
+# Requirements for R
+# install.packages('devtools')
+#  devtools::install_github('JiekaiLab/dior')
+  # or devtools::install_github('JiekaiLab/dior@HEAD')
+# install.packages("getopt")
+# install.packages(Seurat)
+# install.packages(SeuratData)
+# install.packages(SeuratDisk)
+# install.packages(Signac)

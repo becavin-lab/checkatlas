@@ -1,12 +1,13 @@
 import argparse  # pragma: no cover
 
-from . import BaseClass, base_function  # pragma: no cover
+from . import atlas # pragma: no cover
+from . import multiqc # pragma: no cover
 
 
 def main() -> None:  # pragma: no cover
     """
     The main function executes on commands:
-    `python -m project_name` and `$ project_name `.
+    `python -m checkatlas` and `$ checkatlas `.
 
     This is your program's entry point.
 
@@ -20,25 +21,17 @@ def main() -> None:  # pragma: no cover
         * Run an application (Flask, FastAPI, Django, etc.)
     """
     parser = argparse.ArgumentParser(
-        description="project_name.",
-        epilog="Enjoy the project_name functionality!",
+        description="checkatlas.",
+        epilog="Enjoy the checkatlas functionality!",
     )
     # This is required positional argument
     parser.add_argument(
-        "name",
+        "path",
         type=str,
-        help="The username",
-        default="author_name",
+        help="Path containing Scanpy and Seurat atlases",
+        default="./",
     )
     # This is optional named argument
-    parser.add_argument(
-        "-m",
-        "--message",
-        type=str,
-        help="The Message",
-        default="Hello",
-        required=False,
-    )
     parser.add_argument(
         "-v",
         "--verbose",
@@ -46,15 +39,28 @@ def main() -> None:  # pragma: no cover
         help="Optionally adds verbosity",
     )
     args = parser.parse_args()
-    print(f"{args.message} {args.name}!")
+    print(f"Checking your single-cell atlases in {args.path}!")
     if args.verbose:
         print("Verbose mode is on.")
 
-    print("Executing main function")
-    base = BaseClass()
-    print(base.base_method())
-    print(base_function())
-    print("End of main function")
+    print("Searching Seurat and Scanpy files")
+    atlas_list = atlas.list_atlases(args.path)
+    print('Found', len(atlas_list),'atlas(es)',atlas_list)
+
+    print("Convert all Seurat atlases")
+    atlas.convert_seurat_atlases(args.path, atlas_list)
+
+    print("Clean Scanpy atlases")
+    #atlas.clean_scanpy(args.path, atlas_list)
+
+    print("Parse information in Atlas")
+    atlas.parse_atlases(args.path, atlas_list)
+
+    print("Run metric calculation")
+
+
+    print("Run MultiQC")
+    #multiqc.run_multiqc(args.path)
 
 
 if __name__ == "__main__":  # pragma: no cover

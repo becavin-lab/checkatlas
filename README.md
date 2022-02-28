@@ -61,23 +61,23 @@ project_description
 ## Install it from PyPI
 
 ```bash
-pip install project_name
+pip install checkatlas
 ```
 
 ## Usage
 
 ```py
-from project_name import BaseClass
-from project_name import base_function
+from checkatlas import BaseClass
+from checkatlas import base_function
 
 BaseClass().base_method()
 base_function()
 ```
 
 ```bash
-$ python -m project_name
+$ python -m checkatlas
 #or
-$ project_name
+$ checkatlas
 ```
 
 ## Development
