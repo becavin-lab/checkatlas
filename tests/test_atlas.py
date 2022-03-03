@@ -12,7 +12,7 @@ def test_parameterized(fn):
 
 
 def test_list_atlases():
-    assert list_atlases('.') == "hello from base function"
+    assert list_atlases(".") == "hello from base function"
 
 
 def test_atlas():

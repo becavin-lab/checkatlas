@@ -10,7 +10,6 @@ mypy
 gitchangelog
 mkdocs
 multiqc
-scipy
 scanpy
 
 # Requirements for R
