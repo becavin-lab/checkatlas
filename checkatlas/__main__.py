@@ -1,7 +1,6 @@
 import argparse  # pragma: no cover
 
-from . import atlas # pragma: no cover
-from . import multiqc # pragma: no cover
+from . import atlas  # pragma: no cover
 
 
 def main() -> None:  # pragma: no cover
@@ -45,22 +44,21 @@ def main() -> None:  # pragma: no cover
 
     print("Searching Seurat and Scanpy files")
     atlas_list = atlas.list_atlases(args.path)
-    print('Found', len(atlas_list),'atlas(es)',atlas_list)
+    print("Found", len(atlas_list), "atlas(es)", atlas_list)
 
     print("Convert all Seurat atlases")
     atlas.convert_seurat_atlases(args.path, atlas_list)
 
     print("Clean Scanpy atlases")
-    #atlas.clean_scanpy(args.path, atlas_list)
+    # atlas.clean_scanpy(args.path, atlas_list)
 
     print("Parse information in Atlas")
     atlas.parse_atlases(args.path, atlas_list)
 
     print("Run metric calculation")
 
-
     print("Run MultiQC")
-    #multiqc.run_multiqc(args.path)
+    # multiqc.run_multiqc(args.path)
 
 
 if __name__ == "__main__":  # pragma: no cover
