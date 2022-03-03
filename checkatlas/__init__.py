@@ -1,5 +1,2 @@
-import diopy
-import scanpy
-from .atlas import Atlas
-
-__all__ = ["atlas"]
+from . import atlas, multiqc
+__all__ = ["atlas", "multiqc"]

@@ -6,7 +6,11 @@ from setuptools import find_packages, setup
 
 def read(*paths, **kwargs):
     """Read the contents of a text file safely.
+<<<<<<< HEAD
     read("checkatlas", "VERSION")
+=======
+    >>> read("checkatlas", "VERSION")
+>>>>>>> b6ed53fdf89beca99eb88ccb03bd83ed951329f4
     '0.1.0'
     """
 
@@ -30,11 +34,16 @@ def read_requirements(path):
 setup(
     name="checkatlas",
     version=read("checkatlas", "VERSION"),
+<<<<<<< HEAD
     description="project_description",
     url="https://github.com/becavin-lab/checkatlas",
+=======
+    description="Awesome checkatlas created by becavin-lab",
+    url="https://github.com/becavin-lab/checkatlas/",
+>>>>>>> b6ed53fdf89beca99eb88ccb03bd83ed951329f4
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
-    author="author_name",
+    author="becavin-lab",
     packages=find_packages(exclude=["tests", ".github"]),
     install_requires=read_requirements("requirements.txt"),
     entry_points={

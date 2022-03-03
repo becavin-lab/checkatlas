@@ -29,7 +29,7 @@ def main() -> None:  # pragma: no cover
         "path",
         type=str,
         help="Path containing Scanpy and Seurat atlases",
-        default="./",
+        default="becavin-lab",
     )
     # This is optional named argument
     parser.add_argument(
