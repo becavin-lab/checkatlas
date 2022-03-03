@@ -132,9 +132,7 @@ dmypy.json
 .github/templates/*
 
 
-# pycharm files
-.idea/*
-.idea/
+
 # MACOSX files
 .DS_Store
 
