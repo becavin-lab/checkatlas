@@ -54,7 +54,7 @@ def list_atlases(path) -> list:
     return atlas_list
 
 
-def convert_seurat_atlases(path, atlas_list) -> str:
+def convert_seurat_atlases(path, atlas_list) -> None:
     for atlas_path in atlas_list:
         if atlas_path.endswith('.rds'):
             atlas_h5 = atlas_path.replace('.rds', '.h5ad')
@@ -68,7 +68,7 @@ def convert_seurat_atlases(path, atlas_list) -> str:
                 os.system(rscript_cmd)
 
 
-def parse_atlases(path, atlas_list) -> str:
+def parse_atlases(path, atlas_list) -> None:
     list_atlas_name = list()
     for atlas_path in atlas_list:
         if atlas_path.endswith('.h5ad'):
