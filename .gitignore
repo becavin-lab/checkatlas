@@ -130,3 +130,10 @@ dmypy.json
 
 # templates
 .github/templates/*
+
+
+# pycharm files
+.idea/*
+# MACOSX files
+.DS_Store
+
