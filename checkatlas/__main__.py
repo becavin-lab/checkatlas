@@ -1,6 +1,6 @@
 import argparse  # pragma: no cover
 
-from . import atlas  # pragma: no cover
+from . import checkatlas  # pragma: no cover
 
 
 def main() -> None:  # pragma: no cover
@@ -43,17 +43,17 @@ def main() -> None:  # pragma: no cover
         print("Verbose mode is on.")
 
     print("Searching Seurat and Scanpy files")
-    atlas_list = atlas.list_atlases(args.path)
+    atlas_list = checkatlas.list_atlases(args.path)
     print("Found", len(atlas_list), "atlas(es)", atlas_list)
 
     print("Convert all Seurat atlases")
-    atlas.convert_seurat_atlases(args.path, atlas_list)
+    # checkatlas.convert_seurat_atlases(args.path, atlas_list)
 
     print("Clean Scanpy atlases")
-    # atlas.clean_scanpy(args.path, atlas_list)
+    # checkatlas.clean_scanpy(args.path, atlas_list)
 
     print("Parse information in Atlas")
-    atlas.parse_atlases(args.path, atlas_list)
+    checkatlas.calc_checkatlas(args.path, atlas_list)
 
     print("Run metric calculation")
 
