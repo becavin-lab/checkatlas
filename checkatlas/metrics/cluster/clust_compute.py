@@ -1,5 +1,6 @@
 
 import anndata
+import numpy as np
 from anndata import AnnData
 from sklearn.metrics import davies_bouldin_score, adjusted_mutual_info_score, \
     adjusted_rand_score, fowlkes_mallows_score, v_measure_score, silhouette_score, calinski_harabasz_score
