@@ -44,21 +44,11 @@ def main() -> None:  # pragma: no cover
 
     print("Searching Seurat and Scanpy files")
     atlas_list = checkatlas.list_atlases(args.path)
-    print("Found", len(atlas_list), "atlas(es)", atlas_list)
+    print("Found", len(atlas_list))
 
-    print("Convert all Seurat atlases")
-    # checkatlas.convert_seurat_atlases(args.path, atlas_list)
-
-    print("Clean Scanpy atlases")
-    # checkatlas.clean_scanpy(args.path, atlas_list)
-
-    print("Parse information in Atlas")
-    checkatlas.calc_checkatlas(args.path, atlas_list)
-
-    print("Run metric calculation")
-
-    print("Run MultiQC")
-    # multiqc.run_multiqc(args.path)
+    n_cpus = 4
+    multithread = False
+    checkatlas.run(args.path, atlas_list, multithread, n_cpus)
 
 
 if __name__ == "__main__":  # pragma: no cover
