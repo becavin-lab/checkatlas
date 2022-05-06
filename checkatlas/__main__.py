@@ -47,7 +47,7 @@ def main() -> None:  # pragma: no cover
     print("Found", len(atlas_list))
 
     n_cpus = 4
-    multithread = False
+    multithread = True
     checkatlas.run(args.path, atlas_list, multithread, n_cpus)
 
 
