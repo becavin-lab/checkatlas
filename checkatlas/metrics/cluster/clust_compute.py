@@ -1,9 +1,15 @@
-
 import anndata
 import numpy as np
 from anndata import AnnData
-from sklearn.metrics import davies_bouldin_score, adjusted_mutual_info_score, \
-    adjusted_rand_score, fowlkes_mallows_score, v_measure_score, silhouette_score, calinski_harabasz_score
+from sklearn.metrics import (
+    adjusted_mutual_info_score,
+    adjusted_rand_score,
+    calinski_harabasz_score,
+    davies_bouldin_score,
+    fowlkes_mallows_score,
+    silhouette_score,
+    v_measure_score,
+)
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -39,6 +45,7 @@ def silhouette(adata, partition_key, obsm_representation: str = None):
         original_count = adata.X
         return silhouette_score(original_count, annotations)
 
+
 # specify a "subset" parameter corresponding to a type to subset the adata. The metric
 # would be computed on this subset. However, this requires to be rather careful with
 # the used annotations etc... Maybe it would be smarter to create another module for
@@ -47,7 +54,9 @@ def silhouette(adata, partition_key, obsm_representation: str = None):
 # in the other function (use subset = 'subset_name')
 
 
-def davies_bouldin(adata : AnnData, partition_key, obsm_representation: str = None):
+def davies_bouldin(
+    adata: AnnData, partition_key, obsm_representation: str = None
+):
     """
     By default, computes the Davies-Bouldin index for the adata with respect to the
     clustering specified by partition_key.
@@ -79,7 +88,9 @@ def davies_bouldin(adata : AnnData, partition_key, obsm_representation: str = No
         return davies_bouldin_score(original_count, annotations)
 
 
-def calinski_harabasz(adata : AnnData, partition_key, obsm_representation: str = None):
+def calinski_harabasz(
+    adata: AnnData, partition_key, obsm_representation: str = None
+):
     """
     By default, computes the Davies-Bouldin index for the adata with respect to the
     clustering specified by partition_key.
@@ -187,7 +198,9 @@ def rand(adata, partition_key, reference):
     The Rand index of the data with respect to the partition_key clustering compared
     to the reference clustering.
     """
-    return adjusted_rand_score(*annotation_to_num(adata, partition_key, reference))
+    return adjusted_rand_score(
+        *annotation_to_num(adata, partition_key, reference)
+    )
 
 
 def fowlkes_mallows(adata, partition_key, reference):
@@ -211,7 +224,9 @@ def fowlkes_mallows(adata, partition_key, reference):
     The Fowlkes-Mallows score of the data with respect to the partition_key clustering
     compared to the reference clustering.
     """
-    return fowlkes_mallows_score(*annotation_to_num(adata,partition_key,reference))
+    return fowlkes_mallows_score(
+        *annotation_to_num(adata, partition_key, reference)
+    )
 
 
 def nmi(adata, partition_key, reference):
@@ -235,7 +250,9 @@ def nmi(adata, partition_key, reference):
     The Normalized Mutual Information of the data with respect to the partition_key
     clustering compared to the reference clustering.
     """
-    return adjusted_mutual_info_score(*annotation_to_num(adata,partition_key,reference))
+    return adjusted_mutual_info_score(
+        *annotation_to_num(adata, partition_key, reference)
+    )
 
 
 def vmeasure(adata, partition_key, reference):
@@ -259,11 +276,10 @@ def vmeasure(adata, partition_key, reference):
     The V-Measure of the data with respect to the partition_key clustering compared
     to the reference clustering.
     """
-    return v_measure_score(*annotation_to_num(adata,partition_key,reference))
+    return v_measure_score(*annotation_to_num(adata, partition_key, reference))
 
 
-
-def dunn(adata , partition_key: str, obsm_representation: str = None):
+def dunn(adata, partition_key: str, obsm_representation: str = None):
     """
     By default, computes the Dunn index for the adata with respect to the clustering
     specified by partition_key.
@@ -286,4 +302,3 @@ def dunn(adata , partition_key: str, obsm_representation: str = None):
     -------
     The Dunn index of the data with respect to the partition_key clustering
     """
-

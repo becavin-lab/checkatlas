@@ -1,7 +1,8 @@
-from dask.distributed import Client
-from dask import delayed
-from time import sleep
 from datetime import datetime
+from time import sleep
+
+from dask import delayed
+from dask.distributed import Client
 
 
 def inc(x):
@@ -21,12 +22,12 @@ def working():
     z.compute()
 
 
-if __name__ == '__main__':
-    print('yo')
-    now = datetime.now().time() # time object
+if __name__ == "__main__":
+    print("yo")
+    now = datetime.now().time()  # time object
     print("now =", now)
     client = Client()
     working()
     client.close()
-    now = datetime.now().time() # time object
+    now = datetime.now().time()  # time object
     print("now =", now)

@@ -1,12 +1,16 @@
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import scanpy as sc
+
 try:
     from . import checkatlas
 except:
     import checkatlas
+
 import re
+
 try:
     from .metrics.cluster import clust_compute
 except:
@@ -58,12 +62,12 @@ def convert_atlas(atlas_path, atlas_name) -> None:
     """
     print("Convert Seurat object to Scanpy: ", atlas_path)
     rscript_cmd = (
-            "Rscript "
-            + checkatlas.RSCRIPT
-            + " "
-            + os.path.dirname(atlas_path)
-            + " "
-            + atlas_name
+        "Rscript "
+        + checkatlas.RSCRIPT
+        + " "
+        + os.path.dirname(atlas_path)
+        + " "
+        + atlas_name
     )
     print(rscript_cmd)
     os.system(rscript_cmd)
@@ -80,9 +84,20 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     atlas_file_type = atlas_info[1]
     atlas_extension = atlas_info[2]
-    csv_path = os.path.join(folders.get_folder(path, folders.SUMMARY), atlas_name + checkatlas.SUMMARY_EXTENSION)
+    csv_path = os.path.join(
+        folders.get_folder(path, folders.SUMMARY),
+        atlas_name + checkatlas.SUMMARY_EXTENSION,
+    )
     # Create summary table
-    header = ["AtlasFileType", "NbCells", "NbGenes", "AnnData.raw", "AnnData.X", "File_extension", "File_path"]
+    header = [
+        "AtlasFileType",
+        "NbCells",
+        "NbGenes",
+        "AnnData.raw",
+        "AnnData.X",
+        "File_extension",
+        "File_path",
+    ]
     print("Run summary")
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
     df_summary["AtlasFileType"][atlas_name] = atlas_file_type
@@ -91,7 +106,7 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     df_summary["AnnData.raw"][atlas_name] = adata.raw is not None
     df_summary["AnnData.X"][atlas_name] = adata.X is not None
     df_summary["File_extension"][atlas_name] = atlas_extension
-    df_summary["File_path"][atlas_name] = atlas_path.replace(path, '')
+    df_summary["File_path"][atlas_name] = atlas_path.replace(path, "")
     df_summary.to_csv(csv_path, index=False)
 
 
@@ -104,7 +119,10 @@ def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    csv_path = os.path.join(folders.get_folder(path, folders.ANNDATA), atlas_name + checkatlas.ADATA_EXTENSION)
+    csv_path = os.path.join(
+        folders.get_folder(path, folders.ANNDATA),
+        atlas_name + checkatlas.ADATA_EXTENSION,
+    )
     # Create AnnData table
     header = ["obs", "obsm", "var", "varm", "uns"]
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
@@ -113,11 +131,27 @@ def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
     # for value in list(adata.obs.columns):
     #     new_line += html_element + value + "</span><br>"
     #     print(new_line)
-    df_summary["obs"][atlas_name] = "<code>"+"</code><br><code>".join(list(adata.obs.columns))+"</code>"
-    df_summary["obsm"][atlas_name] = "<code>"+"</code><br><code>".join(list(adata.obsm_keys()))+"</code>"
-    df_summary["var"][atlas_name] = "<code>"+"</code><br><code>".join(list(adata.var_keys()))+"</code>"
-    df_summary["varm"][atlas_name] = "<code>"+"</code><br><code>".join(list(adata.varm_keys()))+"</code>"
-    df_summary["uns"][atlas_name] = "<code>"+"</code><br><code>".join(list(adata.uns_keys()))+"</code>"
+    df_summary["obs"][atlas_name] = (
+        "<code>"
+        + "</code><br><code>".join(list(adata.obs.columns))
+        + "</code>"
+    )
+    df_summary["obsm"][atlas_name] = (
+        "<code>"
+        + "</code><br><code>".join(list(adata.obsm_keys()))
+        + "</code>"
+    )
+    df_summary["var"][atlas_name] = (
+        "<code>" + "</code><br><code>".join(list(adata.var_keys())) + "</code>"
+    )
+    df_summary["varm"][atlas_name] = (
+        "<code>"
+        + "</code><br><code>".join(list(adata.varm_keys()))
+        + "</code>"
+    )
+    df_summary["uns"][atlas_name] = (
+        "<code>" + "</code><br><code>".join(list(adata.uns_keys())) + "</code>"
+    )
     df_summary.to_csv(csv_path, index=False, quoting=False)
 
 
@@ -136,12 +170,29 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     qc_path = os.sep + atlas_name + checkatlas.QC_EXTENSION
     print("calc qc")
     # mitochondrial genes
-    adata.var['mt'] = adata.var_names.str.startswith('MT-')
+    adata.var["mt"] = adata.var_names.str.startswith("MT-")
     # ribosomal genes
-    adata.var['ribo'] = adata.var_names.str.startswith(("RPS","RPL"))
-    sc.pp.calculate_qc_metrics(adata, qc_vars=['mt','ribo'], percent_top=None, log1p=False, inplace=True)
-    sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_counts_mt','pct_counts_ribo'], jitter=0.4,
-                 multi_panel=True, show=False, save=qc_path)
+    adata.var["ribo"] = adata.var_names.str.startswith(("RPS", "RPL"))
+    sc.pp.calculate_qc_metrics(
+        adata,
+        qc_vars=["mt", "ribo"],
+        percent_top=None,
+        log1p=False,
+        inplace=True,
+    )
+    sc.pl.violin(
+        adata,
+        [
+            "n_genes_by_counts",
+            "total_counts",
+            "pct_counts_mt",
+            "pct_counts_ribo",
+        ],
+        jitter=0.4,
+        multi_panel=True,
+        show=False,
+        save=qc_path,
+    )
 
 
 def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
@@ -169,17 +220,12 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
         while not found:
             if OBS_CLUSTERS[i] in adata.obs_keys():
                 sc.pl.umap(
-                    adata,
-                    color=OBS_CLUSTERS[i],
-                    show=False,
-                    save=umap_path
+                    adata, color=OBS_CLUSTERS[i], show=False, save=umap_path
                 )
                 found = True
             i += 1
         if not found:
-            sc.pl.umap(
-                adata, show=False, save=umap_path
-            )
+            sc.pl.umap(adata, show=False, save=umap_path)
 
 
 def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
@@ -206,17 +252,12 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
         while not found:
             if OBS_CLUSTERS[i] in adata.obs_keys():
                 sc.pl.tsne(
-                    adata,
-                    color=OBS_CLUSTERS[i],
-                    show=False,
-                    save=tsne_path
+                    adata, color=OBS_CLUSTERS[i], show=False, save=tsne_path
                 )
                 found = True
             i += 1
         if not found:
-            sc.pl.tsne(
-                adata, show=False, save=tsne_path
-            )
+            sc.pl.tsne(adata, show=False, save=tsne_path)
 
 
 def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
@@ -228,9 +269,11 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    checkatlas_path = atlas_info[3] + '/' + atlas_name
-    csv_path = os.path.join(folders.get_folder(path, folders.CLUSTER), atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION)
-    header = ["Sample","obs", "Silhouette", "Davies-Bouldin"]
+    csv_path = os.path.join(
+        folders.get_folder(path, folders.CLUSTER),
+        atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION,
+    )
+    header = ["Sample", "obs", "Silhouette", "Davies-Bouldin"]
     df_cluster = pd.DataFrame(columns=header)
     for obs_key in adata.obs_keys():
         for obs_key_celltype in OBS_CLUSTERS:
@@ -239,13 +282,26 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
                 annotations = adata.obs[obs_key].astype("category")
                 if len(annotations.cat.categories) != 1:
                     silhouette = 1
-                    print('Calc Silhouette for '+atlas_name,obs_key)
-                    silhouette = clust_compute.silhouette(adata, obs_key, 'X_umap')
+                    print("Calc Silhouette for " + atlas_name, obs_key)
+                    silhouette = clust_compute.silhouette(
+                        adata, obs_key, "X_umap"
+                    )
                     daviesb = -1
-                    print('Calc Davies Bouldin for '+atlas_name,obs_key)
-                    daviesb = clust_compute.davies_bouldin(adata, obs_key, 'X_umap')
-                    df_line = pd.DataFrame({'Sample': [atlas_name+'_'+obs_key], 'obs': [obs_key],'Silhouette': [silhouette], 'Davies-Bouldin': [daviesb]})
-                    df_cluster = pd.concat([df_cluster, df_line], ignore_index=True, axis=0)
+                    print("Calc Davies Bouldin for " + atlas_name, obs_key)
+                    daviesb = clust_compute.davies_bouldin(
+                        adata, obs_key, "X_umap"
+                    )
+                    df_line = pd.DataFrame(
+                        {
+                            "Sample": [atlas_name + "_" + obs_key],
+                            "obs": [obs_key],
+                            "Silhouette": [silhouette],
+                            "Davies-Bouldin": [daviesb],
+                        }
+                    )
+                    df_cluster = pd.concat(
+                        [df_cluster, df_line], ignore_index=True, axis=0
+                    )
     if len(df_cluster) != 0:
         df_cluster.to_csv(csv_path, index=False)
 
@@ -259,8 +315,11 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    csv_path = os.path.join(folders.get_folder(path, folders.ANNOTATION), atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION)
-    header = ["Sample","obs", "Rand"]
+    csv_path = os.path.join(
+        folders.get_folder(path, folders.ANNOTATION),
+        atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION,
+    )
+    header = ["Sample", "obs", "Rand"]
     df_annot = pd.DataFrame(columns=header)
     for obs_key in adata.obs_keys():
         for obs_key_celltype in OBS_CLUSTERS:
@@ -268,11 +327,19 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
                 # Need more than one sample to calculate metric
                 annotations = adata.obs[obs_key].astype("category")
                 if len(annotations.cat.categories) != 1:
-                    print('Calc Rand Index for '+atlas_name, obs_key)
+                    print("Calc Rand Index for " + atlas_name, obs_key)
                     rand = -1
-                    #rand = clust_compute.rand(adata, obs_key, 'X_umap')
-                    df_line = pd.DataFrame({'Sample': [atlas_name+'_'+obs_key], 'obs': [obs_key], 'Rand': [rand]})
-                    df_annot = pd.concat([df_annot, df_line], ignore_index=True, axis=0)
+                    # rand = clust_compute.rand(adata, obs_key, 'X_umap')
+                    df_line = pd.DataFrame(
+                        {
+                            "Sample": [atlas_name + "_" + obs_key],
+                            "obs": [obs_key],
+                            "Rand": [rand],
+                        }
+                    )
+                    df_annot = pd.concat(
+                        [df_annot, df_line], ignore_index=True, axis=0
+                    )
     if len(df_annot) != 0:
         df_annot.to_csv(csv_path, index=False)
 
@@ -286,15 +353,23 @@ def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    csv_path = os.path.join(folders.get_folder(path, folders.DIMRED), atlas_name + checkatlas.METRIC_DIMRED_EXTENSION)
-    header = ["Sample","obs", "Kruskal"]
+    csv_path = os.path.join(
+        folders.get_folder(path, folders.DIMRED),
+        atlas_name + checkatlas.METRIC_DIMRED_EXTENSION,
+    )
+    header = ["Sample", "obs", "Kruskal"]
     df_dimred = pd.DataFrame(columns=header)
     for obsm_key in adata.obsm_keys():
-        print('Calc Kruskal Stress for '+atlas_name, obsm_key)
+        print("Calc Kruskal Stress for " + atlas_name, obsm_key)
         kruskal = -1
-        #kruskal = dr_compute.kruskal_stress(adata, obsm_key)
-        df_line = pd.DataFrame({'Sample': [atlas_name+'_'+obsm_key], 'obs': [obsm_key], 'Kruskal': [kruskal]})
+        # kruskal = dr_compute.kruskal_stress(adata, obsm_key)
+        df_line = pd.DataFrame(
+            {
+                "Sample": [atlas_name + "_" + obsm_key],
+                "obs": [obsm_key],
+                "Kruskal": [kruskal],
+            }
+        )
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
     if len(df_dimred) != 0:
         df_dimred.to_csv(csv_path, index=False)
-

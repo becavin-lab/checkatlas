@@ -4,27 +4,34 @@ Created on Thu Jun  4 16:38:47 2020
 @author: antoinecollin
 """
 
+from typing import Collection, Literal, Optional
+
 import anndata
-from scanpy.plotting._tools.scatterplots import _panel_grid
-from typing import Collection, Optional, Literal
-import seaborn as sns
-import matplotlib.pyplot as plt
-from compute import one_v_max_matrix, shannon_average, tau_average, gini_average
 import get_data
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+from compute import (
+    gini_average,
+    one_v_max_matrix,
+    shannon_average,
+    tau_average,
+)
+from scanpy.plotting._tools.scatterplots import _panel_grid
 
-
-ROOTDIR = r'C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy'
-FILENAME = 'HCA_Barbry_Hg19_seurat.h5ad'
-filename = '\\'.join([ROOTDIR, 'datasets', FILENAME])
+ROOTDIR = r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy"
+FILENAME = "HCA_Barbry_Hg19_seurat.h5ad"
+filename = "\\".join([ROOTDIR, "datasets", FILENAME])
 annick = anndata.read_h5ad(filename)
 
 
-def gene_expr_distribution(adata: anndata,
-                           gene: str,
-                           ax,
-                           partition_key: str = "CellType",
-                           celltype: Optional[str] = None):
+def gene_expr_distribution(
+    adata: anndata,
+    gene: str,
+    ax,
+    partition_key: str = "CellType",
+    celltype: Optional[str] = None,
+):
     """
     Plot the distribution of the average gene expression across celltypes
 
@@ -49,43 +56,58 @@ def gene_expr_distribution(adata: anndata,
     -------
 
     """
-    average_by_celltype = get_data.get_average_celltype_counts(adata=adata,
-                                                               partition_key=partition_key)
-    out = sns.distplot(average_by_celltype[gene],
-                       kde=False,
-                       rug=True,
-                       ax=ax,
-                       hist_kws={'histtype': 'stepfilled',
-                                 'facecolor':'royalblue',
-                                 'edgecolor':'black',
-                                 'alpha': 0.8,
-                                 'linewidth': 1})
-    indent = ''
-    for spe in ['shannon', 'tau', 'gini']:
-        spe_to_plot = round(get_data.get_spe(adata,
-                                             spe_metric=spe,
-                                             partition_key='CellType')[gene], 2)
-        out = plt.annotate(spe + ' = ' + str(spe_to_plot) + indent,
-                           xy=(0.79,0.70),
-                           xycoords='axes fraction')
-        indent += '\n'
+    average_by_celltype = get_data.get_average_celltype_counts(
+        adata=adata, partition_key=partition_key
+    )
+    out = sns.distplot(
+        average_by_celltype[gene],
+        kde=False,
+        rug=True,
+        ax=ax,
+        hist_kws={
+            "histtype": "stepfilled",
+            "facecolor": "royalblue",
+            "edgecolor": "black",
+            "alpha": 0.8,
+            "linewidth": 1,
+        },
+    )
+    indent = ""
+    for spe in ["shannon", "tau", "gini"]:
+        spe_to_plot = round(
+            get_data.get_spe(adata, spe_metric=spe, partition_key="CellType")[
+                gene
+            ],
+            2,
+        )
+        out = plt.annotate(
+            spe + " = " + str(spe_to_plot) + indent,
+            xy=(0.79, 0.70),
+            xycoords="axes fraction",
+        )
+        indent += "\n"
     if isinstance(celltype, str):
-        out = sns.rugplot([average_by_celltype.loc[celltype, gene]], color='red')
-        out = plt.annotate(celltype,
-                           xy=[average_by_celltype.loc[celltype, gene], 0.06],
-                           xycoords=('data', 'axes fraction'),
-                           annotation_clip=False)
-    ax.set(xlabel= None,
-           ylabel='Number of celltypes')
-    ax.set_title(gene,fontsize=10)
+        out = sns.rugplot(
+            [average_by_celltype.loc[celltype, gene]], color="red"
+        )
+        out = plt.annotate(
+            celltype,
+            xy=[average_by_celltype.loc[celltype, gene], 0.06],
+            xycoords=("data", "axes fraction"),
+            annotation_clip=False,
+        )
+    ax.set(xlabel=None, ylabel="Number of celltypes")
+    ax.set_title(gene, fontsize=10)
     return out
 
 
-def marker_genes_distribution(adata: anndata,
-                              gene_list: Optional[Collection[str]],
-                              celltype : Optional[str],
-                              partition_key : str = 'CellType',
-                              style="seaborn-white"):
+def marker_genes_distribution(
+    adata: anndata,
+    gene_list: Optional[Collection[str]],
+    celltype: Optional[str],
+    partition_key: str = "CellType",
+    style="seaborn-white",
+):
     """
     Display the distribution of the expressions of the genes across all
     celltypes
@@ -109,22 +131,28 @@ def marker_genes_distribution(adata: anndata,
     """
     plt.style.use(style)
     n_panels = len(gene_list)
-    f, grid = _panel_grid(hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels)
+    f, grid = _panel_grid(
+        hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels
+    )
     for i in range(n_panels):
         gene = gene_list[i]
         ax = f.add_subplot(grid[i])
-        gene_expr_distribution(adata=adata,
-                               gene=gene,
-                               ax=ax,
-                               partition_key=partition_key,
-                               celltype=celltype)
+        gene_expr_distribution(
+            adata=adata,
+            gene=gene,
+            ax=ax,
+            partition_key=partition_key,
+            celltype=celltype,
+        )
 
 
-def distrib_one_v_max(adata: anndata,
-                      celltype: str,
-                      ax,
-                      gene_highlight: Optional[Collection[str]] = None,
-                      partition_key: str = 'CellType'):
+def distrib_one_v_max(
+    adata: anndata,
+    celltype: str,
+    ax,
+    gene_highlight: Optional[Collection[str]] = None,
+    partition_key: str = "CellType",
+):
     """
 
     Parameters
@@ -148,46 +176,49 @@ def distrib_one_v_max(adata: anndata,
     """
     one_v_max = one_v_max_matrix(adata, partition_key=partition_key)
     to_plot = one_v_max.loc[celltype]
-    to_plot_trunc = to_plot[to_plot > 1]  # The only relevant one_v_max are the ones >1
+    to_plot_trunc = to_plot[
+        to_plot > 1
+    ]  # The only relevant one_v_max are the ones >1
     gene_highlight = list(set(gene_highlight) & set(list(to_plot_trunc.index)))
     if gene_highlight:
         to_plot_highlight = to_plot_trunc[gene_highlight]
         to_plot_trunc = to_plot_trunc.drop(gene_highlight)
-        out = sns.stripplot(y=to_plot_trunc,
-                            ax=ax,
-                            orient='v',
-                            s=3,
-                            linewidth=0.25)
-        out = sns.stripplot(y=to_plot_highlight,
-                            ax=ax,
-                            orient='v',
-                            color='red',
-                            linewidth=0.5)
+        out = sns.stripplot(
+            y=to_plot_trunc, ax=ax, orient="v", s=3, linewidth=0.25
+        )
+        out = sns.stripplot(
+            y=to_plot_highlight, ax=ax, orient="v", color="red", linewidth=0.5
+        )
         out.axes.set_xticks([])
         if len(gene_highlight) == 1:
-            spe_ovm = round(to_plot_highlight[0],2)
-            out.axes.set_title(label=f'{gene_highlight[0]} \n {to_plot_trunc.name} onevmax={spe_ovm}',
-                               loc='center',
-                               fontsize='small')
+            spe_ovm = round(to_plot_highlight[0], 2)
+            out.axes.set_title(
+                label=f"{gene_highlight[0]} \n {to_plot_trunc.name} onevmax={spe_ovm}",
+                loc="center",
+                fontsize="small",
+            )
         else:
             out.axes.set_title(
-                label=f'{to_plot_trunc.name}',
-                loc='center',
-                fontsize='small')
-        out.axes.set_ylabel(ylabel='')
+                label=f"{to_plot_trunc.name}", loc="center", fontsize="small"
+            )
+        out.axes.set_ylabel(ylabel="")
     else:
-        out = sns.stripplot(y=to_plot_trunc, ax=ax, orient='v', s=3, linewidth=0.25)
-        out.axes.set_title(label=f'{to_plot_trunc.name}',
-                           loc='center',
-                           fontsize='small')
-        out.axes.set_ylabel(ylabel='')
+        out = sns.stripplot(
+            y=to_plot_trunc, ax=ax, orient="v", s=3, linewidth=0.25
+        )
+        out.axes.set_title(
+            label=f"{to_plot_trunc.name}", loc="center", fontsize="small"
+        )
+        out.axes.set_ylabel(ylabel="")
     return out
 
 
 ## Not used
-def one_v_max_celltypes(adata: anndata,
-                        celltype_list: Optional[Collection[str]]=None,
-                        partition_key: str = 'CellType'):
+def one_v_max_celltypes(
+    adata: anndata,
+    celltype_list: Optional[Collection[str]] = None,
+    partition_key: str = "CellType",
+):
     """
     Plots the one_v_max stripplot across the specified celltypes in the same plot
 
@@ -208,20 +239,26 @@ def one_v_max_celltypes(adata: anndata,
 
     """
     one_v_max = one_v_max_matrix(adata, partition_key=partition_key)
-    one_v_max['celltype'] = one_v_max.index
-    mean_melt = pd.melt(one_v_max, id_vars='celltype',
-                        value_vars=list(one_v_max.columns[:-1]), var_name='genes',
-                        value_name='expression')
-    mean_melt = mean_melt[mean_melt['expression'] > 1]
-    out = sns.stripplot(x=mean_melt['celltype'], y=mean_melt['expression'], s=2)
-    out.set(yscale='log')
+    one_v_max["celltype"] = one_v_max.index
+    mean_melt = pd.melt(
+        one_v_max,
+        id_vars="celltype",
+        value_vars=list(one_v_max.columns[:-1]),
+        var_name="genes",
+        value_name="expression",
+    )
+    mean_melt = mean_melt[mean_melt["expression"] > 1]
+    out = sns.stripplot(
+        x=mean_melt["celltype"], y=mean_melt["expression"], s=2
+    )
+    out.set(yscale="log")
     return out
 
 
 ## Used
-def one_v_max_genelist(adata: anndata,
-                       gene_list: Collection[str],
-                       partition_key: str = 'CellType'):
+def one_v_max_genelist(
+    adata: anndata, gene_list: Collection[str], partition_key: str = "CellType"
+):
     """
     For each gene, plots the one_v_max stripplot in the celltype where it is maximum.
 
@@ -237,25 +274,31 @@ def one_v_max_genelist(adata: anndata,
     """
     one_v_max = one_v_max_matrix(adata, partition_key=partition_key)
     n_panels = len(gene_list)
-    f, grid = _panel_grid(hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels)
+    f, grid = _panel_grid(
+        hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels
+    )
     for i in range(n_panels):
         gene = gene_list[i]
         ax = f.add_subplot(grid[i])
-        ax.set(yscale='log')
-        ax.set_yticks = [5**(n % 2) * 10**(n // 2) for n in range(10)]
+        ax.set(yscale="log")
+        ax.set_yticks = [5 ** (n % 2) * 10 ** (n // 2) for n in range(10)]
         max_celltype = pd.to_numeric(one_v_max[gene]).idxmax()
-        distrib_one_v_max(adata=adata,
-                          celltype=max_celltype,
-                          ax=ax,
-                          gene_highlight=[gene],
-                          partition_key=partition_key)
+        distrib_one_v_max(
+            adata=adata,
+            celltype=max_celltype,
+            ax=ax,
+            gene_highlight=[gene],
+            partition_key=partition_key,
+        )
 
 
 ## Not used
-def one_v_max_celltypes_sep(adata: anndata,
-                            celltype_list: Collection[str],
-                            gene_highlight = None,
-                            partition_key: str = 'CellType'):
+def one_v_max_celltypes_sep(
+    adata: anndata,
+    celltype_list: Collection[str],
+    gene_highlight=None,
+    partition_key: str = "CellType",
+):
     """
     Plots the one_v_max distribution across the specified celltypes in separate plots
 
@@ -276,22 +319,28 @@ def one_v_max_celltypes_sep(adata: anndata,
 
     """
     n_panels = len(celltype_list)
-    f, grid = _panel_grid(hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels)
+    f, grid = _panel_grid(
+        hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels
+    )
     for i in range(n_panels):
         celltype = celltype_list[i]
         ax = f.add_subplot(grid[i])
-        ax.set(yscale='log')
-        distrib_one_v_max(adata=adata,
-                          celltype=celltype,
-                          ax=ax,
-                          gene_highlight=gene_highlight,
-                          partition_key=partition_key)
+        ax.set(yscale="log")
+        distrib_one_v_max(
+            adata=adata,
+            celltype=celltype,
+            ax=ax,
+            gene_highlight=gene_highlight,
+            partition_key=partition_key,
+        )
 
 
-def spec_distrib(adata: anndata,
-                 spe_name: Literal['shannon','tau','gini'],
-                 ax,
-                 partition_key: str='CellType'):
+def spec_distrib(
+    adata: anndata,
+    spe_name: Literal["shannon", "tau", "gini"],
+    ax,
+    partition_key: str = "CellType",
+):
     """
     Plots the distribution of the specified gene specificity
 
@@ -312,26 +361,25 @@ def spec_distrib(adata: anndata,
     -------
 
     """
-    dist_to_plot = get_data.get_spe(adata=adata,
-                                    spe_metric=spe_name,
-                                    partition_key=partition_key)
+    dist_to_plot = get_data.get_spe(
+        adata=adata, spe_metric=spe_name, partition_key=partition_key
+    )
     out = sns.distplot(dist_to_plot, ax=ax)
     return out
 
 
-def all_spec_distrib(adata: anndata,
-                     partition_key : str = 'CellType'):
+def all_spec_distrib(adata: anndata, partition_key: str = "CellType"):
     f, (ax1, ax2, ax3) = plt.subplots(3, 1)
-    for ax, spe in [(ax1, 'shannon'), (ax2, 'tau'), (ax3, 'gini')]:
-        spec_distrib(adata=adata,
-                     spe_name=spe,
-                     ax=ax,
-                     partition_key=partition_key)
+    for ax, spe in [(ax1, "shannon"), (ax2, "tau"), (ax3, "gini")]:
+        spec_distrib(
+            adata=adata, spe_name=spe, ax=ax, partition_key=partition_key
+        )
 
 
-
-#TODO
-def marked_celltype_UMAP(adata : anndata, gene : str, marked_celltypes : Collection[str]):
+# TODO
+def marked_celltype_UMAP(
+    adata: anndata, gene: str, marked_celltypes: Collection[str]
+):
     """
 
     Parameters
@@ -346,8 +394,8 @@ def marked_celltype_UMAP(adata : anndata, gene : str, marked_celltypes : Collect
     """
 
 
-#TODO
-def gene_distrib_celltype(adata, gene, celltype ) :
+# TODO
+def gene_distrib_celltype(adata, gene, celltype):
     """
 
     Parameters
