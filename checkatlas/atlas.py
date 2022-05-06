@@ -133,6 +133,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     """
     atlas_name = atlas_info[0]
     sc.settings.figdir = folders.get_workingdir(path)
+    qc_path = os.sep + atlas_name + checkatlas.QC_EXTENSION
     print("calc qc")
     # mitochondrial genes
     adata.var['mt'] = adata.var_names.str.startswith('MT-')
@@ -140,7 +141,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     adata.var['ribo'] = adata.var_names.str.startswith(("RPS","RPL"))
     sc.pp.calculate_qc_metrics(adata, qc_vars=['mt','ribo'], percent_top=None, log1p=False, inplace=True)
     sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_counts_mt','pct_counts_ribo'], jitter=0.4,
-                 multi_panel=True, show=False, save="/" + atlas_name + checkatlas.QC_EXTENSION)
+                 multi_panel=True, show=False, save=qc_path)
 
 
 def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
@@ -163,6 +164,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
         i = 0
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(path)
+        umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
         # Exporting umap
         while not found:
             if OBS_CLUSTERS[i] in adata.obs_keys():
@@ -170,13 +172,13 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
                     adata,
                     color=OBS_CLUSTERS[i],
                     show=False,
-                    save="/" + atlas_name + checkatlas.UMAP_EXTENSION,
+                    save=umap_path
                 )
                 found = True
             i += 1
         if not found:
             sc.pl.umap(
-                adata, show=False, save="/" + atlas_name + checkatlas.UMAP_EXTENSION
+                adata, show=False, save=umap_path
             )
 
 
@@ -199,6 +201,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
         i = 0
         # Setting up figures directory
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(path)
+        tsne_path = os.sep + atlas_name + checkatlas.TSNE_EXTENSION
         # Exporting tsne
         while not found:
             if OBS_CLUSTERS[i] in adata.obs_keys():
@@ -206,13 +209,13 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
                     adata,
                     color=OBS_CLUSTERS[i],
                     show=False,
-                    save="/" + atlas_name + checkatlas.TSNE_EXTENSION,
+                    save=tsne_path
                 )
                 found = True
             i += 1
         if not found:
             sc.pl.tsne(
-                adata, show=False, save="/" + atlas_name + checkatlas.TSNE_EXTENSION
+                adata, show=False, save=tsne_path
             )
 
 
@@ -237,10 +240,10 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
                 if len(annotations.cat.categories) != 1:
                     silhouette = 1
                     print('Calc Silhouette for '+atlas_name,obs_key)
-                    #silhouette = clust_compute.silhouette(adata, obs_key, 'X_umap')
+                    silhouette = clust_compute.silhouette(adata, obs_key, 'X_umap')
                     daviesb = -1
                     print('Calc Davies Bouldin for '+atlas_name,obs_key)
-                    #daviesb = clust_compute.davies_bouldin(adata, obs_key, 'X_umap')
+                    daviesb = clust_compute.davies_bouldin(adata, obs_key, 'X_umap')
                     df_line = pd.DataFrame({'Sample': [atlas_name+'_'+obs_key], 'obs': [obs_key],'Silhouette': [silhouette], 'Davies-Bouldin': [daviesb]})
                     df_cluster = pd.concat([df_cluster, df_line], ignore_index=True, axis=0)
     if len(df_cluster) != 0:
