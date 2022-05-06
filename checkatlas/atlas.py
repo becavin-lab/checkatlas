@@ -15,6 +15,10 @@ try:
     from .metrics.dim_red import dr_compute
 except:
     from metrics.dim_red import dr_compute
+try:
+    from . import folders
+except:
+    import folders
 
 
 """
@@ -76,9 +80,7 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     atlas_file_type = atlas_info[1]
     atlas_extension = atlas_info[2]
-    checkatlas_path = atlas_info[3] + '/' + atlas_name
-
-    csv_path = checkatlas_path + checkatlas.SUMMARY_EXTENSION
+    csv_path = os.path.join(folders.get_folder(path, folders.SUMMARY), atlas_name + checkatlas.SUMMARY_EXTENSION)
     # Create summary table
     header = ["AtlasFileType", "NbCells", "NbGenes", "AnnData.raw", "AnnData.X", "File_extension", "File_path"]
     print("Run summary")
@@ -93,7 +95,7 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     df_summary.to_csv(csv_path, index=False)
 
 
-def create_anndata_table(adata, atlas_path, atlas_info) -> None:
+def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
     """
     Create a table with all AnnData arguments
     :param adata:
@@ -102,9 +104,7 @@ def create_anndata_table(adata, atlas_path, atlas_info) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    checkatlas_path = atlas_info[3] + '/' + atlas_name
-
-    csv_path = checkatlas_path + checkatlas.ADATA_EXTENSION
+    csv_path = os.path.join(folders.get_folder(path, folders.ANNDATA), atlas_name + checkatlas.ADATA_EXTENSION)
     # Create AnnData table
     header = ["obs", "obsm", "var", "varm", "uns"]
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
@@ -121,7 +121,7 @@ def create_anndata_table(adata, atlas_path, atlas_info) -> None:
     df_summary.to_csv(csv_path, index=False, quoting=False)
 
 
-def create_qc_plots(adata, atlas_path, atlas_info, fig_path) -> None:
+def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     """
     Display the atlas QC
     Search for the OBS variable which correspond to the toal_RNA, total_UMI, MT_ratio, RT_ratio
@@ -132,11 +132,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, fig_path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    # Setting up figures directory
-    sc.settings.figdir = fig_path
-    if not os.path.exists(fig_path + "/violin"):
-        os.mkdir(fig_path + "/violin")
-
+    sc.settings.figdir = folders.get_workingdir(path)
     print("calc qc")
     # mitochondrial genes
     adata.var['mt'] = adata.var_names.str.startswith('MT-')
@@ -147,7 +143,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, fig_path) -> None:
                  multi_panel=True, show=False, save="/" + atlas_name + checkatlas.QC_EXTENSION)
 
 
-def create_umap_fig(adata, atlas_path, atlas_info, fig_path) -> None:
+def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -160,15 +156,13 @@ def create_umap_fig(adata, atlas_path, atlas_info, fig_path) -> None:
     atlas_name = atlas_info[0]
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
+
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
         # Create umap
         found = False
         i = 0
         # Setting up figures directory
-        sc.settings.figdir = fig_path
-        print(sc.settings.figdir)
-        if not os.path.exists(fig_path + "/umap"):
-            os.mkdir(fig_path + "/umap")
+        sc.settings.figdir = folders.get_workingdir(path)
         # Exporting umap
         while not found:
             if OBS_CLUSTERS[i] in adata.obs_keys():
@@ -186,7 +180,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, fig_path) -> None:
             )
 
 
-def create_tsne_fig(adata, atlas_path, atlas_info, fig_path) -> None:
+def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -204,13 +198,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, fig_path) -> None:
         found = False
         i = 0
         # Setting up figures directory
-        sc.settings.figdir = fig_path
-        print(sc.settings.figdir)
-        r = re.compile(".*umap*.")
-        newlist = list(filter(r.match, adata.obsm_keys())) # Read Note below
-        print(newlist)
-        if not os.path.exists(fig_path + "/tsne"):
-            os.mkdir(fig_path + "/tsne")
+        sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(path)
         # Exporting tsne
         while not found:
             if OBS_CLUSTERS[i] in adata.obs_keys():
@@ -228,7 +216,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, fig_path) -> None:
             )
 
 
-def metric_cluster(adata, atlas_path, atlas_info) -> None:
+def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
     """
     Main function of checkatlas
     For every atlas create summary tables with all attributes of the atlas
@@ -238,7 +226,7 @@ def metric_cluster(adata, atlas_path, atlas_info) -> None:
     """
     atlas_name = atlas_info[0]
     checkatlas_path = atlas_info[3] + '/' + atlas_name
-    csv_path = checkatlas_path + checkatlas.METRIC_CLUSTER_EXTENSION
+    csv_path = os.path.join(folders.get_folder(path, folders.CLUSTER), atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION)
     header = ["Sample","obs", "Silhouette", "Davies-Bouldin"]
     df_cluster = pd.DataFrame(columns=header)
     for obs_key in adata.obs_keys():
@@ -249,17 +237,17 @@ def metric_cluster(adata, atlas_path, atlas_info) -> None:
                 if len(annotations.cat.categories) != 1:
                     silhouette = 1
                     print('Calc Silhouette for '+atlas_name,obs_key)
-                    silhouette = clust_compute.silhouette(adata, obs_key, 'X_umap')
+                    #silhouette = clust_compute.silhouette(adata, obs_key, 'X_umap')
                     daviesb = -1
                     print('Calc Davies Bouldin for '+atlas_name,obs_key)
-                    daviesb = clust_compute.davies_bouldin(adata, obs_key, 'X_umap')
+                    #daviesb = clust_compute.davies_bouldin(adata, obs_key, 'X_umap')
                     df_line = pd.DataFrame({'Sample': [atlas_name+'_'+obs_key], 'obs': [obs_key],'Silhouette': [silhouette], 'Davies-Bouldin': [daviesb]})
                     df_cluster = pd.concat([df_cluster, df_line], ignore_index=True, axis=0)
     if len(df_cluster) != 0:
         df_cluster.to_csv(csv_path, index=False)
 
 
-def metric_annot(adata, atlas_path, atlas_info) -> None:
+def metric_annot(adata, atlas_path, atlas_info, path) -> None:
     """
     Main function of checkatlas
     For every atlas create summary tables with all attributes of the atlas
@@ -268,8 +256,7 @@ def metric_annot(adata, atlas_path, atlas_info) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    checkatlas_path = atlas_info[3] + '/' + atlas_name
-    csv_path = checkatlas_path + checkatlas.METRIC_ANNOTATION_EXTENSION
+    csv_path = os.path.join(folders.get_folder(path, folders.ANNOTATION), atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION)
     header = ["Sample","obs", "Rand"]
     df_annot = pd.DataFrame(columns=header)
     for obs_key in adata.obs_keys():
@@ -287,7 +274,7 @@ def metric_annot(adata, atlas_path, atlas_info) -> None:
         df_annot.to_csv(csv_path, index=False)
 
 
-def metric_dimred(adata, atlas_path, atlas_info) -> None:
+def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
     """
     Main function of checkatlas
     For every atlas create summary tables with all attributes of the atlas
@@ -296,8 +283,7 @@ def metric_dimred(adata, atlas_path, atlas_info) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    checkatlas_path = atlas_info[3] + '/' + atlas_name
-    csv_path = checkatlas_path + checkatlas.METRIC_DIMRED_EXTENSION
+    csv_path = os.path.join(folders.get_folder(path, folders.DIMRED), atlas_name + checkatlas.METRIC_DIMRED_EXTENSION)
     header = ["Sample","obs", "Kruskal"]
     df_dimred = pd.DataFrame(columns=header)
     for obsm_key in adata.obsm_keys():
