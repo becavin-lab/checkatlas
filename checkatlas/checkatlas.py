@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 import scanpy as sc
 
@@ -11,12 +12,10 @@ try:
 except:
     import folders
 
-from dask.distributed import Client
-from dask.distributed import wait
 import webbrowser
-from dask.distributed import Client, LocalCluster
-import matplotlib
 
+import matplotlib
+from dask.distributed import Client, LocalCluster, wait
 
 """
 checkatlas base module.
@@ -25,7 +24,7 @@ This is the principal module of the checkatlas project.
 """
 
 EXTENSIONS = [".rds", ".h5ad", ".h5"]
-CELLRANGER_FILE = '/outs/filtered_feature_bc_matrix.h5'
+CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
 RSCRIPT = "checkatlas/convertSeurat.R"
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
@@ -72,7 +71,6 @@ def get_atlas_extension(atlas_path):
     return os.path.splitext(os.path.basename(atlas_path))[1]
 
 
-
 def convert_seurat_atlas(atlas_path, atlas_name) -> bool:
     """
     Convert all Seurat atlas to Scanpy
@@ -85,7 +83,7 @@ def convert_seurat_atlas(atlas_path, atlas_name) -> bool:
 
 
 def clean_scanpy_atlas(atlas_path, clean=True) -> bool:
-    print('Clean scanpy:' + atlas_path)
+    print("Clean scanpy:" + atlas_path)
     return True
 
 
@@ -112,33 +110,60 @@ def clean_list_atlases_multi(client, futures, atlas_list) -> list:
                 print("Seurat file already converted to Scanpy:", atlas_h5)
             else:
                 future_name = "ConvertRDS_" + atlas_name
-                future_seurat = client.submit(convert_seurat_atlas, atlas_path, atlas_name, key=future_name)
+                future_seurat = client.submit(
+                    convert_seurat_atlas,
+                    atlas_path,
+                    atlas_name,
+                    key=future_name,
+                )
                 futures.append(future_seurat)
                 if os.path.exists(atlas_h5):
-                    future_name = "CleanScanpy-"+atlas_name
-                    future_scanpy = client.submit(clean_scanpy_atlas, atlas_h5, future_seurat, key=future_name)
+                    future_name = "CleanScanpy-" + atlas_name
+                    future_scanpy = client.submit(
+                        clean_scanpy_atlas,
+                        atlas_h5,
+                        future_seurat,
+                        key=future_name,
+                    )
                     futures.append(future_scanpy)
-                    info = [atlas_name, 'Seurat', '.h5', os.path.dirname(atlas_path)]
+                    info = [
+                        atlas_name,
+                        "Seurat",
+                        ".h5",
+                        os.path.dirname(atlas_path),
+                    ]
                     clean_atlas_dict[atlas_h5] = info
         elif atlas_path.endswith(".h5"):
             print(atlas_path)
             # detect if its a cellranger output
             if atlas_path.endswith(CELLRANGER_FILE):
-                atlas_h5 = atlas_path.replace(CELLRANGER_FILE, '')
+                atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
                 atlas_name = get_atlas_name(atlas_h5)
                 get_atlas_extension()
-                info = [atlas_name, 'Cellranger', '.h5', atlas_h5+'/']
+                info = [atlas_name, "Cellranger", ".h5", atlas_h5 + "/"]
                 clean_atlas_dict[atlas_path] = info
         else:
             atlas_rds = atlas_path.replace(".h5ad", ".rds")
             if os.path.exists(atlas_rds):
-                info = [atlas_name, 'Seurat', '.h5ad', os.path.dirname(atlas_path)]
+                info = [
+                    atlas_name,
+                    "Seurat",
+                    ".h5ad",
+                    os.path.dirname(atlas_path),
+                ]
                 clean_atlas_dict[atlas_path] = info
             else:
-                future_name = "CleanScanpy_"+atlas_name
-                future_scanpy = client.submit(clean_scanpy_atlas, atlas_path, key=future_name)
+                future_name = "CleanScanpy_" + atlas_name
+                future_scanpy = client.submit(
+                    clean_scanpy_atlas, atlas_path, key=future_name
+                )
                 futures.append(future_scanpy)
-                info = [atlas_name, 'Scanpy', '.h5ad', os.path.dirname(atlas_path)]
+                info = [
+                    atlas_name,
+                    "Scanpy",
+                    ".h5ad",
+                    os.path.dirname(atlas_path),
+                ]
                 clean_atlas_dict[atlas_path] = info
     wait(futures)
     return clean_atlas_dict
@@ -168,30 +193,45 @@ def clean_list_atlases(atlas_list) -> list:
                 convert_seurat_atlas(atlas_path, atlas_name)
                 if os.path.exists(atlas_h5):
                     clean_scanpy_atlas(atlas_h5)
-                    info = [atlas_name, 'Seurat', '.h5ad', os.path.dirname(atlas_path)+'/']
+                    info = [
+                        atlas_name,
+                        "Seurat",
+                        ".h5ad",
+                        os.path.dirname(atlas_path) + "/",
+                    ]
                     clean_atlas_dict[atlas_h5] = info
         elif atlas_path.endswith(".h5"):
             print(atlas_path)
             # detect if its a cellranger output
             if atlas_path.endswith(CELLRANGER_FILE):
-                atlas_h5 = atlas_path.replace(CELLRANGER_FILE, '')
+                atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
                 atlas_name = get_atlas_name(atlas_h5)
-                info = [atlas_name, 'Cellranger', '.h5', atlas_h5+'/']
+                info = [atlas_name, "Cellranger", ".h5", atlas_h5 + "/"]
                 clean_atlas_dict[atlas_path] = info
         elif atlas_path.endswith(".h5ad"):
             atlas_rds = atlas_path.replace(".h5ad", ".rds")
             if os.path.exists(atlas_rds):
-                info = [atlas_name, 'Seurat', '.h5ad', os.path.dirname(atlas_path)+'/']
+                info = [
+                    atlas_name,
+                    "Seurat",
+                    ".h5ad",
+                    os.path.dirname(atlas_path) + "/",
+                ]
                 clean_atlas_dict[atlas_path] = info
             else:
                 clean_scanpy_atlas(atlas_path)
-                info = [atlas_name, 'Scanpy', '.h5ad', os.path.dirname(atlas_path)+'/']
+                info = [
+                    atlas_name,
+                    "Scanpy",
+                    ".h5ad",
+                    os.path.dirname(atlas_path) + "/",
+                ]
                 clean_atlas_dict[atlas_path] = info
     return clean_atlas_dict
 
 
 def read_atlas(atlas_path):
-    if atlas_path.endswith('.h5'):
+    if atlas_path.endswith(".h5"):
         print(atlas_path)
         adata = sc.read_10x_h5(atlas_path)
         adata.var_names_make_unique()
@@ -232,8 +272,8 @@ def start_multithread_client():
     # setup the cluster
     cluster = LocalCluster()
     client = Client(cluster)
-    print('Opening Dask browser: http://localhost:8787/status')
-    webbrowser.open('http://localhost:8787/status')
+    print("Opening Dask browser: http://localhost:8787/status")
+    webbrowser.open("http://localhost:8787/status")
     return client
 
 
@@ -259,7 +299,9 @@ def run(path, atlas_list, multithread, n_cpus):
     # First clean atlas list and keep only the h5ad files
     if multithread:
         futures = list()
-        clean_atlas_dict = clean_list_atlases_multi(client, futures, atlas_list)
+        clean_atlas_dict = clean_list_atlases_multi(
+            client, futures, atlas_list
+        )
     else:
         clean_atlas_dict = clean_list_atlases(atlas_list)
 
@@ -267,39 +309,95 @@ def run(path, atlas_list, multithread, n_cpus):
     figure_path = path
     for atlas_path, atlas_info in clean_atlas_dict.items():
         if multithread:
-            matplotlib.pyplot.switch_backend('Agg')
+            matplotlib.pyplot.switch_backend("Agg")
             ##### Multi-threaded
             # read adata
-            future_name = "Read_"+atlas_name
+            future_name = "Read_" + atlas_name
             adata = client.submit(read_atlas, atlas_path, key=future_name)
             # Create summary files
-            future_name = "Summary_"+atlas_name
-            future_sum = client.submit(atlas.create_summary_table, adata, atlas_path, atlas_info, path, key=future_name)
+            future_name = "Summary_" + atlas_name
+            future_sum = client.submit(
+                atlas.create_summary_table,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name,
+            )
             futures.append(future_sum)
             # Adata explorer
-            future_name = "Adata_"+atlas_name
-            future_sum = client.submit(atlas.create_anndata_table, adata, atlas_path, atlas_info, path, key=future_name)
+            future_name = "Adata_" + atlas_name
+            future_sum = client.submit(
+                atlas.create_anndata_table,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name,
+            )
             futures.append(future_sum)
             # Create QC plots
-            future_name = "QC_"+atlas_name
-            future_sum = client.submit(atlas.create_qc_plots, adata, atlas_path, atlas_info, path, key=future_name)
+            future_name = "QC_" + atlas_name
+            future_sum = client.submit(
+                atlas.create_qc_plots,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name,
+            )
             futures.append(future_sum)
             # Create Umap and TSNE figures
-            future_name = "UMAP_"+get_atlas_name(atlas_path)
-            future_fig_umap = client.submit(atlas.create_umap_fig, adata, atlas_path, atlas_info, path, key=future_name)
+            future_name = "UMAP_" + get_atlas_name(atlas_path)
+            future_fig_umap = client.submit(
+                atlas.create_umap_fig,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name,
+            )
             futures.append(future_fig_umap)
-            future_name = "TSNE_"+get_atlas_name(atlas_path)
-            future_fig_tsne = client.submit(atlas.create_tsne_fig, adata, atlas_path, atlas_info, path, key=future_name)
+            future_name = "TSNE_" + get_atlas_name(atlas_path)
+            future_fig_tsne = client.submit(
+                atlas.create_tsne_fig,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name,
+            )
             futures.append(future_fig_tsne)
             # Calculate metrics
-            future_name = "Metric_Cluster_"+get_atlas_name(atlas_path)
-            future_met = client.submit(atlas.metric_cluster, adata, atlas_path, atlas_info, path, key=future_name)
+            future_name = "Metric_Cluster_" + get_atlas_name(atlas_path)
+            future_met = client.submit(
+                atlas.metric_cluster,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name,
+            )
             futures.append(future_met)
-            future_name2 = "Metric_Annot_"+get_atlas_name(atlas_path)
-            future_met2 = client.submit(atlas.metric_annot, adata, atlas_path, atlas_info, path, key=future_name2)
+            future_name2 = "Metric_Annot_" + get_atlas_name(atlas_path)
+            future_met2 = client.submit(
+                atlas.metric_annot,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name2,
+            )
             futures.append(future_met2)
-            future_name3 = "Metric_DimRed_"+get_atlas_name(atlas_path)
-            future_met3 = client.submit(atlas.metric_dimred, adata, atlas_path, atlas_info, path, key=future_name3)
+            future_name3 = "Metric_DimRed_" + get_atlas_name(atlas_path)
+            future_met3 = client.submit(
+                atlas.metric_dimred,
+                adata,
+                atlas_path,
+                atlas_info,
+                path,
+                key=future_name3,
+            )
             futures.append(future_met3)
             # Wait for all thread to end
             wait(futures)
@@ -315,15 +413,12 @@ def run(path, atlas_list, multithread, n_cpus):
             atlas.metric_annot(adata, atlas_path, atlas_info, path)
             atlas.metric_dimred(adata, atlas_path, atlas_info, path)
 
-
-
-
     print("Run MultiQC")
     # multiqc.run_multiqc(args.path)
 
 
 if __name__ == "__main__":
-    path = '/Users/christophebecavin/Documents/testatlas/'
+    path = "/Users/christophebecavin/Documents/testatlas/"
     folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list)
