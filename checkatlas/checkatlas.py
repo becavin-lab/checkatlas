@@ -6,6 +6,11 @@ try:
     from . import atlas
 except:
     import atlas
+try:
+    from . import folders
+except:
+    import folders
+
 from dask.distributed import Client
 from dask.distributed import wait
 import webbrowser
@@ -247,6 +252,8 @@ def run(path, atlas_list, multithread, n_cpus):
     :param n_cpus:
     :return:
     """
+    folders.checkatlas_folders(path)
+
     if multithread:
         client = start_multithread_client()
     # First clean atlas list and keep only the h5ad files
@@ -271,7 +278,7 @@ def run(path, atlas_list, multithread, n_cpus):
             futures.append(future_sum)
             # Adata explorer
             future_name = "Adata_"+atlas_name
-            future_sum = client.submit(atlas.create_anndata_table, adata, atlas_path, atlas_info, key=future_name)
+            future_sum = client.submit(atlas.create_anndata_table, adata, atlas_path, atlas_info, path, key=future_name)
             futures.append(future_sum)
             # Create QC plots
             future_name = "QC_"+atlas_name
@@ -286,13 +293,13 @@ def run(path, atlas_list, multithread, n_cpus):
             futures.append(future_fig_tsne)
             # Calculate metrics
             future_name = "Metric_Cluster_"+get_atlas_name(atlas_path)
-            future_met = client.submit(atlas.metric_cluster, adata, atlas_path, atlas_info, key=future_name)
+            future_met = client.submit(atlas.metric_cluster, adata, atlas_path, atlas_info, path, key=future_name)
             futures.append(future_met)
             future_name2 = "Metric_Annot_"+get_atlas_name(atlas_path)
-            future_met2 = client.submit(atlas.metric_annot, adata, atlas_path, atlas_info, key=future_name2)
+            future_met2 = client.submit(atlas.metric_annot, adata, atlas_path, atlas_info, path, key=future_name2)
             futures.append(future_met2)
             future_name3 = "Metric_DimRed_"+get_atlas_name(atlas_path)
-            future_met3 = client.submit(atlas.metric_dimred, adata, atlas_path, atlas_info, key=future_name3)
+            future_met3 = client.submit(atlas.metric_dimred, adata, atlas_path, atlas_info, path, key=future_name3)
             futures.append(future_met3)
             # Wait for all thread to end
             wait(futures)
@@ -300,13 +307,13 @@ def run(path, atlas_list, multithread, n_cpus):
             # ##### Sequential
             adata = read_atlas(atlas_path)
             atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-            atlas.create_anndata_table(adata, atlas_path, atlas_info)
-            atlas.create_qc_plots(adata, atlas_path, atlas_info, figure_path)
-            atlas.create_umap_fig(adata, atlas_path, atlas_info, figure_path)
-            atlas.create_tsne_fig(adata, atlas_path, atlas_info, figure_path)
-            #atlas.metric_cluster(adata, atlas_path, atlas_info)
-            atlas.metric_annot(adata, atlas_path, atlas_info)
-            atlas.metric_dimred(adata, atlas_path, atlas_info)
+            atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+            atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+            atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
+            atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+            atlas.metric_cluster(adata, atlas_path, atlas_info, path)
+            atlas.metric_annot(adata, atlas_path, atlas_info, path)
+            atlas.metric_dimred(adata, atlas_path, atlas_info, path)
 
 
 
@@ -316,7 +323,8 @@ def run(path, atlas_list, multithread, n_cpus):
 
 
 if __name__ == "__main__":
-    path = '/Users/christophebecavin/Documents/testatlas-big/'
+    path = '/Users/christophebecavin/Documents/testatlas/'
+    folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list)
 
@@ -325,19 +333,19 @@ if __name__ == "__main__":
         atlas_name = atlas_info[0]
         adata = read_atlas(atlas_path)
         atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-        # atlas.create_anndata_table(adata, atlas_path, atlas_info)
-        # atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-        # atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-        # atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-        # atlas.metric_cluster(adata, atlas_path, atlas_info)
-        # atlas.metric_annot(adata, atlas_path, atlas_info)
-        # atlas.metric_dimred(adata, atlas_path, atlas_info)
+        atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+        atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+        atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
+        atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+        atlas.metric_cluster(adata, atlas_path, atlas_info, path)
+        atlas.metric_annot(adata, atlas_path, atlas_info, path)
+        atlas.metric_dimred(adata, atlas_path, atlas_info, path)
 
 # atlas_path = '/Users/christophebecavin/Documents/testatlas/hca/HCA_Barbry_Grch38_Raw_filter_Norm.h5ad'
-    # #atlas_path = '/Users/christophebecavin/Documents/testatlas/PAH_675093.h5ad'
-    # atlas_name = get_atlas_name(atlas_path)
-    # print('Read atlas')
-    # adata = read_atlas(atlas_path)
-    # print('Calc QC')
-    # figure_path = '/Users/christophebecavin/Documents/testatlas/'
-    # atlas.create_qc_plots(adata, atlas_path, atlas_name, figure_path)
+# #atlas_path = '/Users/christophebecavin/Documents/testatlas/PAH_675093.h5ad'
+# atlas_name = get_atlas_name(atlas_path)
+# print('Read atlas')
+# adata = read_atlas(atlas_path)
+# print('Calc QC')
+# figure_path = '/Users/christophebecavin/Documents/testatlas/'
+# atlas.create_qc_plots(adata, atlas_path, atlas_name, figure_path)
