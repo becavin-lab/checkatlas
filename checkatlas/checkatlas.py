@@ -304,7 +304,7 @@ def run(path, atlas_list, multithread, n_cpus):
             atlas.create_qc_plots(adata, atlas_path, atlas_info, figure_path)
             atlas.create_umap_fig(adata, atlas_path, atlas_info, figure_path)
             atlas.create_tsne_fig(adata, atlas_path, atlas_info, figure_path)
-            atlas.metric_cluster(adata, atlas_path, atlas_info)
+            #atlas.metric_cluster(adata, atlas_path, atlas_info)
             atlas.metric_annot(adata, atlas_path, atlas_info)
             atlas.metric_dimred(adata, atlas_path, atlas_info)
 
@@ -316,7 +316,7 @@ def run(path, atlas_list, multithread, n_cpus):
 
 
 if __name__ == "__main__":
-    path = '/Users/christophebecavin/Documents/testatlas/'
+    path = '/Users/christophebecavin/Documents/testatlas-big/'
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list)
 
