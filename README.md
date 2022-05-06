@@ -6,6 +6,33 @@
 
 Awesome checkatlas created by becavin-lab
 
+## Summary
+
+1. Parse Scanpy, Seurat and CellRanger objects
+    
+    CheckAtlas should be able to load : .rds, .h5 and .h5ad corresponding to single-cell experiment. Need to implement :
+      - automatic conversion of Seurat object to Scanpy with SeuratDisk
+      - Rapid check-up of files to see if a Seurat or Scanpy can be found
+      - Automatic search in Scanpy files of key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
+
+
+2. Create checkatlas summary files
+  
+    Go through all Scanpy files and extract summary information. We won't to extract :
+
+      - All basic QC (nRNA, nFeature, ratio_mito)
+      - General information (nbcells, nbgenes, nblayers)
+      - All elements in scanpy objects (obs, obsm, uns, var, varm)
+      - Reductions (pca, umap, tsne)
+      - All metrics (clustering, annotation, dimreduction, specificity)
+
+3. Parse checkatlas files in MultiQC
+  
+    Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
+
+
+
+
 ## Install it from PyPI
 
 ```bash
@@ -15,17 +42,15 @@ pip install checkatlas
 ## Usage
 
 ```py
-from checkatlas import BaseClass
-from checkatlas import base_function
-
-BaseClass().base_method()
-base_function()
+from checkatlas import checkatlas
+checkatlas.run(path, atlas_list, multithread, n_cpus)
 ```
 
 ```bash
-$ python -m checkatlas
+$ cd your_search_folder/
+$ python -m checkatlas .
 #or
-$ checkatlas
+$ checkatlas .
 ```
 
 ## Development
