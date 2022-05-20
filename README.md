@@ -30,7 +30,12 @@ Awesome checkatlas created by becavin-lab
   
     Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
 
+## Use cases
 
+1. Evaluate and compare different atlases
+2. Evaluate different version of your atlas
+3. Explore Scanpy, Seurat and CellRanger objects in your folder
+4. 
 
 
 ## Install it from PyPI
