@@ -30,7 +30,7 @@ Awesome checkatlas created by becavin-lab
   
     Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
 
-## Use cases
+## Examples
 
 1. Evaluate and compare different atlases: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Atlas_comparison.ipynb
 
