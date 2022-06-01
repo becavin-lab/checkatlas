@@ -1,0 +1,8 @@
+Sample	obs	Kruskal
+B-cells_compartment_X_umap	X_umap	-1
+Fetal_X_pca	X_pca	-1
+Fetal_X_umap	X_umap	-1
+Tabula_Sapiens_Endothelial_X_pca	X_pca	-1
+Tabula_Sapiens_Endothelial_X_scvi	X_scvi	-1
+Tabula_Sapiens_Endothelial_X_scvi_umap	X_scvi_umap	-1
+Tabula_Sapiens_Endothelial_X_umap	X_umap	-1

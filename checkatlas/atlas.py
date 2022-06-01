@@ -35,6 +35,7 @@ OBS_CLUSTERS = [
     "CellType",
     "celltype",
     "seurat_clusters",
+    "orig.ident"
 ]
 
 
@@ -208,7 +209,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
-
+    print(len(list(filter(r.match, adata.obsm_keys()))))
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
         # Create umap
         found = False
