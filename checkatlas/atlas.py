@@ -35,7 +35,6 @@ OBS_CLUSTERS = [
     "CellType",
     "celltype",
     "seurat_clusters",
-    "orig.ident",
 ]
 
 
@@ -261,6 +260,15 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
             sc.pl.tsne(adata, show=False, save=tsne_path)
 
 
+def get_viable_obs(adata):
+    obs_keys = list()
+    for obs_key in adata.obs_keys():
+        for obs_key_celltype in OBS_CLUSTERS:
+            if obs_key_celltype in obs_key:
+                obs_keys.append(obs_key)
+    return sorted(obs_keys) #### obs are sorted to have cell_type (! Need to fix that accordingly)
+
+
 def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
     """
     Main function of checkatlas
@@ -276,33 +284,32 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
     )
     header = ["Sample", "obs", "Silhouette", "Davies-Bouldin"]
     df_cluster = pd.DataFrame(columns=header)
-    for obs_key in adata.obs_keys():
-        for obs_key_celltype in OBS_CLUSTERS:
-            if obs_key_celltype in obs_key:
-                # Need more than one sample to calculate metric
-                annotations = adata.obs[obs_key].astype("category")
-                if len(annotations.cat.categories) != 1:
-                    silhouette = 1
-                    print("Calc Silhouette for " + atlas_name, obs_key)
-                    silhouette = clust_compute.silhouette(
-                        adata, obs_key, "X_umap"
-                    )
-                    daviesb = -1
-                    print("Calc Davies Bouldin for " + atlas_name, obs_key)
-                    daviesb = clust_compute.davies_bouldin(
-                        adata, obs_key, "X_umap"
-                    )
-                    df_line = pd.DataFrame(
-                        {
-                            "Sample": [atlas_name + "_" + obs_key],
-                            "obs": [obs_key],
-                            "Silhouette": [silhouette],
-                            "Davies-Bouldin": [daviesb],
-                        }
-                    )
-                    df_cluster = pd.concat(
-                        [df_cluster, df_line], ignore_index=True, axis=0
-                    )
+    obs_keys = get_viable_obs(adata)
+    for obs_key in obs_keys:
+        # Need more than one sample to calculate metric
+        annotations = adata.obs[obs_key].astype("category")
+        if len(annotations.cat.categories) != 1:
+            silhouette = 1
+            print("Calc Silhouette for " + atlas_name, obs_key)
+            silhouette = clust_compute.silhouette(
+                adata, obs_key, "X_umap"
+            )
+            daviesb = -1
+            print("Calc Davies Bouldin for " + atlas_name, obs_key)
+            daviesb = clust_compute.davies_bouldin(
+                adata, obs_key, "X_umap"
+            )
+            df_line = pd.DataFrame(
+                {
+                    "Sample": [atlas_name + "_" + obs_key],
+                    "obs": [obs_key],
+                    "Silhouette": [silhouette],
+                    "Davies-Bouldin": [daviesb],
+                }
+            )
+            df_cluster = pd.concat(
+                [df_cluster, df_line], ignore_index=True, axis=0
+            )
     if len(df_cluster) != 0:
         df_cluster.to_csv(csv_path, index=False)
 
@@ -322,25 +329,27 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
     )
     header = ["Sample", "obs", "Rand"]
     df_annot = pd.DataFrame(columns=header)
-    for obs_key in adata.obs_keys():
-        for obs_key_celltype in OBS_CLUSTERS:
-            if obs_key_celltype in obs_key:
-                # Need more than one sample to calculate metric
-                annotations = adata.obs[obs_key].astype("category")
-                if len(annotations.cat.categories) != 1:
-                    print("Calc Rand Index for " + atlas_name, obs_key)
-                    rand = -1
-                    rand = clust_compute.rand(adata, obs_key, 'X_umap')
-                    df_line = pd.DataFrame(
-                        {
-                            "Sample": [atlas_name + "_" + obs_key],
-                            "obs": [obs_key],
-                            "Rand": [rand],
-                        }
-                    )
-                    df_annot = pd.concat(
-                        [df_annot, df_line], ignore_index=True, axis=0
-                    )
+    obs_keys = get_viable_obs(adata)
+    ref_obs = obs_keys[0]
+    for i in range(1, len(obs_keys)):
+        obs_key = obs_keys[i]
+        # Need more than one sample to calculate metric
+        annotations = adata.obs[obs_key].astype("category")
+        if len(annotations.cat.categories) != 1:
+            print("NOT WORKING YET - Calc Rand Index for " + atlas_name, obs_key)
+            rand = -1
+            ###rand = clust_compute.rand(adata, obs_key, ref_obs)
+            df_line = pd.DataFrame(
+                {
+                    "Sample": [atlas_name + "_" + obs_key],
+                    "Reference": [ref_obs],
+                    "obs": [obs_key],
+                    "Rand": [rand],
+                }
+            )
+            df_annot = pd.concat(
+                [df_annot, df_line], ignore_index=True, axis=0
+            )
     if len(df_annot) != 0:
         df_annot.to_csv(csv_path, index=False)
 
@@ -361,9 +370,9 @@ def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
     header = ["Sample", "obs", "Kruskal"]
     df_dimred = pd.DataFrame(columns=header)
     for obsm_key in adata.obsm_keys():
-        print("Calc Kruskal Stress for " + atlas_name, obsm_key)
+        print("NOT WORKING YET - Calc Kruskal Stress for " + atlas_name, obsm_key)
         kruskal = -1
-        kruskal = dr_compute.kruskal_stress(adata, obsm_key)
+        #kruskal = dr_compute.kruskal_stress(adata, obsm_key)
         df_line = pd.DataFrame(
             {
                 "Sample": [atlas_name + "_" + obsm_key],

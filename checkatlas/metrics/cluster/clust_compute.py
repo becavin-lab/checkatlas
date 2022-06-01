@@ -168,6 +168,8 @@ def annotation_to_num(adata, partition_key, reference):
     -------
 
     """
+    print(partition_key)
+    print(reference)
     annotation = adata.obs[partition_key].to_numpy()
     ref_annotation = adata.obs[reference].to_numpy()
     le = LabelEncoder()
