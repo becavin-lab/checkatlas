@@ -230,7 +230,8 @@ def clean_list_atlases(atlas_list) -> list:
     return clean_atlas_dict
 
 
-def read_atlas(atlas_path):
+def read_atlas(atlas_path, atlas_info):
+    print('--- Load '+atlas_info[0]+" in "+atlas_info[-1])
     if atlas_path.endswith(".h5"):
         print(atlas_path)
         adata = sc.read_10x_h5(atlas_path)
@@ -312,8 +313,9 @@ def run(path, atlas_list, multithread, n_cpus):
             matplotlib.pyplot.switch_backend("Agg")
             ##### Multi-threaded
             # read adata
+            atlas_name = atlas_info[0]
             future_name = "Read_" + atlas_name
-            adata = client.submit(read_atlas, atlas_path, key=future_name)
+            adata = client.submit(read_atlas, atlas_path, atlas_info, key=future_name)
             # Create summary files
             future_name = "Summary_" + atlas_name
             future_sum = client.submit(
@@ -403,7 +405,7 @@ def run(path, atlas_list, multithread, n_cpus):
             wait(futures)
         else:
             # ##### Sequential
-            adata = read_atlas(atlas_path)
+            adata = read_atlas(atlas_path, atlas_info)
             atlas.create_summary_table(adata, atlas_path, atlas_info, path)
             atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
             atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
@@ -425,8 +427,7 @@ if __name__ == "__main__":
 
     for atlas_path, atlas_info in clean_atlas_dict.items():
         print(atlas_path, atlas_info)
-        atlas_name = atlas_info[0]
-        adata = read_atlas(atlas_path)
+        adata = read_atlas(atlas_path, atlas_info)
         atlas.create_summary_table(adata, atlas_path, atlas_info, path)
         atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
         atlas.create_qc_plots(adata, atlas_path, atlas_info, path)

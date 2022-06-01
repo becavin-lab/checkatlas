@@ -31,6 +31,7 @@ All the function to screen the atlases
 """
 
 OBS_CLUSTERS = [
+    "cell_type",
     "CellType",
     "celltype",
     "seurat_clusters",
@@ -168,7 +169,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     sc.settings.figdir = folders.get_workingdir(path)
     qc_path = os.sep + atlas_name + checkatlas.QC_EXTENSION
-    print("calc qc")
+    print("Calc QC")
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
     # ribosomal genes
@@ -329,7 +330,7 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
                 if len(annotations.cat.categories) != 1:
                     print("Calc Rand Index for " + atlas_name, obs_key)
                     rand = -1
-                    # rand = clust_compute.rand(adata, obs_key, 'X_umap')
+                    rand = clust_compute.rand(adata, obs_key, 'X_umap')
                     df_line = pd.DataFrame(
                         {
                             "Sample": [atlas_name + "_" + obs_key],
@@ -362,7 +363,7 @@ def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
     for obsm_key in adata.obsm_keys():
         print("Calc Kruskal Stress for " + atlas_name, obsm_key)
         kruskal = -1
-        # kruskal = dr_compute.kruskal_stress(adata, obsm_key)
+        kruskal = dr_compute.kruskal_stress(adata, obsm_key)
         df_line = pd.DataFrame(
             {
                 "Sample": [atlas_name + "_" + obsm_key],
