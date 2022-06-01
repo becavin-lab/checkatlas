@@ -32,10 +32,12 @@ Awesome checkatlas created by becavin-lab
 
 ## Use cases
 
-1. Evaluate and compare different atlases
-2. Evaluate different version of your atlas
+1. Evaluate and compare different atlases: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Atlas_comparison.ipynb
+
+2. Evaluate different version of your atlas: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Version_comparison.ipynb
+
 3. Explore Scanpy, Seurat and CellRanger objects in your folder
-4. 
+ 
 
 
 ## Install it from PyPI
