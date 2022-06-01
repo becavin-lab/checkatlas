@@ -22,12 +22,14 @@ def working():
     z.compute()
 
 
+
 if __name__ == "__main__":
-    print("yo")
-    now = datetime.now().time()  # time object
-    print("now =", now)
-    client = Client()
-    working()
-    client.close()
-    now = datetime.now().time()  # time object
-    print("now =", now)
+    print("Dask tuto")
+    # now = datetime.now().time()  # time object
+    # print("now =", now)
+    # client = Client()
+    # working()
+    # client.close()
+    # now = datetime.now().time()  # time object
+    # print("now =", now)
+
