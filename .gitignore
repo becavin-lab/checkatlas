@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 dask-worker-space/
 data*
-CheckAtlas_*
+# CheckAtlas_*
 
 # C extensions
 *.so
