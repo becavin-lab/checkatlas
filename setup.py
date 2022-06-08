@@ -35,7 +35,9 @@ setup(
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     author="becavin-lab",
-    packages=find_packages(exclude=["tests", ".github"]),
+    packages=find_packages(exclude=["tests", ".github", "*dask-worker-space*"]),
+    package_data={'checkatlas': ['checkatlas/convertSeurat.R']},
+    include_package_data=True,
     install_requires=read_requirements("requirements.txt"),
     entry_points={
         "console_scripts": ["checkatlas = checkatlas.__main__:main"]

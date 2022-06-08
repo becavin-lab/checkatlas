@@ -1,0 +1,130 @@
+{
+    "report_data_sources": {
+        "CheckAtlas": {
+            "all_sections": {
+                "pbmc_3k_scanpy": "/Users/christophebecavin/Documents/checkatlas/examples/data3/checkatlas_files/dimred/pbmc_3k_scanpy_checkatlas_mdimred.tsv",
+                "pbmc_3k_seurat": "/Users/christophebecavin/Documents/checkatlas/examples/data3/checkatlas_files/dimred/pbmc_3k_seurat_checkatlas_mdimred.tsv",
+                "pbmc_3k_cellranger": "/Users/christophebecavin/Documents/checkatlas/examples/data3/checkatlas_files/violin/pbmc_3k_cellranger_checkatlas_qc.png"
+            }
+        }
+    },
+    "report_general_stats_data": [],
+    "report_general_stats_headers": [],
+    "report_multiqc_command": "/Users/christophebecavin/miniconda3/envs/checkatlas/bin/multiqc -f --cl-config ignore_images: false -c multiqc_config.yaml -n CheckAtlas_example_3 -o CheckAtlas_example_3 data3/",
+    "report_plot_data": {},
+    "report_saved_raw_data": {
+        "multiqc_checkatlas-summary": {
+            "pbmc_3k_scanpy": {
+                "AtlasFileType": "Scanpy",
+                "NbCells": "2638",
+                "NbGenes": "1838",
+                "AnnData.raw": "True",
+                "AnnData.X": "True",
+                "File_extension": ".h5ad",
+                "File_path": "pbmc_3k_scanpy.h5ad"
+            },
+            "pbmc_3k_seurat": {
+                "AtlasFileType": "Seurat",
+                "NbCells": "2638",
+                "NbGenes": "13714",
+                "AnnData.raw": "True",
+                "AnnData.X": "True",
+                "File_extension": ".rds",
+                "File_path": "pbmc_3k_seurat.h5ad"
+            },
+            "pbmc_3k_cellranger": {
+                "AtlasFileType": "Cellranger",
+                "NbCells": "5025",
+                "NbGenes": "33538",
+                "AnnData.raw": "False",
+                "AnnData.X": "True",
+                "File_extension": ".h5",
+                "File_path": "pbmc_3k_cellranger/outs/filtered_feature_bc_matrix.h5"
+            }
+        },
+        "multiqc_checkatlas_adata": {
+            "pbmc_3k_cellranger": {
+                "obs": "<code></code>",
+                "obsm": "<code></code>",
+                "var": "<code>gene_ids</code><br><code>feature_types</code><br><code>genome</code>",
+                "varm": "<code></code>",
+                "uns": "<code></code>"
+            },
+            "pbmc_3k_scanpy": {
+                "obs": "<code>n_genes</code><br><code>percent_mito</code><br><code>n_counts</code><br><code>louvain</code>",
+                "obsm": "<code>X_pca</code><br><code>X_tsne</code><br><code>X_umap</code><br><code>X_draw_graph_fr</code>",
+                "var": "<code>n_cells</code>",
+                "varm": "<code>PCs</code>",
+                "uns": "<code>draw_graph</code><br><code>louvain</code><br><code>louvain_colors</code><br><code>neighbors</code><br><code>pca</code><br><code>rank_genes_groups</code>"
+            },
+            "pbmc_3k_seurat": {
+                "obs": "<code>orig.ident</code><br><code>nCount_RNA</code><br><code>nFeature_RNA</code><br><code>percent.mt</code><br><code>RNA_snn_res.0.5</code><br><code>seurat_clusters</code>",
+                "obsm": "<code>X_pca</code><br><code>X_umap</code>",
+                "var": "<code>mean</code><br><code>variance</code><br><code>variance.expected</code><br><code>variance.standardized</code>",
+                "varm": "<code>PCs</code>",
+                "uns": "<code>neighbors</code>"
+            }
+        },
+        "multiqc_checkatlas_mcluster": {
+            "pbmc_3k_scanpy_louvain": {
+                "obs": "louvain",
+                "Silhouette": "0.4915104631170554",
+                "Davies-Bouldin": "0.6034430232398404"
+            },
+            "pbmc_3k_seurat_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Silhouette": "0.49929098207566697",
+                "Davies-Bouldin": "0.5574578753120782"
+            }
+        },
+        "multiqc_checkatlas_mannot": {
+            "pbmc_3k_seurat_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Rand": "-1",
+                "Reference": "orig.ident"
+            }
+        },
+        "multiqc_checkatlas_mdimred": {
+            "pbmc_3k_seurat_X_pca": {
+                "obs": "X_pca",
+                "Kruskal": "-1"
+            },
+            "pbmc_3k_seurat_X_umap": {
+                "obs": "X_umap",
+                "Kruskal": "-1"
+            },
+            "pbmc_3k_scanpy_X_pca": {
+                "obs": "X_pca",
+                "Kruskal": "-1"
+            },
+            "pbmc_3k_scanpy_X_tsne": {
+                "obs": "X_tsne",
+                "Kruskal": "-1"
+            },
+            "pbmc_3k_scanpy_X_umap": {
+                "obs": "X_umap",
+                "Kruskal": "-1"
+            },
+            "pbmc_3k_scanpy_X_draw_graph_fr": {
+                "obs": "X_draw_graph_fr",
+                "Kruskal": "-1"
+            }
+        }
+    },
+    "config_analysis_dir_abs": [
+        "/Users/christophebecavin/Documents/checkatlas/examples/data3"
+    ],
+    "config_analysis_dir": [
+        "data3/"
+    ],
+    "config_creation_date": "2022-06-08, 21:01",
+    "config_git_hash": null,
+    "config_intro_text": null,
+    "config_report_comment": null,
+    "config_report_header_info": null,
+    "config_script_path": "/Users/christophebecavin/miniconda3/envs/checkatlas/lib/python3.9/site-packages/multiqc/utils",
+    "config_short_version": "1.13.dev0",
+    "config_subtitle": null,
+    "config_title": null,
+    "config_version": "1.13.dev0"
+}
