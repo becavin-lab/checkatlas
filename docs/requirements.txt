@@ -1,0 +1,2 @@
+# This requirements are for building the doc, not for production.
+mkdocs
