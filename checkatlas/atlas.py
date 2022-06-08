@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
-
 try:
     from . import checkatlas
 except:
@@ -38,9 +37,8 @@ OBS_CLUSTERS = [
     "seurat_clusters",
     "louvain",
     "leiven",
-    "orig.ident"
+    "orig.ident",
 ]
-
 
 
 def list_atlases(path) -> list:
@@ -286,7 +284,9 @@ def get_viable_obs(adata):
         for obs_key_celltype in OBS_CLUSTERS:
             if obs_key_celltype in obs_key:
                 obs_keys.append(obs_key)
-    return sorted(obs_keys) #### obs are sorted to have cell_type (! Need to fix that accordingly)
+    return sorted(
+        obs_keys
+    )  #### obs are sorted to have cell_type (! Need to fix that accordingly)
 
 
 def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
@@ -311,14 +311,10 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
         if len(annotations.cat.categories) != 1:
             silhouette = 1
             print("Calc Silhouette for " + atlas_name, obs_key)
-            silhouette = clust_compute.silhouette(
-                adata, obs_key, "X_umap"
-            )
+            silhouette = clust_compute.silhouette(adata, obs_key, "X_umap")
             daviesb = -1
             print("Calc Davies Bouldin for " + atlas_name, obs_key)
-            daviesb = clust_compute.davies_bouldin(
-                adata, obs_key, "X_umap"
-            )
+            daviesb = clust_compute.davies_bouldin(adata, obs_key, "X_umap")
             df_line = pd.DataFrame(
                 {
                     "Sample": [atlas_name + "_" + obs_key],
@@ -357,7 +353,10 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
             # Need more than one sample to calculate metric
             annotations = adata.obs[obs_key]
             if len(annotations.cat.categories) != 1:
-                print("NOT WORKING YET - Calc Rand Index for " + atlas_name, obs_key)
+                print(
+                    "NOT WORKING YET - Calc Rand Index for " + atlas_name,
+                    obs_key,
+                )
                 rand = -1
                 ###rand = clust_compute.rand(adata, obs_key, ref_obs)
                 df_line = pd.DataFrame(
@@ -391,9 +390,11 @@ def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
     header = ["Sample", "obs", "Kruskal"]
     df_dimred = pd.DataFrame(columns=header)
     for obsm_key in adata.obsm_keys():
-        print("NOT WORKING YET - Calc Kruskal Stress for " + atlas_name, obsm_key)
+        print(
+            "NOT WORKING YET - Calc Kruskal Stress for " + atlas_name, obsm_key
+        )
         kruskal = -1
-        #kruskal = dr_compute.kruskal_stress(adata, obsm_key)
+        # kruskal = dr_compute.kruskal_stress(adata, obsm_key)
         df_line = pd.DataFrame(
             {
                 "Sample": [atlas_name + "_" + obsm_key],
