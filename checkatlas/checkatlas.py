@@ -1,8 +1,8 @@
+import inspect
 import os
 
 import pandas as pd
 import scanpy as sc
-import inspect
 
 try:
     from . import atlas
@@ -26,7 +26,7 @@ This is the principal module of the checkatlas project.
 
 EXTENSIONS = [".rds", ".h5ad", ".h5"]
 CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
-RSCRIPT = inspect.getfile(atlas).replace('atlas.py','convertSeurat.R')
+RSCRIPT = inspect.getfile(atlas).replace("atlas.py", "convertSeurat.R")
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
 QC_EXTENSION = "_checkatlas_qc.png"
@@ -214,7 +214,7 @@ def clean_list_atlases(atlas_list) -> list:
 
 
 def read_atlas(atlas_path, atlas_info):
-    print('--- Load '+atlas_info[0]+" in "+atlas_info[-1])
+    print("--- Load " + atlas_info[0] + " in " + atlas_info[-1])
     if atlas_path.endswith(".h5"):
         print(atlas_path)
         adata = sc.read_10x_h5(atlas_path)
@@ -299,9 +299,13 @@ def run(path, atlas_list, multithread, n_cpus):
             # read adata
             atlas_name = atlas_info[0]
             future_name = "Read_" + atlas_name
-            adata = client.submit(read_atlas, atlas_path, atlas_info, key=future_name)
+            adata = client.submit(
+                read_atlas, atlas_path, atlas_info, key=future_name
+            )
             future_name = "Clean_" + atlas_name
-            adata = client.submit(atlas.clean_scanpy_atlas, adata, atlas_info, key=future_name)
+            adata = client.submit(
+                atlas.clean_scanpy_atlas, adata, atlas_info, key=future_name
+            )
             # Create summary files
             future_name = "Summary_" + atlas_name
             future_sum = client.submit(

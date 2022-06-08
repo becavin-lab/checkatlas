@@ -4,18 +4,10 @@
 # or run `make init` to create this file automatically based on the template.
 # You can also run `make switch-to-poetry` to use the poetry package manager.
 multiqc
-scanpy~=1.8.2
-flake8
-black
-mypy
-dask
-isort
-matplotlib
-pytest~=7.0.1
-setuptools~=60.9.3
-seaborn~=0.11.2
+scanpy
 pandas
-anndata~=0.7.8
-numpy~=1.21.5
-scikit-learn~=1.0.2
+anndata
+numpy
+scikit-learn
+matplotlib
 scipy

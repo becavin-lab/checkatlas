@@ -22,7 +22,6 @@ def working():
     z.compute()
 
 
-
 if __name__ == "__main__":
     print("Dask tuto")
     # now = datetime.now().time()  # time object
@@ -32,4 +31,3 @@ if __name__ == "__main__":
     # client.close()
     # now = datetime.now().time()  # time object
     # print("now =", now)
-
