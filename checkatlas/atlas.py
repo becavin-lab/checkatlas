@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
+
 try:
     from . import checkatlas
 except:
@@ -35,8 +36,11 @@ OBS_CLUSTERS = [
     "CellType",
     "celltype",
     "seurat_clusters",
+    "louvain",
+    "leiven",
     "orig.ident"
 ]
+
 
 
 def list_atlases(path) -> list:
@@ -72,6 +76,21 @@ def convert_atlas(atlas_path, atlas_name) -> None:
     )
     print(rscript_cmd)
     os.system(rscript_cmd)
+
+
+def clean_scanpy_atlas(adata, atlas_info) -> bool:
+    """
+    Clean the Scanpy object to be suyre to get all information out of it
+    :param adata:
+    :return:
+    """
+    print("Clean scanpy:" + atlas_info[0])
+    # If OBS_CLUSTERS are present and in int32 -> be sure to transform them in categorical
+    obs_keys = get_viable_obs(adata)
+    for obs_key in obs_keys:
+        if adata.obs[obs_key].dtype == np.int32:
+            adata.obs[obs_key] = pd.Categorical(adata.obs[obs_key])
+    return adata
 
 
 def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
@@ -288,7 +307,7 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
     obs_keys = get_viable_obs(adata)
     for obs_key in obs_keys:
         # Need more than one sample to calculate metric
-        annotations = adata.obs[obs_key].astype("category")
+        annotations = adata.obs[obs_key]
         if len(annotations.cat.categories) != 1:
             silhouette = 1
             print("Calc Silhouette for " + atlas_name, obs_key)
@@ -331,28 +350,29 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
     header = ["Sample", "obs", "Rand"]
     df_annot = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs(adata)
-    ref_obs = obs_keys[0]
-    for i in range(1, len(obs_keys)):
-        obs_key = obs_keys[i]
-        # Need more than one sample to calculate metric
-        annotations = adata.obs[obs_key].astype("category")
-        if len(annotations.cat.categories) != 1:
-            print("NOT WORKING YET - Calc Rand Index for " + atlas_name, obs_key)
-            rand = -1
-            ###rand = clust_compute.rand(adata, obs_key, ref_obs)
-            df_line = pd.DataFrame(
-                {
-                    "Sample": [atlas_name + "_" + obs_key],
-                    "Reference": [ref_obs],
-                    "obs": [obs_key],
-                    "Rand": [rand],
-                }
-            )
-            df_annot = pd.concat(
-                [df_annot, df_line], ignore_index=True, axis=0
-            )
-    if len(df_annot) != 0:
-        df_annot.to_csv(csv_path, index=False)
+    if len(obs_keys) != 0:
+        ref_obs = obs_keys[0]
+        for i in range(1, len(obs_keys)):
+            obs_key = obs_keys[i]
+            # Need more than one sample to calculate metric
+            annotations = adata.obs[obs_key]
+            if len(annotations.cat.categories) != 1:
+                print("NOT WORKING YET - Calc Rand Index for " + atlas_name, obs_key)
+                rand = -1
+                ###rand = clust_compute.rand(adata, obs_key, ref_obs)
+                df_line = pd.DataFrame(
+                    {
+                        "Sample": [atlas_name + "_" + obs_key],
+                        "Reference": [ref_obs],
+                        "obs": [obs_key],
+                        "Rand": [rand],
+                    }
+                )
+                df_annot = pd.concat(
+                    [df_annot, df_line], ignore_index=True, axis=0
+                )
+        if len(df_annot) != 0:
+            df_annot.to_csv(csv_path, index=False)
 
 
 def metric_dimred(adata, atlas_path, atlas_info, path) -> None:

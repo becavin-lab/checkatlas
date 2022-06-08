@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 import scanpy as sc
+import inspect
 
 try:
     from . import atlas
@@ -25,7 +26,7 @@ This is the principal module of the checkatlas project.
 
 EXTENSIONS = [".rds", ".h5ad", ".h5"]
 CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
-RSCRIPT = "checkatlas/convertSeurat.R"
+RSCRIPT = inspect.getfile(atlas).replace('atlas.py','convertSeurat.R')
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
 QC_EXTENSION = "_checkatlas_qc.png"
@@ -82,11 +83,6 @@ def convert_seurat_atlas(atlas_path, atlas_name) -> bool:
     return True
 
 
-def clean_scanpy_atlas(atlas_path, clean=True) -> bool:
-    print("Clean scanpy:" + atlas_path)
-    return True
-
-
 def clean_list_atlases_multi(client, futures, atlas_list) -> list:
     """
     Go through all files and detect Seurat or Scanpy Atlas
@@ -119,17 +115,10 @@ def clean_list_atlases_multi(client, futures, atlas_list) -> list:
                 futures.append(future_seurat)
                 if os.path.exists(atlas_h5):
                     future_name = "CleanScanpy-" + atlas_name
-                    future_scanpy = client.submit(
-                        clean_scanpy_atlas,
-                        atlas_h5,
-                        future_seurat,
-                        key=future_name,
-                    )
-                    futures.append(future_scanpy)
                     info = [
                         atlas_name,
                         "Seurat",
-                        ".h5",
+                        ".rds",
                         os.path.dirname(atlas_path),
                     ]
                     clean_atlas_dict[atlas_h5] = info
@@ -154,10 +143,6 @@ def clean_list_atlases_multi(client, futures, atlas_list) -> list:
                 clean_atlas_dict[atlas_path] = info
             else:
                 future_name = "CleanScanpy_" + atlas_name
-                future_scanpy = client.submit(
-                    clean_scanpy_atlas, atlas_path, key=future_name
-                )
-                futures.append(future_scanpy)
                 info = [
                     atlas_name,
                     "Scanpy",
@@ -192,11 +177,10 @@ def clean_list_atlases(atlas_list) -> list:
             else:
                 convert_seurat_atlas(atlas_path, atlas_name)
                 if os.path.exists(atlas_h5):
-                    clean_scanpy_atlas(atlas_h5)
                     info = [
                         atlas_name,
                         "Seurat",
-                        ".h5ad",
+                        ".rds",
                         os.path.dirname(atlas_path) + "/",
                     ]
                     clean_atlas_dict[atlas_h5] = info
@@ -219,7 +203,6 @@ def clean_list_atlases(atlas_list) -> list:
                 ]
                 clean_atlas_dict[atlas_path] = info
             else:
-                clean_scanpy_atlas(atlas_path)
                 info = [
                     atlas_name,
                     "Scanpy",
@@ -293,6 +276,7 @@ def run(path, atlas_list, multithread, n_cpus):
     :param n_cpus:
     :return:
     """
+
     folders.checkatlas_folders(path)
 
     if multithread:
@@ -316,6 +300,8 @@ def run(path, atlas_list, multithread, n_cpus):
             atlas_name = atlas_info[0]
             future_name = "Read_" + atlas_name
             adata = client.submit(read_atlas, atlas_path, atlas_info, key=future_name)
+            future_name = "Clean_" + atlas_name
+            adata = client.submit(atlas.clean_scanpy_atlas, adata, atlas_info, key=future_name)
             # Create summary files
             future_name = "Summary_" + atlas_name
             future_sum = client.submit(
@@ -406,6 +392,7 @@ def run(path, atlas_list, multithread, n_cpus):
         else:
             # ##### Sequential
             adata = read_atlas(atlas_path, atlas_info)
+            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
             atlas.create_summary_table(adata, atlas_path, atlas_info, path)
             atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
             atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
@@ -420,7 +407,7 @@ def run(path, atlas_list, multithread, n_cpus):
 
 
 if __name__ == "__main__":
-    path = "/Users/christophebecavin/Documents/testatlas/"
+    path = "/Users/christophebecavin/Documents/checkatlas/examples/data3/"
     folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list)
@@ -428,6 +415,7 @@ if __name__ == "__main__":
     for atlas_path, atlas_info in clean_atlas_dict.items():
         print(atlas_path, atlas_info)
         adata = read_atlas(atlas_path, atlas_info)
+        adata = atlas.clean_scanpy_atlas(adata, atlas_info)
         atlas.create_summary_table(adata, atlas_path, atlas_info, path)
         atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
         atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
