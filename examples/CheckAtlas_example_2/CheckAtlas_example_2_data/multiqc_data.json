@@ -1,0 +1,220 @@
+{
+    "report_data_sources": {
+        "CheckAtlas": {
+            "all_sections": {
+                "Fetal_v2": "/Users/christophebecavin/Documents/checkatlas/examples/data2/checkatlas_files/dimred/Fetal_v2_checkatlas_mdimred.tsv",
+                "Fetal_v3": "/Users/christophebecavin/Documents/checkatlas/examples/data2/checkatlas_files/dimred/Fetal_v3_checkatlas_mdimred.tsv",
+                "Fetal_v1": "/Users/christophebecavin/Documents/checkatlas/examples/data2/checkatlas_files/dimred/Fetal_v1_checkatlas_mdimred.tsv"
+            }
+        }
+    },
+    "report_general_stats_data": [],
+    "report_general_stats_headers": [],
+    "report_multiqc_command": "/Users/christophebecavin/miniconda3/envs/checkatlas/bin/multiqc -f --cl-config ignore_images: false -c multiqc_config.yaml -n CheckAtlas_example_2 -o CheckAtlas_example_2 data2/",
+    "report_plot_data": {},
+    "report_saved_raw_data": {
+        "multiqc_checkatlas-summary": {
+            "Fetal_v2": {
+                "AtlasFileType": "Scanpy",
+                "NbCells": "27203",
+                "NbGenes": "32828",
+                "AnnData.raw": "False",
+                "AnnData.X": "True",
+                "File_extension": ".h5ad",
+                "File_path": "V2/Fetal_v2.h5ad"
+            },
+            "Fetal_v3": {
+                "AtlasFileType": "Scanpy",
+                "NbCells": "27203",
+                "NbGenes": "32828",
+                "AnnData.raw": "True",
+                "AnnData.X": "True",
+                "File_extension": ".h5ad",
+                "File_path": "V3/Fetal_v3.h5ad"
+            },
+            "Fetal_v1": {
+                "AtlasFileType": "Scanpy",
+                "NbCells": "16321",
+                "NbGenes": "32828",
+                "AnnData.raw": "True",
+                "AnnData.X": "True",
+                "File_extension": ".h5ad",
+                "File_path": "V1/Fetal_v1.h5ad"
+            }
+        },
+        "multiqc_checkatlas_adata": {
+            "Fetal_v2": {
+                "obs": "<code>orig.ident</code><br><code>nCount_RNA</code><br><code>nFeature_RNA</code><br><code>seurat_clusters</code><br><code>Experiment</code><br><code>Stage</code><br><code>Selection</code><br><code>compartment</code><br><code>age</code><br><code>CnT</code><br><code>DTLH</code><br><code>UBCD</code><br><code>SSBpr</code><br><code>End</code><br><code>MSC</code><br><code>RVCSB</code><br><code>SSBpod</code><br><code>SSBm.d</code><br><code>ICa</code><br><code>ErPrT</code><br><code>ICb</code><br><code>NPC</code><br><code>Pod</code><br><code>annotCell</code><br><code>author_cell_type</code><br><code>cell_type_ontology_term_id</code><br><code>disease_ontology_term_id</code><br><code>ethnicity_ontology_term_id</code><br><code>development_stage_ontology_term_id</code><br><code>tissue_ontology_term_id</code><br><code>sex_ontology_term_id</code><br><code>organism_ontology_term_id</code><br><code>is_primary_data</code><br><code>assay_ontology_term_id</code><br><code>cell_type</code><br><code>assay</code><br><code>disease</code><br><code>organism</code><br><code>sex</code><br><code>tissue</code><br><code>ethnicity</code><br><code>development_stage</code>",
+                "obsm": "<code>X_pca</code><br><code>X_umap</code>",
+                "var": "<code>vst.mean</code><br><code>vst.variance</code><br><code>vst.variance.expected</code><br><code>vst.variance.standardized</code><br><code>vst.variable</code><br><code>feature_biotype</code><br><code>feature_is_filtered</code><br><code>feature_name</code><br><code>feature_reference</code>",
+                "varm": "<code></code>",
+                "uns": "<code>X_normalization</code><br><code>cell_type_ontology_term_id_colors</code><br><code>schema_version</code><br><code>title</code>"
+            },
+            "Fetal_v3": {
+                "obs": "<code>orig.ident</code><br><code>nCount_RNA</code><br><code>nFeature_RNA</code><br><code>seurat_clusters</code><br><code>Experiment</code><br><code>Stage</code><br><code>Selection</code><br><code>compartment</code><br><code>age</code><br><code>CnT</code><br><code>DTLH</code><br><code>UBCD</code><br><code>SSBpr</code><br><code>End</code><br><code>MSC</code><br><code>RVCSB</code><br><code>SSBpod</code><br><code>SSBm.d</code><br><code>ICa</code><br><code>ErPrT</code><br><code>ICb</code><br><code>NPC</code><br><code>Pod</code><br><code>annotCell</code><br><code>disease_ontology_term_id</code><br><code>ethnicity_ontology_term_id</code><br><code>development_stage_ontology_term_id</code><br><code>tissue_ontology_term_id</code><br><code>sex_ontology_term_id</code><br><code>organism_ontology_term_id</code><br><code>is_primary_data</code><br><code>assay_ontology_term_id</code><br><code>assay</code><br><code>disease</code><br><code>organism</code><br><code>sex</code><br><code>tissue</code><br><code>ethnicity</code><br><code>development_stage</code>",
+                "obsm": "<code>X_pca</code><br><code>X_umap</code>",
+                "var": "<code>vst.mean</code><br><code>vst.variance</code><br><code>vst.variance.expected</code><br><code>vst.variance.standardized</code><br><code>vst.variable</code><br><code>feature_biotype</code><br><code>feature_is_filtered</code><br><code>feature_name</code><br><code>feature_reference</code>",
+                "varm": "<code></code>",
+                "uns": "<code>X_normalization</code><br><code>cell_type_ontology_term_id_colors</code><br><code>schema_version</code><br><code>title</code>"
+            },
+            "Fetal_v1": {
+                "obs": "<code>orig.ident</code><br><code>nCount_RNA</code><br><code>nFeature_RNA</code><br><code>seurat_clusters</code><br><code>Experiment</code><br><code>Stage</code><br><code>Selection</code><br><code>compartment</code><br><code>age</code><br><code>CnT</code><br><code>DTLH</code><br><code>UBCD</code><br><code>SSBpr</code><br><code>End</code><br><code>MSC</code><br><code>RVCSB</code><br><code>SSBpod</code><br><code>SSBm.d</code><br><code>ICa</code><br><code>ErPrT</code><br><code>ICb</code><br><code>NPC</code><br><code>Pod</code><br><code>annotCell</code><br><code>author_cell_type</code><br><code>cell_type_ontology_term_id</code><br><code>disease_ontology_term_id</code><br><code>ethnicity_ontology_term_id</code><br><code>development_stage_ontology_term_id</code><br><code>tissue_ontology_term_id</code><br><code>sex_ontology_term_id</code><br><code>organism_ontology_term_id</code><br><code>is_primary_data</code><br><code>assay_ontology_term_id</code><br><code>cell_type</code><br><code>assay</code><br><code>disease</code><br><code>organism</code><br><code>sex</code><br><code>tissue</code><br><code>ethnicity</code><br><code>development_stage</code>",
+                "obsm": "<code>X_pca</code><br><code>X_umap</code>",
+                "var": "<code>vst.mean</code><br><code>vst.variance</code><br><code>vst.variance.expected</code><br><code>vst.variance.standardized</code><br><code>vst.variable</code><br><code>feature_biotype</code><br><code>feature_is_filtered</code><br><code>feature_name</code><br><code>feature_reference</code>",
+                "varm": "<code>PCs</code>",
+                "uns": "<code>X_normalization</code><br><code>cell_type_ontology_term_id_colors</code><br><code>neighbors</code><br><code>pca</code><br><code>schema_version</code><br><code>title</code><br><code>umap</code>"
+            }
+        },
+        "multiqc_checkatlas_mcluster": {
+            "Fetal_v3_orig.ident": {
+                "obs": "orig.ident",
+                "Silhouette": "-0.13000507708270384",
+                "Davies-Bouldin": "23.88945314074328"
+            },
+            "Fetal_v3_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Silhouette": "0.32940060327187937",
+                "Davies-Bouldin": "1.9680400327403922"
+            },
+            "Fetal_v1_author_cell_type": {
+                "obs": "author_cell_type",
+                "Silhouette": "-0.02886217273771763",
+                "Davies-Bouldin": "8.533452455252949"
+            },
+            "Fetal_v1_cell_type": {
+                "obs": "cell_type",
+                "Silhouette": "-0.03291133791208267",
+                "Davies-Bouldin": "8.52563628745973"
+            },
+            "Fetal_v1_cell_type_ontology_term_id": {
+                "obs": "cell_type_ontology_term_id",
+                "Silhouette": "-0.03291133791208267",
+                "Davies-Bouldin": "8.52563628745973"
+            },
+            "Fetal_v1_orig.ident": {
+                "obs": "orig.ident",
+                "Silhouette": "-0.03239608183503151",
+                "Davies-Bouldin": "19.215855644314107"
+            },
+            "Fetal_v1_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Silhouette": "0.011362794786691666",
+                "Davies-Bouldin": "4.728810934436815"
+            },
+            "Fetal_v2_author_cell_type": {
+                "obs": "author_cell_type",
+                "Silhouette": "0.18312640310713196",
+                "Davies-Bouldin": "2.0815025463615555"
+            },
+            "Fetal_v2_cell_type": {
+                "obs": "cell_type",
+                "Silhouette": "0.21239389639864864",
+                "Davies-Bouldin": "1.9125807575681335"
+            },
+            "Fetal_v2_cell_type_ontology_term_id": {
+                "obs": "cell_type_ontology_term_id",
+                "Silhouette": "0.21239389639864864",
+                "Davies-Bouldin": "1.912580757568134"
+            },
+            "Fetal_v2_orig.ident": {
+                "obs": "orig.ident",
+                "Silhouette": "-0.13000507708270384",
+                "Davies-Bouldin": "23.88945314074328"
+            },
+            "Fetal_v2_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Silhouette": "0.32940060327187937",
+                "Davies-Bouldin": "1.9680400327403922"
+            }
+        },
+        "multiqc_checkatlas_mannot": {
+            "Fetal_v3_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Rand": "-1",
+                "Reference": "orig.ident"
+            },
+            "Fetal_v1_cell_type": {
+                "obs": "cell_type",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            },
+            "Fetal_v1_cell_type_ontology_term_id": {
+                "obs": "cell_type_ontology_term_id",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            },
+            "Fetal_v1_orig.ident": {
+                "obs": "orig.ident",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            },
+            "Fetal_v1_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            },
+            "Fetal_v2_cell_type": {
+                "obs": "cell_type",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            },
+            "Fetal_v2_cell_type_ontology_term_id": {
+                "obs": "cell_type_ontology_term_id",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            },
+            "Fetal_v2_orig.ident": {
+                "obs": "orig.ident",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            },
+            "Fetal_v2_seurat_clusters": {
+                "obs": "seurat_clusters",
+                "Rand": "-1",
+                "Reference": "author_cell_type"
+            }
+        },
+        "multiqc_checkatlas_mdimred": {
+            "Fetal_v2_X_pca": {
+                "obs": "X_pca",
+                "Kruskal": "-1"
+            },
+            "Fetal_v2_X_umap": {
+                "obs": "X_umap",
+                "Kruskal": "-1"
+            },
+            "Fetal_v1_X_pca": {
+                "obs": "X_pca",
+                "Kruskal": "-1"
+            },
+            "Fetal_v1_X_umap": {
+                "obs": "X_umap",
+                "Kruskal": "-1"
+            },
+            "Fetal_v3_X_pca": {
+                "obs": "X_pca",
+                "Kruskal": "-1"
+            },
+            "Fetal_v3_X_umap": {
+                "obs": "X_umap",
+                "Kruskal": "-1"
+            }
+        }
+    },
+    "config_analysis_dir_abs": [
+        "/Users/christophebecavin/Documents/checkatlas/examples/data2"
+    ],
+    "config_analysis_dir": [
+        "data2/"
+    ],
+    "config_creation_date": "2022-06-09, 12:19",
+    "config_git_hash": null,
+    "config_intro_text": null,
+    "config_report_comment": null,
+    "config_report_header_info": null,
+    "config_script_path": "/Users/christophebecavin/miniconda3/envs/checkatlas/lib/python3.9/site-packages/multiqc/utils",
+    "config_short_version": "1.13.dev0",
+    "config_subtitle": null,
+    "config_title": null,
+    "config_version": "1.13.dev0"
+}
