@@ -12,6 +12,7 @@ scikit-learn~=1.0.2
 matplotlib
 scipy~=1.8.0
 dask~=2022.3.0
+distributed
 pytest~=7.0.1
 setuptools~=60.9.3
 seaborn~=0.11.2
