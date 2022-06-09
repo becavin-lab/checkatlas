@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance_matrix
-from scipy.spatial.distance import euclidean
 
 
 def euc(a, b):
@@ -13,8 +12,8 @@ def euc(a, b):
 
 def kruskal_stress(adata, key_repr):
     """
-    Computes the kruskal stress for the low dimension representation stored at
-    adata.obsm.key_repr
+    Computes the kruskal stress for the low dimension representation
+    stored at adata.obsm.key_repr
 
     Parameters
     ----------
@@ -36,7 +35,8 @@ def kruskal_stress(adata, key_repr):
             / np.square(low_dim_distances).sum()
         )
         print(
-            f"dist_diff = {np.square(high_dim_distances - low_dim_distances).sum()}"
+            f"dist_diff = "
+            f"{np.square(high_dim_distances - low_dim_distances).sum()}"
         )
         print(f"lowdimsum = {np.square(low_dim_distances).sum()}")
         df = pd.DataFrame(low_dim_distances)

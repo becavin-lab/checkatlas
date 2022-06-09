@@ -1,8 +1,6 @@
-from datetime import datetime
 from time import sleep
 
 from dask import delayed
-from dask.distributed import Client
 
 
 def inc(x):

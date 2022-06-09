@@ -26,9 +26,8 @@ install:          ## Install the project in dev mode.
 
 .PHONY: fmt
 fmt:              ## Format code using black & isort.
-	$(ENV_PREFIX)isort checkatlas/
-	$(ENV_PREFIX)black -l 79 checkatlas/
-	$(ENV_PREFIX)black -l 79 tests/
+	$(ENV_PREFIX)isort .
+	$(ENV_PREFIX)black -l 79 .
 
 .PHONY: lint
 lint:             ## Run pep8, black, mypy linters.
@@ -91,7 +90,7 @@ release:          ## Create a new tag for release.
 docs:             ## Build the documentation.
 	@echo "building documentation ..."
 	@$(ENV_PREFIX)mkdocs build
-	URL="site/index.html"; xdg-open $$URL || sensible-browser $$URL || x-www-browser $$URL || gnome-open $$URL
+	URL="site/index.html"; open $$URL || xdg-open $$URL || sensible-browser $$URL || x-www-browser $$URL || gnome-open $$URL
 
 .PHONY: switch-to-poetry
 switch-to-poetry: ## Switch to poetry package manager.

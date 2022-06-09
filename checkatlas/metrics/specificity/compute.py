@@ -4,8 +4,7 @@ Created on Thu Jun  4 16:38:47 2020
 @author: antoinecollin
 """
 
-from pathlib import Path, PureWindowsPath
-from typing import Collection, Optional, Tuple, Union
+from typing import Collection, Optional
 
 import anndata
 import numpy as np
@@ -16,9 +15,9 @@ from scipy.stats import entropy
 
 def one_v_all_matrix(adata: anndata, partition_key: str = "CellType"):
     """
-    Computes the one_v_all specificity of all genes for all celltype. It is defined as
-    the average expression of a gene in a celltype divided by the sum of mean expressions
-    in every celltypes.
+    Computes the one_v_all specificity of all genes for all celltype.
+    It is defined as the average expression of a gene in a celltype
+    divided by the sum of mean expressions in every celltypes.
 
     Parameters
     ----------
@@ -31,8 +30,8 @@ def one_v_all_matrix(adata: anndata, partition_key: str = "CellType"):
     Returns
     -------
     spe_one_v_all : DataFrame
-        DataFrame of shape n_genes x n_celltype containing the one_v_all specificities
-        of all genes by celltypes
+        DataFrame of shape n_genes x n_celltype containing the one_v_all
+        specificities of all genes by celltypes
 
     """
     average_by_celltype = get_average_celltype_counts(
@@ -51,10 +50,10 @@ def one_v_all_matrix(adata: anndata, partition_key: str = "CellType"):
 
 def one_v_max_matrix(adata: anndata, partition_key: str = "CellType"):
     """
-    Computes the one_v_max specifity of all genes for the celltypes which maximizes it.
-    For a gene, one_v_max specificity is defined as the ratio between the average
-    expression of this gene in the most expressed celltype divided by the second most
-    expressed celltype.
+    Computes the one_v_max specifity of all genes for the celltypes which
+    maximizes it. For a gene, one_v_max specificity is defined as the ratio
+    between the average expression of this gene in the most expressed
+    celltype divided by the second most expressed celltype.
 
     Parameters
     ----------
@@ -67,8 +66,8 @@ def one_v_max_matrix(adata: anndata, partition_key: str = "CellType"):
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with the
+        value of the specificity and the specific celltype name.
 
     """
     try:
@@ -97,8 +96,8 @@ def one_v_max_matrix(adata: anndata, partition_key: str = "CellType"):
 
 def shannon_average(adata: anndata, partition_key: str = "CellType"):
     """
-    Computes the Shannon entropy of every gene based on the distribution of their
-     average value across celltypes.
+    Computes the Shannon entropy of every gene based on the distribution of
+    their average value across celltypes.
 
     Parameters
     ----------
@@ -111,8 +110,8 @@ def shannon_average(adata: anndata, partition_key: str = "CellType"):
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with the
+        value of the specificity and the specific celltype name.
 
     """
     prob_matrix = one_v_all_matrix(adata=adata, partition_key=partition_key)
@@ -127,9 +126,10 @@ def shannon_average(adata: anndata, partition_key: str = "CellType"):
 # TODO
 def shannon_sample(adata: anndata, genes: Optional[Collection[str]]):
     """
-    Computes the Shannon entropy of the gene distribution across the celltypes based on
-    a subsample of the expression matrix. The sampling has a normalizing effect, preventing
-    the most represented celltypes to overshadow the rare ones.
+    Computes the Shannon entropy of the gene distribution across the
+    celltypes based on a subsample of the expression matrix. The sampling
+    has a normalizing effect, preventing the most represented celltypes
+    to overshadow the rare ones.
 
     Parameters
     ----------
@@ -137,14 +137,14 @@ def shannon_sample(adata: anndata, genes: Optional[Collection[str]]):
         The corrected expression matrix
 
     genes : Collection[str]
-        List of genes for which to compute the specificities. If not specified, it is
-        computed for all the genes.
+        List of genes for which to compute the specificities. If not
+        specified, it is computed for all the genes.
 
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with
+        the value of the specificity and the specific celltype name.
 
 
     """
@@ -152,8 +152,8 @@ def shannon_sample(adata: anndata, genes: Optional[Collection[str]]):
 
 def tau_average(adata: anndata, partition_key: str = "CellType"):
     """
-    Computes tau coefficient of every gene based on the distribution of their average
-    value across celltypes.
+    Computes tau coefficient of every gene based on the distribution of
+    their average value across celltypes.
 
     Parameters
     ----------
@@ -166,8 +166,8 @@ def tau_average(adata: anndata, partition_key: str = "CellType"):
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with the
+        value of the specificity and the specific celltype name.
 
     """
     average_by_celltype = get_average_celltype_counts(
@@ -195,22 +195,22 @@ def tau_sample(adata: anndata, genes: Optional[Collection[str]]):
         The corrected expression matrix
 
     genes : Collection[str]
-        List of genes for which to compute the specificities. If not specified, it is
-        computed for all the genes.
+        List of genes for which to compute the specificities. If not
+        specified, it is computed for all the genes.
 
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with
+        the value of the specificity and the specific celltype name.
 
     """
 
 
 def gini_average(adata: anndata, partition_key: str = "CellType"):
     """
-    Computes gini coefficient of every gene based on the distribution of their average
-    value across celltypes.
+    Computes gini coefficient of every gene based on the distribution of
+    their average value across celltypes.
 
     Parameters
     ----------
@@ -223,8 +223,8 @@ def gini_average(adata: anndata, partition_key: str = "CellType"):
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with
+        the value of the specificity and the specific celltype name.
 
     """
     average_by_celltype = get_average_celltype_counts(
@@ -253,14 +253,14 @@ def gini_sample(adata: anndata, genes: Optional[Collection[str]]):
         The corrected expression matrix
 
     genes : Collection[str]
-        List of genes for which to compute the specificities. If not specified, it is
-        computed for all the genes.
+        List of genes for which to compute the specificities. If not
+        specified, it is computed for all the genes.
 
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with
+        the value of the specificity and the specific celltype name.
 
     """
 
@@ -268,8 +268,9 @@ def gini_sample(adata: anndata, genes: Optional[Collection[str]]):
 # TODO
 def dist_gene_to_celltype(adata):
     """
-    Just from the adata, identifies the marker genes and corresponding celltypes. Those
-    are computed using the criteria of the fonction (threshold, metric etc...)
+    Just from the adata, identifies the marker genes and corresponding
+    celltypes. Those are computed using the criteria of the fonction
+    (threshold, metric etc...)
 
     Parameters
     ----------
@@ -279,8 +280,8 @@ def dist_gene_to_celltype(adata):
     Returns
     -------
     spe_one_v_max : dict
-        Dictionary where keys are genes and attributes are lists with the value of
-        the specificity and the specific celltype name.
+        Dictionary where keys are genes and attributes are lists with the
+        value of the specificity and the specific celltype name.
 
     """
 
@@ -289,4 +290,5 @@ def dist_gene_to_celltype(adata):
 
 
 # if __name__ == "__main__" :
-#     a = specificity_summary(adata=barbry,marker_genes = mark_dict,partition_key='CellType')
+#     a = specificity_summary(adata=barbry,marker_genes =
+#     mark_dict,partition_key='CellType')

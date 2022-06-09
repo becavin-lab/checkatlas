@@ -7,7 +7,6 @@ Created on Thu Jun  4 16:38:47 2020
 import datetime
 import os
 from pathlib import Path
-from typing import Collection, Optional
 
 import anndata
 import compute
@@ -27,8 +26,8 @@ def specificity_summary(adata, marker_genes, partition_key: str = "CellType"):
         The corrected expression matrix
 
     marker_genes
-        A dictionary containing the celltypes and their marker genes to analyse in
-        the following format {celltype1 : [gene1,gene2,...],celltype2 : ...}
+        A dictionary containing the celltypes and their marker genes to analyse
+        in the following format {celltype1 : [gene1,gene2,...],celltype2 : ...}
 
     partition_key
         The key in adata.obs corresponding to the annotations to be used.
@@ -79,13 +78,13 @@ def specificity_summary(adata, marker_genes, partition_key: str = "CellType"):
 # TODO
 def specificity_quality_control(
     adata: anndata,
-    marker_genes: Collection[str],
+    marker_genes: dict,
     partition_key: str,
     project_dir: str,
 ):
     """
-    Performs an analysis of the identified marker genes with regard to specificity and
-    save the files of the analysis.
+    Performs an analysis of the identified marker genes with regard to
+    specificity and save the files of the analysis.
 
     Parameters
     ----------
@@ -105,9 +104,10 @@ def specificity_quality_control(
     Returns
     -------
     For every celltypes, plot and save 2 figures :
-    -The distribution of the marker genes supported by their shannon, gini, tau specificity
-    -The one_v_max specificity repartition of the celltype for which the marker genes
-    are most specific.
+    -The distribution of the marker genes supported by their shannon, gini,
+    au specificity
+    -The one_v_max specificity repartition of the celltype for which the marker
+     genes are most specific.
 
     Also computes and save a summary of the analysis
 
@@ -121,15 +121,15 @@ def specificity_quality_control(
         celltypes = list(set(celltypes) & set(celltypes_checks))
         marker_genes = {keys: marker_genes[keys] for keys in celltypes}
     now = datetime.datetime.now()
-    project_dir = Path(project_dir)
-    if not project_dir.joinpath("SpecAnalysis").is_dir():
-        os.mkdir(project_dir.joinpath("SpecAnalysis"))
+    project_dir_path = Path(project_dir)
+    if not project_dir_path.joinpath(Path("SpecAnalysis")).is_dir():
+        os.mkdir(project_dir_path.joinpath("SpecAnalysis"))
     os.mkdir(
-        project_dir.joinpath(
+        project_dir_path.joinpath(
             f'SpecAnalysis/Analysis_{now.strftime("%y%m%d_%H%M")}'
         )
     )
-    analysis_path = project_dir.joinpath(
+    analysis_path = project_dir_path.joinpath(
         f'SpecAnalysis/Analysis_{now.strftime("%y%m%d_%H%M")}'
     )
     for celltype in celltypes:
@@ -166,19 +166,23 @@ def specificity_quality_control(
 #     specificity_quality_control(adata=barbry,
 #                                 marker_genes=marker_dict,
 #                                 partition_key='CellType',
-#                                 project_dir = r'C:\Users\ipmc\PycharmProjects\test&tuto\Kobaye')
+#                                 project_dir = r'
+#                                 C:\Users\ipmc\PycharmProjects\test&tuto\Kobaye')
 
 # Saves in an ad hoc 'result' directory :
 # - gene_distribs, one for each celltype
-# - one_v_max distrib : one_v_max distrib in the celltypes. Markers of different
-# celltypes marked with different colors ? --> messy. For each gene, just the stripplot
-# one_v_max in the most expressed celltype. (with legend pex 'FOXJ1, max in 'Basal')
+# - one_v_max distrib : one_v_max distrib in the celltypes. Markers of
+# different celltypes marked with different colors ? --> messy.
+# For each gene, just the stripplot
+# one_v_max in the most expressed celltype. (with legend pex 'FOXJ1,
+# max in 'Basal')
 # - an excel file with gene | expected celltype | most expressed celltype |
 # one_v_max | Shannon | Tau | Gini
 
 
 # adata = barbry
-# genes = dict({celltype : [Gene1,Gene2,...]}. On gerera les autres types de fichier
+# genes = dict({celltype : [Gene1,Gene2,...]}. On gerera les
+# autres types de fichier
 # plus tard
 
 

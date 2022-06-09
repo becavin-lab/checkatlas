@@ -4,11 +4,16 @@ Created on Thu Jun  4 16:38:47 2020
 @author: antoinecollin
 """
 
-from typing import Collection, Literal, Optional
+from typing import Literal
 
 import anndata
 import numpy as np
 import pandas as pd
+
+try:
+    import compute  # Prevents circular import
+except ImportError:
+    from . import compute
 
 
 def mean_celltype(
@@ -26,12 +31,12 @@ def mean_celltype(
         The key in adata.obs corresponding to the annotations to be used.
 
     gene_id_key
-        The key in adata.obs corresponding to the gene ID column. Default will use
-        adata.var.index.
+        The key in adata.obs corresponding to the gene ID column. Default
+        will use adata.var.index.
 
     add_adata
-        Indicate if the average matrix should be added to the varm field and its index
-        to the uns field of adata.
+        Indicate if the average matrix should be added to the varm field
+        and its index to the uns field of adata.
 
     Returns
     -------
@@ -63,9 +68,9 @@ def mean_celltype(
 
 def get_average_celltype_counts(adata, partition_key: str = "CellType"):
     """
-    Gets the mean expression by celltype matrix of adata. If it's already in the adata
-    object, fetches it. If it's not, computes it and adds it to the adata object in
-    varm with labels in uns
+    Gets the mean expression by celltype matrix of adata. If it's already
+    in the adata object, fetches it. If it's not, computes it and adds it
+    to the adata object in varm with labels in uns
 
     Parameters
     ----------
@@ -76,8 +81,8 @@ def get_average_celltype_counts(adata, partition_key: str = "CellType"):
         The key in adata.obs corresponding to the annotations to be used.
 
     gene_id_key
-        The key in adata.obs corresponding to the gene ID column. Default will use
-        adata.var.index.
+        The key in adata.obs corresponding to the gene ID column. Default
+        will use adata.var.index.
 
     Returns
     -------
@@ -99,9 +104,6 @@ def get_average_celltype_counts(adata, partition_key: str = "CellType"):
             f"ave_celltype_index_{partition_key}"
         ]
     return average_by_celltype
-
-
-import compute  # Prevents circular import
 
 
 def get_anndata(adata_filename: str):
