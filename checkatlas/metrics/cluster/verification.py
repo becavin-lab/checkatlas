@@ -1,16 +1,16 @@
 import anndata
 import matplotlib.pyplot as plt
+import numpy as np
 import scanpy as sc
-from scanpy.tools._louvain import louvain
+from scipy.spatial import distance_matrix
+from sklearn.cluster import dbscan, k_means
 from sklearn.preprocessing import LabelEncoder
 
 from .clust_plots import hist_internal
 
-# import phenograph
-
-
 adata = anndata.read_h5ad(
-    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\datasets\HCA_Barbry_Hg19_seurat.h5ad"
+    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\datasets\
+    HCA_Barbry_Hg19_seurat.h5ad"
 )
 adata.X = adata.X.todense()
 
@@ -39,9 +39,6 @@ for type in classes:
 sc.pl.umap(adata, color=["CellType"])
 
 
-import numpy as np
-from sklearn.cluster import dbscan, k_means
-
 kmeans = k_means(adata.X, 28)
 np.array([str(x) for x in kmeans[1]])
 dbscan = dbscan(adata.X, 28)
@@ -55,16 +52,14 @@ sc.pp.pca(adata, n_comps=20)
 
 phen_typing = sc.external.tl.phenograph(adata.obsm["X_pca"][:, :12])
 
-
-from scipy.spatial import distance_matrix
-
 x = adata.X.todense()
 
 dist = distance_matrix(x[:10, :], x[:10, :])
 
-## Create test set
+# Create test set
 brain = anndata.read_h5ad(
-    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\datasets\brain.h5ad"
+    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\
+    datasets\brain.h5ad"
 )
 sc.pl.highest_expr_genes(
     brain,
@@ -90,11 +85,13 @@ sc.pl.umap(brain, color=["leiden", "louvain"])
 sc.tl.tsne(brain)
 
 brain.write_h5ad(
-    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\datasets\test_dataset.h5ad"
+    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\datasets\
+    test_dataset.h5ad"
 )
 
-## Load test set
+# Load test set
 
 test_set = anndata.read_h5ad(
-    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\datasets\test_dataset.h5ad"
+    r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy\datasets\
+    test_dataset.h5ad"
 )

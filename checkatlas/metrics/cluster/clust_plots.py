@@ -1,9 +1,8 @@
-from typing import Collection, Literal, Optional
+from typing import Collection
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from scanpy.plotting._tools.scatterplots import _panel_grid
 
 from . import clust_compute as compute
 
@@ -20,7 +19,7 @@ def hist_external(
     )
     # ,
     # DBCV=compute.dbcv)  # Import dbcv...
-    f = plt.figure()
+    # f = plt.figure()
     i = 1
     for name, func in metrics_dict.items():
         plt.subplot(1, len(metrics_dict), i)
@@ -61,7 +60,7 @@ def hist_internal(adata, partition_keys: Collection[str], reference):
         NMI=compute.nmi,
         vmeasure=compute.vmeasure,
     )
-    f = plt.figure()
+    # f = plt.figure()
     to_plot_array = []
     i = 0
     for key in partition_keys:

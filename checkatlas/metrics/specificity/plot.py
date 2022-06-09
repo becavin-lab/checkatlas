@@ -4,19 +4,14 @@ Created on Thu Jun  4 16:38:47 2020
 @author: antoinecollin
 """
 
-from typing import Collection, Literal, Optional
+from typing import Collection, Optional, Iterable
 
 import anndata
 import get_data
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from compute import (
-    gini_average,
-    one_v_max_matrix,
-    shannon_average,
-    tau_average,
-)
+from compute import one_v_max_matrix
 from scanpy.plotting._tools.scatterplots import _panel_grid
 
 ROOTDIR = r"C:\Users\ipmc\Documents\Package_Metrics\scanpy\scanpy"
@@ -103,7 +98,7 @@ def gene_expr_distribution(
 
 def marker_genes_distribution(
     adata: anndata,
-    gene_list: Optional[Collection[str]],
+    gene_list: list,
     celltype: Optional[str],
     partition_key: str = "CellType",
     style="seaborn-white",
@@ -150,7 +145,7 @@ def distrib_one_v_max(
     adata: anndata,
     celltype: str,
     ax,
-    gene_highlight: Optional[Collection[str]] = None,
+    gene_highlight: Iterable[str],
     partition_key: str = "CellType",
 ):
     """
@@ -193,7 +188,8 @@ def distrib_one_v_max(
         if len(gene_highlight) == 1:
             spe_ovm = round(to_plot_highlight[0], 2)
             out.axes.set_title(
-                label=f"{gene_highlight[0]} \n {to_plot_trunc.name} onevmax={spe_ovm}",
+                label=f"{gene_highlight[0]} \n "
+                f"{to_plot_trunc.name} onevmax={spe_ovm}",
                 loc="center",
                 fontsize="small",
             )
@@ -213,14 +209,15 @@ def distrib_one_v_max(
     return out
 
 
-## Not used
+# Not used
 def one_v_max_celltypes(
     adata: anndata,
     celltype_list: Optional[Collection[str]] = None,
     partition_key: str = "CellType",
 ):
     """
-    Plots the one_v_max stripplot across the specified celltypes in the same plot
+    Plots the one_v_max stripplot across the specified celltypes
+    in the same plot
 
 
     Parameters
@@ -255,12 +252,13 @@ def one_v_max_celltypes(
     return out
 
 
-## Used
+# Used
 def one_v_max_genelist(
-    adata: anndata, gene_list: Collection[str], partition_key: str = "CellType"
+    adata: anndata, gene_list: list, partition_key: str = "CellType"
 ):
     """
-    For each gene, plots the one_v_max stripplot in the celltype where it is maximum.
+    For each gene, plots the one_v_max stripplot in the celltype where it is
+    maximum.
 
     Parameters
     ----------
@@ -292,15 +290,16 @@ def one_v_max_genelist(
         )
 
 
-## Not used
+# Not used
 def one_v_max_celltypes_sep(
     adata: anndata,
-    celltype_list: Collection[str],
+    celltype_list: list,
     gene_highlight=None,
     partition_key: str = "CellType",
 ):
     """
-    Plots the one_v_max distribution across the specified celltypes in separate plots
+    Plots the one_v_max distribution across the specified celltypes in
+    separate plots
 
     Parameters
     ----------
@@ -337,7 +336,7 @@ def one_v_max_celltypes_sep(
 
 def spec_distrib(
     adata: anndata,
-    spe_name: Literal["shannon", "tau", "gini"],
+    spe_name: str,
     ax,
     partition_key: str = "CellType",
 ):
@@ -411,7 +410,9 @@ def gene_distrib_celltype(adata, gene, celltype):
 
 
 # if __name__ == "__main__" :
-#     a = ['SERPINB4','SERPINB3','LY6D','CLCA2','MT1X','CCND1','AKR1C3','AQP3','DAPL1','NUPR1','S100A2','KRT5','CSRP2','IGFBP3','CALML3','TSPAN1','GPX2','FAM3B','EPAS1','TXN','SERPINB13','SUSD4','FAM84A']
+#     a = ['SERPINB4','SERPINB3','LY6D','CLCA2','MT1X','CCND1','AKR1C3',
+#     'AQP3','DAPL1','NUPR1','S100A2','KRT5','CSRP2','IGFBP3','CALML3',
+#     'TSPAN1','GPX2','FAM3B','EPAS1','TXN','SERPINB13','SUSD4','FAM84A']
 #
 #     one_v_max_celltypes(barbry,celltype_list=cl,partition_key='CellType')
 #
