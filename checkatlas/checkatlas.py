@@ -22,7 +22,8 @@ This is the principal module of the checkatlas project.
 
 """
 
-EXTENSIONS = [".rds", ".h5ad", ".h5"]
+EXTENSIONS = [".h5ad", ".h5"]
+#EXTENSIONS = [".rds", ".h5ad", ".h5"]
 CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
 RSCRIPT = inspect.getfile(atlas).replace("atlas.py", "convertSeurat.R")
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
