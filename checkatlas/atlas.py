@@ -19,7 +19,7 @@ from . import checkatlas, folders
 # except ImportError:
 #    import checkatlas
 # try:
-from .metrics.cluster import clust_compute
+# from .metrics.cluster import clust_compute
 
 # except ImportError:
 #    import folders
@@ -318,10 +318,10 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
         if len(annotations.cat.categories) != 1:
             silhouette = 1
             print("Calc Silhouette for " + atlas_name, obs_key)
-            #silhouette = clust_compute.silhouette(adata, obs_key, "X_umap")
+            # silhouette = clust_compute.silhouette(adata, obs_key, "X_umap")
             daviesb = -1
             print("Calc Davies Bouldin for " + atlas_name, obs_key)
-            #daviesb = clust_compute.davies_bouldin(adata, obs_key, "X_umap")
+            # daviesb = clust_compute.davies_bouldin(adata, obs_key, "X_umap")
             df_line = pd.DataFrame(
                 {
                     "Sample": [atlas_name + "_" + obs_key],
