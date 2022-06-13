@@ -23,7 +23,7 @@ This is the principal module of the checkatlas project.
 """
 
 EXTENSIONS = [".h5ad", ".h5"]
-#EXTENSIONS = [".rds", ".h5ad", ".h5"]
+# EXTENSIONS = [".rds", ".h5ad", ".h5"]
 CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
 RSCRIPT = inspect.getfile(atlas).replace("atlas.py", "convertSeurat.R")
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
@@ -421,9 +421,9 @@ if __name__ == "__main__":
         adata = atlas.clean_scanpy_atlas(adata, atlas_info)
         atlas.create_summary_table(adata, atlas_path, atlas_info, path)
         atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
-        #atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+        # atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
         atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-        #atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+        # atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
         atlas.metric_cluster(adata, atlas_path, atlas_info, path)
         atlas.metric_annot(adata, atlas_path, atlas_info, path)
         atlas.metric_dimred(adata, atlas_path, atlas_info, path)
