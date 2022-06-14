@@ -376,7 +376,7 @@ if __name__ == "__main__":
             atlas.metric_cluster(adata, atlas_path, atlas_info, path)
             atlas.metric_annot(adata, atlas_path, atlas_info, path)
             atlas.metric_dimred(adata, atlas_path, atlas_info, path)
-        except anndata.AnnDataReadError:
+        except (anndata.AnnDataReadError, KeyError) as e:
             print('AnnDataReadError, cannot read:', atlas_info[0])
 
 # atlas_path = '/Users/christophebecavin/Documents/testatlas/hca/
