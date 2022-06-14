@@ -34,6 +34,7 @@ OBS_CLUSTERS = [
     "cell_type",
     "CellType",
     "celltype",
+    "ann_finest_level",
     "seurat_clusters",
     "louvain",
     "leiden",
