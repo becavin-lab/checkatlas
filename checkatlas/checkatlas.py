@@ -1,7 +1,7 @@
 import inspect
 import os
 import webbrowser
-
+import csv
 import matplotlib
 import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
@@ -82,77 +82,7 @@ def convert_seurat_atlas(atlas_path, atlas_name) -> bool:
     return True
 
 
-def clean_list_atlases_multi(client, futures, atlas_list) -> dict:
-    """
-    Go through all files and detect Seurat or Scanpy Atlas
-    Then:
-    - Convert Seurat files to Scanpy
-    - Clean Scanpy files
-    :param client:
-    :param futures:
-    :param atlas_list:
-    :return: clean_atlas_dict will only cleaned Scanpy atlas. A dict with
-    these info ['Atlas_Name','Type','Atlas_file_extension',
-    'Checkatlas_folder']
-    """
-    clean_atlas_dict = dict()
-    for atlas_path in atlas_list:
-        atlas_name = get_atlas_name(atlas_path)
-        print(atlas_name)
-        if atlas_path.endswith(".rds"):
-            atlas_h5 = atlas_path.replace(".rds", ".h5ad")
-            if os.path.exists(atlas_h5):
-                print("Seurat file already converted to Scanpy:", atlas_h5)
-            else:
-                future_name = "ConvertRDS_" + atlas_name
-                future_seurat = client.submit(
-                    convert_seurat_atlas,
-                    atlas_path,
-                    atlas_name,
-                    key=future_name,
-                )
-                futures.append(future_seurat)
-                if os.path.exists(atlas_h5):
-                    future_name = "CleanScanpy-" + atlas_name
-                    info = [
-                        atlas_name,
-                        "Seurat",
-                        ".rds",
-                        os.path.dirname(atlas_path),
-                    ]
-                    clean_atlas_dict[atlas_h5] = info
-        elif atlas_path.endswith(".h5"):
-            print(atlas_path)
-            # detect if its a cellranger output
-            if atlas_path.endswith(CELLRANGER_FILE):
-                atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
-                atlas_name = get_atlas_name(atlas_h5)
-                info = [atlas_name, "Cellranger", ".h5", atlas_h5 + "/"]
-                clean_atlas_dict[atlas_path] = info
-        else:
-            atlas_rds = atlas_path.replace(".h5ad", ".rds")
-            if os.path.exists(atlas_rds):
-                info = [
-                    atlas_name,
-                    "Seurat",
-                    ".h5ad",
-                    os.path.dirname(atlas_path),
-                ]
-                clean_atlas_dict[atlas_path] = info
-            else:
-                future_name = "CleanScanpy_" + atlas_name
-                info = [
-                    atlas_name,
-                    "Scanpy",
-                    ".h5ad",
-                    os.path.dirname(atlas_path),
-                ]
-                clean_atlas_dict[atlas_path] = info
-    wait(futures)
-    return clean_atlas_dict
-
-
-def clean_list_atlases(atlas_list) -> dict:
+def clean_list_atlases(atlas_list, path) -> dict:
     """
     Go through all files and detect Seurat or Scanpy Atlas
     Then:
@@ -211,6 +141,14 @@ def clean_list_atlases(atlas_list) -> dict:
                     os.path.dirname(atlas_path) + "/",
                 ]
                 clean_atlas_dict[atlas_path] = info
+    # open file for writing, "w" is writing
+    dict_file = open(path+'/checkatlas_files/list_atlases.csv', "w")
+    w = csv.writer(dict_file)
+    # loop over dictionary keys and values
+    for key, val in clean_atlas_dict.items():
+        # write every key and value to file
+        w.writerow([key, ','.join(val)])
+    dict_file.close()
     return clean_atlas_dict
 
 
@@ -283,14 +221,10 @@ def run(path, atlas_list, multithread, n_cpus):
 
     if multithread:
         client = start_multithread_client()
-    # First clean atlas list and keep only the h5ad files
-    if multithread:
         futures = list()
-        clean_atlas_dict = clean_list_atlases_multi(
-            client, futures, atlas_list
-        )
-    else:
-        clean_atlas_dict = clean_list_atlases(atlas_list)
+
+    # First clean atlas list and keep only the h5ad files
+    clean_atlas_dict = clean_list_atlases(atlas_list, path)
 
     # Create summary files
     for atlas_path, atlas_info in clean_atlas_dict.items():
