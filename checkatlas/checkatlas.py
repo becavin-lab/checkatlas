@@ -5,6 +5,7 @@ import csv
 import matplotlib
 import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
+import anndata
 
 # except ImportError:
 #     import atlas
@@ -356,24 +357,27 @@ def run(path, atlas_list, multithread, n_cpus):
 if __name__ == "__main__":
     path = "/Users/christophebecavin/Documents/checkatlas/examples/data3/"
     path = "/data/data_collin/Discovair/"
-    atlas_path = "/data/data_collin/Discovair/data/HLCA_v1.h5ad"
-    atlas_info = ["HLCA_V1", "Scanpy", ".h5ad", "data/HLCA_v1.h5ad"]
+    atlas_path = "/data/data_collin/Discovair/data/test_version.h5ad"
+    atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
     folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list)
 
     for atlas_path, atlas_info in clean_atlas_dict.items():
         print(atlas_path, atlas_info)
-        adata = read_atlas(atlas_path, atlas_info)
-        adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-        atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-        atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
-        # atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-        atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-        # atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-        atlas.metric_cluster(adata, atlas_path, atlas_info, path)
-        atlas.metric_annot(adata, atlas_path, atlas_info, path)
-        atlas.metric_dimred(adata, atlas_path, atlas_info, path)
+        try:
+            adata = read_atlas(atlas_path, atlas_info)
+            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+            atlas.create_summary_table(adata, atlas_path, atlas_info, path)
+            atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+            # atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+            atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
+            # atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+            atlas.metric_cluster(adata, atlas_path, atlas_info, path)
+            atlas.metric_annot(adata, atlas_path, atlas_info, path)
+            atlas.metric_dimred(adata, atlas_path, atlas_info, path)
+        except anndata.AnnDataReadError:
+            print('AnnDataReadError, cannot read:', atlas_info[0])
 
 # atlas_path = '/Users/christophebecavin/Documents/testatlas/hca/
 # HCA_Barbry_Grch38_Raw_filter_Norm.h5ad'
