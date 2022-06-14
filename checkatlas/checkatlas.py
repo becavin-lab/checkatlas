@@ -168,7 +168,6 @@ def clean_list_atlases(atlas_list) -> dict:
     clean_atlas_dict = dict()
     for atlas_path in atlas_list:
         atlas_name = get_atlas_name(atlas_path)
-        print(atlas_name)
         if atlas_path.endswith(".rds"):
             atlas_h5 = atlas_path.replace(".rds", ".h5ad")
             if os.path.exists(atlas_h5):
@@ -176,32 +175,35 @@ def clean_list_atlases(atlas_list) -> dict:
             else:
                 convert_seurat_atlas(atlas_path, atlas_name)
                 if os.path.exists(atlas_h5):
+                    print('Include Atlas: '+atlas_name+' from ' + atlas_path)
                     info = [
                         atlas_name,
                         "Seurat",
                         ".rds",
-                        os.path.dirname(atlas_path) + "/",
+                        os.path.dirname(atlas_path) + "/"
                     ]
                     clean_atlas_dict[atlas_h5] = info
         elif atlas_path.endswith(".h5"):
-            print(atlas_path)
             # detect if its a cellranger output
             if atlas_path.endswith(CELLRANGER_FILE):
                 atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
                 atlas_name = get_atlas_name(atlas_h5)
-                info = [atlas_name, "Cellranger", ".h5", atlas_h5 + "/"]
+                print('Include Atlas: '+atlas_name+' from ' + atlas_path)
+                info = [atlas_name, "Cellranger", ".h5", os.path.dirname(atlas_h5) + "/"]
                 clean_atlas_dict[atlas_path] = info
         elif atlas_path.endswith(".h5ad"):
             atlas_rds = atlas_path.replace(".h5ad", ".rds")
             if os.path.exists(atlas_rds):
+                print('Include Atlas: '+atlas_name+' from ' + atlas_path)
                 info = [
                     atlas_name,
                     "Seurat",
-                    ".h5ad",
+                    ".rds",
                     os.path.dirname(atlas_path) + "/",
                 ]
                 clean_atlas_dict[atlas_path] = info
             else:
+                print('Include Atlas: '+atlas_name+' from ' + atlas_path)
                 info = [
                     atlas_name,
                     "Scanpy",
@@ -411,6 +413,9 @@ def run(path, atlas_list, multithread, n_cpus):
 
 if __name__ == "__main__":
     path = "/Users/christophebecavin/Documents/checkatlas/examples/data3/"
+    path = "/data/data_collin/Discovair/"
+    atlas_path = "/data/data_collin/Discovair/data/HLCA_v1.h5ad"
+    atlas_info = ["HLCA_V1", "Scanpy", ".h5ad", "data/HLCA_v1.h5ad"]
     folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list)
