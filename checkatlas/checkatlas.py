@@ -330,16 +330,24 @@ def run(path, atlas_list, multithread, n_cpus):
             wait(futures)
         else:
             # ##### Sequential
-            adata = read_atlas(atlas_path, atlas_info)
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-            atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
-            atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-            atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-            atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-            atlas.metric_cluster(adata, atlas_path, atlas_info, path)
-            atlas.metric_annot(adata, atlas_path, atlas_info, path)
-            atlas.metric_dimred(adata, atlas_path, atlas_info, path)
+            atlas_name = atlas_info[0]
+            csv_summary_path = os.path.join(
+                folders.get_folder(path, folders.SUMMARY),
+                atlas_name + SUMMARY_EXTENSION,
+            )
+            if not os.path.exists(csv_summary_path):
+                adata = read_atlas(atlas_path, atlas_info)
+                adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+                atlas.create_summary_table(adata, atlas_path, atlas_info, path)
+                atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+                atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+                atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
+                atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+                atlas.metric_cluster(adata, atlas_path, atlas_info, path)
+                atlas.metric_annot(adata, atlas_path, atlas_info, path)
+                atlas.metric_dimred(adata, atlas_path, atlas_info, path)
+            else:
+                print('Checkatlas already ran for:', atlas_name)
 
     print("Run MultiQC")
     # multiqc.run_multiqc(args.path)
