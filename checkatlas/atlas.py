@@ -93,6 +93,23 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     return adata
 
 
+def get_viable_obs(adata):
+    """
+    Search in obs_keys a match to OBS_CLUSTERS values
+    Extract sorted obs_keys in same order then OBS_CLUSTERS
+    :param adata:
+    :return:
+    """
+    obs_keys = list()
+    for obs_key in adata.obs_keys():
+        for obs_key_celltype in OBS_CLUSTERS:
+            if obs_key_celltype in obs_key:
+                if type(adata.obs[obs_key].dtype) == pd.CategoricalDtype:
+                    obs_keys.append(obs_key)
+    # ### obs are sorted to have cell_type first (! Need to fix that accordingly)
+    return sorted(obs_keys)
+
+
 def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     """
     Create a table with all interesting variables
@@ -279,22 +296,6 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
             i += 1
         if not found:
             sc.pl.tsne(adata, show=False, save=tsne_path)
-
-
-def get_viable_obs(adata):
-    """
-    Search in obs_keys a match to OBS_CLUSTERS values
-    Extract sorted obs_keys in same order then OBS_CLUSTERS
-    :param adata:
-    :return:
-    """
-    obs_keys = list()
-    for obs_key in adata.obs_keys():
-        for obs_key_celltype in OBS_CLUSTERS:
-            if obs_key_celltype in obs_key:
-                obs_keys.append(obs_key)
-    # ### obs are sorted to have cell_type (! Need to fix that accordingly)
-    return sorted(obs_keys)
 
 
 def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
