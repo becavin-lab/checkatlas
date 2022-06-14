@@ -5,12 +5,13 @@ from checkatlas.atlas import clean_scanpy_atlas
 given = pytest.mark.parametrize
 
 
-def test_atlas():
+def test_atlas_object():
     adata = sc.datasets.pbmc68k_reduced()
-    atlas_info = ['PBMC68k','Scanpy','.h5ad','Scanpy module']
+    atlas_info = ["PBMC68k", "Scanpy", ".h5ad", "Scanpy module"]
     assert clean_scanpy_atlas(adata, atlas_info)
 
 
+# test_atlas_object()
 # @given("fn", [atlas(), list_atlases()])
 # def test_parameterized(fn):
 #     assert "hello from" in fn()
