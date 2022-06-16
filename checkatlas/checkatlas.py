@@ -1,11 +1,12 @@
+import csv
 import inspect
 import os
 import webbrowser
-import csv
+
+import anndata
 import matplotlib
 import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
-import anndata
 
 # except ImportError:
 #     import atlas
@@ -106,12 +107,14 @@ def clean_list_atlases(atlas_list, path) -> dict:
             else:
                 convert_seurat_atlas(atlas_path, atlas_name)
                 if os.path.exists(atlas_h5):
-                    print('Include Atlas: '+atlas_name+' from ' + atlas_path)
+                    print(
+                        "Include Atlas: " + atlas_name + " from " + atlas_path
+                    )
                     info = [
                         atlas_name,
                         "Seurat",
                         ".rds",
-                        os.path.dirname(atlas_path) + "/"
+                        os.path.dirname(atlas_path) + "/",
                     ]
                     clean_atlas_dict[atlas_h5] = info
         elif atlas_path.endswith(".h5"):
@@ -119,13 +122,18 @@ def clean_list_atlases(atlas_list, path) -> dict:
             if atlas_path.endswith(CELLRANGER_FILE):
                 atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
                 atlas_name = get_atlas_name(atlas_h5)
-                print('Include Atlas: '+atlas_name+' from ' + atlas_path)
-                info = [atlas_name, "Cellranger", ".h5", os.path.dirname(atlas_h5) + "/"]
+                print("Include Atlas: " + atlas_name + " from " + atlas_path)
+                info = [
+                    atlas_name,
+                    "Cellranger",
+                    ".h5",
+                    os.path.dirname(atlas_h5) + "/",
+                ]
                 clean_atlas_dict[atlas_path] = info
         elif atlas_path.endswith(".h5ad"):
             atlas_rds = atlas_path.replace(".h5ad", ".rds")
             if os.path.exists(atlas_rds):
-                print('Include Atlas: '+atlas_name+' from ' + atlas_path)
+                print("Include Atlas: " + atlas_name + " from " + atlas_path)
                 info = [
                     atlas_name,
                     "Seurat",
@@ -134,7 +142,7 @@ def clean_list_atlases(atlas_list, path) -> dict:
                 ]
                 clean_atlas_dict[atlas_path] = info
             else:
-                print('Include Atlas: '+atlas_name+' from ' + atlas_path)
+                print("Include Atlas: " + atlas_name + " from " + atlas_path)
                 info = [
                     atlas_name,
                     "Scanpy",
@@ -143,12 +151,12 @@ def clean_list_atlases(atlas_list, path) -> dict:
                 ]
                 clean_atlas_dict[atlas_path] = info
     # open file for writing, "w" is writing
-    dict_file = open(path+'/checkatlas_files/list_atlases.csv', "w")
+    dict_file = open(path + "/checkatlas_files/list_atlases.csv", "w")
     w = csv.writer(dict_file)
     # loop over dictionary keys and values
     for key, val in clean_atlas_dict.items():
         # write every key and value to file
-        w.writerow([key, ','.join(val)])
+        w.writerow([key, ",".join(val)])
     dict_file.close()
     return clean_atlas_dict
 
@@ -348,7 +356,7 @@ def run(path, atlas_list, multithread, n_cpus):
                 atlas.metric_annot(adata, atlas_path, atlas_info, path)
                 atlas.metric_dimred(adata, atlas_path, atlas_info, path)
             else:
-                print('Checkatlas already ran for:', atlas_name)
+                print("Checkatlas already ran for:", atlas_name)
 
     print("Run MultiQC")
     # multiqc.run_multiqc(args.path)
@@ -361,7 +369,7 @@ if __name__ == "__main__":
     atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
     folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
-    clean_atlas_dict = clean_list_atlases(atlas_list)
+    clean_atlas_dict = clean_list_atlases(atlas_list, path)
 
     for atlas_path, atlas_info in clean_atlas_dict.items():
         print(atlas_path, atlas_info)
@@ -376,8 +384,9 @@ if __name__ == "__main__":
             atlas.metric_cluster(adata, atlas_path, atlas_info, path)
             atlas.metric_annot(adata, atlas_path, atlas_info, path)
             atlas.metric_dimred(adata, atlas_path, atlas_info, path)
-        except (anndata.AnnDataReadError, KeyError) as e:
-            print('AnnDataReadError, cannot read:', atlas_info[0])
+        except (anndata.AnnDataReadError, KeyError) as error:
+            print(error)
+            print("AnnDataReadError, cannot read:", atlas_info[0])
 
 # atlas_path = '/Users/christophebecavin/Documents/testatlas/hca/
 # HCA_Barbry_Grch38_Raw_filter_Norm.h5ad'

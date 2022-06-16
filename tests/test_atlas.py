@@ -1,5 +1,6 @@
 import pytest
 import scanpy as sc
+
 from checkatlas.atlas import clean_scanpy_atlas
 
 given = pytest.mark.parametrize

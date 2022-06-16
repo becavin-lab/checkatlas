@@ -106,7 +106,8 @@ def get_viable_obs(adata):
             if obs_key_celltype in obs_key:
                 if type(adata.obs[obs_key].dtype) == pd.CategoricalDtype:
                     obs_keys.append(obs_key)
-    # ### obs are sorted to have cell_type first (! Need to fix that accordingly)
+    # ### obs are sorted to have cell_type first
+    # (! Need to fix that accordingly)
     return sorted(obs_keys)
 
 
