@@ -163,13 +163,17 @@ def clean_list_atlases(atlas_list, path) -> dict:
 
 def read_atlas(atlas_path, atlas_info):
     print("--- Load " + atlas_info[0] + " in " + atlas_info[-1])
-    if atlas_path.endswith(".h5"):
-        print(atlas_path)
-        adata = sc.read_10x_h5(atlas_path)
-        adata.var_names_make_unique()
-    else:
-        adata = sc.read_h5ad(atlas_path)
-    return adata
+    try:
+        if atlas_path.endswith(".h5"):
+            print(atlas_path)
+            adata = sc.read_10x_h5(atlas_path)
+            adata.var_names_make_unique()
+        else:
+            adata = sc.read_h5ad(atlas_path)
+        return adata
+    except anndata._io.utils.AnnDataReadError:
+        print("AnnDataReadError, cannot read:", atlas_info[0])
+        return None
 
 
 def summary_table(adata, atlas_path, atlas_name, resume) -> None:
@@ -346,15 +350,17 @@ def run(path, atlas_list, multithread, n_cpus):
             )
             if not os.path.exists(csv_summary_path):
                 adata = read_atlas(atlas_path, atlas_info)
-                adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-                atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-                atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
-                atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-                atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-                atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-                atlas.metric_cluster(adata, atlas_path, atlas_info, path)
-                atlas.metric_annot(adata, atlas_path, atlas_info, path)
-                atlas.metric_dimred(adata, atlas_path, atlas_info, path)
+                print(adata is not None)
+                if adata is not None:
+                    adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+                    atlas.create_summary_table(adata, atlas_path, atlas_info, path)
+                    atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+                    atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+                    atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
+                    atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+                    atlas.metric_cluster(adata, atlas_path, atlas_info, path)
+                    atlas.metric_annot(adata, atlas_path, atlas_info, path)
+                    atlas.metric_dimred(adata, atlas_path, atlas_info, path)
             else:
                 print("Checkatlas already ran for:", atlas_name)
 
@@ -373,8 +379,9 @@ if __name__ == "__main__":
 
     for atlas_path, atlas_info in clean_atlas_dict.items():
         print(atlas_path, atlas_info)
-        try:
-            adata = read_atlas(atlas_path, atlas_info)
+        adata = read_atlas(atlas_path, atlas_info)
+        print(adata is not None)
+        if adata is not None:
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)
             atlas.create_summary_table(adata, atlas_path, atlas_info, path)
             atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
@@ -384,9 +391,6 @@ if __name__ == "__main__":
             atlas.metric_cluster(adata, atlas_path, atlas_info, path)
             atlas.metric_annot(adata, atlas_path, atlas_info, path)
             atlas.metric_dimred(adata, atlas_path, atlas_info, path)
-        except (anndata.AnnDataReadError, KeyError) as error:
-            print(error)
-            print("AnnDataReadError, cannot read:", atlas_info[0])
 
 # atlas_path = '/Users/christophebecavin/Documents/testatlas/hca/
 # HCA_Barbry_Grch38_Raw_filter_Norm.h5ad'
