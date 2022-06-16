@@ -4,6 +4,16 @@ Changelog
 
 (unreleased)
 ------------
+- Fix release making. [drbecavin]
+- Merge branch 'main' of github.com:becavin-lab/checkatlas Good.
+  [drbecavin]
+- Update README.md. [drbecavin]
+- Fix release making. [drbecavin]
+
+
+0.0.1 (2022-06-16)
+------------------
+- Release: version 0.0.1 🚀 [drbecavin]
 - Release: version  🚀 [drbecavin]
 - Release: version  🚀 [drbecavin]
 - Release: version  🚀 [drbecavin]
