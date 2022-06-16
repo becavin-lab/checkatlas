@@ -5,6 +5,7 @@ Changelog
 (unreleased)
 ------------
 - Release: version  🚀 [drbecavin]
+- Release: version  🚀 [drbecavin]
 - Clean project before release. [drbecavin]
 - Release: version  🚀 [drbecavin]
 - Add corrupted h5ad management with AnnDataReadError. [drbecavin]
