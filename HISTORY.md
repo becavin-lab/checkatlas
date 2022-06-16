@@ -4,6 +4,14 @@ Changelog
 
 (unreleased)
 ------------
+- Add corrupted h5ad management with AnnDataReadError. [drbecavin]
+- Add corrupted h5ad management with AnnDataReadError. [drbecavin]
+- Add resume capacity in checkatlas.py. [drbecavin]
+- Fix obs_beys selection. [drbecavin]
+- Add list_atlases.csv. [drbecavin]
+- Fix list files. [drbecavin]
+- Add HLCA index names. [drbecavin]
+- Release: version  🚀 [drbecavin]
 - Clean project. [drbecavin]
 - Clean files. [drbecavin]
 - Remove rds from type of file. [christophe Becavin]
