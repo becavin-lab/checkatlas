@@ -44,7 +44,12 @@ def main() -> None:  # pragma: no cover
 
     print("Searching Seurat and Scanpy files")
     atlas_list = checkatlas.list_atlases(args.path)
-    print("Found", len(atlas_list),'files with these extensions', checkatlas.EXTENSIONS)
+    print(
+        "Found",
+        len(atlas_list),
+        "files with these extensions",
+        checkatlas.EXTENSIONS,
+    )
 
     n_cpus = 4
     multithread = False

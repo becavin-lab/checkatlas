@@ -4,7 +4,7 @@ Created on Thu Jun  4 16:38:47 2020
 @author: antoinecollin
 """
 
-from typing import Collection, Optional, Iterable
+from typing import Collection, Iterable, Optional
 
 import anndata
 import get_data
