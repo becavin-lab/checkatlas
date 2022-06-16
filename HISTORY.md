@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Clean project before release. [drbecavin]
+- Release: version  🚀 [drbecavin]
 - Add corrupted h5ad management with AnnDataReadError. [drbecavin]
 - Add corrupted h5ad management with AnnDataReadError. [drbecavin]
 - Add resume capacity in checkatlas.py. [drbecavin]
