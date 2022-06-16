@@ -8,15 +8,11 @@ import matplotlib
 import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
 
-# except ImportError:
-#     import atlas
-# try:
-# local imports
-# try:
-from . import atlas, folders
-
-# except ImportError:
-#    import folders
+try:
+    from . import atlas, folders
+except ImportError:
+    import atlas
+    import folders
 
 """
 checkatlas base module.
@@ -350,7 +346,6 @@ def run(path, atlas_list, multithread, n_cpus):
             )
             if not os.path.exists(csv_summary_path):
                 adata = read_atlas(atlas_path, atlas_info)
-                print(adata is not None)
                 if adata is not None:
                     adata = atlas.clean_scanpy_atlas(adata, atlas_info)
                     atlas.create_summary_table(adata, atlas_path, atlas_info, path)
@@ -369,10 +364,9 @@ def run(path, atlas_list, multithread, n_cpus):
 
 
 if __name__ == "__main__":
-    path = "/Users/christophebecavin/Documents/checkatlas/examples/data3/"
-    path = "/data/data_collin/Discovair/"
-    atlas_path = "/data/data_collin/Discovair/data/test_version.h5ad"
-    atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
+    path = "/Users/christophebecavin/Documents/testatlas/"
+    #atlas_path = "/Users/christophebecavin/Documents/testatlas/"
+    #atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
     folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list, path)

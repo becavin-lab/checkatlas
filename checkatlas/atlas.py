@@ -5,24 +5,20 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
-# except ImportError:
-#    from metrics.cluster import clust_compute
-# try:
-#     from .metrics.dim_red import dr_compute
-# except ImportError:
-#     from metrics.dim_red import dr_compute
-# try:
-# local imports
-# try:
-from . import checkatlas, folders
+try:
+    from .metrics.cluster import clust_compute
+except ImportError:
+   from metrics.cluster import clust_compute
+try:
+    from .metrics.dim_red import dr_compute
+except ImportError:
+    from metrics.dim_red import dr_compute
 
-# except ImportError:
-#    import checkatlas
-# try:
-# from .metrics.cluster import clust_compute
-
-# except ImportError:
-#    import folders
+try:
+    from . import checkatlas, folders
+except ImportError:
+    import checkatlas
+    import folders
 
 
 """
@@ -86,10 +82,11 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     print("Clean scanpy:" + atlas_info[0])
     # If OBS_CLUSTERS are present and in int32 -> be sure to
     # transform them in categorical
-    obs_keys = get_viable_obs(adata)
-    for obs_key in obs_keys:
-        if adata.obs[obs_key].dtype == np.int32:
-            adata.obs[obs_key] = pd.Categorical(adata.obs[obs_key])
+    for obs_key in adata.obs_keys():
+        for obs_key_celltype in OBS_CLUSTERS:
+            if obs_key_celltype in obs_key:
+                if adata.obs[obs_key].dtype == np.int32:
+                    adata.obs[obs_key] = pd.Categorical(adata.obs[obs_key])
     return adata
 
 
@@ -321,10 +318,10 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
         if len(annotations.cat.categories) != 1:
             silhouette = 1
             print("Calc Silhouette for " + atlas_name, obs_key)
-            # silhouette = clust_compute.silhouette(adata, obs_key, "X_umap")
+            silhouette = clust_compute.silhouette(adata, obs_key, "X_umap")
             daviesb = -1
             print("Calc Davies Bouldin for " + atlas_name, obs_key)
-            # daviesb = clust_compute.davies_bouldin(adata, obs_key, "X_umap")
+            daviesb = clust_compute.davies_bouldin(adata, obs_key, "X_umap")
             df_line = pd.DataFrame(
                 {
                     "Sample": [atlas_name + "_" + obs_key],
