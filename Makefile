@@ -1,6 +1,7 @@
 .ONESHELL:
 ENV_PREFIX=$(shell python -c "if __import__('pathlib').Path('.venv/bin/pip').exists(): print('.venv/bin/')")
 USING_POETRY=$(shell grep "tool.poetry" pyproject.toml && echo "yes")
+VERSION=$(shell cat checkatlas/VERSION)
 
 .PHONY: help
 help:             ## Show the help.
@@ -76,13 +77,12 @@ virtualenv:       ## Create a virtual environment.
 .PHONY: release
 release:          ## Create a new tag for release.
 	@echo "WARNING: This operation will create s version tag and push to github"
-	@read -p "Version? (provide the next x.y.z semver) : " TAG
-	@echo "$${TAG}" > checkatlas/VERSION
+	@echo "Reading version $(VERSION) from: checkatlas/VERSION"
 	@$(ENV_PREFIX)gitchangelog > HISTORY.md
 	@git add checkatlas/VERSION HISTORY.md
-	@git commit -m "release: version $${TAG} 🚀"
-	@echo "creating git tag : $${TAG}"
-	@git tag $${TAG}
+	@git commit -m "release: version $(VERSION) 🚀"
+	@echo "creating git tag : $(VERSION)"
+	@git tag $(VERSION)
 	@git push -u origin HEAD --tags
 	@echo "Github Actions will detect the new tag and release the new version."
 
