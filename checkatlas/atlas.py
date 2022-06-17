@@ -253,14 +253,12 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
         sc.settings.figdir = folders.get_workingdir(path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
         # Exporting umap
-        while not found:
-            if OBS_CLUSTERS[i] in adata.obs_keys():
-                sc.pl.umap(
-                    adata, color=OBS_CLUSTERS[i], show=False, save=umap_path
-                )
-                found = True
-            i += 1
-        if not found:
+        obs_keys = get_viable_obs(adata)
+        if len(obs_keys) != 0:
+            sc.pl.umap(
+                adata, color=obs_keys[0], show=False, save=umap_path
+            )
+        else:
             sc.pl.umap(adata, show=False, save=umap_path)
 
 
@@ -285,14 +283,12 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(path)
         tsne_path = os.sep + atlas_name + checkatlas.TSNE_EXTENSION
         # Exporting tsne
-        while not found:
-            if OBS_CLUSTERS[i] in adata.obs_keys():
-                sc.pl.tsne(
-                    adata, color=OBS_CLUSTERS[i], show=False, save=tsne_path
-                )
-                found = True
-            i += 1
-        if not found:
+        obs_keys = get_viable_obs(adata)
+        if len(obs_keys) != 0:
+            sc.pl.tsne(
+                adata, color=obs_keys[0], show=False, save=tsne_path
+            )
+        else:
             sc.pl.tsne(adata, show=False, save=tsne_path)
 
 
