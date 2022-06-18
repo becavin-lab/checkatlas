@@ -4,6 +4,18 @@ Changelog
 
 (unreleased)
 ------------
+- Merge branch 'main' of github.com:becavin-lab/checkatlas good.
+  [drbecavin]
+- Update README.md. [drbecavin]
+- Update README.md. [drbecavin]
+- Fix umap display. [drbecavin]
+- Fix category management in adata.obs. [drbecavin]
+- Add test on scanp version. [drbecavin]
+
+
+0.0.2 (2022-06-16)
+------------------
+- Release: version 0.0.2 🚀 [drbecavin]
 - Release: version 0.0.1 🚀 [drbecavin]
 - Fix release making. [drbecavin]
 - Merge branch 'main' of github.com:becavin-lab/checkatlas Good.
