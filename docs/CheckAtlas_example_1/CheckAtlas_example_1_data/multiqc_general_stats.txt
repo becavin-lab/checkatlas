@@ -1,0 +1,2 @@
+Sample	Snippy_mqc-generalstats-snippy-VariantTotal
+multiqc	0

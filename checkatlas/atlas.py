@@ -5,20 +5,23 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
-try:
-    from .metrics.cluster import clust_compute
-except ImportError:
-   from metrics.cluster import clust_compute
-try:
-    from .metrics.dim_red import dr_compute
-except ImportError:
-    from metrics.dim_red import dr_compute
+from . import checkatlas, folders
+from .metrics.cluster import clust_compute
 
-try:
-    from . import checkatlas, folders
-except ImportError:
-    import checkatlas
-    import folders
+# try:
+#     from .metrics.cluster import clust_compute
+# except ImportError:
+#     from metrics.cluster import clust_compute
+# try:
+#     from .metrics.dim_red import dr_compute
+# except ImportError:
+#     from metrics.dim_red import dr_compute
+
+# try:
+#     from . import checkatlas, folders
+# except ImportError:
+#     import folders
+#     import checkatlas
 
 
 """
@@ -246,18 +249,13 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
     r = re.compile(".*umap*.")
     print(len(list(filter(r.match, adata.obsm_keys()))))
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
-        # Create umap
-        found = False
-        i = 0
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
         # Exporting umap
         obs_keys = get_viable_obs(adata)
         if len(obs_keys) != 0:
-            sc.pl.umap(
-                adata, color=obs_keys[0], show=False, save=umap_path
-            )
+            sc.pl.umap(adata, color=obs_keys[0], show=False, save=umap_path)
         else:
             sc.pl.umap(adata, show=False, save=umap_path)
 
@@ -276,18 +274,13 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     r = re.compile(".*tsne*.")
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
-        # Create tsne
-        found = False
-        i = 0
         # Setting up figures directory
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(path)
         tsne_path = os.sep + atlas_name + checkatlas.TSNE_EXTENSION
         # Exporting tsne
         obs_keys = get_viable_obs(adata)
         if len(obs_keys) != 0:
-            sc.pl.tsne(
-                adata, color=obs_keys[0], show=False, save=tsne_path
-            )
+            sc.pl.tsne(adata, color=obs_keys[0], show=False, save=tsne_path)
         else:
             sc.pl.tsne(adata, show=False, save=tsne_path)
 
