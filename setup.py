@@ -31,7 +31,7 @@ def read_requirements(path):
 setup(
     name="checkatlas",
     version=read("checkatlas", "VERSION"),
-    description="Awesome checkatlas created by becavin-lab",
+    description="One liner tool to check the quality of your single-cell atlases",
     url="https://github.com/becavin-lab/checkatlas/",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
