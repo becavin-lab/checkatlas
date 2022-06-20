@@ -44,7 +44,27 @@ https://checkatlas.readthedocs.io/en/latest/
 3. Explore Scanpy, Seurat and CellRanger objects in your folder: https://github.com/becavin-lab/checkatlas/blob/main/examples/AtlasType_comparison.ipynb
 
 
-## Install it from PyPI
+## Installation
+
+CheckAtlas can be downloaded from PyPI. However, the project is in an early development phase. We strongly recommend to use the developmental version.
+
+### Install checkatlas development version
+
+```bash
+git clone git@github.com:becavin-lab/checkatlas.git
+pip install checkatlas/.
+```
+
+Install MultiQC with checkatlas file management. This version of MultiQC is available at checkatlas branch of github.com:becavin-lab/MultiQC.
+
+```bash
+git clone git@github.com:becavin-lab/MultiQC.git
+cd MultiQC/
+git checkout checkatlas
+pip install .
+```
+
+### Install it from PyPI
 
 ```bash
 pip install checkatlas
@@ -52,10 +72,7 @@ pip install checkatlas
 
 ## Usage
 
-```py
-from checkatlas import checkatlas
-checkatlas.run(path, atlas_list, multithread, n_cpus)
-```
+The one liner way to run checkatlas is the following: 
 
 ```bash
 $ cd your_search_folder/
@@ -63,6 +80,14 @@ $ python -m checkatlas .
 #or
 $ checkatlas .
 ```
+
+Or run it inside your python workflow.
+
+```py
+from checkatlas import checkatlas
+checkatlas.run(path, atlas_list, multithread, n_cpus)
+```
+
 
 ## Development
 
