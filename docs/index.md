@@ -91,7 +91,7 @@ checkatlas.run(path, atlas_list, multithread, n_cpus)
 
 ## Development
 
-Read the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+Read the [CONTRIBUTING.md](contributing.md) file.
 
 Project developed thanks to the project template : (https://github.com/rochacbruno/python-project-template/)
 

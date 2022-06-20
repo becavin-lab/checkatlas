@@ -4,3 +4,4 @@ theme: readthedocs
 nav:
   - Home: "index.md"
   - Examples: "examples.md"
+  - Contributing: "contributing.md"
