@@ -2,8 +2,9 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+0.0.6 (2022-06-20)
+------------------
+- Release: version 0.0.6 🚀 [drbecavin]
 - Clean docs. [drbecavin]
 - Update README.md. [drbecavin]
 - Modify readme docs. [drbecavin]
