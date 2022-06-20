@@ -4,6 +4,14 @@ Changelog
 
 (unreleased)
 ------------
+- Modify readme docs. [drbecavin]
+- Update README.md. [drbecavin]
+- Add examples in the doc. [drbecavin]
+
+
+0.0.3 (2022-06-18)
+------------------
+- Release: version 0.0.3 🚀 [drbecavin]
 - Merge branch 'main' of github.com:becavin-lab/checkatlas good.
   [drbecavin]
 - Update README.md. [drbecavin]
