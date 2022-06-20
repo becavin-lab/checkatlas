@@ -43,11 +43,11 @@ https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_1/CheckAtlas_exam
 
 2. Evaluate different version of your atlas: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Version_comparison.ipynb
 
-https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_1/CheckAtlas_example_2.html
+https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_2/CheckAtlas_example_2.html
 
 3. Explore Scanpy, Seurat and CellRanger objects in your folder: https://github.com/becavin-lab/checkatlas/blob/main/examples/AtlasType_comparison.ipynb
 
-https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_1/CheckAtlas_example_3.html
+https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_3/CheckAtlas_example_3.html
 
 ## Installation
 
