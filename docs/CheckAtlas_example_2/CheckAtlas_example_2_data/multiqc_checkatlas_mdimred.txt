@@ -1,0 +1,7 @@
+Sample	obs	Kruskal
+Fetal_v1_X_pca	X_pca	-1
+Fetal_v1_X_umap	X_umap	-1
+Fetal_v2_X_pca	X_pca	-1
+Fetal_v2_X_umap	X_umap	-1
+Fetal_v3_X_pca	X_pca	-1
+Fetal_v3_X_umap	X_umap	-1

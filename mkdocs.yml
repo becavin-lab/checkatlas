@@ -1,2 +1,6 @@
 site_name: checkatlas
 theme: readthedocs
+
+nav:
+  - Home: "index.md"
+  - Examples: "examples.md"

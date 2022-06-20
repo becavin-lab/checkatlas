@@ -8,11 +8,15 @@ import matplotlib
 import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
 
-try:
-    from . import atlas, folders
-except ImportError:
-    import atlas
-    import folders
+from . import atlas, folders, multiqc
+
+# try:
+#     from . import atlas, folders, multiqc
+# except ImportError:
+#     import atlas
+#     import folders
+#     import multiqc
+
 
 """
 checkatlas base module.
@@ -348,8 +352,12 @@ def run(path, atlas_list, multithread, n_cpus):
                 adata = read_atlas(atlas_path, atlas_info)
                 if adata is not None:
                     adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-                    atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-                    atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+                    atlas.create_summary_table(
+                        adata, atlas_path, atlas_info, path
+                    )
+                    atlas.create_anndata_table(
+                        adata, atlas_path, atlas_info, path
+                    )
                     atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
                     atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
                     atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
@@ -360,13 +368,14 @@ def run(path, atlas_list, multithread, n_cpus):
                 print("Checkatlas already ran for:", atlas_name)
 
     print("Run MultiQC")
-    # multiqc.run_multiqc(args.path)
+    multiqc.run_multiqc(path)
 
 
 if __name__ == "__main__":
     path = "/Users/christophebecavin/Documents/testatlas/"
-    #atlas_path = "/Users/christophebecavin/Documents/testatlas/"
-    #atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
+    # atlas_path = "/Users/christophebecavin/Documents/testatlas/"
+    # atlas_info = ["test_version", "Scanpy", ".h5ad",
+    # "data/test_version.h5ad"]
     folders.checkatlas_folders(path)
     atlas_list = list_atlases(path)
     clean_atlas_dict = clean_list_atlases(atlas_list, path)

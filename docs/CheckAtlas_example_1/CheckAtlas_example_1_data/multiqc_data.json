@@ -6,10 +6,48 @@
                 "Tabula_Sapiens_Endothelial": "/Users/christophebecavin/Documents/checkatlas/examples/data1/checkatlas_files/dimred/Tabula_Sapiens_Endothelial_checkatlas_mdimred.tsv",
                 "B-cells_compartment": "/Users/christophebecavin/Documents/checkatlas/examples/data1/checkatlas_files/dimred/B-cells_compartment_checkatlas_mdimred.tsv"
             }
+        },
+        "Snippy": {
+            "snippy": {
+                "multiqc": "/Users/christophebecavin/Documents/checkatlas/examples/data1/CheckAtlas_MultiQC/CheckAtlas_data/multiqc.log"
+            }
         }
     },
-    "report_general_stats_data": [],
-    "report_general_stats_headers": [],
+    "report_general_stats_data": [
+        {
+            "multiqc": {
+                "Variant-COMPLEX": 0,
+                "Variant-DEL": 0,
+                "Variant-INS": 0,
+                "Variant-SNP": 0,
+                "VariantTotal": 0
+            }
+        }
+    ],
+    "report_general_stats_headers": [
+        {
+            "VariantTotal": {
+                "title": "# Variants",
+                "description": "Total variants detected.",
+                "scale": "BuPu",
+                "format": "{:.0f}",
+                "shared_key": "variant_count",
+                "namespace": "Snippy",
+                "rid": "mqc-generalstats-snippy-VariantTotal",
+                "colour": "55,126,184",
+                "hidden": null,
+                "max": null,
+                "min": null,
+                "ceiling": null,
+                "floor": null,
+                "minRange": null,
+                "modify": null,
+                "placement": 1000.0,
+                "dmax": 0,
+                "dmin": 0
+            }
+        }
+    ],
     "report_multiqc_command": "/Users/christophebecavin/miniconda3/envs/checkatlas/bin/multiqc -f --cl-config ignore_images: false -c multiqc_config.yaml -n CheckAtlas_example_1 -o CheckAtlas_example_1 data1/",
     "report_plot_data": {},
     "report_saved_raw_data": {
@@ -183,6 +221,20 @@
                 "obs": "X_umap",
                 "Kruskal": "-1"
             }
+        },
+        "multiqc_snippy": {
+            "multiqc": {
+                "Variant-COMPLEX": 0,
+                "Variant-DEL": 0,
+                "Variant-INS": 0,
+                "Variant-SNP": 0,
+                "VariantTotal": 0
+            }
+        },
+        "multiqc_general_stats": {
+            "multiqc": {
+                "Snippy_mqc-generalstats-snippy-VariantTotal": 0
+            }
         }
     },
     "config_analysis_dir_abs": [
@@ -191,7 +243,7 @@
     "config_analysis_dir": [
         "data1/"
     ],
-    "config_creation_date": "2022-06-18, 14:52",
+    "config_creation_date": "2022-06-18, 14:51",
     "config_git_hash": null,
     "config_intro_text": null,
     "config_report_comment": null,
