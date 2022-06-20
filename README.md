@@ -1,5 +1,5 @@
 
-# checkatlas
+# CheckAtlas
 
 [![codecov](https://codecov.io/gh/becavin-lab/checkatlas/branch/main/graph/badge.svg?token=checkatlas_token_here)](https://codecov.io/gh/becavin-lab/checkatlas)
 [![CI](https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml/badge.svg)](https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml)
