@@ -2,8 +2,9 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+0.0.4 (2022-06-20)
+------------------
+- Release: version 0.0.4 🚀 [drbecavin]
 - Modify readme docs. [drbecavin]
 - Update README.md. [drbecavin]
 - Add examples in the doc. [drbecavin]
