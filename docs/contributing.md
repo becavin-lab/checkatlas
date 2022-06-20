@@ -1,6 +1,6 @@
 # How to develop on this project
 
-checkatlas welcomes contributions from the community.
+CheckAtlas welcomes contributions from the community.
 
 **You need PYTHON3!**
 
