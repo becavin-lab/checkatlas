@@ -2,6 +2,19 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Clean docs. [drbecavin]
+- Update README.md. [drbecavin]
+- Modify readme docs. [drbecavin]
+- Update README.md. [drbecavin]
+
+
+0.0.5 (2022-06-20)
+------------------
+- Release: version 0.0.5 🚀 [drbecavin]
+
+
 0.0.4 (2022-06-20)
 ------------------
 - Release: version 0.0.4 🚀 [drbecavin]
