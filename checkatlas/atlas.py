@@ -40,6 +40,29 @@ OBS_CLUSTERS = [
     "orig.ident",
 ]
 
+OBS_QC = [
+    "n_genes_by_counts",
+    "total_counts",
+    "pct_counts_mt",
+    "pct_counts_ribo",
+    "percent.mito",
+    "percent.ribo",
+    "dropouts",
+    "nCount_SCT",
+    "nFeature_SCT",
+    "nCount_RNA",
+    "nFeature_RNA",
+    "nCount_HTO",
+    "nFeature_HTO",
+    "n_genes",
+    "n_genes_by_counts",
+    "total_counts",
+    "total_counts_mt",
+    "pct_counts_mt",
+    "total_counts_ribo",
+    "pct_counts_ribo",
+]
+
 
 def list_atlases(path) -> list:
     """
@@ -93,7 +116,21 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     return adata
 
 
-def get_viable_obs(adata):
+def get_viable_obs_qc(adata):
+    """
+    Search in obs_keys a match to OBS_QC values
+    Extract sorted obs_keys in same order then OBS_QC
+    :param adata:
+    :return:
+    """
+    obs_keys = list()
+    for obs_key in adata.obs_keys():
+        if obs_key in OBS_QC:
+            obs_keys.append(obs_key)
+    return obs_keys
+
+
+def get_viable_obs_annot(adata):
     """
     Search in obs_keys a match to OBS_CLUSTERS values
     Extract sorted obs_keys in same order then OBS_CLUSTERS
@@ -106,8 +143,6 @@ def get_viable_obs(adata):
             if obs_key_celltype in obs_key:
                 if type(adata.obs[obs_key].dtype) == pd.CategoricalDtype:
                     obs_keys.append(obs_key)
-    # ### obs are sorted to have cell_type first
-    # (! Need to fix that accordingly)
     return sorted(obs_keys)
 
 
@@ -145,7 +180,7 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     df_summary["AnnData.X"][atlas_name] = adata.X is not None
     df_summary["File_extension"][atlas_name] = atlas_extension
     df_summary["File_path"][atlas_name] = atlas_path.replace(path, "")
-    df_summary.to_csv(csv_path, index=False)
+    df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
 def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
@@ -190,7 +225,7 @@ def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
     df_summary["uns"][atlas_name] = (
         "<code>" + "</code><br><code>".join(list(adata.uns_keys())) + "</code>"
     )
-    df_summary.to_csv(csv_path, index=False, quoting=False)
+    df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
 def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
@@ -207,6 +242,10 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     sc.settings.figdir = folders.get_workingdir(path)
     qc_path = os.sep + atlas_name + checkatlas.QC_EXTENSION
+    # qc_path = os.path.join(
+    #     folders.get_folder(path, folders.QC),
+    #     atlas_name + checkatlas.QC_EXTENSION,
+    #     )
     print("Calc QC")
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
@@ -219,6 +258,8 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
         log1p=False,
         inplace=True,
     )
+    # df_annot = adata.obs[get_viable_obs_qc(adata)]
+    # df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
     sc.pl.violin(
         adata,
         [
@@ -253,7 +294,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
         sc.settings.figdir = folders.get_workingdir(path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
         # Exporting umap
-        obs_keys = get_viable_obs(adata)
+        obs_keys = get_viable_obs_annot(adata)
         if len(obs_keys) != 0:
             sc.pl.umap(adata, color=obs_keys[0], show=False, save=umap_path)
         else:
@@ -278,7 +319,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(path)
         tsne_path = os.sep + atlas_name + checkatlas.TSNE_EXTENSION
         # Exporting tsne
-        obs_keys = get_viable_obs(adata)
+        obs_keys = get_viable_obs_annot(adata)
         if len(obs_keys) != 0:
             sc.pl.tsne(adata, color=obs_keys[0], show=False, save=tsne_path)
         else:
@@ -300,7 +341,7 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
     )
     header = ["Sample", "obs", "Silhouette", "Davies-Bouldin"]
     df_cluster = pd.DataFrame(columns=header)
-    obs_keys = get_viable_obs(adata)
+    obs_keys = get_viable_obs_annot(adata)
     for obs_key in obs_keys:
         # Need more than one sample to calculate metric
         annotations = adata.obs[obs_key]
@@ -323,7 +364,7 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
                 [df_cluster, df_line], ignore_index=True, axis=0
             )
     if len(df_cluster) != 0:
-        df_cluster.to_csv(csv_path, index=False)
+        df_cluster.to_csv(csv_path, index=False, sep="\t")
 
 
 def metric_annot(adata, atlas_path, atlas_info, path) -> None:
@@ -341,7 +382,7 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
     )
     header = ["Sample", "obs", "Rand"]
     df_annot = pd.DataFrame(columns=header)
-    obs_keys = get_viable_obs(adata)
+    obs_keys = get_viable_obs_annot(adata)
     if len(obs_keys) != 0:
         ref_obs = obs_keys[0]
         for i in range(1, len(obs_keys)):
@@ -367,7 +408,7 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
                     [df_annot, df_line], ignore_index=True, axis=0
                 )
         if len(df_annot) != 0:
-            df_annot.to_csv(csv_path, index=False)
+            df_annot.to_csv(csv_path, index=False, sep="\t")
 
 
 def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
@@ -400,4 +441,4 @@ def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
         )
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
     if len(df_dimred) != 0:
-        df_dimred.to_csv(csv_path, index=False)
+        df_dimred.to_csv(csv_path, index=False, sep="\t")

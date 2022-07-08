@@ -31,6 +31,7 @@ RSCRIPT = inspect.getfile(atlas).replace("atlas.py", "convertSeurat.R")
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
 QC_EXTENSION = "_checkatlas_qc.png"
+# QC_EXTENSION = "_checkatlas_qc.tsv"
 UMAP_EXTENSION = "_checkatlas_umap.png"
 TSNE_EXTENSION = "_checkatlas_tsne.png"
 METRIC_CLUSTER_EXTENSION = "_checkatlas_mcluster.tsv"
@@ -348,24 +349,21 @@ def run(path, atlas_list, multithread, n_cpus):
                 folders.get_folder(path, folders.SUMMARY),
                 atlas_name + SUMMARY_EXTENSION,
             )
-            if not os.path.exists(csv_summary_path):
-                adata = read_atlas(atlas_path, atlas_info)
-                if adata is not None:
-                    adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-                    atlas.create_summary_table(
-                        adata, atlas_path, atlas_info, path
-                    )
-                    atlas.create_anndata_table(
-                        adata, atlas_path, atlas_info, path
-                    )
-                    atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-                    atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-                    atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-                    atlas.metric_cluster(adata, atlas_path, atlas_info, path)
-                    atlas.metric_annot(adata, atlas_path, atlas_info, path)
-                    atlas.metric_dimred(adata, atlas_path, atlas_info, path)
-            else:
-                print("Checkatlas already ran for:", atlas_name)
+            print("Search", csv_summary_path)
+            # if not os.path.exists(csv_summary_path):
+            adata = read_atlas(atlas_path, atlas_info)
+            if adata is not None:
+                adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+                atlas.create_summary_table(adata, atlas_path, atlas_info, path)
+                atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+                atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+                atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
+                atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+                atlas.metric_cluster(adata, atlas_path, atlas_info, path)
+                atlas.metric_annot(adata, atlas_path, atlas_info, path)
+                atlas.metric_dimred(adata, atlas_path, atlas_info, path)
+            # else:
+            #     print("Checkatlas already ran for:", atlas_name)
 
     print("Run MultiQC")
     multiqc.run_multiqc(path)
