@@ -2,8 +2,9 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+0.0.10 (2022-07-08)
+-------------------
+- Release: version 0.0.10 🚀 [drbecavin]
 - Prepare QC table production. [drbecavin]
 - Test.txt. [drbecavin]
 - Change in workflow. [drbecavin]
