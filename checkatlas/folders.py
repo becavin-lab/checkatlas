@@ -3,7 +3,7 @@ import os
 working_dir = "checkatlas_files"
 SUMMARY = "summary"
 ANNDATA = "adata"
-QC = "violin"
+QC = "qc"
 UMAP = "umap"
 TSNE = "tsne"
 CLUSTER = "cluster"
