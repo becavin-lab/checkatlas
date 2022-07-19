@@ -2,6 +2,16 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Add QC tables for Knee plots. [drbecavin]
+
+
+0.0.12 (2022-07-08)
+-------------------
+- Release: version 0.0.12 🚀 [drbecavin]
+
+
 0.0.11 (2022-07-08)
 -------------------
 - Release: version 0.0.11 🚀 [drbecavin]
