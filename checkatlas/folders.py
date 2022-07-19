@@ -4,6 +4,7 @@ working_dir = "checkatlas_files"
 SUMMARY = "summary"
 ANNDATA = "adata"
 QC = "qc"
+QC_FIG = "violin"
 UMAP = "umap"
 TSNE = "tsne"
 CLUSTER = "cluster"
@@ -15,6 +16,7 @@ dict_folder = {
     SUMMARY: SUMMARY,
     ANNDATA: ANNDATA,
     QC: QC,
+    QC_FIG: QC_FIG,
     UMAP: UMAP,
     TSNE: TSNE,
     CLUSTER: CLUSTER,

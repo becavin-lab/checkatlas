@@ -16,7 +16,7 @@ from .metrics.cluster import clust_compute
 #     from .metrics.dim_red import dr_compute
 # except ImportError:
 #     from metrics.dim_red import dr_compute
-
+#
 # try:
 #     from . import checkatlas, folders
 # except ImportError:
@@ -228,6 +228,39 @@ def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
     df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
+def create_qc_tables(adata, atlas_path, atlas_info, path) -> None:
+    """
+    Display the atlas QC
+    Search for the OBS variable which correspond to the toal_RNA, total_UMI,
+     MT_ratio, RT_ratio
+    :param path:
+    :param adata:
+    :param atlas_name:
+    :param atlas_path:
+    :return:
+    """
+    atlas_name = atlas_info[0]
+    sc.settings.figdir = folders.get_workingdir(path)
+    qc_path = os.path.join(
+        folders.get_folder(path, folders.QC),
+        atlas_name + checkatlas.QC_EXTENSION,
+    )
+    print("Calc QC")
+    # mitochondrial genes
+    adata.var["mt"] = adata.var_names.str.startswith("MT-")
+    # ribosomal genes
+    adata.var["ribo"] = adata.var_names.str.startswith(("RPS", "RPL"))
+    sc.pp.calculate_qc_metrics(
+        adata,
+        qc_vars=["mt", "ribo"],
+        percent_top=None,
+        log1p=False,
+        inplace=True,
+    )
+    df_annot = adata.obs[get_viable_obs_qc(adata)]
+    df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
+
+
 def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     """
     Display the atlas QC
@@ -241,11 +274,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     """
     atlas_name = atlas_info[0]
     sc.settings.figdir = folders.get_workingdir(path)
-    qc_path = os.sep + atlas_name + checkatlas.QC_EXTENSION
-    # qc_path = os.path.join(
-    #     folders.get_folder(path, folders.QC),
-    #     atlas_name + checkatlas.QC_EXTENSION,
-    #     )
+    qc_path = os.sep + atlas_name + checkatlas.QC_FIG_EXTENSION
     print("Calc QC")
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
@@ -258,8 +287,6 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
         log1p=False,
         inplace=True,
     )
-    # df_annot = adata.obs[get_viable_obs_qc(adata)]
-    # df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
     sc.pl.violin(
         adata,
         [

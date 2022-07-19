@@ -30,8 +30,8 @@ CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
 RSCRIPT = inspect.getfile(atlas).replace("atlas.py", "convertSeurat.R")
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
-QC_EXTENSION = "_checkatlas_qc.png"
-# QC_EXTENSION = "_checkatlas_qc.tsv"
+QC_FIG_EXTENSION = "_checkatlas_qc.png"
+QC_EXTENSION = "_checkatlas_qc.tsv"
 UMAP_EXTENSION = "_checkatlas_umap.png"
 TSNE_EXTENSION = "_checkatlas_tsne.png"
 METRIC_CLUSTER_EXTENSION = "_checkatlas_mcluster.tsv"
@@ -357,6 +357,7 @@ def run(path, atlas_list, multithread, n_cpus):
                 atlas.create_summary_table(adata, atlas_path, atlas_info, path)
                 atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
                 atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+                atlas.create_qc_tables(adata, atlas_path, atlas_info, path)
                 atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
                 atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
                 atlas.metric_cluster(adata, atlas_path, atlas_info, path)
@@ -372,33 +373,34 @@ def run(path, atlas_list, multithread, n_cpus):
 if __name__ == "__main__":
     path = "/Users/christophebecavin/Documents/testatlas/"
     # atlas_path = "/Users/christophebecavin/Documents/testatlas/"
-    # atlas_info = ["test_version", "Scanpy", ".h5ad",
-    # "data/test_version.h5ad"]
-    folders.checkatlas_folders(path)
-    atlas_list = list_atlases(path)
-    clean_atlas_dict = clean_list_atlases(atlas_list, path)
-
-    for atlas_path, atlas_info in clean_atlas_dict.items():
-        print(atlas_path, atlas_info)
-        adata = read_atlas(atlas_path, atlas_info)
-        print(adata is not None)
-        if adata is not None:
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-            atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
-            # atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-            atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-            # atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-            atlas.metric_cluster(adata, atlas_path, atlas_info, path)
-            atlas.metric_annot(adata, atlas_path, atlas_info, path)
-            atlas.metric_dimred(adata, atlas_path, atlas_info, path)
-
+    atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
+    # folders.checkatlas_folders(path)
+    # atlas_list = list_atlases(path)
+    # clean_atlas_dict = clean_list_atlases(atlas_list, path)
+    #
+    # for atlas_path, atlas_info in clean_atlas_dict.items():
+    #     print(atlas_path, atlas_info)
+    #     adata = read_atlas(atlas_path, atlas_info)
+    #     print(adata is not None)
+    #     if adata is not None:
+    #         adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+    #         atlas.create_summary_table(adata, atlas_path, atlas_info, path)
+    #         atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
+    #         # atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
+    #         atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
+    #         # atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
+    #         atlas.metric_cluster(adata, atlas_path, atlas_info, path)
+    #         atlas.metric_annot(adata, atlas_path, atlas_info, path)
+    #         atlas.metric_dimred(adata, atlas_path, atlas_info, path)
 # atlas_path = '/Users/christophebecavin/Documents/testatlas/hca/
 # HCA_Barbry_Grch38_Raw_filter_Norm.h5ad'
-# #atlas_path = '/Users/christophebecavin/Documents/testatlas/PAH_675093.h5ad'
+# atlas_path = '/Users/christophebecavin/Documents/testatlas/Endothelial.h5ad'
 # atlas_name = get_atlas_name(atlas_path)
 # print('Read atlas')
-# adata = read_atlas(atlas_path)
+#     adata = read_atlas(atlas_path, atlas_info)
+#     sc.pp.subsample(adata, fraction=0.05)
+#     adata.write('/Users/christophebecavin/Documents/testatlas/Endothelial_lite.h5ad')
+#     print(adata)
 # print('Calc QC')
 # figure_path = '/Users/christophebecavin/Documents/testatlas/'
 # atlas.create_qc_plots(adata, atlas_path, atlas_name, figure_path)
