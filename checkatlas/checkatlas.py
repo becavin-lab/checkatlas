@@ -214,7 +214,7 @@ def start_multithread_client():
     return client
 
 
-def run(path, atlas_list, multithread, n_cpus):
+def run(args, logger):
     """
     Main function of checkatlas
     Run all functions for all atlases:
@@ -225,24 +225,26 @@ def run(path, atlas_list, multithread, n_cpus):
     - Calculate every metrics
     Dask powered -- everything is done in parallel
 
-    :param path:
-    :param atlas_list:
-    :param n_cpus:
+    :param args:
     :return:
     """
 
-    folders.checkatlas_folders(path)
+    folders.checkatlas_folders(args.path)
 
-    if multithread:
+    logger.info("Searching Seurat, Cellranger and Scanpy files")
+    atlas_list = list_atlases(args.path)
+    # First clean atlas list and keep only the h5ad files
+    clean_atlas_dict = clean_list_atlases(atlas_list, args.path)
+    logger.info("Found {} files with these extensions"
+                " {}.".format(len(atlas_list), EXTENSIONS))
+
+    if args.thread > 1:
         client = start_multithread_client()
         futures = list()
 
-    # First clean atlas list and keep only the h5ad files
-    clean_atlas_dict = clean_list_atlases(atlas_list, path)
-
     # Create summary files
     for atlas_path, atlas_info in clean_atlas_dict.items():
-        if multithread:
+        if args.thread > 1:
             matplotlib.pyplot.switch_backend("Agg")
             # #### Multi-threaded
             # read adata
@@ -346,7 +348,7 @@ def run(path, atlas_list, multithread, n_cpus):
             # ##### Sequential
             atlas_name = atlas_info[0]
             csv_summary_path = os.path.join(
-                folders.get_folder(path, folders.SUMMARY),
+                folders.get_folder(args.path, folders.SUMMARY),
                 atlas_name + SUMMARY_EXTENSION,
             )
             print("Search", csv_summary_path)
@@ -354,20 +356,20 @@ def run(path, atlas_list, multithread, n_cpus):
             adata = read_atlas(atlas_path, atlas_info)
             if adata is not None:
                 adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-                atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-                atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
-                atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-                atlas.create_qc_tables(adata, atlas_path, atlas_info, path)
-                atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-                atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-                atlas.metric_cluster(adata, atlas_path, atlas_info, path)
-                atlas.metric_annot(adata, atlas_path, atlas_info, path)
-                atlas.metric_dimred(adata, atlas_path, atlas_info, path)
+                atlas.create_summary_table(adata, atlas_path, atlas_info, args.path)
+                atlas.create_anndata_table(adata, atlas_path, atlas_info, args.path)
+                atlas.create_qc_plots(adata, atlas_path, atlas_info, args.path)
+                atlas.create_qc_tables(adata, atlas_path, atlas_info, args.path)
+                atlas.create_umap_fig(adata, atlas_path, atlas_info, args.path)
+                atlas.create_tsne_fig(adata, atlas_path, atlas_info, args.path)
+                atlas.metric_cluster(adata, atlas_path, atlas_info, args.path)
+                atlas.metric_annot(adata, atlas_path, atlas_info, args.path)
+                atlas.metric_dimred(adata, atlas_path, atlas_info, args.path)
             # else:
             #     print("Checkatlas already ran for:", atlas_name)
 
     print("Run MultiQC")
-    multiqc.run_multiqc(path)
+    multiqc.run_multiqc(args)
 
 
 if __name__ == "__main__":
