@@ -1,0 +1,30 @@
+NOADATA: false
+NOMETRIC: false
+NOMULTIQC: false
+NOQC: false
+NOREDUCTION: false
+NOSUMMARY: false
+config: config/default_config.yaml
+debug: true
+metric_annot: []
+metric_cluster:
+- silhouette
+- davies_boudin
+metric_dimred: []
+multiqc: CheckAtlas_MultiQC
+obs_cluster:
+- cell_type
+- CellType
+- celltype
+- ann_finest_level
+- seurat_clusters
+- louvain
+- leiden
+- orig.ident
+path: /Users/christophebecavin/Documents/testatlas
+qc_display:
+- violin_plot
+- total-counts
+- n_genes_by_counts
+- pct_counts_mt
+thread: 1
