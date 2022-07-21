@@ -1,6 +1,9 @@
 import argparse  # pragma: no cover
 
 from . import checkatlas  # pragma: no cover
+import logging
+import time
+import os
 
 
 def main() -> None:  # pragma: no cover
@@ -8,52 +11,103 @@ def main() -> None:  # pragma: no cover
     The main function executes on commands:
     `python -m checkatlas` and `$ checkatlas `.
 
-    This is your program's entry point.
+    This is checkatlas entry point.
 
-    You can change this function to do whatever you want.
-    Examples:
-        * Run a test suite
-        * Run a server
-        * Do some other stuff
-        * Run a command line application (Click, Typer, ArgParse)
-        * List all available tasks
-        * Run an application (Flask, FastAPI, Django, etc.)
+    Arguments are managed here
+    Search fo atlases is managed here
+    Then checkatlas is ran with the list of atlases found
     """
+
+    # Set up logging
+    start_execution_time = time.time()
+    logger = logging.getLogger("checkatlas")
+    logging.basicConfig(format='%(name)-12s: %(levelname)-8s %(message)s')
+
     parser = argparse.ArgumentParser(
-        description="checkatlas.",
+        prog="checkatlas",
+        usage="checkatlas [OPTIONS] your_search_folder/",
+        description="CheckAtlas is a one liner tool to check the quality of your \n"
+                    "single-cell atlases. For every atlas, it produces the quality "
+                    "control tables and figures which can be then processed by multiqc. "
+                    "CheckAtlas is able to load Scanpy, Seurat, and CellRanger files.",
         epilog="Enjoy the checkatlas functionality!",
     )
-    # This is required positional argument
+    
+    # All Program arguments
+    # main_options = parser.add_argument_group("Main arguments")
     parser.add_argument(
         "path",
         type=str,
-        help="Path containing Scanpy and Seurat atlases",
-        default="becavin-lab",
+        help="Path containing Scanpy, CellRanger and Seurat atlases",
+        default=".",
     )
-    # This is optional named argument
     parser.add_argument(
-        "-v",
-        "--verbose",
+        "-m",
+        "--multiqc",
+        type=str,
+        help="Set Multiqc out folder. Default: CheckAtlas_MultiQC",
+        default="CheckAtlas_MultiQC",
+    )
+    parser.add_argument(
+        "-t",
+        "--thread",
+        default=1,
+        help="Number of threads for parallel computing. \nIf -t > 1,"
+             " this will activate automatically the parallel computing"
+             " mode using Dask.",
+    )
+    parser.add_argument(
+        "-d",
+        "--debug",
         action="store_true",
-        help="Optionally adds verbosity",
+        help="Print out all debug messages",
     )
+
+    # Pipeline arguments
+    pipeline_options = parser.add_argument_group("Manage checkatlas pipeline")
+    pipeline_options.add_argument("-ns", "--NOSUMMARY", action="store_true",
+                        help="Do not create general summary tables")
+    pipeline_options.add_argument("-na", "--NOADATA", action="store_true",
+                                  help="Do not Create adata summary tables")
+    pipeline_options.add_argument("-nq", "--NOQC", action="store_true",
+                                  help="Do not produce any quality control figures or tables")
+    pipeline_options.add_argument("-nr", "--NOREDUCTION", action="store_true",
+                              help="Do not Produce UMAP and t-SNE figures")
+    pipeline_options.add_argument("-nm", "--NOMETRIC", action="store_true",
+                                  help="Do not calculate any metric.")
+    pipeline_options.add_argument("-nc", "--NOMULTIQC", action="store_true",
+                              help="Do not run multiqc.")
+
+    # Arguments linked to QC
+    qc_options = parser.add_argument_group("QC options")
+    qc_options.add_argument("--qc_display", nargs='+', type=str,
+                            default=["violin_plot","total-counts",
+                                    "n_genes_by_counts","pct_counts_mt"],
+                            help="List of QC to display. "
+                                 "Available qc = violin_plot, total_counts, "
+                                 "n_genes_by_counts, pct_counts_mt. "
+                                 "Default: --qc_display violin_plot total_counts "
+                                 "n_genes_by_counts pct_counts_mt")
+
+    # Arguments linked to metric
+    metric_options = parser.add_argument_group("Metric options")
+
+
+
+    # Parse all args
     args = parser.parse_args()
-    print(f"Checking your single-cell atlases in {args.path}!")
-    if args.verbose:
-        print("Verbose mode is on.")
+    print("Get arguments of the program:",args)
 
-    print("Searching Seurat and Scanpy files")
-    atlas_list = checkatlas.list_atlases(args.path)
-    print(
-        "Found",
-        len(atlas_list),
-        "files with these extensions",
-        checkatlas.EXTENSIONS,
-    )
+    # Set logger level
+    if args.debug:
+        logger.setLevel(getattr(logging, "DEBUG"))
+    else:
+        logger.setLevel(getattr(logging, "INFO"))
 
-    n_cpus = 4
-    multithread = False
-    checkatlas.run(args.path, atlas_list, multithread, n_cpus)
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    logger.debug("Path_script", script_path)
+
+    checkatlas.run(args, logger)
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -1,12 +1,12 @@
 import os
 
 
-def run_multiqc(path):
+def run_multiqc(args):
     title = '"Check Single-Cell Atlas"'
     name = "CheckAtlas"
     multiqc_script = (
-        "cd " + path + ";"
-        "multiqc -i " + title + " -n " + name + " -o CheckAtlas_MultiQC"
+        "cd " + args.path + ";"
+        "multiqc -i " + title + " -n " + name + " -o " + args.multiqc +
         ' -f -e "snippy" --cl-config "ignore_images: false" ' + path
     )
     print(multiqc_script)
