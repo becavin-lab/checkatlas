@@ -4,6 +4,13 @@ Changelog
 
 (unreleased)
 ------------
+- Add config file management for program arguments. [drbecavin]
+- Add parameters and logger in main. [drbecavin]
+
+
+0.0.13 (2022-07-19)
+-------------------
+- Release: version 0.0.13 🚀 [drbecavin]
 - Add QC tables for Knee plots. [drbecavin]
 
 
