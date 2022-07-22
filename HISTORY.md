@@ -4,6 +4,12 @@ Changelog
 
 (unreleased)
 ------------
+- Replace print by logger.info and logger.debug. [drbecavin]
+
+
+0.0.14 (2022-07-22)
+-------------------
+- Release: version 0.0.14 🚀 [drbecavin]
 - Add config file management for program arguments. [drbecavin]
 - Add parameters and logger in main. [drbecavin]
 
