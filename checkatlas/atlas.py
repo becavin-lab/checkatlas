@@ -1,5 +1,6 @@
 import os
 import re
+import logging
 
 import numpy as np
 import pandas as pd
@@ -63,21 +64,7 @@ OBS_QC = [
     "pct_counts_ribo",
 ]
 
-
-def list_atlases(path) -> list:
-    """
-    List all atlases files in the path
-    Detect .rds, .h5, .h5ad
-    :param path:
-    :return: List of files
-    """
-    atlas_list = list()
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            for extension in checkatlas.EXTENSIONS:
-                if file.endswith(extension):
-                    atlas_list.append(os.path.join(root, file))
-    return atlas_list
+logger = logging.getLogger("checkatlas")
 
 
 def convert_atlas(atlas_path, atlas_name) -> None:
@@ -86,7 +73,7 @@ def convert_atlas(atlas_path, atlas_name) -> None:
     :param atlas_path:
     :return:
     """
-    print("Convert Seurat object to Scanpy: ", atlas_path)
+    logger.info(f"Convert Seurat object to Scanpy: {atlas_path}")
     rscript_cmd = (
         "Rscript "
         + checkatlas.RSCRIPT
@@ -95,7 +82,7 @@ def convert_atlas(atlas_path, atlas_name) -> None:
         + " "
         + atlas_name
     )
-    print(rscript_cmd)
+    logger.debug(f"Run: {rscript_cmd}")
     os.system(rscript_cmd)
 
 
@@ -105,7 +92,7 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     :param adata:
     :return:
     """
-    print("Clean scanpy:" + atlas_info[0])
+    logger.debug(f"Clean scanpy: {atlas_info[0]}")
     # If OBS_CLUSTERS are present and in int32 -> be sure to
     # transform them in categorical
     for obs_key in adata.obs_keys():
@@ -146,7 +133,7 @@ def get_viable_obs_annot(adata):
     return sorted(obs_keys)
 
 
-def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
+def create_summary_table(adata, atlas_path, atlas_info, args) -> None:
     """
     Create a table with all interesting variables
     :param adata:
@@ -155,10 +142,11 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
+    logger.debug(f"Create Summary table for {atlas_name}")
     atlas_file_type = atlas_info[1]
     atlas_extension = atlas_info[2]
     csv_path = os.path.join(
-        folders.get_folder(path, folders.SUMMARY),
+        folders.get_folder(args.path, folders.SUMMARY),
         atlas_name + checkatlas.SUMMARY_EXTENSION,
     )
     # Create summary table
@@ -171,7 +159,6 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
         "File_extension",
         "File_path",
     ]
-    print("Run summary")
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
     df_summary["AtlasFileType"][atlas_name] = atlas_file_type
     df_summary["NbCells"][atlas_name] = adata.n_obs
@@ -179,11 +166,11 @@ def create_summary_table(adata, atlas_path, atlas_info, path) -> None:
     df_summary["AnnData.raw"][atlas_name] = adata.raw is not None
     df_summary["AnnData.X"][atlas_name] = adata.X is not None
     df_summary["File_extension"][atlas_name] = atlas_extension
-    df_summary["File_path"][atlas_name] = atlas_path.replace(path, "")
+    df_summary["File_path"][atlas_name] = atlas_path.replace(args.path, "")
     df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
-def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
+def create_anndata_table(adata, atlas_path, atlas_info, args) -> None:
     """
     Create a table with all AnnData arguments
     :param adata:
@@ -192,8 +179,9 @@ def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
+    logger.debug(f"Create Adata table for {atlas_name}")
     csv_path = os.path.join(
-        folders.get_folder(path, folders.ANNDATA),
+        folders.get_folder(args.path, folders.ANNDATA),
         atlas_name + checkatlas.ADATA_EXTENSION,
     )
     # Create AnnData table
@@ -228,7 +216,7 @@ def create_anndata_table(adata, atlas_path, atlas_info, path) -> None:
     df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_tables(adata, atlas_path, atlas_info, path) -> None:
+def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
     """
     Display the atlas QC
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
@@ -240,12 +228,11 @@ def create_qc_tables(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    sc.settings.figdir = folders.get_workingdir(path)
     qc_path = os.path.join(
-        folders.get_folder(path, folders.QC),
+        folders.get_folder(args.path, folders.QC),
         atlas_name + checkatlas.QC_EXTENSION,
     )
-    print("Calc QC")
+    logger.debug(f"Create QC tables for {atlas_name}")
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
     # ribosomal genes
@@ -261,7 +248,7 @@ def create_qc_tables(adata, atlas_path, atlas_info, path) -> None:
     df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
+def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
     """
     Display the atlas QC
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
@@ -273,9 +260,9 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
-    sc.settings.figdir = folders.get_workingdir(path)
+    sc.settings.figdir = folders.get_workingdir(args.path)
     qc_path = os.sep + atlas_name + checkatlas.QC_FIG_EXTENSION
-    print("Calc QC")
+    logger.debug(f"Create QC violin plot for {atlas_name}")
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
     # ribosomal genes
@@ -302,7 +289,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, path) -> None:
     )
 
 
-def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
+def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -315,10 +302,10 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
-    print(len(list(filter(r.match, adata.obsm_keys()))))
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
+        logger.debug(f"Create UMAP figure for {atlas_name}")
         # Setting up figures directory
-        sc.settings.figdir = folders.get_workingdir(path)
+        sc.settings.figdir = folders.get_workingdir(args.path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
         # Exporting umap
         obs_keys = get_viable_obs_annot(adata)
@@ -328,7 +315,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, path) -> None:
             sc.pl.umap(adata, show=False, save=umap_path)
 
 
-def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
+def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -342,8 +329,11 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
     atlas_name = atlas_info[0]
     r = re.compile(".*tsne*.")
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
+        logger.debug(f"Create t-SNE figure for {atlas_name}")
         # Setting up figures directory
-        sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(path)
+        sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(
+            args.path
+        )
         tsne_path = os.sep + atlas_name + checkatlas.TSNE_EXTENSION
         # Exporting tsne
         obs_keys = get_viable_obs_annot(adata)
@@ -353,7 +343,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, path) -> None:
             sc.pl.tsne(adata, show=False, save=tsne_path)
 
 
-def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
+def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     """
     Main function of checkatlas
     For every atlas create summary tables with all attributes of the atlas
@@ -363,21 +353,29 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
     """
     atlas_name = atlas_info[0]
     csv_path = os.path.join(
-        folders.get_folder(path, folders.CLUSTER),
+        folders.get_folder(args.path, folders.CLUSTER),
         atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION,
     )
     header = ["Sample", "obs", "Silhouette", "Davies-Bouldin"]
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata)
+    if len(obs_keys) > 0:
+        logger.debug(f"Calc Clustering metrics for {atlas_name}")
+    else:
+        logger.debug(f"No viable obs_key was found for {atlas_name}")
     for obs_key in obs_keys:
         # Need more than one sample to calculate metric
         annotations = adata.obs[obs_key]
         if len(annotations.cat.categories) != 1:
             silhouette = 1
-            print("Calc Silhouette for " + atlas_name, obs_key)
+            logger.debug(
+                f"Calc Silhouette for {atlas_name} with obs {obs_key}"
+            )
             silhouette = clust_compute.silhouette(adata, obs_key, "X_umap")
             daviesb = -1
-            print("Calc Davies Bouldin for " + atlas_name, obs_key)
+            logger.debug(
+                f"Calc Davies Bouldin for {atlas_name} with obs {obs_key}"
+            )
             daviesb = clust_compute.davies_bouldin(adata, obs_key, "X_umap")
             df_line = pd.DataFrame(
                 {
@@ -394,7 +392,7 @@ def metric_cluster(adata, atlas_path, atlas_info, path) -> None:
         df_cluster.to_csv(csv_path, index=False, sep="\t")
 
 
-def metric_annot(adata, atlas_path, atlas_info, path) -> None:
+def metric_annot(adata, atlas_path, atlas_info, args) -> None:
     """
     Main function of checkatlas
     For every atlas create summary tables with all attributes of the atlas
@@ -404,7 +402,7 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
     """
     atlas_name = atlas_info[0]
     csv_path = os.path.join(
-        folders.get_folder(path, folders.ANNOTATION),
+        folders.get_folder(args.path, folders.ANNOTATION),
         atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION,
     )
     header = ["Sample", "obs", "Rand"]
@@ -417,9 +415,9 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
             # Need more than one sample to calculate metric
             annotations = adata.obs[obs_key]
             if len(annotations.cat.categories) != 1:
-                print(
-                    "NOT WORKING YET - Calc Rand Index for " + atlas_name,
-                    obs_key,
+                logger.debug(
+                    f"NOT WORKING YET - Calc Rand Index "
+                    f"for {atlas_name} with obs {obs_key}"
                 )
                 rand = -1
                 # ##rand = clust_compute.rand(adata, obs_key, ref_obs)
@@ -438,7 +436,7 @@ def metric_annot(adata, atlas_path, atlas_info, path) -> None:
             df_annot.to_csv(csv_path, index=False, sep="\t")
 
 
-def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
+def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
     """
     Main function of checkatlas
     For every atlas create summary tables with all attributes of the atlas
@@ -448,14 +446,15 @@ def metric_dimred(adata, atlas_path, atlas_info, path) -> None:
     """
     atlas_name = atlas_info[0]
     csv_path = os.path.join(
-        folders.get_folder(path, folders.DIMRED),
+        folders.get_folder(args.path, folders.DIMRED),
         atlas_name + checkatlas.METRIC_DIMRED_EXTENSION,
     )
     header = ["Sample", "obs", "Kruskal"]
     df_dimred = pd.DataFrame(columns=header)
     for obsm_key in adata.obsm_keys():
-        print(
-            "NOT WORKING YET - Calc Kruskal Stress for " + atlas_name, obsm_key
+        logger.debug(
+            f"NOT WORKING YET - Calc Rand Index "
+            f"for {atlas_name} with obs {obsm_key}"
         )
         kruskal = -1
         # kruskal = dr_compute.kruskal_stress(adata, obsm_key)

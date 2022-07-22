@@ -1,4 +1,5 @@
 import os
+import logging
 
 working_dir = "checkatlas_files"
 SUMMARY = "summary"
@@ -25,6 +26,8 @@ dict_folder = {
     SPECI: SPECI,
 }
 
+logger = logging.getLogger("checkatlas")
+
 
 def get_workingdir(path):
     return os.path.join(path, working_dir)
@@ -35,7 +38,12 @@ def get_folder(path, key_folder):
 
 
 def checkatlas_folders(path):
-    print("Check if checkatlas folders exist")
+    """
+    Check in path if the different checkatlas folders exists.<br>
+    Create them if needed.
+    :param path:
+    :return: None
+    """
     global_path = get_workingdir(path)
     if not os.path.exists(global_path):
         os.mkdir(global_path)
@@ -43,4 +51,5 @@ def checkatlas_folders(path):
     for key_folder in dict_folder.keys():
         temp_path = os.path.join(global_path, key_folder)
         if not os.path.exists(temp_path):
+            logger.debug(f"Create folder: {temp_path}")
             os.mkdir(temp_path)
