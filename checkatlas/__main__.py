@@ -2,7 +2,6 @@ import argparse  # pragma: no cover
 
 from . import checkatlas  # pragma: no cover
 import logging
-import time
 import yaml
 from . import atlas
 
@@ -21,15 +20,17 @@ def main() -> None:  # pragma: no cover
 
     # Set up logging
     logger = logging.getLogger("checkatlas")
-    logging.basicConfig(format="%(name)-12s: %(levelname)-8s %(message)s")
+    logging.basicConfig(format="|--- %(levelname)-8s %(message)s")
 
     parser = argparse.ArgumentParser(
         prog="checkatlas",
         usage="checkatlas [OPTIONS] your_search_folder/",
-        description="CheckAtlas is a one liner tool to check the quality of your \n"
-        "single-cell atlases. For every atlas, it produces the quality "
-        "control tables and figures which can be then processed by multiqc. "
-        "CheckAtlas is able to load Scanpy, Seurat, and CellRanger files.",
+        description="CheckAtlas is a one liner tool to check the "
+        "quality of your single-cell atlases. For "
+        "every atlas, it produces the quality control "
+        "tables and figures which can be then processed "
+        "by multiqc. CheckAtlas is able to load Scanpy, "
+        "Seurat, and CellRanger files.",
         epilog="Enjoy the checkatlas functionality!",
     )
 
@@ -38,7 +39,7 @@ def main() -> None:  # pragma: no cover
     parser.add_argument(
         "path",
         type=str,
-        help="Path containing Scanpy, CellRanger and Seurat atlases",
+        help="Your folder containing Scanpy, CellRanger and Seurat atlasesv",
         default=".",
     )
     parser.add_argument(
@@ -47,7 +48,8 @@ def main() -> None:  # pragma: no cover
         type=str,
         help="Provide a config file with all checkatlas arguments. "
         "The default config file is provided in "
-        "https://github.com/becavin-lab/checkatlas/config/checkatlas_config.yaml",
+        "https://github.com/becavin-lab/checkatlas/"
+        "config/checkatlas_config.yaml",
         default="",
     )
     parser.add_argument(
@@ -56,6 +58,15 @@ def main() -> None:  # pragma: no cover
         type=str,
         help="Set Multiqc out folder. Default: CheckAtlas_MultiQC",
         default="CheckAtlas_MultiQC",
+    )
+    parser.add_argument(
+        "-r",
+        "--resume",
+        action="store_true",
+        help="Set this argument, if you added "
+        "atlas files since the last run of "
+        "checkatlas and you want to check "
+        "only the new files.",
     )
     parser.add_argument(
         "-t",
@@ -70,34 +81,28 @@ def main() -> None:  # pragma: no cover
         "-d",
         "--debug",
         action="store_true",
-        help="Print out all debug messages",
+        help="Print out all debug messages.",
     )
 
     # Pipeline arguments
     pipeline_options = parser.add_argument_group("Manage checkatlas pipeline")
     pipeline_options.add_argument(
-        "-ns",
-        "--NOSUMMARY",
-        action="store_true",
-        help="Do not create general summary tables",
-    )
-    pipeline_options.add_argument(
         "-na",
         "--NOADATA",
         action="store_true",
-        help="Do not Create adata summary tables",
+        help="Do not Create adata summary tables.",
     )
     pipeline_options.add_argument(
         "-nq",
         "--NOQC",
         action="store_true",
-        help="Do not produce any quality control figures or tables",
+        help="Do not produce any quality control figures or tables.",
     )
     pipeline_options.add_argument(
         "-nr",
         "--NOREDUCTION",
         action="store_true",
-        help="Do not Produce UMAP and t-SNE figures",
+        help="Do not Produce UMAP and t-SNE figures.",
     )
     pipeline_options.add_argument(
         "-nm",
@@ -146,8 +151,9 @@ def main() -> None:  # pragma: no cover
         default=["silhouette", "davies_boudin"],
         help="List of clustering metrics to calculate."
         "To get a complete list of metrics, look here:"
-        "https://github.com/becavin-lab/checkatlas/blob/main/checkatlas/metrics/metrics.py"
-        "Example: --metric_cluster silhouette davies_bouldin",
+        "https://github.com/becavin-lab/checkatlas/"
+        "blob/main/checkatlas/metrics/metrics.py"
+        " Example: --metric_cluster silhouette davies_bouldin",
     )
     metric_options.add_argument(
         "--metric_annot",
@@ -156,8 +162,9 @@ def main() -> None:  # pragma: no cover
         default=[],
         help="List of clustering metrics to calculate."
         "To get a complete list of metrics, look here:"
-        "https://github.com/becavin-lab/checkatlas/blob/main/checkatlas/metrics/metrics.py"
-        "Example: --metric_annot rand_index",
+        "https://github.com/becavin-lab/checkatlas/blob/"
+        "main/checkatlas/metrics/metrics.py"
+        " Example: --metric_annot rand_index",
     )
     metric_options.add_argument(
         "--metric_dimred",
@@ -166,8 +173,9 @@ def main() -> None:  # pragma: no cover
         default=[],
         help="List of dimensionality reduction metrics to calculate."
         "To get a complete list of metrics, look here:"
-        "https://github.com/becavin-lab/checkatlas/blob/main/checkatlas/metrics/metrics.py"
-        "Example: --metric_dimred kruskal_stress",
+        "https://github.com/becavin-lab/checkatlas/blob/"
+        "main/checkatlas/metrics/metrics.py"
+        " Example: --metric_dimred kruskal_stress",
     )
 
     # Parse all args
@@ -193,10 +201,11 @@ def main() -> None:  # pragma: no cover
     # script_path = os.path.dirname(os.path.realpath(__file__))
     # logger.debug("Path_script {}".format(script_path))
 
-    # Save all arguments to yaml (only run it when generatiing example file config.yaml
+    # Save all arguments to yaml (only run it when
+    # generating example file config.yaml
     # save_arguments(args, 'config/default_config.yaml')
 
-    checkatlas.run(args, logger)
+    checkatlas.run(args)
 
 
 def load_arguments(args, yaml_name):
@@ -222,7 +231,8 @@ def load_arguments(args, yaml_name):
 
 def save_arguments(args, yaml_name):
     """
-    Save all args to a yaml file. Only use this functon to create example yaml config files.
+    Save all args to a yaml file. Only use this
+    function to create example yaml config files.
 
     :param args:
     :param yaml_name:

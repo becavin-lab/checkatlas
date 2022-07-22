@@ -6,8 +6,14 @@ def run_multiqc(args):
     name = "CheckAtlas"
     multiqc_script = (
         "cd " + args.path + ";"
-        "multiqc -i " + title + " -n " + name + " -o " + args.multiqc +
-        ' -f -e "snippy" --cl-config "ignore_images: false" ' + path
+        "multiqc -i "
+        + title
+        + " -n "
+        + name
+        + " -o "
+        + args.multiqc
+        + ' -f -e "snippy" --cl-config "ignore_images: false" '
+        + args.path
     )
     print(multiqc_script)
     os.system(multiqc_script)

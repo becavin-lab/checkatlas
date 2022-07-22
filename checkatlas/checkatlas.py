@@ -2,7 +2,7 @@ import csv
 import inspect
 import os
 import webbrowser
-
+import logging
 import anndata
 import matplotlib
 import scanpy as sc
@@ -38,6 +38,8 @@ METRIC_CLUSTER_EXTENSION = "_checkatlas_mcluster.tsv"
 METRIC_ANNOTATION_EXTENSION = "_checkatlas_mannot.tsv"
 METRIC_DIMRED_EXTENSION = "_checkatlas_mdimred.tsv"
 METRIC_SPECIFICITY_EXTENSION = "_checkatlas_mspecificity.tsv"
+
+logger = logging.getLogger("checkatlas")
 
 
 def list_atlases(path) -> list:
@@ -104,12 +106,14 @@ def clean_list_atlases(atlas_list, path) -> dict:
         if atlas_path.endswith(".rds"):
             atlas_h5 = atlas_path.replace(".rds", ".h5ad")
             if os.path.exists(atlas_h5):
-                print("Seurat file already converted to Scanpy:", atlas_h5)
+                logger.debug(
+                    f"Seurat file already converted to Scanpy: {atlas_h5}"
+                )
             else:
                 convert_seurat_atlas(atlas_path, atlas_name)
                 if os.path.exists(atlas_h5):
-                    print(
-                        "Include Atlas: " + atlas_name + " from " + atlas_path
+                    logger.debug(
+                        f"Include Atlas: {atlas_name} from {atlas_path}"
                     )
                     info = [
                         atlas_name,
@@ -123,7 +127,7 @@ def clean_list_atlases(atlas_list, path) -> dict:
             if atlas_path.endswith(CELLRANGER_FILE):
                 atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
                 atlas_name = get_atlas_name(atlas_h5)
-                print("Include Atlas: " + atlas_name + " from " + atlas_path)
+                logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
                 info = [
                     atlas_name,
                     "Cellranger",
@@ -134,7 +138,7 @@ def clean_list_atlases(atlas_list, path) -> dict:
         elif atlas_path.endswith(".h5ad"):
             atlas_rds = atlas_path.replace(".h5ad", ".rds")
             if os.path.exists(atlas_rds):
-                print("Include Atlas: " + atlas_name + " from " + atlas_path)
+                logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
                 info = [
                     atlas_name,
                     "Seurat",
@@ -143,7 +147,7 @@ def clean_list_atlases(atlas_list, path) -> dict:
                 ]
                 clean_atlas_dict[atlas_path] = info
             else:
-                print("Include Atlas: " + atlas_name + " from " + atlas_path)
+                logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
                 info = [
                     atlas_name,
                     "Scanpy",
@@ -163,13 +167,14 @@ def clean_list_atlases(atlas_list, path) -> dict:
 
 
 def read_atlas(atlas_path, atlas_info):
-    print("--- Load " + atlas_info[0] + " in " + atlas_info[-1])
+    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
     try:
         if atlas_path.endswith(".h5"):
-            print(atlas_path)
+            logger.debug(f"Read Cellranger file {atlas_path}")
             adata = sc.read_10x_h5(atlas_path)
             adata.var_names_make_unique()
         else:
+            logger.debug(f"Read Scanpy file {atlas_path}")
             adata = sc.read_h5ad(atlas_path)
         return adata
     except anndata._io.utils.AnnDataReadError:
@@ -214,7 +219,39 @@ def start_multithread_client():
     return client
 
 
-def run(args, logger):
+def get_pipeline_functions(args):
+    """
+    Using arguments of checkatlas program -> build
+    the list of functions to run on each adata
+    and seurat object
+    :param args:
+    :return: list of functions to run
+    """
+    checkatlas_functions = list()
+    # Create summary by default, this table is used by the resume option
+    checkatlas_functions.append(atlas.create_summary_table)
+    if not args.NOADATA:
+        checkatlas_functions.append(atlas.create_anndata_table)
+    if not args.NOQC:
+        if "violin_plot" in args.qc_display:
+            checkatlas_functions.append(atlas.create_qc_plots)
+        if (
+            "total-counts" in args.qc_display
+            or "n_genes_by_counts" in args.qc_display
+            or "pct_counts_mt" in args.qc_display
+        ):
+            checkatlas_functions.append(atlas.create_qc_tables)
+    if not args.NOREDUCTION:
+        checkatlas_functions.append(atlas.create_umap_fig)
+        checkatlas_functions.append(atlas.create_tsne_fig)
+    if not args.NOMETRIC:
+        checkatlas_functions.append(atlas.metric_cluster)
+        checkatlas_functions.append(atlas.metric_annot)
+        checkatlas_functions.append(atlas.metric_dimred)
+    return checkatlas_functions
+
+
+def run(args):
     """
     Main function of checkatlas
     Run all functions for all atlases:
@@ -226,150 +263,76 @@ def run(args, logger):
     Dask powered -- everything is done in parallel
 
     :param args:
+    :param logger:
     :return:
     """
-
+    logger.debug(f"Check checkatlas folders in:{args.path}")
     folders.checkatlas_folders(args.path)
 
     logger.info("Searching Seurat, Cellranger and Scanpy files")
     atlas_list = list_atlases(args.path)
     # First clean atlas list and keep only the h5ad files
     clean_atlas_dict = clean_list_atlases(atlas_list, args.path)
-    logger.info("Found {} files with these extensions"
-                " {}.".format(len(atlas_list), EXTENSIONS))
+    logger.info(
+        f"Found {len(atlas_list)} files with these extensions"
+        f" {EXTENSIONS}."
+    )
+
+    logger.debug("Get list of functions to run from the checkatlas config")
+    pipeline_functions = get_pipeline_functions(args)
+    logger.debug(
+        f"List of functions which will be ran "
+        f"for each atlas: {pipeline_functions}"
+    )
 
     if args.thread > 1:
         client = start_multithread_client()
         futures = list()
+        matplotlib.pyplot.switch_backend("Agg")
 
     # Create summary files
     for atlas_path, atlas_info in clean_atlas_dict.items():
-        if args.thread > 1:
-            matplotlib.pyplot.switch_backend("Agg")
-            # #### Multi-threaded
-            # read adata
-            atlas_name = atlas_info[0]
-            future_name = "Read_" + atlas_name
-            adata = client.submit(
-                read_atlas, atlas_path, atlas_info, key=future_name
-            )
-            future_name = "Clean_" + atlas_name
-            adata = client.submit(
-                atlas.clean_scanpy_atlas, adata, atlas_info, key=future_name
-            )
-            # Create summary files
-            future_name = "Summary_" + atlas_name
-            future_sum = client.submit(
-                atlas.create_summary_table,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name,
-            )
-            futures.append(future_sum)
-            # Adata explorer
-            future_name = "Adata_" + atlas_name
-            future_sum = client.submit(
-                atlas.create_anndata_table,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name,
-            )
-            futures.append(future_sum)
-            # Create QC plots
-            future_name = "QC_" + atlas_name
-            future_sum = client.submit(
-                atlas.create_qc_plots,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name,
-            )
-            futures.append(future_sum)
-            # Create Umap and TSNE figures
-            future_name = "UMAP_" + get_atlas_name(atlas_path)
-            future_fig_umap = client.submit(
-                atlas.create_umap_fig,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name,
-            )
-            futures.append(future_fig_umap)
-            future_name = "TSNE_" + get_atlas_name(atlas_path)
-            future_fig_tsne = client.submit(
-                atlas.create_tsne_fig,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name,
-            )
-            futures.append(future_fig_tsne)
-            # Calculate metrics
-            future_name = "Metric_Cluster_" + get_atlas_name(atlas_path)
-            future_met = client.submit(
-                atlas.metric_cluster,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name,
-            )
-            futures.append(future_met)
-            future_name2 = "Metric_Annot_" + get_atlas_name(atlas_path)
-            future_met2 = client.submit(
-                atlas.metric_annot,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name2,
-            )
-            futures.append(future_met2)
-            future_name3 = "Metric_DimRed_" + get_atlas_name(atlas_path)
-            future_met3 = client.submit(
-                atlas.metric_dimred,
-                adata,
-                atlas_path,
-                atlas_info,
-                path,
-                key=future_name3,
-            )
-            futures.append(future_met3)
-            # Wait for all thread to end
-            wait(futures)
-        else:
-            # ##### Sequential
-            atlas_name = atlas_info[0]
-            csv_summary_path = os.path.join(
-                folders.get_folder(args.path, folders.SUMMARY),
-                atlas_name + SUMMARY_EXTENSION,
-            )
-            print("Search", csv_summary_path)
-            # if not os.path.exists(csv_summary_path):
-            adata = read_atlas(atlas_path, atlas_info)
-            if adata is not None:
-                adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-                atlas.create_summary_table(adata, atlas_path, atlas_info, args.path)
-                atlas.create_anndata_table(adata, atlas_path, atlas_info, args.path)
-                atlas.create_qc_plots(adata, atlas_path, atlas_info, args.path)
-                atlas.create_qc_tables(adata, atlas_path, atlas_info, args.path)
-                atlas.create_umap_fig(adata, atlas_path, atlas_info, args.path)
-                atlas.create_tsne_fig(adata, atlas_path, atlas_info, args.path)
-                atlas.metric_cluster(adata, atlas_path, atlas_info, args.path)
-                atlas.metric_annot(adata, atlas_path, atlas_info, args.path)
-                atlas.metric_dimred(adata, atlas_path, atlas_info, args.path)
-            # else:
-            #     print("Checkatlas already ran for:", atlas_name)
+        atlas_name = atlas_info[0]
 
-    print("Run MultiQC")
-    multiqc.run_multiqc(args)
+        # Load adata only if resume is not selected
+        # and if csv_summary_path do not exist
+        csv_summary_path = os.path.join(
+            folders.get_folder(args.path, folders.SUMMARY),
+            atlas_name + SUMMARY_EXTENSION,
+        )
+        logger.debug(f"Search {csv_summary_path}")
+        if not args.resume:
+            adata = read_atlas(atlas_path, atlas_info)
+        elif not os.path.exists(csv_summary_path):
+            adata = read_atlas(atlas_path, atlas_info)
+
+        if adata is not None:
+            # Clean adata
+            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+
+            # Run pipeline functions
+            for function in pipeline_functions:
+                if args.thread == 1:
+                    function(adata, atlas_path, atlas_info, args)
+                else:
+                    future_name = function.__name__ + "_" + atlas_name
+                    future = client.submit(
+                        atlas.create_summary_table,
+                        adata,
+                        atlas_path,
+                        atlas_info,
+                        args,
+                        key=future_name,
+                    )
+                    futures.append(future)
+
+            if args.thread > 1:
+                # Wait for all thread to end
+                wait(futures)
+
+    if args.multiqc:
+        logger.info("Run MultiQC")
+        multiqc.run_multiqc(args)
 
 
 if __name__ == "__main__":
