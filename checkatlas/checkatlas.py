@@ -1,8 +1,9 @@
 import csv
 import inspect
+import logging
 import os
 import webbrowser
-import logging
+
 import anndata
 import matplotlib
 import scanpy as sc
@@ -246,9 +247,22 @@ def get_pipeline_functions(args):
         checkatlas_functions.append(atlas.create_umap_fig)
         checkatlas_functions.append(atlas.create_tsne_fig)
     if not args.NOMETRIC:
-        checkatlas_functions.append(atlas.metric_cluster)
-        checkatlas_functions.append(atlas.metric_annot)
-        checkatlas_functions.append(atlas.metric_dimred)
+        if len(args.metric_cluster) > 0:
+            checkatlas_functions.append(atlas.metric_cluster)
+        else:
+            logger.debug(
+                "No clustering metric was specified in --metric_cluster"
+            )
+        if len(args.metric_annot) > 0:
+            checkatlas_functions.append(atlas.metric_annot)
+        else:
+            logger.debug(
+                "No annotation metric was specified in --metric_annot"
+            )
+        if len(args.metric_dimred) > 0:
+            checkatlas_functions.append(atlas.metric_dimred)
+        else:
+            logger.debug("No dim red metric was specified in --metric_dimred")
     return checkatlas_functions
 
 

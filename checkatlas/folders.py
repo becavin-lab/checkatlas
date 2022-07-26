@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 working_dir = "checkatlas_files"
 SUMMARY = "summary"

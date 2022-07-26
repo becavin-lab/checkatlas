@@ -1,6 +1,6 @@
+import logging
 import os
 import re
-import logging
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,6 @@ import scanpy as sc
 
 from . import checkatlas, folders
 from .metrics import metrics
-
 
 # try:
 #     from .metrics.cluster import clust_compute
@@ -40,6 +39,12 @@ OBS_CLUSTERS = [
     "louvain",
     "leiden",
     "orig.ident",
+]
+
+OBSM_DIMRED = [
+    "X_umap",
+    "X_pca",
+    "X-tsne",
 ]
 
 OBS_QC = [
@@ -140,14 +145,31 @@ def get_viable_obs_annot(adata, args):
         categories_temp = annotations.cat.categories
         # remove nan if found
         categories = categories_temp.dropna()
-        if True in categories.isin(['nan']):
-            index = categories.get_loc('nan')
+        if True in categories.isin(["nan"]):
+            index = categories.get_loc("nan")
             categories = categories.delete(index)
         # Add obs_key with more than one category (with Nan removed)
         if len(categories) != 1:
             logger.debug(f"Add obs_key {obs_key} with cat {categories_temp}")
             obs_keys_final.append(obs_key)
     return sorted(obs_keys_final)
+
+
+def get_viable_obsm(adata, args):
+    """
+    Search viable obsm for dimensionality reduction metric
+    calc.
+    ! No filter on osbm is appled for now !
+    :param adata:
+    :param args:
+    :return:
+    """
+    obsm_keys = list()
+    # for obsm_key in adata.obsm_keys():
+    #   if obsm_key in args.obsm_dimred:
+    obsm_keys = adata.obsm_keys()
+    logger.debug(f"Add obsm {obsm_keys}")
+    return obsm_keys
 
 
 def create_summary_table(adata, atlas_path, atlas_info, args) -> None:
@@ -381,12 +403,12 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     else:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
     for obs_key in obs_keys:
-        dict_line = {
-            "Sample": [atlas_name + "_" + obs_key],
-            "obs": [obs_key]}
+        dict_line = {"Sample": [atlas_name + "_" + obs_key], "obs": [obs_key]}
         for metric in args.metric_cluster:
             logger.debug(f"Calc {metric} for {atlas_name} with obs {obs_key}")
-            metric_value = metrics.calc_metric_cluster(metric, adata, obs_key, "X_umap")
+            metric_value = metrics.calc_metric_cluster(
+                metric, adata, obs_key, "X_umap"
+            )
             dict_line[metric] = metric_value
         df_line = pd.DataFrame(dict_line)
         df_cluster = pd.concat(
@@ -426,8 +448,12 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
                 "obs": [obs_key],
             }
             for metric in args.metric_annot:
-                logger.debug(f"Calc {metric} for {atlas_name} with obs {obs_key} vs ref_obs {ref_obs}")
-                metric_value = metrics.calc_metric_annot(metric, adata, obs_key, ref_obs)
+                logger.debug(
+                    f"Calc {metric} for {atlas_name} with obs {obs_key} vs ref_obs {ref_obs}"
+                )
+                metric_value = metrics.calc_metric_annot(
+                    metric, adata, obs_key, ref_obs
+                )
                 dict_line[metric] = metric_value
             df_line = pd.DataFrame(dict_line)
             df_annot = pd.concat(
@@ -450,22 +476,25 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
         folders.get_folder(args.path, folders.DIMRED),
         atlas_name + checkatlas.METRIC_DIMRED_EXTENSION,
     )
-    header = ["Sample", "obs", "Kruskal"]
+    header = ["Sample", "obsm"] + args.metric_dimred
     df_dimred = pd.DataFrame(columns=header)
-    for obsm_key in adata.obsm_keys():
-        logger.debug(
-            f"NOT WORKING YET - Calc Rand Index "
-            f"for {atlas_name} with obs {obsm_key}"
-        )
-        kruskal = -1
-        # kruskal = dr_compute.kruskal_stress(adata, obsm_key)
-        df_line = pd.DataFrame(
-            {
-                "Sample": [atlas_name + "_" + obsm_key],
-                "obs": [obsm_key],
-                "Kruskal": [kruskal],
-            }
-        )
+    obsm_keys = get_viable_obsm(adata, args)
+    if len(obsm_keys) > 0:
+        logger.debug(f"Calc dim red metrics for {atlas_name}")
+    else:
+        logger.debug(f"No viable obsm_key was found for {atlas_name}")
+    for obsm_key in obsm_keys:
+        dict_line = {
+            "Sample": [atlas_name + "_" + obsm_key],
+            "obsm": [obsm_key],
+        }
+        for metric in args.metric_dimred:
+            logger.debug(
+                f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
+            )
+            metric_value = metrics.calc_metric_dimred(metric, adata, obsm_key)
+            dict_line[metric] = metric_value
+        df_line = pd.DataFrame(dict_line)
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
     if len(df_dimred) != 0:
         df_dimred.to_csv(csv_path, index=False, sep="\t")
