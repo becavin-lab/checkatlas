@@ -16,11 +16,11 @@ Module for management of Atlas n Seurat format
 
 def install_library():
     # R package names
-    packnames = ['Seurat']
-    utils = rpackages.importr('utils')
+    packnames = ["Seurat"]
+    utils = rpackages.importr("utils")
 
     # select a mirror for R packages
-    utils.chooseCRANmirror(ind=1) # select the first mirror in the list
+    utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
 
     # Selectively install what needs to be install.
     # We are fancy, just because we can.

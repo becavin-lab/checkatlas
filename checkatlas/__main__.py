@@ -1,9 +1,10 @@
 import argparse  # pragma: no cover
+import logging
 import os.path
 
-from . import checkatlas  # pragma: no cover
-import logging
 import yaml
+
+from . import checkatlas  # pragma: no cover
 from . import atlas
 
 
@@ -218,11 +219,14 @@ def main() -> None:  # pragma: no cover
 def test_r():
     seurat_path = "/Users/christophebecavin/Documents/testatlas/PAH_675093.rds"
     import rpy2
+
     print(seurat_path)
-    from . import atlas_seurat
     import rpy2.robjects as robjects
-    #atlas_seurat.install_library()
-    rcode = f"readRDS(\"{seurat_path}\")"
+
+    from . import atlas_seurat
+
+    # atlas_seurat.install_library()
+    rcode = f'readRDS("{seurat_path}")'
     print(rcode)
     seurat = robjects.r(rcode)
     print(seurat)
@@ -268,7 +272,7 @@ def get_version():
     :return: checkatlas version
     """
     script_path = os.path.dirname(os.path.realpath(__file__))
-    version_file = os.path.join(script_path,"VERSION")
+    version_file = os.path.join(script_path, "VERSION")
     with open(version_file, "r") as version:
         return version.readlines()[0].strip()
 
