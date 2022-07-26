@@ -9,6 +9,7 @@ import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
 
 from . import atlas, folders, multiqc
+from .metrics import metrics
 
 # try:
 #     from . import atlas, folders, multiqc
@@ -309,7 +310,7 @@ def run(args):
         if adata is not None:
             # Clean adata
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-
+            logger.info(f"Run checkatlas pipeline for {atlas_name}")
             # Run pipeline functions
             for function in pipeline_functions:
                 if args.thread == 1:

@@ -1,4 +1,5 @@
 import argparse  # pragma: no cover
+import os.path
 
 from . import checkatlas  # pragma: no cover
 import logging
@@ -17,7 +18,6 @@ def main() -> None:  # pragma: no cover
     Search fo atlases is managed here
     Then checkatlas is ran with the list of atlases found
     """
-
     # Set up logging
     logger = logging.getLogger("checkatlas")
     logging.basicConfig(format="|--- %(levelname)-8s %(message)s")
@@ -39,7 +39,7 @@ def main() -> None:  # pragma: no cover
     parser.add_argument(
         "path",
         type=str,
-        help="Your folder containing Scanpy, CellRanger and Seurat atlasesv",
+        help="Required argument: Your folder containing Scanpy, CellRanger and Seurat atlasesv",
         default=".",
     )
     parser.add_argument(
@@ -82,6 +82,13 @@ def main() -> None:  # pragma: no cover
         "--debug",
         action="store_true",
         help="Print out all debug messages.",
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"Checkatlas {get_version()}",
+        help="Display checkatlas version.",
     )
 
     # Pipeline arguments
@@ -148,7 +155,7 @@ def main() -> None:  # pragma: no cover
         "--metric_cluster",
         nargs="+",
         type=str,
-        default=["silhouette", "davies_boudin"],
+        default=["silhouette", "davies_bouldin"],
         help="List of clustering metrics to calculate."
         "To get a complete list of metrics, look here:"
         "https://github.com/becavin-lab/checkatlas/"
@@ -204,8 +211,21 @@ def main() -> None:  # pragma: no cover
     # Save all arguments to yaml (only run it when
     # generating example file config.yaml
     # save_arguments(args, 'config/default_config.yaml')
-
+    # test_r()
     checkatlas.run(args)
+
+
+def test_r():
+    seurat_path = "/Users/christophebecavin/Documents/testatlas/PAH_675093.rds"
+    import rpy2
+    print(seurat_path)
+    from . import atlas_seurat
+    import rpy2.robjects as robjects
+    #atlas_seurat.install_library()
+    rcode = f"readRDS(\"{seurat_path}\")"
+    print(rcode)
+    seurat = robjects.r(rcode)
+    print(seurat)
 
 
 def load_arguments(args, yaml_name):
@@ -240,6 +260,17 @@ def save_arguments(args, yaml_name):
     """
     with open(yaml_name, "w") as config_file:
         yaml.dump(args.__dict__, config_file)
+
+
+def get_version():
+    """
+    Get version of checkatlas from checkatlas/VERSION file
+    :return: checkatlas version
+    """
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    version_file = os.path.join(script_path,"VERSION")
+    with open(version_file, "r") as version:
+        return version.readlines()[0].strip()
 
 
 if __name__ == "__main__":  # pragma: no cover
