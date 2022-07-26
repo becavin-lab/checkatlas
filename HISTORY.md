@@ -4,6 +4,16 @@ Changelog
 
 (unreleased)
 ------------
+- Improve metrics management. Add annot and dimred metrics. [drbecavin]
+- Add Metrics management with arguments, you can specify now the metrics
+  to run inside the argument list or usng config file. Fix also the use
+  of config/default_config.yaml to specify program arguments.
+  [drbecavin]
+
+
+0.0.15 (2022-07-22)
+-------------------
+- Release: version 0.0.15 🚀 [drbecavin]
 - Replace print by logger.info and logger.debug. [drbecavin]
 
 
