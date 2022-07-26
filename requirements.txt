@@ -4,6 +4,7 @@
 # or run `make init` to create this file automatically based on the template.
 # You can also run `make switch-to-poetry` to use the poetry package manager.
 multiqc
+
 scanpy~=1.8.2
 pandas~=1.4.1
 anndata~=0.7.8
@@ -16,3 +17,4 @@ distributed
 pytest~=7.0.1
 setuptools~=60.9.3
 seaborn~=0.11.2
+rpy2

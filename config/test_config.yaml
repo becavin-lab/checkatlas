@@ -6,10 +6,10 @@ NOREDUCTION: false
 NOSUMMARY: false
 config: config/test_config.yaml
 debug: true
-metric_annot: []
+metric_annot: 
+- rand_index
 metric_cluster:
 - silhouette
-- davies_boudin
 metric_dimred: []
 multiqc: CheckAtlas_MultiQC
 obs_cluster:

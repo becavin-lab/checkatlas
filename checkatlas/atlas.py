@@ -7,7 +7,8 @@ import pandas as pd
 import scanpy as sc
 
 from . import checkatlas, folders
-from .metrics.cluster import clust_compute
+from .metrics import metrics
+
 
 # try:
 #     from .metrics.cluster import clust_compute
@@ -103,7 +104,7 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     return adata
 
 
-def get_viable_obs_qc(adata):
+def get_viable_obs_qc(adata, args):
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
@@ -112,25 +113,41 @@ def get_viable_obs_qc(adata):
     """
     obs_keys = list()
     for obs_key in adata.obs_keys():
-        if obs_key in OBS_QC:
+        if obs_key in args.qc_display:
             obs_keys.append(obs_key)
     return obs_keys
 
 
-def get_viable_obs_annot(adata):
+def get_viable_obs_annot(adata, args):
     """
     Search in obs_keys a match to OBS_CLUSTERS values
+    ! Remove obs_key with only one category !
     Extract sorted obs_keys in same order then OBS_CLUSTERS
     :param adata:
     :return:
     """
     obs_keys = list()
+    # Get keys from OBS_CLUSTERS
     for obs_key in adata.obs_keys():
-        for obs_key_celltype in OBS_CLUSTERS:
+        for obs_key_celltype in args.obs_cluster:
             if obs_key_celltype in obs_key:
                 if type(adata.obs[obs_key].dtype) == pd.CategoricalDtype:
                     obs_keys.append(obs_key)
-    return sorted(obs_keys)
+    # Remove keys with only one category
+    obs_keys_final = list()
+    for obs_key in obs_keys:
+        annotations = adata.obs[obs_key]
+        categories_temp = annotations.cat.categories
+        # remove nan if found
+        categories = categories_temp.dropna()
+        if True in categories.isin(['nan']):
+            index = categories.get_loc('nan')
+            categories = categories.delete(index)
+        # Add obs_key with more than one category (with Nan removed)
+        if len(categories) != 1:
+            logger.debug(f"Add obs_key {obs_key} with cat {categories_temp}")
+            obs_keys_final.append(obs_key)
+    return sorted(obs_keys_final)
 
 
 def create_summary_table(adata, atlas_path, atlas_info, args) -> None:
@@ -244,7 +261,7 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
         log1p=False,
         inplace=True,
     )
-    df_annot = adata.obs[get_viable_obs_qc(adata)]
+    df_annot = adata.obs[get_viable_obs_qc(adata, args)]
     df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
 
 
@@ -308,7 +325,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
         sc.settings.figdir = folders.get_workingdir(args.path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
         # Exporting umap
-        obs_keys = get_viable_obs_annot(adata)
+        obs_keys = get_viable_obs_annot(adata, args)
         if len(obs_keys) != 0:
             sc.pl.umap(adata, color=obs_keys[0], show=False, save=umap_path)
         else:
@@ -336,7 +353,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
         )
         tsne_path = os.sep + atlas_name + checkatlas.TSNE_EXTENSION
         # Exporting tsne
-        obs_keys = get_viable_obs_annot(adata)
+        obs_keys = get_viable_obs_annot(adata, args)
         if len(obs_keys) != 0:
             sc.pl.tsne(adata, color=obs_keys[0], show=False, save=tsne_path)
         else:
@@ -356,38 +373,25 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
         folders.get_folder(args.path, folders.CLUSTER),
         atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION,
     )
-    header = ["Sample", "obs", "Silhouette", "Davies-Bouldin"]
+    header = ["Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
-    obs_keys = get_viable_obs_annot(adata)
+    obs_keys = get_viable_obs_annot(adata, args)
     if len(obs_keys) > 0:
-        logger.debug(f"Calc Clustering metrics for {atlas_name}")
+        logger.debug(f"Calc clustering metrics for {atlas_name}")
     else:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
     for obs_key in obs_keys:
-        # Need more than one sample to calculate metric
-        annotations = adata.obs[obs_key]
-        if len(annotations.cat.categories) != 1:
-            silhouette = 1
-            logger.debug(
-                f"Calc Silhouette for {atlas_name} with obs {obs_key}"
-            )
-            silhouette = clust_compute.silhouette(adata, obs_key, "X_umap")
-            daviesb = -1
-            logger.debug(
-                f"Calc Davies Bouldin for {atlas_name} with obs {obs_key}"
-            )
-            daviesb = clust_compute.davies_bouldin(adata, obs_key, "X_umap")
-            df_line = pd.DataFrame(
-                {
-                    "Sample": [atlas_name + "_" + obs_key],
-                    "obs": [obs_key],
-                    "Silhouette": [silhouette],
-                    "Davies-Bouldin": [daviesb],
-                }
-            )
-            df_cluster = pd.concat(
-                [df_cluster, df_line], ignore_index=True, axis=0
-            )
+        dict_line = {
+            "Sample": [atlas_name + "_" + obs_key],
+            "obs": [obs_key]}
+        for metric in args.metric_cluster:
+            logger.debug(f"Calc {metric} for {atlas_name} with obs {obs_key}")
+            metric_value = metrics.calc_metric_cluster(metric, adata, obs_key, "X_umap")
+            dict_line[metric] = metric_value
+        df_line = pd.DataFrame(dict_line)
+        df_cluster = pd.concat(
+            [df_cluster, df_line], ignore_index=True, axis=0
+        )
     if len(df_cluster) != 0:
         df_cluster.to_csv(csv_path, index=False, sep="\t")
 
@@ -405,33 +409,30 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
         folders.get_folder(args.path, folders.ANNOTATION),
         atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION,
     )
-    header = ["Sample", "obs", "Rand"]
+    header = ["Sample", "Reference", "obs"] + args.metric_annot
     df_annot = pd.DataFrame(columns=header)
-    obs_keys = get_viable_obs_annot(adata)
+    obs_keys = get_viable_obs_annot(adata, args)
+    if len(obs_keys) > 0:
+        logger.debug(f"Calc annotation metrics for {atlas_name}")
+    else:
+        logger.debug(f"No viable obs_key was found for {atlas_name}")
     if len(obs_keys) != 0:
         ref_obs = obs_keys[0]
         for i in range(1, len(obs_keys)):
             obs_key = obs_keys[i]
-            # Need more than one sample to calculate metric
-            annotations = adata.obs[obs_key]
-            if len(annotations.cat.categories) != 1:
-                logger.debug(
-                    f"NOT WORKING YET - Calc Rand Index "
-                    f"for {atlas_name} with obs {obs_key}"
-                )
-                rand = -1
-                # ##rand = clust_compute.rand(adata, obs_key, ref_obs)
-                df_line = pd.DataFrame(
-                    {
-                        "Sample": [atlas_name + "_" + obs_key],
-                        "Reference": [ref_obs],
-                        "obs": [obs_key],
-                        "Rand": [rand],
-                    }
-                )
-                df_annot = pd.concat(
-                    [df_annot, df_line], ignore_index=True, axis=0
-                )
+            dict_line = {
+                "Sample": [atlas_name + "_" + obs_key],
+                "Reference": [ref_obs],
+                "obs": [obs_key],
+            }
+            for metric in args.metric_annot:
+                logger.debug(f"Calc {metric} for {atlas_name} with obs {obs_key} vs ref_obs {ref_obs}")
+                metric_value = metrics.calc_metric_annot(metric, adata, obs_key, ref_obs)
+                dict_line[metric] = metric_value
+            df_line = pd.DataFrame(dict_line)
+            df_annot = pd.concat(
+                [df_annot, df_line], ignore_index=True, axis=0
+            )
         if len(df_annot) != 0:
             df_annot.to_csv(csv_path, index=False, sep="\t")
 

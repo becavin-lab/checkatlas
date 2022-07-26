@@ -179,14 +179,14 @@ def annotation_to_num(adata, partition_key, reference):
     -------
 
     """
-    print(partition_key)
-    print(reference)
     annotation = adata.obs[partition_key].to_numpy()
     ref_annotation = adata.obs[reference].to_numpy()
     le = LabelEncoder()
     le.fit(annotation)
     annotation = le.transform(annotation)
-    ref_annotation = le.transform(ref_annotation)
+    le2 = LabelEncoder()
+    le2.fit(ref_annotation)
+    ref_annotation = le2.transform(ref_annotation)
     return annotation, ref_annotation
 
 
