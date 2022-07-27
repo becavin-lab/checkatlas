@@ -1,6 +1,6 @@
 NOADATA: false
 NOMETRIC: false
-NOMULTIQC: false
+NOMULTIQC: true
 NOQC: false
 NOREDUCTION: false
 NOSUMMARY: false
@@ -16,6 +16,7 @@ obs_cluster:
 - CellType
 - celltype
 - ann_finest_level
+- cellranger_graphclust
 - seurat_clusters
 - louvain
 - leiden

@@ -35,6 +35,7 @@ OBS_CLUSTERS = [
     "CellType",
     "celltype",
     "ann_finest_level",
+    "cellranger_graphclust",
     "seurat_clusters",
     "louvain",
     "leiden",
@@ -77,9 +78,8 @@ def read_atlas(atlas_path, atlas_info):
     logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
     try:
         if atlas_path.endswith(".h5"):
-            logger.debug(f"Read Cellranger file {atlas_path}")
-            adata = sc.read_10x_h5(atlas_path)
-            adata.var_names_make_unique()
+            logger.debug(f"Read Cellranger results {atlas_path}")
+            adata = read_cellranger(atlas_path)
         else:
             logger.debug(f"Read Scanpy file {atlas_path}")
             adata = sc.read_h5ad(atlas_path)
@@ -87,6 +87,32 @@ def read_atlas(atlas_path, atlas_info):
     except anndata._io.utils.AnnDataReadError:
         logger.warning(f"AnnDataReadError, cannot read: {atlas_info[0]}")
         return None
+
+
+def read_cellranger(atlas_path):
+    cellranger_path = atlas_path.replace(checkatlas.CELLRANGER_FILE, "")
+    cellranger_path = os.path.join(cellranger_path, "outs")
+    clust_path = os.path.join(cellranger_path, "analysis", "clustering", "graphclust", "clusters.csv")
+    rna_umap = os.path.join(cellranger_path, "analysis", "umap", "2_components", "projection.csv")
+    rna_tsne = os.path.join(cellranger_path, "analysis", "tsne", "2_components", "projection.csv")
+    rna_pca = os.path.join(cellranger_path, "analysis", "pca", "10_components", "projection.csv")
+    adata = sc.read_10x_h5(atlas_path)
+    adata.var_names_make_unique()
+    # Add cluster
+    if os.path.exists(clust_path):
+        df_cluster = pd.read_csv(clust_path, index_col=0)
+        adata.obs['cellranger_graphclust'] = df_cluster["Cluster"]
+    # Add reduction
+    if os.path.exists(rna_umap):
+        df_umap = pd.read_csv(rna_umap, index_col=0)
+        adata.obsm['X_umap'] = df_umap
+    if os.path.exists(rna_umap):
+        df_tsne = pd.read_csv(rna_tsne, index_col=0)
+        adata.obsm['X_tsne'] = df_tsne
+    if os.path.exists(rna_umap):
+        df_pca = pd.read_csv(rna_pca, index_col=0)
+        adata.obsm['X_pca'] = df_pca
+    return adata
 
 
 def clean_scanpy_atlas(adata, atlas_info) -> bool:
@@ -101,7 +127,8 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     for obs_key in adata.obs_keys():
         for obs_key_celltype in OBS_CLUSTERS:
             if obs_key_celltype in obs_key:
-                if adata.obs[obs_key].dtype == np.int32:
+                if adata.obs[obs_key].dtype == np.int32 or \
+                        adata.obs[obs_key].dtype == np.int64:
                     adata.obs[obs_key] = pd.Categorical(adata.obs[obs_key])
     return adata
 
