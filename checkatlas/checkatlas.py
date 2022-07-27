@@ -121,6 +121,7 @@ def clean_list_atlases(atlas_list, path) -> dict:
             # detect if its a cellranger output
             if atlas_path.endswith(CELLRANGER_FILE):
                 atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
+                atlas_name = get_atlas_name(atlas_h5)
                 logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
                 info = [
                     atlas_name,
@@ -233,11 +234,12 @@ def run(args):
     logger.info(f"Found {len(clean_atlas_cellranger)} cellranger file with .h5 extension")
 
     # Run all checkatlas analysis
-    run_scanpy(clean_atlas_scanpy, args)
+    # clean_atlas_adata = dict(clean_atlas_scanpy)
+    # clean_atlas_adata.update(clean_atlas_cellranger)
+    run_scanpy(clean_atlas_cellranger, args)
     #run_seurat(clean_atlas_seurat, args)
-    #run_cellranger(clean_atlas_cellranger, args)
 
-    if args.multiqc:
+    if not args.NOMULTIQC:
         logger.info("Run MultiQC")
         multiqc.run_multiqc(args)
 
