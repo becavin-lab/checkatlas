@@ -26,8 +26,7 @@ This is the principal module of the checkatlas project.
 
 """
 
-EXTENSIONS = [".h5ad", ".h5"]
-# EXTENSIONS = [".rds", ".h5ad", ".h5"]
+EXTENSIONS = [".rds", ".h5ad", ".h5"]
 CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
 RSCRIPT = inspect.getfile(atlas).replace("atlas.py", "convertSeurat.R")
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
@@ -102,114 +101,55 @@ def clean_list_atlases(atlas_list, path) -> dict:
     """
     # Create dict with these info ['Atlas_Name','Type','Converted',
     # 'Checkatlas_path']
-    clean_atlas_dict = dict()
+    clean_atlas_scanpy = dict()
+    clean_atlas_seurat = dict()
+    clean_atlas_cellranger = dict()
     for atlas_path in atlas_list:
         atlas_name = get_atlas_name(atlas_path)
         if atlas_path.endswith(".rds"):
-            atlas_h5 = atlas_path.replace(".rds", ".h5ad")
-            if os.path.exists(atlas_h5):
-                logger.debug(
-                    f"Seurat file already converted to Scanpy: {atlas_h5}"
-                )
-            else:
-                convert_seurat_atlas(atlas_path, atlas_name)
-                if os.path.exists(atlas_h5):
-                    logger.debug(
-                        f"Include Atlas: {atlas_name} from {atlas_path}"
-                    )
-                    info = [
-                        atlas_name,
-                        "Seurat",
-                        ".rds",
-                        os.path.dirname(atlas_path) + "/",
-                    ]
-                    clean_atlas_dict[atlas_h5] = info
+            logger.debug(
+                f"Include Atlas: {atlas_name} from {atlas_path}"
+            )
+            info = [
+                atlas_name,
+                "Seurat",
+                ".rds",
+                os.path.dirname(atlas_path) + "/",
+                ]
+            clean_atlas_seurat[atlas_path] = info
         elif atlas_path.endswith(".h5"):
             # detect if its a cellranger output
             if atlas_path.endswith(CELLRANGER_FILE):
                 atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
-                atlas_name = get_atlas_name(atlas_h5)
                 logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
                 info = [
                     atlas_name,
                     "Cellranger",
                     ".h5",
                     os.path.dirname(atlas_h5) + "/",
-                ]
-                clean_atlas_dict[atlas_path] = info
+                    ]
+                clean_atlas_cellranger[atlas_path] = info
         elif atlas_path.endswith(".h5ad"):
-            atlas_rds = atlas_path.replace(".h5ad", ".rds")
-            if os.path.exists(atlas_rds):
-                logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
-                info = [
-                    atlas_name,
-                    "Seurat",
-                    ".rds",
-                    os.path.dirname(atlas_path) + "/",
+            logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
+            info = [
+                atlas_name,
+                "Scanpy",
+                ".h5ad",
+                os.path.dirname(atlas_path) + "/",
                 ]
-                clean_atlas_dict[atlas_path] = info
-            else:
-                logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
-                info = [
-                    atlas_name,
-                    "Scanpy",
-                    ".h5ad",
-                    os.path.dirname(atlas_path) + "/",
-                ]
-                clean_atlas_dict[atlas_path] = info
+            clean_atlas_scanpy[atlas_path] = info
     # open file for writing, "w" is writing
-    dict_file = open(path + "/checkatlas_files/list_atlases.csv", "w")
+    dict_file = open(folders.get_workingdir(path) + "list_atlases.csv", "w")
     w = csv.writer(dict_file)
     # loop over dictionary keys and values
-    for key, val in clean_atlas_dict.items():
-        # write every key and value to file
+    for key, val in clean_atlas_scanpy.items():
+        w.writerow([key, ",".join(val)])
+    for key, val in clean_atlas_seurat.items():
+        w.writerow([key, ",".join(val)])
+    for key, val in clean_atlas_cellranger.items():
         w.writerow([key, ",".join(val)])
     dict_file.close()
-    return clean_atlas_dict
-
-
-def read_atlas(atlas_path, atlas_info):
-    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
-    try:
-        if atlas_path.endswith(".h5"):
-            logger.debug(f"Read Cellranger file {atlas_path}")
-            adata = sc.read_10x_h5(atlas_path)
-            adata.var_names_make_unique()
-        else:
-            logger.debug(f"Read Scanpy file {atlas_path}")
-            adata = sc.read_h5ad(atlas_path)
-        return adata
-    except anndata._io.utils.AnnDataReadError:
-        print("AnnDataReadError, cannot read:", atlas_info[0])
-        return None
-
-
-def summary_table(adata, atlas_path, atlas_name, resume) -> None:
-    """
-    Extract summary tables from the adata
-    :param adata:
-    :param atlas_path:
-    :param atlas_name:
-    :param resume: True if you want to run the function only if the tables
-     does not exist already
-    :return:
-    """
-    # create summary table
-    csv_path = atlas_path.replace(".h5ad", SUMMARY_EXTENSION)
-    print(csv_path)
-    if resume:
-        if not os.path.isfile(csv_path):
-            atlas.create_summary_table(adata, csv_path, atlas_name, path)
-    else:
-        atlas.create_summary_table(adata, csv_path, atlas_name, path)
-
-    # Create AnnData table
-    csv_path = atlas_path.replace(".h5ad", ADATA_EXTENSION)
-    if resume:
-        if not os.path.isfile(csv_path):
-            atlas.create_anndata_table(adata, csv_path, atlas_name, path)
-    else:
-        atlas.create_anndata_table(adata, csv_path, atlas_name, path)
+    return clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
 
 
 def start_multithread_client():
@@ -221,7 +161,7 @@ def start_multithread_client():
     return client
 
 
-def get_pipeline_functions(args):
+def get_pipeline_functions(module, args):
     """
     Using arguments of checkatlas program -> build
     the list of functions to run on each adata
@@ -231,36 +171,36 @@ def get_pipeline_functions(args):
     """
     checkatlas_functions = list()
     # Create summary by default, this table is used by the resume option
-    checkatlas_functions.append(atlas.create_summary_table)
+    checkatlas_functions.append(module.create_summary_table)
     if not args.NOADATA:
-        checkatlas_functions.append(atlas.create_anndata_table)
+        checkatlas_functions.append(module.create_anndata_table)
     if not args.NOQC:
         if "violin_plot" in args.qc_display:
-            checkatlas_functions.append(atlas.create_qc_plots)
+            checkatlas_functions.append(module.create_qc_plots)
         if (
             "total-counts" in args.qc_display
             or "n_genes_by_counts" in args.qc_display
             or "pct_counts_mt" in args.qc_display
         ):
-            checkatlas_functions.append(atlas.create_qc_tables)
+            checkatlas_functions.append(module.create_qc_tables)
     if not args.NOREDUCTION:
-        checkatlas_functions.append(atlas.create_umap_fig)
-        checkatlas_functions.append(atlas.create_tsne_fig)
+        checkatlas_functions.append(module.create_umap_fig)
+        checkatlas_functions.append(module.create_tsne_fig)
     if not args.NOMETRIC:
         if len(args.metric_cluster) > 0:
-            checkatlas_functions.append(atlas.metric_cluster)
+            checkatlas_functions.append(module.metric_cluster)
         else:
             logger.debug(
                 "No clustering metric was specified in --metric_cluster"
             )
         if len(args.metric_annot) > 0:
-            checkatlas_functions.append(atlas.metric_annot)
+            checkatlas_functions.append(module.metric_annot)
         else:
             logger.debug(
                 "No annotation metric was specified in --metric_annot"
             )
         if len(args.metric_dimred) > 0:
-            checkatlas_functions.append(atlas.metric_dimred)
+            checkatlas_functions.append(module.metric_dimred)
         else:
             logger.debug("No dim red metric was specified in --metric_dimred")
     return checkatlas_functions
@@ -287,14 +227,30 @@ def run(args):
     logger.info("Searching Seurat, Cellranger and Scanpy files")
     atlas_list = list_atlases(args.path)
     # First clean atlas list and keep only the h5ad files
-    clean_atlas_dict = clean_list_atlases(atlas_list, args.path)
-    logger.info(
-        f"Found {len(atlas_list)} files with these extensions"
-        f" {EXTENSIONS}."
-    )
+    clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger = clean_list_atlases(atlas_list, args.path)
+    logger.info(f"Found {len(clean_atlas_scanpy)} potential scanpy files with .h5ad extension")
+    logger.info(f"Found {len(clean_atlas_seurat)} potential seurat files with .rds extension")
+    logger.info(f"Found {len(clean_atlas_cellranger)} cellranger file with .h5 extension")
 
+    # Run all checkatlas analysis
+    run_scanpy(clean_atlas_scanpy, args)
+    #run_seurat(clean_atlas_seurat, args)
+    #run_cellranger(clean_atlas_cellranger, args)
+
+    if args.multiqc:
+        logger.info("Run MultiQC")
+        multiqc.run_multiqc(args)
+
+
+def run_scanpy(clean_atlas_scanpy, args):
+    """
+    Run Checkatlas pipeline for all Scanpy objects
+    :param clean_atlas_scanpy:
+    :param args:
+    :return:
+    """
     logger.debug("Get list of functions to run from the checkatlas config")
-    pipeline_functions = get_pipeline_functions(args)
+    pipeline_functions = get_pipeline_functions(atlas, args)
     logger.debug(
         f"List of functions which will be ran "
         f"for each atlas: {pipeline_functions}"
@@ -306,7 +262,7 @@ def run(args):
         matplotlib.pyplot.switch_backend("Agg")
 
     # Create summary files
-    for atlas_path, atlas_info in clean_atlas_dict.items():
+    for atlas_path, atlas_info in clean_atlas_scanpy.items():
         atlas_name = atlas_info[0]
 
         # Load adata only if resume is not selected
@@ -317,14 +273,14 @@ def run(args):
         )
         logger.debug(f"Search {csv_summary_path}")
         if not args.resume:
-            adata = read_atlas(atlas_path, atlas_info)
+            adata = atlas.read_atlas(atlas_path, atlas_info)
         elif not os.path.exists(csv_summary_path):
-            adata = read_atlas(atlas_path, atlas_info)
+            adata = atlas.read_atlas(atlas_path, atlas_info)
 
         if adata is not None:
             # Clean adata
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            logger.info(f"Run checkatlas pipeline for {atlas_name}")
+            logger.info(f"Run checkatlas pipeline for {atlas_name} Scanpy atlas")
             # Run pipeline functions
             for function in pipeline_functions:
                 if args.thread == 1:
@@ -344,10 +300,6 @@ def run(args):
             if args.thread > 1:
                 # Wait for all thread to end
                 wait(futures)
-
-    if args.multiqc:
-        logger.info("Run MultiQC")
-        multiqc.run_multiqc(args)
 
 
 if __name__ == "__main__":

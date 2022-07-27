@@ -1,9 +1,8 @@
 NOADATA: true
-NOMETRIC: false
+NOMETRIC: true
 NOMULTIQC: true
-NOQC: true
+NOQC: false
 NOREDUCTION: true
-NOSUMMARY: true
 config: config/test_config.yaml
 debug: true
 metric_annot: []
@@ -23,7 +22,7 @@ obs_cluster:
 path: /Users/christophebecavin/Documents/testatlas
 qc_display:
 - violin_plot
-- total-counts
+- total_counts
 - n_genes_by_counts
 - pct_counts_mt
 thread: 1

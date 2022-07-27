@@ -73,28 +73,25 @@ OBS_QC = [
 logger = logging.getLogger("checkatlas")
 
 
-def convert_atlas(atlas_path, atlas_name) -> None:
-    """
-    Convert a atlas to Scanpy
-    :param atlas_path:
-    :return:
-    """
-    logger.info(f"Convert Seurat object to Scanpy: {atlas_path}")
-    rscript_cmd = (
-        "Rscript "
-        + checkatlas.RSCRIPT
-        + " "
-        + os.path.dirname(atlas_path)
-        + " "
-        + atlas_name
-    )
-    logger.debug(f"Run: {rscript_cmd}")
-    os.system(rscript_cmd)
+def read_atlas(atlas_path, atlas_info):
+    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
+    try:
+        if atlas_path.endswith(".h5"):
+            logger.debug(f"Read Cellranger file {atlas_path}")
+            adata = sc.read_10x_h5(atlas_path)
+            adata.var_names_make_unique()
+        else:
+            logger.debug(f"Read Scanpy file {atlas_path}")
+            adata = sc.read_h5ad(atlas_path)
+        return adata
+    except anndata._io.utils.AnnDataReadError:
+        logger.warning(f"AnnDataReadError, cannot read: {atlas_info[0]}")
+        return None
 
 
 def clean_scanpy_atlas(adata, atlas_info) -> bool:
     """
-    Clean the Scanpy object to be suyre to get all information out of it
+    Clean the Scanpy object to be sure to get all information out of it
     :param adata:
     :return:
     """
