@@ -5,6 +5,7 @@ import re
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import anndata
 
 from . import checkatlas, folders
 from .metrics import metrics
@@ -106,10 +107,10 @@ def read_cellranger(atlas_path):
     if os.path.exists(rna_umap):
         df_umap = pd.read_csv(rna_umap, index_col=0)
         adata.obsm['X_umap'] = df_umap
-    if os.path.exists(rna_umap):
+    if os.path.exists(rna_tsne):
         df_tsne = pd.read_csv(rna_tsne, index_col=0)
         adata.obsm['X_tsne'] = df_tsne
-    if os.path.exists(rna_umap):
+    if os.path.exists(rna_pca):
         df_pca = pd.read_csv(rna_pca, index_col=0)
         adata.obsm['X_pca'] = df_pca
     return adata
@@ -324,6 +325,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
     """
     atlas_name = atlas_info[0]
     sc.settings.figdir = folders.get_workingdir(args.path)
+    sc.set_figure_params(dpi_save=80)
     qc_path = os.sep + atlas_name + checkatlas.QC_FIG_EXTENSION
     logger.debug(f"Create QC violin plot for {atlas_name}")
     # mitochondrial genes
@@ -363,6 +365,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
+    sc.set_figure_params(dpi_save=150)
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
@@ -390,6 +393,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
     """
     # Search if tsne reduction exists
     atlas_name = atlas_info[0]
+    sc.set_figure_params(dpi_save=150)
     r = re.compile(".*tsne*.")
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
         logger.debug(f"Create t-SNE figure for {atlas_name}")
