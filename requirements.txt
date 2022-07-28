@@ -18,3 +18,4 @@ pytest~=7.0.1
 setuptools~=60.9.3
 seaborn~=0.11.2
 rpy2
+rpy2_Matrix

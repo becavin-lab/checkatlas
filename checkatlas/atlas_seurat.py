@@ -11,6 +11,7 @@ from rpy2.robjects.packages import importr
 from rpy2.rinterface_lib.sexp import NULLType
 from rpy2.robjects.vectors import FactorVector
 
+from .metrics import metrics
 from . import checkatlas, folders
 
 
@@ -104,6 +105,24 @@ def get_viable_obs_annot(seurat, args):
     return sorted(obs_keys_final)
 
 
+def get_viable_obsm(seurat, args):
+    """
+    Search viable obsm for dimensionality reduction metric
+    calc.
+    ! No filter on osbm is appled for now !
+    :param seurat:
+    :param args:
+    :return:
+    """
+    obsm_keys = list()
+    # for obsm_key in adata.obsm_keys():
+    #   if obsm_key in args.obsm_dimred:
+    r_obsm = robjects.r('f<-function(seurat){return(names(seurat@reductions))}')
+    obsm_keys = r_obsm(seurat)
+    logger.debug(f"Add obsm {obsm_keys}")
+    return obsm_keys
+
+
 def create_summary_table(seurat, atlas_path, atlas_info, args) -> None:
     """
     Create a table with all interesting variables
@@ -167,10 +186,10 @@ def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
 
     # Create r_functions
     r_obs = robjects.r('obs <- function(seurat){ return(colnames(seurat@meta.data))}')
-    r_names = robjects.r['names']
+    r_obsm = robjects.r('f<-function(seurat){return(names(seurat@reductions))}')
     r_uns = robjects.r('uns <- function(seurat){ return(colnames(seurat@misc))}')
     obs_list = r_obs(seurat)
-    obsm_list = r_names(seurat)
+    obsm_list = r_obsm(seurat)
     var_list = []
     varm_list = []
     uns_list = []
@@ -328,23 +347,139 @@ def create_tsne_fig(seurat, atlas_path, atlas_info, args) -> None:
         r_tsne(seurat, obs_keys[0], tsne_path)
 
 
-def metric_cluster():
-    print('yo')
-def metric_annot():
-    print('yo')
-def metric_dimred():
-    print('yo')
+def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
+    """
+    Calc clustering metrics
+    :param seurat:
+    :param atlas_path:
+    :param atlas_info:
+    :param args:
+    :return:
+    """
+    atlas_name = atlas_info[0]
+    csv_path = os.path.join(
+        folders.get_folder(args.path, folders.CLUSTER),
+        atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION,
+        )
+    header = ["Sample", "obs"] + args.metric_cluster
+    df_cluster = pd.DataFrame(columns=header)
+    obs_keys = get_viable_obs_annot(seurat, args)
+    obsm_key_representation = "umap"
+    r_annot = robjects.r('type <- function(seurat, obs_key){ return(seurat[[obs_key]][[obs_key]])}')
+    r_reduction = robjects.r('reduc <- function(seurat, obsm_key){'
+                             ' return(Embeddings(object = seurat, reduction = obsm_key))}')
+    if len(obs_keys) > 0:
+        logger.debug(f"Calc clustering metrics for {atlas_name}")
+    else:
+        logger.debug(f"No viable obs_key was found for {atlas_name}")
+    for obs_key in obs_keys:
+        dict_line = {"Sample": [atlas_name + "_" + obs_key], "obs": [obs_key]}
+        for metric in args.metric_cluster:
+            logger.debug(f"Calc {metric} for {atlas_name} "
+                         f"with obs {obs_key} and obsm {obsm_key_representation}")
+            annotation = ro.conversion.rpy2py(r_annot(seurat, obs_key))
+            count_representation = ro.conversion.rpy2py(r_reduction(seurat, obsm_key_representation))
+            metric_value = metrics.calc_metric_cluster(
+                metric, count_representation, annotation)
+            dict_line[metric] = metric_value
+        df_line = pd.DataFrame(dict_line)
+        df_cluster = pd.concat(
+            [df_cluster, df_line], ignore_index=True, axis=0
+        )
+    if len(df_cluster) != 0:
+        df_cluster.to_csv(csv_path, index=False, sep="\t")
 
-# def install_library():
-#     # R package names
-#     packnames = ["Seurat"]
-#     utils = rpackages.importr("utils")
-#
-#     # select a mirror for R packages
-#     utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
-#
-#     # Selectively install what needs to be install.
-#     # We are fancy, just because we can.
-#     names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
-#     if len(names_to_install) > 0:
-#         utils.install_packages(StrVector(names_to_install))
+
+def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
+    """
+    Calc annotation metrics
+    :param adata:
+    :param atlas_path:
+    :param atlas_info:
+    :param args:
+    :return:
+    """
+    atlas_name = atlas_info[0]
+    csv_path = os.path.join(
+        folders.get_folder(args.path, folders.ANNOTATION),
+        atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION,
+        )
+    header = ["Sample", "Reference", "obs"] + args.metric_annot
+    df_annot = pd.DataFrame(columns=header)
+    obs_keys = get_viable_obs_annot(seurat, args)
+    if len(obs_keys) > 0:
+        logger.debug(f"Calc annotation metrics for {atlas_name}")
+    else:
+        logger.debug(f"No viable obs_key was found for {atlas_name}")
+    r_annot = robjects.r('type <- function(seurat, obs_key){ return(seurat[[obs_key]][[obs_key]])}')
+    if len(obs_keys) != 0:
+        ref_obs = obs_keys[0]
+        for i in range(1, len(obs_keys)):
+            obs_key = obs_keys[i]
+            dict_line = {
+                "Sample": [atlas_name + "_" + obs_key],
+                "Reference": [ref_obs],
+                "obs": [obs_key],
+            }
+            for metric in args.metric_annot:
+                logger.debug(
+                    f"Calc {metric} for {atlas_name} with obs {obs_key} vs ref_obs {ref_obs}"
+                )
+                annotation = ro.conversion.rpy2py(r_annot(seurat, obs_key))
+                ref_annotation = ro.conversion.rpy2py(r_annot(seurat, ref_obs))
+                metric_value = metrics.calc_metric_annot(
+                    metric, annotation, ref_annotation
+                )
+                dict_line[metric] = metric_value
+            df_line = pd.DataFrame(dict_line)
+            df_annot = pd.concat(
+                [df_annot, df_line], ignore_index=True, axis=0
+            )
+        if len(df_annot) != 0:
+            df_annot.to_csv(csv_path, index=False, sep="\t")
+
+
+def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
+    """
+    Calc dimensionality reduction metrics
+    :param adata:
+    :param atlas_path:
+    :param atlas_info:
+    :param args:
+    :return:
+    """
+    atlas_name = atlas_info[0]
+    csv_path = os.path.join(
+        folders.get_folder(args.path, folders.DIMRED),
+        atlas_name + checkatlas.METRIC_DIMRED_EXTENSION,
+        )
+    header = ["Sample", "obsm"] + args.metric_dimred
+    df_dimred = pd.DataFrame(columns=header)
+    r_reduction = robjects.r('reduc <- function(seurat, obsm_key){'
+                             ' return(Embeddings(object = seurat, reduction = obsm_key))}')
+    obsm_keys = get_viable_obsm(seurat, args)
+    if len(obsm_keys) > 0:
+        logger.debug(f"Calc dim red metrics for {atlas_name}")
+    else:
+        logger.debug(f"No viable obsm_key was found for {atlas_name}")
+    for obsm_key in obsm_keys:
+        dict_line = {
+            "Sample": [atlas_name + "_" + obsm_key],
+            "obsm": [obsm_key],
+        }
+        for metric in args.metric_dimred:
+            logger.debug(
+                f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
+            )
+            r_countmatrix = robjects.r('mat <- function(seurat){'
+                                       'return(seurat@assays$RNA@counts)}')
+            high_dim_counts = ro.conversion.rpy2py(r_countmatrix(seurat))
+            low_dim_counts = ro.conversion.rpy2py(r_reduction(seurat, obsm_key))
+            # metric_value = metrics.calc_metric_dimred(metric, high_dim_counts, low_dim_counts)
+            logger.warning("!!! Dim reduction metrics not available for Seurat !!!")
+            metric_value = -1
+            dict_line[metric] = metric_value
+        df_line = pd.DataFrame(dict_line)
+        df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
+    if len(df_dimred) != 0:
+        df_dimred.to_csv(csv_path, index=False, sep="\t")
