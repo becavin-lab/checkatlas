@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../MultiQC/.idea/MultiQC.iml" filepath="$PROJECT_DIR$/../MultiQC/.idea/MultiQC.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../cellranger-to-scanpy/.idea/cellranger-to-scanpy.iml" filepath="$PROJECT_DIR$/../cellranger-to-scanpy/.idea/cellranger-to-scanpy.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/checkatlas.iml" filepath="$PROJECT_DIR$/.idea/checkatlas.iml" />
     </modules>
   </component>

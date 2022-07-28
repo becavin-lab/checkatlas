@@ -9,7 +9,7 @@ import matplotlib
 import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
 
-from . import atlas, folders, multiqc
+from . import atlas, folders, multiqc, atlas_seurat
 from .metrics import metrics
 
 # try:
@@ -234,10 +234,10 @@ def run(args):
     logger.info(f"Found {len(clean_atlas_cellranger)} cellranger file with .h5 extension")
 
     # Run all checkatlas analysis
-    # clean_atlas_adata = dict(clean_atlas_scanpy)
-    # clean_atlas_adata.update(clean_atlas_cellranger)
-    run_scanpy(clean_atlas_cellranger, args)
-    #run_seurat(clean_atlas_seurat, args)
+    clean_atlas_adata = dict(clean_atlas_scanpy)
+    clean_atlas_adata.update(clean_atlas_cellranger)
+    #run_scanpy(clean_atlas_adata, args)
+    run_seurat(clean_atlas_seurat, args)
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")
@@ -246,12 +246,11 @@ def run(args):
 
 def run_scanpy(clean_atlas_scanpy, args):
     """
-    Run Checkatlas pipeline for all Scanpy objects
+    Run Checkatlas pipeline for all Scanpy and Cellranger objects
     :param clean_atlas_scanpy:
     :param args:
     :return:
     """
-    logger.debug("Get list of functions to run from the checkatlas config")
     pipeline_functions = get_pipeline_functions(atlas, args)
     logger.debug(
         f"List of functions which will be ran "
@@ -274,11 +273,10 @@ def run_scanpy(clean_atlas_scanpy, args):
             atlas_name + SUMMARY_EXTENSION,
         )
         logger.debug(f"Search {csv_summary_path}")
-        if not args.resume:
+        if args.resume and os.path.exists(csv_summary_path):
+            adata = None
+        else:
             adata = atlas.read_atlas(atlas_path, atlas_info)
-        elif not os.path.exists(csv_summary_path):
-            adata = atlas.read_atlas(atlas_path, atlas_info)
-
         if adata is not None:
             # Clean adata
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)
@@ -290,8 +288,66 @@ def run_scanpy(clean_atlas_scanpy, args):
                 else:
                     future_name = function.__name__ + "_" + atlas_name
                     future = client.submit(
-                        atlas.create_summary_table,
+                        function,
                         adata,
+                        atlas_path,
+                        atlas_info,
+                        args,
+                        key=future_name,
+                    )
+                    futures.append(future)
+
+            if args.thread > 1:
+                # Wait for all thread to end
+                wait(futures)
+
+
+def run_seurat(clean_atlas_seurat, args):
+    """
+    Run Checkatlas pipeline for all Scanpy objects
+    :param clean_atlas_scanpy:
+    :param args:
+    :return:
+    """
+    pipeline_functions = get_pipeline_functions(atlas_seurat, args)
+    logger.debug(
+        f"List of functions which will be ran "
+        f"for each Seurat atlas: {pipeline_functions}"
+    )
+
+    if args.thread > 1:
+        client = start_multithread_client()
+        futures = list()
+        matplotlib.pyplot.switch_backend("Agg")
+
+    # Create summary files
+    for atlas_path, atlas_info in clean_atlas_seurat.items():
+        atlas_name = atlas_info[0]
+
+        # Load adata only if resume is not selected
+        # and if csv_summary_path do not exist
+        csv_summary_path = os.path.join(
+            folders.get_folder(args.path, folders.SUMMARY),
+            atlas_name + SUMMARY_EXTENSION,
+            )
+        logger.debug(f"Search {csv_summary_path}")
+        if args.resume and os.path.exists(csv_summary_path):
+            seurat = None
+        else:
+            seurat = atlas_seurat.read_atlas(atlas_path, atlas_info)
+        if seurat is not None:
+            # Clean adata
+            # adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+            logger.info(f"Run checkatlas pipeline for {atlas_name} Seurat atlas")
+            # Run pipeline functions
+            for function in pipeline_functions:
+                if args.thread == 1:
+                    function(seurat, atlas_path, atlas_info, args)
+                else:
+                    future_name = function.__name__ + "_" + atlas_name
+                    future = client.submit(
+                        function,
+                        seurat,
                         atlas_path,
                         atlas_info,
                         args,
