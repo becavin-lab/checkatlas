@@ -412,10 +412,11 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
 
 def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     """
-    Main function of checkatlas
-    For every atlas create summary tables with all attributes of the atlas
-    Calc UMAP, tSNE, andd all metrics
+    Calc clustering metrics
+    :param adata:
     :param atlas_path:
+    :param atlas_info:
+    :param args:
     :return:
     """
     atlas_name = atlas_info[0]
@@ -426,6 +427,7 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     header = ["Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
+    obsm_key_representation = "X_umap"
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")
     else:
@@ -433,9 +435,12 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     for obs_key in obs_keys:
         dict_line = {"Sample": [atlas_name + "_" + obs_key], "obs": [obs_key]}
         for metric in args.metric_cluster:
-            logger.debug(f"Calc {metric} for {atlas_name} with obs {obs_key}")
+            logger.debug(f"Calc {metric} for {atlas_name} "
+                         f"with obs {obs_key} and obsm {obsm_key_representation}")
+            annotation = adata.obs[obs_key]
+            count_representation = adata.obsm[obsm_key_representation]
             metric_value = metrics.calc_metric_cluster(
-                metric, adata, obs_key, "X_umap"
+                metric, count_representation, annotation, "X_umap"
             )
             dict_line[metric] = metric_value
         df_line = pd.DataFrame(dict_line)
@@ -448,10 +453,11 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
 
 def metric_annot(adata, atlas_path, atlas_info, args) -> None:
     """
-    Main function of checkatlas
-    For every atlas create summary tables with all attributes of the atlas
-    Calc UMAP, tSNE, and all metrics
+    Calc annotation metrics
+    :param adata:
     :param atlas_path:
+    :param atlas_info:
+    :param args:
     :return:
     """
     atlas_name = atlas_info[0]
@@ -479,8 +485,10 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
                 logger.debug(
                     f"Calc {metric} for {atlas_name} with obs {obs_key} vs ref_obs {ref_obs}"
                 )
+                annotation = adata.obs[obs_key]
+                ref_annotation = adata.obs[ref_obs]
                 metric_value = metrics.calc_metric_annot(
-                    metric, adata, obs_key, ref_obs
+                    metric, annotation, ref_annotation
                 )
                 dict_line[metric] = metric_value
             df_line = pd.DataFrame(dict_line)
@@ -493,10 +501,11 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
 
 def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
     """
-    Main function of checkatlas
-    For every atlas create summary tables with all attributes of the atlas
-    Calc UMAP, tSNE, andd all metrics
+    Calc dimensionality reduction metrics
+    :param adata:
     :param atlas_path:
+    :param atlas_info:
+    :param args:
     :return:
     """
     atlas_name = atlas_info[0]
@@ -520,7 +529,9 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
             logger.debug(
                 f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
             )
-            metric_value = metrics.calc_metric_dimred(metric, adata, obsm_key)
+            high_dim_counts = adata.X
+            low_dim_counts = adata.obsm[obsm_key]
+            metric_value = metrics.calc_metric_dimred(metric, high_dim_counts, low_dim_counts)
             dict_line[metric] = metric_value
         df_line = pd.DataFrame(dict_line)
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
