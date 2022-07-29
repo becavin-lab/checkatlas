@@ -3,14 +3,10 @@ import inspect
 import logging
 import os
 import webbrowser
-
-import anndata
 import matplotlib
-import scanpy as sc
 from dask.distributed import Client, LocalCluster, wait
 
 from . import atlas, folders, multiqc, atlas_seurat
-from .metrics import metrics
 
 # try:
 #     from . import atlas, folders, multiqc
@@ -77,18 +73,7 @@ def get_atlas_extension(atlas_path):
     return os.path.splitext(os.path.basename(atlas_path))[1]
 
 
-def convert_seurat_atlas(atlas_path, atlas_name) -> bool:
-    """
-    Convert all Seurat atlas to Scanpy
-    :param path:
-    :param atlas_list:
-    :return:
-    """
-    atlas.convert_atlas(atlas_path, atlas_name)
-    return True
-
-
-def clean_list_atlases(atlas_list, path) -> dict:
+def clean_list_atlases(atlas_list, path) -> tuple:
     """
     Go through all files and detect Seurat or Scanpy Atlas
     Then:
@@ -107,15 +92,13 @@ def clean_list_atlases(atlas_list, path) -> dict:
     for atlas_path in atlas_list:
         atlas_name = get_atlas_name(atlas_path)
         if atlas_path.endswith(".rds"):
-            logger.debug(
-                f"Include Atlas: {atlas_name} from {atlas_path}"
-            )
+            logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
             info = [
                 atlas_name,
                 "Seurat",
                 ".rds",
                 os.path.dirname(atlas_path) + "/",
-                ]
+            ]
             clean_atlas_seurat[atlas_path] = info
         elif atlas_path.endswith(".h5"):
             # detect if its a cellranger output
@@ -128,7 +111,7 @@ def clean_list_atlases(atlas_list, path) -> dict:
                     "Cellranger",
                     ".h5",
                     os.path.dirname(atlas_h5) + "/",
-                    ]
+                ]
                 clean_atlas_cellranger[atlas_path] = info
         elif atlas_path.endswith(".h5ad"):
             logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
@@ -137,7 +120,7 @@ def clean_list_atlases(atlas_list, path) -> dict:
                 "Scanpy",
                 ".h5ad",
                 os.path.dirname(atlas_path) + "/",
-                ]
+            ]
             clean_atlas_scanpy[atlas_path] = info
     # open file for writing, "w" is writing
     dict_file = open(folders.get_workingdir(path) + "list_atlases.csv", "w")
@@ -154,6 +137,10 @@ def clean_list_atlases(atlas_list, path) -> dict:
 
 
 def start_multithread_client():
+    """
+    Open a dask localcluster and a status browser
+    :return:
+    """
     # setup the cluster
     cluster = LocalCluster()
     client = Client(cluster)
@@ -228,15 +215,28 @@ def run(args):
     logger.info("Searching Seurat, Cellranger and Scanpy files")
     atlas_list = list_atlases(args.path)
     # First clean atlas list and keep only the h5ad files
-    clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger = clean_list_atlases(atlas_list, args.path)
-    logger.info(f"Found {len(clean_atlas_scanpy)} potential scanpy files with .h5ad extension")
-    logger.info(f"Found {len(clean_atlas_seurat)} potential seurat files with .rds extension")
-    logger.info(f"Found {len(clean_atlas_cellranger)} cellranger file with .h5 extension")
+    (
+        clean_atlas_scanpy,
+        clean_atlas_seurat,
+        clean_atlas_cellranger,
+    ) = clean_list_atlases(atlas_list, args.path)
+    logger.info(
+        f"Found {len(clean_atlas_scanpy)} potential "
+        f"scanpy files with .h5ad extension"
+    )
+    logger.info(
+        f"Found {len(clean_atlas_seurat)} potential "
+        f"seurat files with .rds extension"
+    )
+    logger.info(
+        f"Found {len(clean_atlas_cellranger)} cellranger "
+        f"file with .h5 extension"
+    )
 
     # Run all checkatlas analysis
     clean_atlas_adata = dict(clean_atlas_scanpy)
     clean_atlas_adata.update(clean_atlas_cellranger)
-    #run_scanpy(clean_atlas_adata, args)
+    # run_scanpy(clean_atlas_adata, args)
     run_seurat(clean_atlas_seurat, args)
 
     if not args.NOMULTIQC:
@@ -280,7 +280,9 @@ def run_scanpy(clean_atlas_scanpy, args):
         if adata is not None:
             # Clean adata
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            logger.info(f"Run checkatlas pipeline for {atlas_name} Scanpy atlas")
+            logger.info(
+                f"Run checkatlas pipeline for {atlas_name} Scanpy atlas"
+            )
             # Run pipeline functions
             for function in pipeline_functions:
                 if args.thread == 1:
@@ -329,7 +331,7 @@ def run_seurat(clean_atlas_seurat, args):
         csv_summary_path = os.path.join(
             folders.get_folder(args.path, folders.SUMMARY),
             atlas_name + SUMMARY_EXTENSION,
-            )
+        )
         logger.debug(f"Search {csv_summary_path}")
         if args.resume and os.path.exists(csv_summary_path):
             seurat = None
@@ -338,7 +340,9 @@ def run_seurat(clean_atlas_seurat, args):
         if seurat is not None:
             # Clean adata
             # adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            logger.info(f"Run checkatlas pipeline for {atlas_name} Seurat atlas")
+            logger.info(
+                f"Run checkatlas pipeline for {atlas_name} Seurat atlas"
+            )
             # Run pipeline functions
             for function in pipeline_functions:
                 if args.thread == 1:

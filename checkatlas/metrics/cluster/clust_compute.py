@@ -41,7 +41,7 @@ def silhouette(adata, partition_key, obsm_representation: str = None):
     annotations = adata.obs[partition_key]
     if obsm_representation:
         count_repr = adata.obsm[obsm_representation]
-        return silhouette_score(count_representation, annotations)
+        return silhouette_score(count_repr, annotations)
     else:
         original_count = adata.X
         return silhouette_score(original_count, annotations)
@@ -213,9 +213,7 @@ def rand(annotation, ref_annotation):
     compared
     to the reference clustering.
     """
-    return adjusted_rand_score(
-        *annotation_to_num(annotation, ref_annotation)
-    )
+    return adjusted_rand_score(*annotation_to_num(annotation, ref_annotation))
 
 
 def fowlkes_mallows(adata, partition_key, reference):
