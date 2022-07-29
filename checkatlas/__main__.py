@@ -1,7 +1,6 @@
 import argparse  # pragma: no cover
 import logging
 import os.path
-
 import yaml
 
 from . import checkatlas  # pragma: no cover
@@ -40,7 +39,8 @@ def main() -> None:  # pragma: no cover
     parser.add_argument(
         "path",
         type=str,
-        help="Required argument: Your folder containing Scanpy, CellRanger and Seurat atlasesv",
+        help="Required argument: Your folder containing "
+        "Scanpy, CellRanger and Seurat atlasesv",
         default=".",
     )
     parser.add_argument(
@@ -212,24 +212,7 @@ def main() -> None:  # pragma: no cover
     # Save all arguments to yaml (only run it when
     # generating example file config.yaml
     # save_arguments(args, 'config/default_config.yaml')
-    # test_r()
     checkatlas.run(args)
-
-
-def test_r():
-    seurat_path = "/Users/christophebecavin/Documents/testatlas/PAH_675093.rds"
-    import rpy2
-
-    print(seurat_path)
-    import rpy2.robjects as robjects
-
-    from . import atlas_seurat
-
-    # atlas_seurat.install_library()
-    rcode = f'readRDS("{seurat_path}")'
-    print(rcode)
-    seurat = robjects.r(rcode)
-    print(seurat)
 
 
 def load_arguments(args, yaml_name):

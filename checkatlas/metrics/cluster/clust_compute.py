@@ -165,7 +165,7 @@ def dbcv(adata, partition_key, obsm_representation: str = None):
         return davies_bouldin_score(original_count, annotations)
 
 
-def annotation_to_num(adata, partition_key, reference):
+def annotation_to_num(annotation, ref_annotation):
     """
     Transforms the annotations from categorical to numerical
 
@@ -179,8 +179,8 @@ def annotation_to_num(adata, partition_key, reference):
     -------
 
     """
-    annotation = adata.obs[partition_key].to_numpy()
-    ref_annotation = adata.obs[reference].to_numpy()
+    annotation = annotation.to_numpy()
+    ref_annotation = ref_annotation.to_numpy()
     le = LabelEncoder()
     le.fit(annotation)
     annotation = le.transform(annotation)
@@ -190,7 +190,7 @@ def annotation_to_num(adata, partition_key, reference):
     return annotation, ref_annotation
 
 
-def rand(adata, partition_key, reference):
+def rand(annotation, ref_annotation):
     """
     By default, computes the Rand index for the adata with respect to the
     clustering specified by partition_key compared to the reference clustering.
@@ -213,9 +213,7 @@ def rand(adata, partition_key, reference):
     compared
     to the reference clustering.
     """
-    return adjusted_rand_score(
-        *annotation_to_num(adata, partition_key, reference)
-    )
+    return adjusted_rand_score(*annotation_to_num(annotation, ref_annotation))
 
 
 def fowlkes_mallows(adata, partition_key, reference):
