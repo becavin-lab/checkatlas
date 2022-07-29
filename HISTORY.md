@@ -4,6 +4,12 @@ Changelog
 
 (unreleased)
 ------------
+- Modify summary. [drbecavin]
+
+
+0.1.1 (2022-07-29)
+------------------
+- Release: version 0.1.1 🚀 [drbecavin]
 - Add examples to docs. [drbecavin]
 - Update checkatlas examples. [drbecavin]
 - Update checkatlas examples. [drbecavin]
