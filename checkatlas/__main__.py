@@ -130,7 +130,7 @@ def main() -> None:  # pragma: no cover
         type=str,
         default=[
             "violin_plot",
-            "total-counts",
+            "total_counts",
             "n_genes_by_counts",
             "pct_counts_mt",
         ],
@@ -167,18 +167,18 @@ def main() -> None:  # pragma: no cover
         "--metric_annot",
         nargs="+",
         type=str,
-        default=[],
+        default=["rand_index"],
         help="List of clustering metrics to calculate."
         "To get a complete list of metrics, look here:"
         "https://github.com/becavin-lab/checkatlas/blob/"
         "main/checkatlas/metrics/metrics.py"
-        " Example: --metric_annot rand_index",
+        " Example: --metric_annot rand_i    ndex",
     )
     metric_options.add_argument(
         "--metric_dimred",
         nargs="+",
         type=str,
-        default=[],
+        default=[] ,
         help="List of dimensionality reduction metrics to calculate."
         "To get a complete list of metrics, look here:"
         "https://github.com/becavin-lab/checkatlas/blob/"
