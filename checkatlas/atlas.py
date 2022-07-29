@@ -5,6 +5,7 @@ import re
 import numpy as np
 import pandas as pd
 import scanpy as sc
+import anndata
 
 from . import checkatlas, folders
 from .metrics import metrics
@@ -35,6 +36,7 @@ OBS_CLUSTERS = [
     "CellType",
     "celltype",
     "ann_finest_level",
+    "cellranger_graphclust",
     "seurat_clusters",
     "louvain",
     "leiden",
@@ -73,28 +75,58 @@ OBS_QC = [
 logger = logging.getLogger("checkatlas")
 
 
-def convert_atlas(atlas_path, atlas_name) -> None:
-    """
-    Convert a atlas to Scanpy
-    :param atlas_path:
-    :return:
-    """
-    logger.info(f"Convert Seurat object to Scanpy: {atlas_path}")
-    rscript_cmd = (
-        "Rscript "
-        + checkatlas.RSCRIPT
-        + " "
-        + os.path.dirname(atlas_path)
-        + " "
-        + atlas_name
+def read_atlas(atlas_path, atlas_info):
+    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
+    try:
+        if atlas_path.endswith(".h5"):
+            logger.debug(f"Read Cellranger results {atlas_path}")
+            adata = read_cellranger(atlas_path)
+        else:
+            logger.debug(f"Read Scanpy file {atlas_path}")
+            adata = sc.read_h5ad(atlas_path)
+        return adata
+    except anndata._io.utils.AnnDataReadError:
+        logger.warning(f"AnnDataReadError, cannot read: {atlas_info[0]}")
+        return None
+
+
+def read_cellranger(atlas_path):
+    cellranger_path = atlas_path.replace(checkatlas.CELLRANGER_FILE, "")
+    cellranger_path = os.path.join(cellranger_path, "outs")
+    clust_path = os.path.join(
+        cellranger_path, "analysis", "clustering", "graphclust", "clusters.csv"
     )
-    logger.debug(f"Run: {rscript_cmd}")
-    os.system(rscript_cmd)
+    rna_umap = os.path.join(
+        cellranger_path, "analysis", "umap", "2_components", "projection.csv"
+    )
+    rna_tsne = os.path.join(
+        cellranger_path, "analysis", "tsne", "2_components", "projection.csv"
+    )
+    rna_pca = os.path.join(
+        cellranger_path, "analysis", "pca", "10_components", "projection.csv"
+    )
+    adata = sc.read_10x_h5(atlas_path)
+    adata.var_names_make_unique()
+    # Add cluster
+    if os.path.exists(clust_path):
+        df_cluster = pd.read_csv(clust_path, index_col=0)
+        adata.obs["cellranger_graphclust"] = df_cluster["Cluster"]
+    # Add reduction
+    if os.path.exists(rna_umap):
+        df_umap = pd.read_csv(rna_umap, index_col=0)
+        adata.obsm["X_umap"] = df_umap
+    if os.path.exists(rna_tsne):
+        df_tsne = pd.read_csv(rna_tsne, index_col=0)
+        adata.obsm["X_tsne"] = df_tsne
+    if os.path.exists(rna_pca):
+        df_pca = pd.read_csv(rna_pca, index_col=0)
+        adata.obsm["X_pca"] = df_pca
+    return adata
 
 
 def clean_scanpy_atlas(adata, atlas_info) -> bool:
     """
-    Clean the Scanpy object to be suyre to get all information out of it
+    Clean the Scanpy object to be sure to get all information out of it
     :param adata:
     :return:
     """
@@ -104,7 +136,10 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     for obs_key in adata.obs_keys():
         for obs_key_celltype in OBS_CLUSTERS:
             if obs_key_celltype in obs_key:
-                if adata.obs[obs_key].dtype == np.int32:
+                if (
+                    adata.obs[obs_key].dtype == np.int32
+                    or adata.obs[obs_key].dtype == np.int64
+                ):
                     adata.obs[obs_key] = pd.Categorical(adata.obs[obs_key])
     return adata
 
@@ -300,6 +335,7 @@ def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
     """
     atlas_name = atlas_info[0]
     sc.settings.figdir = folders.get_workingdir(args.path)
+    sc.set_figure_params(dpi_save=80)
     qc_path = os.sep + atlas_name + checkatlas.QC_FIG_EXTENSION
     logger.debug(f"Create QC violin plot for {atlas_name}")
     # mitochondrial genes
@@ -339,6 +375,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
     :return:
     """
     atlas_name = atlas_info[0]
+    sc.set_figure_params(dpi_save=150)
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
@@ -366,6 +403,7 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
     """
     # Search if tsne reduction exists
     atlas_name = atlas_info[0]
+    sc.set_figure_params(dpi_save=150)
     r = re.compile(".*tsne*.")
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
         logger.debug(f"Create t-SNE figure for {atlas_name}")
@@ -384,10 +422,11 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
 
 def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     """
-    Main function of checkatlas
-    For every atlas create summary tables with all attributes of the atlas
-    Calc UMAP, tSNE, andd all metrics
+    Calc clustering metrics
+    :param adata:
     :param atlas_path:
+    :param atlas_info:
+    :param args:
     :return:
     """
     atlas_name = atlas_info[0]
@@ -398,6 +437,7 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     header = ["Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
+    obsm_key_representation = "X_umap"
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")
     else:
@@ -405,9 +445,14 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     for obs_key in obs_keys:
         dict_line = {"Sample": [atlas_name + "_" + obs_key], "obs": [obs_key]}
         for metric in args.metric_cluster:
-            logger.debug(f"Calc {metric} for {atlas_name} with obs {obs_key}")
+            logger.debug(
+                f"Calc {metric} for {atlas_name} "
+                f"with obs {obs_key} and obsm {obsm_key_representation}"
+            )
+            annotation = adata.obs[obs_key]
+            count_representation = adata.obsm[obsm_key_representation]
             metric_value = metrics.calc_metric_cluster(
-                metric, adata, obs_key, "X_umap"
+                metric, count_representation, annotation
             )
             dict_line[metric] = metric_value
         df_line = pd.DataFrame(dict_line)
@@ -420,10 +465,11 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
 
 def metric_annot(adata, atlas_path, atlas_info, args) -> None:
     """
-    Main function of checkatlas
-    For every atlas create summary tables with all attributes of the atlas
-    Calc UMAP, tSNE, and all metrics
+    Calc annotation metrics
+    :param adata:
     :param atlas_path:
+    :param atlas_info:
+    :param args:
     :return:
     """
     atlas_name = atlas_info[0]
@@ -449,10 +495,13 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
             }
             for metric in args.metric_annot:
                 logger.debug(
-                    f"Calc {metric} for {atlas_name} with obs {obs_key} vs ref_obs {ref_obs}"
+                    f"Calc {metric} for {atlas_name} "
+                    f"with obs {obs_key} vs ref_obs {ref_obs}"
                 )
+                annotation = adata.obs[obs_key]
+                ref_annotation = adata.obs[ref_obs]
                 metric_value = metrics.calc_metric_annot(
-                    metric, adata, obs_key, ref_obs
+                    metric, annotation, ref_annotation
                 )
                 dict_line[metric] = metric_value
             df_line = pd.DataFrame(dict_line)
@@ -465,10 +514,11 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
 
 def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
     """
-    Main function of checkatlas
-    For every atlas create summary tables with all attributes of the atlas
-    Calc UMAP, tSNE, andd all metrics
+    Calc dimensionality reduction metrics
+    :param adata:
     :param atlas_path:
+    :param atlas_info:
+    :param args:
     :return:
     """
     atlas_name = atlas_info[0]
@@ -492,7 +542,11 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
             logger.debug(
                 f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
             )
-            metric_value = metrics.calc_metric_dimred(metric, adata, obsm_key)
+            high_dim_counts = adata.X
+            low_dim_counts = adata.obsm[obsm_key]
+            metric_value = metrics.calc_metric_dimred(
+                metric, high_dim_counts, low_dim_counts
+            )
             dict_line[metric] = metric_value
         df_line = pd.DataFrame(dict_line)
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)

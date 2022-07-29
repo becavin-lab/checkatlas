@@ -1,6 +1,6 @@
 NOADATA: false
 NOMETRIC: false
-NOMULTIQC: false
+NOMULTIQC: true
 NOQC: false
 NOREDUCTION: false
 NOSUMMARY: false
@@ -9,7 +9,6 @@ debug: true
 metric_annot: []
 metric_cluster:
 - silhouette
-- davies_boudin
 metric_dimred: []
 multiqc: CheckAtlas_MultiQC
 obs_cluster:
@@ -17,6 +16,7 @@ obs_cluster:
 - CellType
 - celltype
 - ann_finest_level
+- cellranger_graphclust
 - seurat_clusters
 - louvain
 - leiden
@@ -24,7 +24,7 @@ obs_cluster:
 path: /Users/christophebecavin/Documents/testatlas
 qc_display:
 - violin_plot
-- total-counts
+- total_counts
 - n_genes_by_counts
 - pct_counts_mt
 thread: 1
