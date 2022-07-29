@@ -1,7 +1,7 @@
-
 def test_r():
     print("Test Seurat")
-    # seurat_path = "/Users/christophebecavin/Documents/testatlas/PAH_675093.rds"
+    # seurat_path = "/Users/christophebecavin/
+    # Documents/testatlas/PAH_675093.rds"
     #
     # print(seurat_path)
     #
