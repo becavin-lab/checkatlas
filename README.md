@@ -20,8 +20,8 @@ and CellRanger files.
 1. Parse Scanpy, Seurat and CellRanger objects
 
    CheckAtlas should be able to load : .rds, .h5 and .h5ad corresponding to single-cell experiment. Need to implement :
-    - Rapid check-up of files to see if a Seurat, Scanpy or cellranger atlas can be found
-    - Automatic search in atlas files for key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
+     - Fast crawl through your folder and detect Seurat, Scanpy or cellranger atlas files.
+     - Automatic search in atlas files for key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
 
 
 2. Create checkatlas summary files
