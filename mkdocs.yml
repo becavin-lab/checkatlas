@@ -1,5 +1,7 @@
 site_name: checkatlas
 theme: readthedocs
+repo_url: https://github.com/becavin-lab/checkatlas
+site_url: https://checkatlas.readthedocs.io/
 
 nav:
   - Home: "index.md"
