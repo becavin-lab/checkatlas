@@ -4,6 +4,30 @@ Changelog
 
 (unreleased)
 ------------
+- Minor bug correction. [drbecavin]
+- Merge pull request #26 from becavin-lab/rpy2. [drbecavin]
+
+  Rpy2
+- Minor bug correction. [drbecavin]
+- Fix requirements. [drbecavin]
+- Fix requirements. [drbecavin]
+- Fix requirements. [drbecavin]
+- Run lint, clean code. [drbecavin]
+- Add metrics calculation for Seurat objects (dimred not working yet)
+  [drbecavin]
+- Implement Seurat management via rpy2. Summary, adata, qc and umap/tsne
+  is now performed with R. No conversion from seurat to scanpy is needed
+  anymore. [drbecavin]
+- Parse Cellranger files by searching for clustering and reductions in
+  outs/analysis/ folder. [drbecavin]
+- Separate search of scanpy, seurat and cellranger. Add atlas_seurat for
+  managing Seurat object with rpy2. [drbecavin]
+- Update README.md. [drbecavin]
+
+
+0.0.16 (2022-07-26)
+-------------------
+- Release: version 0.0.16 🚀 [drbecavin]
 - Improve metrics management. Add annot and dimred metrics. [drbecavin]
 - Add Metrics management with arguments, you can specify now the metrics
   to run inside the argument list or usng config file. Fix also the use
