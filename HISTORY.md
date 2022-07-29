@@ -4,6 +4,21 @@ Changelog
 
 (unreleased)
 ------------
+- Add examples to docs. [drbecavin]
+- Update checkatlas examples. [drbecavin]
+- Update checkatlas examples. [drbecavin]
+- Update doc. [drbecavin]
+- Update doc. [drbecavin]
+- Merge branch 'main' of github.com:becavin-lab/checkatlas Good.
+  [drbecavin]
+- Update README.md. [drbecavin]
+- Update README.md. [drbecavin]
+- Update doc. [drbecavin]
+
+
+0.1.0 (2022-07-29)
+------------------
+- Release: version 0.1.0 🚀 [drbecavin]
 - Minor bug correction. [drbecavin]
 - Merge pull request #26 from becavin-lab/rpy2. [drbecavin]
 
