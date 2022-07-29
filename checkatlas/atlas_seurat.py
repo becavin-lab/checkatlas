@@ -519,7 +519,7 @@ def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
             # metric, high_dim_counts, low_dim_counts)
             logger.warning(
                 "!!! Dim reduction metrics not available for Seurat"
-                "at the moment !!!"
+                " at the moment !!!"
             )
             # metric_value = -1
             # dict_line[metric] = str(metric_value)

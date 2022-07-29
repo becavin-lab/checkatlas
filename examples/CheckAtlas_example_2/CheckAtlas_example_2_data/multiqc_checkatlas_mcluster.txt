@@ -1,4 +1,4 @@
-Sample	obs	Silhouette	Davies-Bouldin
+Sample	obs	silhouette	davies_bouldin
 Fetal_v1_author_cell_type	author_cell_type	-0.02886217273771763	8.533452455252949
 Fetal_v1_cell_type	cell_type	-0.03291133791208267	8.52563628745973
 Fetal_v1_cell_type_ontology_term_id	cell_type_ontology_term_id	-0.03291133791208267	8.52563628745973

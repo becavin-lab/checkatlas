@@ -1,4 +1,4 @@
-Sample	obs	Silhouette	Davies-Bouldin
+Sample	obs	silhouette	davies_bouldin
 B-cells_compartment_Manually_curated_celltype	Manually_curated_celltype	0.1839601844549179	1.3069555092772787
 B-cells_compartment_cell_type	cell_type	0.2491266131401062	1.093590111229104
 B-cells_compartment_cell_type_ontology_term_id	cell_type_ontology_term_id	0.2491266131401062	1.093590111229104
