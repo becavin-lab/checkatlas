@@ -1,4 +1,3 @@
-
 # CheckAtlas
 
 [![codecov](https://codecov.io/gh/becavin-lab/checkatlas/branch/main/graph/badge.svg?token=checkatlas_token_here)](https://codecov.io/gh/becavin-lab/checkatlas)
@@ -11,23 +10,28 @@ and CellRanger files.
 
 ## Summary
 
+CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
+quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
+and CellRanger files.
+
+## Summary
+
 1. Parse Scanpy, Seurat and CellRanger objects
 
    CheckAtlas should be able to load : .rds, .h5 and .h5ad corresponding to single-cell experiment. Need to implement :
-    - automatic conversion of Seurat object to Scanpy with SeuratDisk
-    - Rapid check-up of files to see if a Seurat or Scanpy can be found
-    - Automatic search in Scanpy files of key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
+   - Fast crawl through your folder and detect Seurat, Scanpy or cellranger atlas files.
+   - Automatic search in atlas files for key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
 
 
 2. Create checkatlas summary files
 
-   Go through all Scanpy files and extract summary information. We won't to extract :
+   Go through all atlas files and produce summary information:
 
-    - All basic QC (nRNA, nFeature, ratio_mito)
-    - General information (nbcells, nbgenes, nblayers)
-    - All elements in scanpy objects (obs, obsm, uns, var, varm)
-    - Reductions (pca, umap, tsne)
-    - All metrics (clustering, annotation, dimreduction, specificity)
+   - All basic QC (nRNA, nFeature, ratio_mito)
+   - General information (nbcells, nbgenes, nblayers)
+   - All elements in atlas files (obs, obsm, uns, var, varm)
+   - Reductions (pca, umap, tsne)
+   - All metrics (clustering, annotation, dimreduction, specificity)
 
 3. Parse checkatlas files in MultiQC
 
@@ -39,10 +43,15 @@ https://checkatlas.readthedocs.io/en/latest/
 
 1. Evaluate and compare different atlases: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Atlas_comparison.ipynb
 
+https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_1/CheckAtlas_example_1.html
+
 2. Evaluate different version of your atlas: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Version_comparison.ipynb
+
+https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_2/CheckAtlas_example_2.html
 
 3. Explore Scanpy, Seurat and CellRanger objects in your folder: https://github.com/becavin-lab/checkatlas/blob/main/examples/AtlasType_comparison.ipynb
 
+https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_3/CheckAtlas_example_3.html
 
 ## Installation
 
@@ -70,6 +79,25 @@ pip install .
 pip install checkatlas
 ```
 
+### Install Seurat
+
+To be able to manage seurat file, rpy2 should have Seurat installed. The easiest way is to put all checkatlas requirements in a conda environment and add r-seurat.
+
+```bash
+conda create -n checkatlas python=3.9
+pip install checkatlas
+conda install -c bioconda r-seurat
+```
+
+Or, open R in checkatlas environment (the one where you ran 'pip install') and install Seurat.
+
+```bash
+% R
+> install.packages('Seurat')
+> library(Seurat)
+```
+
+
 ## Usage
 
 The one liner way to run checkatlas is the following:
@@ -87,11 +115,3 @@ Or run it inside your python workflow.
 from checkatlas import checkatlas
 checkatlas.run(path, atlas_list, multithread, n_cpus)
 ```
-
-
-## Development
-
-Read the [CONTRIBUTING.md](contributing.md) file.
-
-Project developed thanks to the project template : (https://github.com/rochacbruno/python-project-template/)
-
