@@ -236,7 +236,7 @@ def run(args):
     # Run all checkatlas analysis
     clean_atlas_adata = dict(clean_atlas_scanpy)
     clean_atlas_adata.update(clean_atlas_cellranger)
-    # run_scanpy(clean_atlas_adata, args)
+    run_scanpy(clean_atlas_adata, args)
     run_seurat(clean_atlas_seurat, args)
 
     if not args.NOMULTIQC:
