@@ -1,6 +1,4 @@
 import numpy as np
-import pandas as pd
-from scipy.spatial.distance import pdist
 from sklearn.metrics.pairwise import euclidean_distances
 
 

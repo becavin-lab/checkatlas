@@ -1,12 +1,8 @@
 import logging
 from sklearn.metrics import (
-    adjusted_mutual_info_score,
     adjusted_rand_score,
-    calinski_harabasz_score,
     davies_bouldin_score,
-    fowlkes_mallows_score,
     silhouette_score,
-    v_measure_score,
 )
 from sklearn.preprocessing import LabelEncoder
 

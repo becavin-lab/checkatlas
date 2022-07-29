@@ -93,26 +93,34 @@ def read_atlas(atlas_path, atlas_info):
 def read_cellranger(atlas_path):
     cellranger_path = atlas_path.replace(checkatlas.CELLRANGER_FILE, "")
     cellranger_path = os.path.join(cellranger_path, "outs")
-    clust_path = os.path.join(cellranger_path, "analysis", "clustering", "graphclust", "clusters.csv")
-    rna_umap = os.path.join(cellranger_path, "analysis", "umap", "2_components", "projection.csv")
-    rna_tsne = os.path.join(cellranger_path, "analysis", "tsne", "2_components", "projection.csv")
-    rna_pca = os.path.join(cellranger_path, "analysis", "pca", "10_components", "projection.csv")
+    clust_path = os.path.join(
+        cellranger_path, "analysis", "clustering", "graphclust", "clusters.csv"
+    )
+    rna_umap = os.path.join(
+        cellranger_path, "analysis", "umap", "2_components", "projection.csv"
+    )
+    rna_tsne = os.path.join(
+        cellranger_path, "analysis", "tsne", "2_components", "projection.csv"
+    )
+    rna_pca = os.path.join(
+        cellranger_path, "analysis", "pca", "10_components", "projection.csv"
+    )
     adata = sc.read_10x_h5(atlas_path)
     adata.var_names_make_unique()
     # Add cluster
     if os.path.exists(clust_path):
         df_cluster = pd.read_csv(clust_path, index_col=0)
-        adata.obs['cellranger_graphclust'] = df_cluster["Cluster"]
+        adata.obs["cellranger_graphclust"] = df_cluster["Cluster"]
     # Add reduction
     if os.path.exists(rna_umap):
         df_umap = pd.read_csv(rna_umap, index_col=0)
-        adata.obsm['X_umap'] = df_umap
+        adata.obsm["X_umap"] = df_umap
     if os.path.exists(rna_tsne):
         df_tsne = pd.read_csv(rna_tsne, index_col=0)
-        adata.obsm['X_tsne'] = df_tsne
+        adata.obsm["X_tsne"] = df_tsne
     if os.path.exists(rna_pca):
         df_pca = pd.read_csv(rna_pca, index_col=0)
-        adata.obsm['X_pca'] = df_pca
+        adata.obsm["X_pca"] = df_pca
     return adata
 
 
@@ -128,8 +136,10 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     for obs_key in adata.obs_keys():
         for obs_key_celltype in OBS_CLUSTERS:
             if obs_key_celltype in obs_key:
-                if adata.obs[obs_key].dtype == np.int32 or \
-                        adata.obs[obs_key].dtype == np.int64:
+                if (
+                    adata.obs[obs_key].dtype == np.int32
+                    or adata.obs[obs_key].dtype == np.int64
+                ):
                     adata.obs[obs_key] = pd.Categorical(adata.obs[obs_key])
     return adata
 
@@ -435,12 +445,14 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     for obs_key in obs_keys:
         dict_line = {"Sample": [atlas_name + "_" + obs_key], "obs": [obs_key]}
         for metric in args.metric_cluster:
-            logger.debug(f"Calc {metric} for {atlas_name} "
-                         f"with obs {obs_key} and obsm {obsm_key_representation}")
+            logger.debug(
+                f"Calc {metric} for {atlas_name} "
+                f"with obs {obs_key} and obsm {obsm_key_representation}"
+            )
             annotation = adata.obs[obs_key]
             count_representation = adata.obsm[obsm_key_representation]
             metric_value = metrics.calc_metric_cluster(
-                metric, count_representation, annotation, "X_umap"
+                metric, count_representation, annotation
             )
             dict_line[metric] = metric_value
         df_line = pd.DataFrame(dict_line)
@@ -483,7 +495,8 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
             }
             for metric in args.metric_annot:
                 logger.debug(
-                    f"Calc {metric} for {atlas_name} with obs {obs_key} vs ref_obs {ref_obs}"
+                    f"Calc {metric} for {atlas_name} "
+                    f"with obs {obs_key} vs ref_obs {ref_obs}"
                 )
                 annotation = adata.obs[obs_key]
                 ref_annotation = adata.obs[ref_obs]
@@ -531,7 +544,9 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
             )
             high_dim_counts = adata.X
             low_dim_counts = adata.obsm[obsm_key]
-            metric_value = metrics.calc_metric_dimred(metric, high_dim_counts, low_dim_counts)
+            metric_value = metrics.calc_metric_dimred(
+                metric, high_dim_counts, low_dim_counts
+            )
             dict_line[metric] = metric_value
         df_line = pd.DataFrame(dict_line)
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
