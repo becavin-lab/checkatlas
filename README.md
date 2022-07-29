@@ -75,6 +75,25 @@ pip install .
 pip install checkatlas
 ```
 
+### Install Seurat
+
+To be able to manage seurat file, rpy2 should have Seurat installed. The easiest way is to put all checkatlas requirements in a conda environment and add r-seurat.
+
+```bash
+conda create -n checkatlas python=3.9
+pip install checkatlas
+conda install -c bioconda r-seurat
+```
+
+Or, open R in checkatlas environment (the one where you ran 'pip install') and install Seurat.
+
+```bash
+% R
+> install.packages('Seurat')
+> library(Seurat)
+```
+
+
 ## Usage
 
 The one liner way to run checkatlas is the following: 
