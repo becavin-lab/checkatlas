@@ -8,22 +8,15 @@ CheckAtlas is a one liner tool to check the quality of your single-cell atlases.
 quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
 and CellRanger files.
 
-## Summary
-
-CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
-quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
-and CellRanger files.
 
 ## Summary
 
-1. Parse Scanpy, Seurat and CellRanger objects
+### Parse Scanpy, Seurat and CellRanger objects
 
-   CheckAtlas should be able to load : .rds, .h5 and .h5ad corresponding to single-cell experiment. Need to implement :
-   - Fast crawl through your folder and detect Seurat, Scanpy or cellranger atlas files.
-   - Automatic search in atlas files for key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
+   Fast crawl through your folder and detect Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
+   
 
-
-2. Create checkatlas summary files
+### Create checkatlas summary files
 
    Go through all atlas files and produce summary information:
 
@@ -33,7 +26,7 @@ and CellRanger files.
    - Reductions (pca, umap, tsne)
    - All metrics (clustering, annotation, dimreduction, specificity)
 
-3. Parse checkatlas files in MultiQC
+### Parse checkatlas files in MultiQC
 
    Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
 
