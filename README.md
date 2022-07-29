@@ -11,29 +11,34 @@ and CellRanger files.
 
 ## Summary
 
+CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
+quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
+and CellRanger files.
+
+## Summary
+
 1. Parse Scanpy, Seurat and CellRanger objects
-    
-    CheckAtlas should be able to load : .rds, .h5 and .h5ad corresponding to single-cell experiment. Need to implement :
-      - automatic conversion of Seurat object to Scanpy with SeuratDisk
-      - Rapid check-up of files to see if a Seurat or Scanpy can be found
-      - Automatic search in Scanpy files of key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
+
+   CheckAtlas should be able to load : .rds, .h5 and .h5ad corresponding to single-cell experiment. Need to implement :
+    - Rapid check-up of files to see if a Seurat, Scanpy or cellranger atlas can be found
+    - Automatic search in atlas files for key information = raw data, normalized data, integrated data, reductions, layers, assays, metadatas, etc...
 
 
 2. Create checkatlas summary files
-  
-    Go through all Scanpy files and extract summary information. We won't to extract :
 
-      - All basic QC (nRNA, nFeature, ratio_mito)
-      - General information (nbcells, nbgenes, nblayers)
-      - All elements in scanpy objects (obs, obsm, uns, var, varm)
-      - Reductions (pca, umap, tsne)
-      - All metrics (clustering, annotation, dimreduction, specificity)
+   Go through all atlas files and produce summary information:
+
+    - All basic QC (nRNA, nFeature, ratio_mito)
+    - General information (nbcells, nbgenes, nblayers)
+    - All elements in atlas files (obs, obsm, uns, var, varm)
+    - Reductions (pca, umap, tsne)
+    - All metrics (clustering, annotation, dimreduction, specificity)
 
 3. Parse checkatlas files in MultiQC
-  
-    Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
 
-https://checkatlas.readthedocs.io/en/stable/
+   Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
+
+https://checkatlas.readthedocs.io/en/latest/
 
 ## Examples
 
