@@ -131,8 +131,16 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     :return:
     """
     logger.debug(f"Clean scanpy: {atlas_info[0]}")
-    #Make var names unique
-    adata.var_names_make_unique()
+    # Make var names unique
+    list_var = adata.var_names
+    if len(set(list_var)) == len(list_var) :
+        print("Var names unique")
+    else:
+        print("Var names not unique.")
+        adata.var_names_make_unique()
+        list_var = adata.var_names
+        print(len(set(list_var)), len(list_var))
+        
     # If OBS_CLUSTERS are present and in int32 -> be sure to
     # transform them in categorical
     for obs_key in adata.obs_keys():
