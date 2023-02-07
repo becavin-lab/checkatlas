@@ -136,11 +136,18 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     if len(set(list_var)) == len(list_var) :
         print("Var names unique")
     else:
-        print("Var names not unique.")
+        print("Var names not unique, ran : adata.var_names_make_unique()")
         adata.var_names_make_unique()
-        list_var = adata.var_names
-        print(len(set(list_var)), len(list_var))
-        
+    if adata.raw is not None :
+        list_var = adata.raw.var_names
+        if len(set(list_var)) == len(list_var) :
+            print("Var names unique")
+        else:
+            print("Var names not unique, ran : adata.var_names_make_unique()")
+            adata.raw.var_names_make_unique()
+            list_var = adata.raw.var_names
+            print(len(set(list_var)), len(list_var))
+
     # If OBS_CLUSTERS are present and in int32 -> be sure to
     # transform them in categorical
     for obs_key in adata.obs_keys():
