@@ -48,13 +48,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Python Poetry Action
-      uses: abatilo/actions-poetry@v2.1.6
+    - name: Build and publish to pypi
+      uses: JRubics/poetry-publish@v1.16
       with:
-        poetry-version: ${{ matrix.poetry-version }}
-    - name: Config poetry Pypi token
-      run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
-    - name: Install project
-      run: make install
-    - name: Build and publish
-      run: poetry build; poetry publish
+        python_version: ${{ matrix.python-version }}
+        poetry_version: ${{ matrix.poetry-version }}
+        pypi_token: ${{ secrets.PYPI_TOKEN }}

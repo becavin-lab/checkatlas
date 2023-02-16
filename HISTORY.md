@@ -2,6 +2,23 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Test pypi token. [drbecavin]
+
+
+0.1.10 (2023-02-16)
+-------------------
+- Release: version 0.1.10 🚀 [drbecavin]
+
+
+0.1.3 (2023-02-16)
+------------------
+- Release: version 0.1.3 🚀 [drbecavin]
+- Release: version  🚀 [drbecavin]
+- Release: version  🚀 [drbecavin]
+
+
 0.1.7 (2023-02-16)
 ------------------
 - Release: version 0.1.7 🚀 [drbecavin]
@@ -42,11 +59,6 @@ Changelog
 - Test git. [Christophe Bécavin]
 - Test. [Paola Porracciolo]
 - Test. [Paola Porracciolo]
-
-
-0.1.3 (2023-02-16)
-------------------
-- Release: version 0.1.3 🚀 [drbecavin]
 
 
 0.1.2 (2022-07-29)
