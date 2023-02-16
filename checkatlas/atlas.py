@@ -2,10 +2,10 @@ import logging
 import os
 import re
 
+import anndata
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import anndata
 
 from . import checkatlas, folders
 from .metrics import metrics
@@ -133,14 +133,14 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     logger.debug(f"Clean scanpy: {atlas_info[0]}")
     # Make var names unique
     list_var = adata.var_names
-    if len(set(list_var)) == len(list_var) :
+    if len(set(list_var)) == len(list_var):
         print("Var names unique")
     else:
         print("Var names not unique, ran : adata.var_names_make_unique()")
         adata.var_names_make_unique()
-    if adata.raw is not None :
+    if adata.raw is not None:
         list_var = adata.raw.var_names
-        if len(set(list_var)) == len(list_var) :
+        if len(set(list_var)) == len(list_var):
             print("Var names unique")
         else:
             print("Var names not unique, ran : adata.var_names_make_unique()")

@@ -3,10 +3,11 @@ import inspect
 import logging
 import os
 import webbrowser
+
 import matplotlib
 from dask.distributed import Client, LocalCluster, wait
 
-from . import atlas, folders, multiqc, atlas_seurat
+from . import atlas, atlas_seurat, folders, multiqc
 
 # try:
 #     from . import atlas, folders, multiqc
