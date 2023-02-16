@@ -35,14 +35,13 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install setuptools wheel twine
+    - name: Python Poetry Action
+      uses: abatilo/actions-poetry@v2.1.6
+      with:
+        poetry-version: ${{ matrix.poetry-version }}
+    - name: Config poetry Pypi token
+      run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+    - name: Install project
+        run: make install
     - name: Build and publish
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload --verbose dist/*
+      run: poetry build; poetry publish
