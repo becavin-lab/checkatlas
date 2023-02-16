@@ -4,6 +4,32 @@ Changelog
 
 (unreleased)
 ------------
+- Modify release workflow. [drbecavin]
+- Merge pull request #32 from becavin-lab/metrics. [drbecavin]
+
+  Poetrry package manager added
+- Modify github workflow for tests. [drbecavin]
+- Modify github workflow for tests. [drbecavin]
+- Modify github workflow for tests. [drbecavin]
+- Add poetry for github workflow. [drbecavin]
+- Add poetry for github workflow. [drbecavin]
+- Add poetry for github workflow. [drbecavin]
+- Add poetry for github workflow. [drbecavin]
+- Add poetry for github workflow. [drbecavin]
+- After poetry add fix MakeFile. [drbecavin]
+- Switch to poetry. [drbecavin]
+- Fix var_names not unique. [drbecavin]
+- Fix var_names not unique. [drbecavin]
+- Branch metrics. [Christophe Bécavin]
+- Test git. [Christophe Bécavin]
+- Test git. [Christophe Bécavin]
+- Test. [Paola Porracciolo]
+- Test. [Paola Porracciolo]
+
+
+0.1.2 (2022-07-29)
+------------------
+- Release: version 0.1.2 🚀 [drbecavin]
 - Modify summary. [drbecavin]
 
 
