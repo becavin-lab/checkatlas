@@ -1,16 +1,17 @@
 # This requirements are for development and testing only, not for production.
 pytest
-coverage
 flake8
 black
-isort
-pytest-cov
-codecov
-mypy
-gitchangelog
-mkdocs
+
 multiqc
 scanpy
+dask
+distributed
+
+rpy2
+
+types-PyYAML
+
 
 # Requirements for R
 # install.packages('devtools')

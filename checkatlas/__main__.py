@@ -1,6 +1,7 @@
 import argparse  # pragma: no cover
 import logging
 import os.path
+
 import yaml
 
 from . import checkatlas  # pragma: no cover
@@ -178,7 +179,7 @@ def main() -> None:  # pragma: no cover
         "--metric_dimred",
         nargs="+",
         type=str,
-        default=[],
+        default=["kruskal_stress"],
         help="List of dimensionality reduction metrics to calculate."
         "To get a complete list of metrics, look here:"
         "https://github.com/becavin-lab/checkatlas/blob/"

@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
+        python-version: ["3.10"]
+        poetry-version: ["1.3.2"]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -26,6 +27,10 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.6
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
         run: make install
       - name: Run linter
@@ -36,7 +41,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
+        python-version: [ "3.10" ]
+        poetry-version: [ "1.3.2" ]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -44,6 +50,10 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.6
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
         run: make install
       - name: Run tests
@@ -58,7 +68,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
+        python-version: [ "3.10" ]
+        poetry-version: [ "1.3.2" ]
         os: [macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -66,6 +77,10 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.6
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
         run: make install
       - name: Run tests
@@ -76,7 +91,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
+        python-version: [ "3.10" ]
+        poetry-version: [ "1.3.2" ]
         os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -84,7 +100,11 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.6
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
-        run: pip install -e .[test]
+        run: poetry install
       - name: run tests
-        run: pytest -s -vvvv -l --tb=long tests
+        run: poetry run pytest -s -vvvv -l --tb=long tests
