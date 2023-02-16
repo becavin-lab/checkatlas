@@ -42,6 +42,6 @@ jobs:
     - name: Config poetry Pypi token
       run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
     - name: Install project
-        run: make install
+      run: make install
     - name: Build and publish
       run: poetry build; poetry publish
