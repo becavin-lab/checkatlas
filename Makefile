@@ -36,7 +36,7 @@ lint:             ## Run pep8, black, mypy linters.
 	$(ENV_PREFIX)poetry run mypy --ignore-missing-imports checkatlas/
 
 .PHONY: test
-test: lint        ## Run tests and generate coverage report.
+test:             ## Run tests and generate coverage report.
 	$(ENV_PREFIX)poetry run pytest -v --cov-config .coveragerc --cov=checkatlas -l --tb=short --maxfail=1 tests/
 	$(ENV_PREFIX)poetry run coverage xml
 	$(ENV_PREFIX)poetry run coverage html
