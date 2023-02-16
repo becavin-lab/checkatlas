@@ -2,6 +2,11 @@ Changelog
 =========
 
 
+0.1.7 (2023-02-16)
+------------------
+- Release: version 0.1.7 🚀 [drbecavin]
+
+
 0.1.6 (2023-02-16)
 ------------------
 - Release: version 0.1.6 🚀 [drbecavin]
