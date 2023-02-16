@@ -31,6 +31,8 @@ jobs:
         uses: abatilo/actions-poetry@v2.1.6
         with:
           poetry-version: ${{ matrix.poetry-version }}
+      - name: Test token
+        run: echo ${{ secrets.PYPI_API_TOKEN }}
       - name: Install project
         run: make install
       - name: Run linter
