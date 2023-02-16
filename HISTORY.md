@@ -2,8 +2,9 @@ Changelog
 =========
 
 
-(unreleased)
-------------
+0.1.12 (2023-02-16)
+-------------------
+- Release: version 0.1.12 🚀 [drbecavin]
 - Release: version 0.1.11 🚀 [drbecavin]
 - Modify release;yaml to get pypi publication running. [drbecavin]
 
