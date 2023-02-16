@@ -1,4 +1,5 @@
 import logging
+
 from sklearn.metrics import (
     adjusted_rand_score,
     davies_bouldin_score,

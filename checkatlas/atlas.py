@@ -2,10 +2,10 @@ import logging
 import os
 import re
 
+import anndata
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import anndata
 
 from . import checkatlas, folders
 from .metrics import metrics
@@ -131,6 +131,23 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     :return:
     """
     logger.debug(f"Clean scanpy: {atlas_info[0]}")
+    # Make var names unique
+    list_var = adata.var_names
+    if len(set(list_var)) == len(list_var):
+        print("Var names unique")
+    else:
+        print("Var names not unique, ran : adata.var_names_make_unique()")
+        adata.var_names_make_unique()
+    if adata.raw is not None:
+        list_var = adata.raw.var_names
+        if len(set(list_var)) == len(list_var):
+            print("Var names unique")
+        else:
+            print("Var names not unique, ran : adata.var_names_make_unique()")
+            adata.raw.var_names_make_unique()
+            list_var = adata.raw.var_names
+            print(len(set(list_var)), len(list_var))
+
     # If OBS_CLUSTERS are present and in int32 -> be sure to
     # transform them in categorical
     for obs_key in adata.obs_keys():

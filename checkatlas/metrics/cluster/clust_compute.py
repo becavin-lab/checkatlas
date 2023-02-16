@@ -11,7 +11,7 @@ from sklearn.metrics import (
 from sklearn.preprocessing import LabelEncoder
 
 
-def silhouette(adata, partition_key, obsm_representation: str = None):
+def silhouette(adata, partition_key, obsm_representation: str = ""):
     """
     By default, computes the average silhouette coefficient for the adata
     with respect to the clustering specified by partition_key.
@@ -57,7 +57,7 @@ def silhouette(adata, partition_key, obsm_representation: str = None):
 
 
 def davies_bouldin(
-    adata: AnnData, partition_key, obsm_representation: str = None
+    adata: AnnData, partition_key, obsm_representation: str = ""
 ):
     """
     By default, computes the Davies-Bouldin index for the adata with respect
@@ -95,7 +95,7 @@ def davies_bouldin(
 
 
 def calinski_harabasz(
-    adata: AnnData, partition_key, obsm_representation: str = None
+    adata: AnnData, partition_key, obsm_representation: str = ""
 ):
     """
     By default, computes the Davies-Bouldin index for the adata with respect
@@ -131,7 +131,7 @@ def calinski_harabasz(
         return calinski_harabasz_score(original_count, annotations)
 
 
-def dbcv(adata, partition_key, obsm_representation: str = None):
+def dbcv(adata, partition_key, obsm_representation: str = ""):
     """
     By default, computes the DBCV index for the adata with respect to the
     clustering
@@ -298,7 +298,7 @@ def vmeasure(adata, partition_key, reference):
     return v_measure_score(*annotation_to_num(adata, partition_key, reference))
 
 
-def dunn(adata, partition_key: str, obsm_representation: str = None):
+def dunn(adata, partition_key: str, obsm_representation: str = ""):
     """
     By default, computes the Dunn index for the adata with respect to the
     clustering specified by partition_key.
