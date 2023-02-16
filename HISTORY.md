@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Modify release;yaml to get pypi publication running. [drbecavin]
+- Release: version 0.1.10 🚀 [drbecavin]
 - Test pypi token. [drbecavin]
 
 
