@@ -1,6 +1,7 @@
 import argparse  # pragma: no cover
 import logging
 import os.path
+
 import yaml
 
 from . import checkatlas  # pragma: no cover

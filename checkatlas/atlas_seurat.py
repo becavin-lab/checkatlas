@@ -1,18 +1,18 @@
 import logging
 import os
 import re
+
 import pandas as pd
 import rpy2.robjects as ro
+import rpy2.robjects as robjects
+from rpy2.rinterface_lib.sexp import NULLType
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
-import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
-from rpy2.rinterface_lib.sexp import NULLType
 from rpy2.robjects.vectors import FactorVector
 
-from .metrics import metrics
 from . import checkatlas, folders
-
+from .metrics import metrics
 
 """
 Module for management of Atlas n Seurat format

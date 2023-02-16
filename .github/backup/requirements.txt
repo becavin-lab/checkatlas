@@ -5,16 +5,7 @@
 # You can also run `make switch-to-poetry` to use the poetry package manager.
 multiqc
 scanpy
-pandas
-anndata
-numpy
-scikit-learn
-matplotlib
-scipy
 dask
-pytest
-setuptools
-seaborn
+distributed
 rpy2
 types-PyYAML
-distributed
