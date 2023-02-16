@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.1.11 🚀 [drbecavin]
 - Modify release;yaml to get pypi publication running. [drbecavin]
 
 
