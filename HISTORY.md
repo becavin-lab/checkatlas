@@ -2,6 +2,11 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Release: version 0.1.4 🚀 [drbecavin]
+
+
 0.1.4 (2023-02-16)
 ------------------
 - Release: version 0.1.4 🚀 [drbecavin]
