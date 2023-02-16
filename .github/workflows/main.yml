@@ -26,6 +26,8 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.6
       - name: Install project
         run: make install
       - name: Run linter
