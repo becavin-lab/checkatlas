@@ -1,0 +1,4 @@
+# This requirements are for building the doc, not for production.
+jinja2~=3.0.0
+mkdocs
+Markdown~=3.0.1
