@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" /><link rel="canonical" href="https://checkatlas.readthedocs.io/" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>checkatlas</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Home";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = "/";
+      </script>
+    
+    <script src="js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> checkatlas
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#parse-scanpy-seurat-and-cellranger-objects">Parse Scanpy, Seurat and CellRanger objects</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#create-checkatlas-summary-files">Create checkatlas summary files</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#parse-checkatlas-files-in-multiqc">Parse checkatlas files in MultiQC</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#install-checkatlas-development-version">Install checkatlas development version</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#install-it-from-pypi">Install it from PyPI</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#install-seurat">Install Seurat</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="examples/">Examples</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="contributing/">Contributing</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">checkatlas</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li>
+      <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/becavin-lab/checkatlas/edit/master/docs/index.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="checkatlas">CheckAtlas</h1>
+<p><a href="https://codecov.io/gh/becavin-lab/checkatlas"><img alt="codecov" src="https://codecov.io/gh/becavin-lab/checkatlas/branch/main/graph/badge.svg?token=checkatlas_token_here" /></a>
+<a href="https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml"><img alt="CI" src="https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml/badge.svg" /></a>
+<a href="https://checkatlas.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="https://readthedocs.org/projects/checkatlas/badge/?version=latest" /></a></p>
+<p>CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
+quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
+and CellRanger files.</p>
+<h2 id="summary">Summary</h2>
+<h3 id="parse-scanpy-seurat-and-cellranger-objects">Parse Scanpy, Seurat and CellRanger objects</h3>
+<p>Fast crawl through your folder and detect Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.</p>
+<h3 id="create-checkatlas-summary-files">Create checkatlas summary files</h3>
+<p>Go through all atlas files and produce summary information:</p>
+<ul>
+<li>All basic QC (nRNA, nFeature, ratio_mito)</li>
+<li>General information (nbcells, nbgenes, nblayers)</li>
+<li>All elements in atlas files (obs, obsm, uns, var, varm)</li>
+<li>Reductions (pca, umap, tsne)</li>
+<li>All metrics (clustering, annotation, dimreduction, specificity)</li>
+</ul>
+<h3 id="parse-checkatlas-files-in-multiqc">Parse checkatlas files in MultiQC</h3>
+<p>Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas</p>
+<p>https://checkatlas.readthedocs.io/en/latest/</p>
+<h2 id="examples">Examples</h2>
+<ol>
+<li>Evaluate and compare different atlases: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Atlas_comparison.ipynb</li>
+</ol>
+<p>https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_1/CheckAtlas_example_1.html</p>
+<ol>
+<li>Evaluate different version of your atlas: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Version_comparison.ipynb</li>
+</ol>
+<p>https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_2/CheckAtlas_example_2.html</p>
+<ol>
+<li>Explore Scanpy, Seurat and CellRanger objects in your folder: https://github.com/becavin-lab/checkatlas/blob/main/examples/AtlasType_comparison.ipynb</li>
+</ol>
+<p>https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_3/CheckAtlas_example_3.html</p>
+<h2 id="installation">Installation</h2>
+<p>CheckAtlas can be downloaded from PyPI. However, the project is in an early development phase. We strongly recommend to use the developmental version.</p>
+<h3 id="install-checkatlas-development-version">Install checkatlas development version</h3>
+<pre><code class="language-bash">git clone git@github.com:becavin-lab/checkatlas.git
+pip install checkatlas/.
+</code></pre>
+<p>Install MultiQC with checkatlas file management. This version of MultiQC is available at checkatlas branch of github.com:becavin-lab/MultiQC.</p>
+<pre><code class="language-bash">git clone git@github.com:becavin-lab/MultiQC.git
+cd MultiQC/
+git checkout checkatlas
+pip install .
+</code></pre>
+<h3 id="install-it-from-pypi">Install it from PyPI</h3>
+<pre><code class="language-bash">pip install checkatlas
+</code></pre>
+<h3 id="install-seurat">Install Seurat</h3>
+<p>To be able to manage seurat file, rpy2 should have Seurat installed. The easiest way is to put all checkatlas requirements in a conda environment and add r-seurat.</p>
+<pre><code class="language-bash">conda create -n checkatlas python=3.9
+pip install checkatlas
+conda install -c bioconda r-seurat
+</code></pre>
+<p>Or, open R in checkatlas environment (the one where you ran 'pip install') and install Seurat.</p>
+<pre><code class="language-bash">% R
+&gt; install.packages('Seurat')
+&gt; library(Seurat)
+</code></pre>
+<h2 id="usage">Usage</h2>
+<p>The one liner way to run checkatlas is the following:</p>
+<pre><code class="language-bash">$ cd your_search_folder/
+$ python -m checkatlas .
+#or
+$ checkatlas .
+</code></pre>
+<p>Or run it inside your python workflow.</p>
+<pre><code class="language-py">from checkatlas import checkatlas
+checkatlas.run(path, atlas_list, multithread, n_cpus)
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="examples/" class="btn btn-neutral float-right" title="Examples">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/becavin-lab/checkatlas" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+    
+      <span><a href="examples/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme_extra.js" defer></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.4.2
+Build Date UTC : 2023-02-17 15:18:52.556923+00:00
+-->

@@ -1,0 +1,3 @@
+Sample	obsm	kruskal_stress
+Fetal_X_pca	X_pca	0.9651735331448457
+Fetal_X_umap	X_umap	3.776382738944447
