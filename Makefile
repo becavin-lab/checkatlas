@@ -58,8 +58,8 @@ release:          ## Create a new tag for release.
 	@$(ENV_PREFIX)poetry run gitchangelog > HISTORY.md
 	@git add HISTORY.md pyproject.toml
 	@git commit -m "release: version $(VERSION) 🚀"
-	@echo "creating git tag : $(VERSION)"
-	@git tag $(VERSION)
+	@echo "creating git tag : release-$(VERSION)"
+	@git tag release-$(VERSION)
 	@git push -u origin HEAD --tags
 	@echo "Github Actions will detect the new tag and release the new version."
 
