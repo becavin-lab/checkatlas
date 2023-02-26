@@ -51,6 +51,15 @@ docs:             ## Build the documentation.
 	@$(ENV_PREFIX)poetry run mkdocs build
 	URL="site/index.html"; open $$URL || xdg-open $$URL || sensible-browser $$URL || x-www-browser $$URL || gnome-open $$URL
 
+.PHONY: ci
+release:          ## Create a new tag for continuous integration.
+	@echo "Push change to github and run continous integration scripts"
+	@git commit -m "Continuous integration 🔄"
+	@echo "creating git tag : tests"
+	@git tag release-$(VERSION)
+	@git push -u origin HEAD --tags
+	@echo "Github Actions will detect the new tag and release the new version."
+
 .PHONY: release
 release:          ## Create a new tag for release.
 	@echo "WARNING: This operation will create s version tag and push to github"
