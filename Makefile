@@ -55,7 +55,7 @@ docs:             ## Build the documentation.
 ci:          ## Create a new tag for continuous integration.
 	@echo "WARNING: You need first to add changes to git with git add"
 	@echo "Push change to github and run continous integration scripts"
-	@git commit -m "Continuous integration 🔄"
+	@git commit -m "Continuous integration 🔄 tests-$(VERSION)"
 	@echo "creating git tag : tests-$(VERSION)"
 	@git tag tests-$(VERSION)
 	@git push -u origin HEAD --tags
