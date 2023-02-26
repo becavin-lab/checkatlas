@@ -14,7 +14,7 @@ and CellRanger files.
 
 ### Parse Scanpy, Seurat and CellRanger objects
 
-Fast crawl through your folder and detect Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
+The checkatlas pipeline start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
 
 
 ### Create checkatlas summary files
