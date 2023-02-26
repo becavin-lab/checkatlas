@@ -36,7 +36,7 @@ jobs:
       - name: Test token
         run: echo ${{ secrets.PYPI_API_TOKEN }}
       - name: Install project
-        run: make install --with dev
+        run: poetry install --with dev
       - name: Run linter
         run: make lint
 
@@ -59,7 +59,7 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
-        run: make install --with dev
+        run: poetry install --with dev
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
@@ -86,7 +86,7 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
-        run: make install --with dev
+        run: poetry install --with dev
       - name: Run tests
         run: make test
 
