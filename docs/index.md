@@ -1,7 +1,7 @@
 # CheckAtlas
 
 [![codecov](https://codecov.io/gh/becavin-lab/checkatlas/branch/main/graph/badge.svg?token=checkatlas_token_here)](https://codecov.io/gh/becavin-lab/checkatlas)
-[![CI](https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml/badge.svg)](https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml)
+[![CI](https://github.com/becavin-lab/checkatlas/actions/workflows/tests.yml/badge.svg)](https://github.com/becavin-lab/checkatlas/actions/workflows/tests.yml)
 [![Documentation Status](https://readthedocs.org/projects/checkatlas/badge/?version=latest)](https://checkatlas.readthedocs.io/en/latest/?badge=latest)
 
 CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
@@ -13,8 +13,7 @@ and CellRanger files.
 
 ### Parse Scanpy, Seurat and CellRanger objects
 
-   Fast crawl through your folder and detect Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
-   
+The checkatlas pipeline start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
 
 ### Create checkatlas summary files
 
