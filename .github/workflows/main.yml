@@ -6,9 +6,11 @@ name: Continuous Integration
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    tags:
+      - 'tests' # Push events to matching v*, i.e. v1.0, v20.15.10
+    #branches: [ main ]
+  #pull_request:
+  #  branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -34,7 +36,7 @@ jobs:
       - name: Test token
         run: echo ${{ secrets.PYPI_API_TOKEN }}
       - name: Install project
-        run: make install
+        run: make install --with dev
       - name: Run linter
         run: make lint
 
@@ -57,7 +59,7 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
-        run: make install
+        run: make install --with dev
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
@@ -84,7 +86,7 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
-        run: make install
+        run: make install --with dev
       - name: Run tests
         run: make test
 
@@ -107,6 +109,6 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
-        run: poetry install
+        run: poetry install --with dev
       - name: run tests
         run: poetry run pytest -s -vvvv -l --tb=long tests
