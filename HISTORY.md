@@ -2,6 +2,17 @@ Changelog
 =========
 
 
+(unreleased)
+------------
+- Modify git tag management for release and docs. [drbecavin]
+- Update documentation. [drbecavin]
+
+
+0.1.16 (2023-02-17)
+-------------------
+- Release: version 0.1.16 🚀 [drbecavin]
+
+
 0.1.15 (2023-02-17)
 -------------------
 - Release: version 0.1.15 🚀 [drbecavin]
