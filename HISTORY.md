@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Modify docs. [drbecavin]
+- Modify readme. [drbecavin]
+- Release: version 0.1.18 🚀 [drbecavin]
 - Continuous integration 🔄 [drbecavin]
 - Continuous integration 🔄 [drbecavin]
 - Fix continuous integration with github workflow. [drbecavin]
