@@ -4,6 +4,13 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 [drbecavin]
+- Continuous integration 🔄 [drbecavin]
+- Fix continuous integration with github workflow. [drbecavin]
+- Add tests workfllow file. [drbecavin]
+- Add tests workfllow file. [drbecavin]
+- Modify git tag management for release and docs. [drbecavin]
+- Release: version 0.1.17 🚀 [drbecavin]
 - Modify git tag management for release and docs. [drbecavin]
 - Update documentation. [drbecavin]
 
