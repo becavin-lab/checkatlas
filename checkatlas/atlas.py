@@ -155,7 +155,12 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
         list_var = adata.var_names
         if len(set(list_var)) == len(list_var):
             print("Var names unique")
-        if adata.raw is not None :
+    if adata.raw is not None :
+        list_var = adata.raw.var_names
+        if len(set(list_var)) == len(list_var):
+            print("Var names for Raw unique")
+        else:
+            print("Var names for Raw not unique")
             adata.raw.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.raw.var)), adata.raw.var_names)]
             list_var = adata.raw.var_names
             if len(set(list_var)) == len(list_var):
