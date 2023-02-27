@@ -420,6 +420,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
         obsm_umap = obsm_umap_keys[0]
         logger.debug(f"Create UMAP figure for {atlas_name} with obsm={obsm_umap}")
         # Set the umap to display
+        print("umap",adata.obsm[obsm_umap])
         adata.obsm['X_umap'] = adata.obsm[obsm_umap]
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(args.path)
