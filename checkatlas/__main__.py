@@ -255,10 +255,11 @@ def get_version():
     Get version of checkatlas from checkatlas/VERSION file
     :return: checkatlas version
     """
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    version_file = os.path.join(script_path, "VERSION")
-    with open(version_file, "r") as version:
-        return version.readlines()[0].strip()
+    return "Need to Fix version reading!"
+    # script_path = os.path.dirname(os.path.realpath(__file__))
+    # version_file = os.path.join(script_path, "VERSION")
+    # with open(version_file, "r") as version:
+    #     return version.readlines()[0].strip()
 
 
 if __name__ == "__main__":  # pragma: no cover
