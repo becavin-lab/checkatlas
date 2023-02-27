@@ -132,38 +132,34 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     """
     logger.debug(f"Clean scanpy: {atlas_info[0]}")
     # Make var names unique
-    print("X",adata.X.shape)
-    print(np.any(adata.X))
-    print(np.all(adata.X))
-    print("raw",adata.raw)
-    adata.raw.to_adata()
-    print(adata)
     list_var = adata.var_names
     if len(set(list_var)) == len(list_var):
         print("Var names unique")
     else:
         print("Var names not unique, ran : adata.var_names_make_unique()")
         adata.var_names_make_unique()
-    print("Xuniq",adata.X.shape)
-    adata.var.index.is_unique
-    adata.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.var)),adata.var_names)]
-    print(adata.var)
-    adata.raw.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.raw.var)), adata.raw.var_names)]
-    print(adata.raw.var)
-    adata.var_names_make_unique()
-    print(len(set(adata.var_names)))
-
-    adata.var_names_make_unique()
-    print(adata.var.index.is_unique)
- #   if adata.raw is not None:
- #       list_var = adata.raw.var_names
- #       if len(set(list_var)) == len(list_var):
- #           print("Var names unique")
- #       else:
- #           print("Var names not unique, ran : adata.var_names_make_unique()")
- #           adata.var_names_make_unique()
- #           list_var = adata.raw.var_names
- #           print(len(set(list_var)), len(list_var))
+    # Test a second time if it is unique (sometimes it helps)
+    list_var = adata.var_names
+    if len(set(list_var)) == len(list_var):
+        print("Var names unique")
+    else:
+        print("Var names not unique, ran : adata.var_names_make_unique()")
+        adata.var_names_make_unique()
+    # If it is still not unique, create unique var_names "by hand"
+    list_var = adata.var_names
+    if len(set(list_var)) == len(list_var):
+        print("Var names unique")
+    else:
+        print("Var names not unique, ran : adata.var_names_make_unique()")
+        adata.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.var)),adata.var_names)]
+        list_var = adata.var_names
+        if len(set(list_var)) == len(list_var):
+            print("Var names unique")
+        if adata.raw is not None :
+            adata.raw.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.raw.var)), adata.raw.var_names)]
+            list_var = adata.raw.var_names
+            if len(set(list_var)) == len(list_var):
+                print("Var names for Raw unique")
 
     # If OBS_CLUSTERS are present and in int32 -> be sure to
     # transform them in categorical
