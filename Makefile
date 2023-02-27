@@ -63,7 +63,7 @@ ci:          ## Create a new tag for continuous integration.
 
 .PHONY: release
 release:          ## Create a new tag for release.
-	@echo "WARNING: This operation will create s version tag and push to github"
+	@echo "WARNING: This operation will create a version tag and push to github"
 	@echo "Reading version $(VERSION) from: pyproject.toml"
 	@$(ENV_PREFIX)poetry run gitchangelog > HISTORY.md
 	@git add HISTORY.md pyproject.toml
