@@ -159,8 +159,6 @@ def get_pipeline_functions(module, args):
     :return: list of functions to run
     """
     checkatlas_functions = list()
-    # Create summary by default, this table is used by the resume option
-    checkatlas_functions.append(module.create_summary_table)
     if not args.NOADATA:
         checkatlas_functions.append(module.create_anndata_table)
     if not args.NOQC:
@@ -192,6 +190,9 @@ def get_pipeline_functions(module, args):
             checkatlas_functions.append(module.metric_dimred)
         else:
             logger.debug("No dim red metric was specified in --metric_dimred")
+    # Create summary by default, it is ran at last so it marks the end of the pipeline
+    # This table is then used by the resume option
+    checkatlas_functions.append(module.create_summary_table)
     return checkatlas_functions
 
 
