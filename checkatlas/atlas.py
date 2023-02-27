@@ -159,7 +159,7 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     if adata.raw is not None :
         list_var = adata.raw.var_names
         if len(set(list_var)) == len(list_var):
-            logger.debug("Var names for Raw unique")
+            logger.debug("Var names for Raw unique, transform ")
         else:
             logger.debug("Var names for Raw not unique")
             adata.raw.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.raw.var)), adata.raw.var_names)]
@@ -415,6 +415,7 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
     if len(list(filter(r.match, adata.obsm_keys()))) > 0:
+        print("umazp list:   ",list(filter(r.match, adata.obsm_keys())))
         logger.debug(f"Create UMAP figure for {atlas_name}")
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(args.path)
