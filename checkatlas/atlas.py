@@ -420,8 +420,11 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
         obsm_umap = obsm_umap_keys[0]
         logger.debug(f"Create UMAP figure for {atlas_name} with obsm={obsm_umap}")
         # Set the umap to display
-        print("umap",adata.obsm[obsm_umap])
-        adata.obsm['X_umap'] = adata.obsm[obsm_umap]
+        if isinstance(adata.obsm[obsm_umap], pd.DataFrame):
+            # Transform to numpy if it is a pandas dataframe
+            adata.obsm['X_umap'] = adata.obsm[obsm_umap].to_numpy()
+        else:
+            adata.obsm['X_umap'] = adata.obsm[obsm_umap]
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(args.path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
@@ -453,7 +456,11 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
         obsm_tsne = obsm_tsne_keys[0]
         logger.debug(f"Create t-SNE figure for {atlas_name} with obsm={obsm_tsne}")
         # Set the t-sne to display
-        adata.obsm['X_tsne'] = adata.obsm[obsm_tsne]
+        if isinstance(adata.obsm[obsm_tsne], pd.DataFrame):
+            # Transform to numpy if it is a pandas dataframe
+            adata.obsm['X_tsne'] = adata.obsm[obsm_tsne].to_numpy()
+        else:
+            adata.obsm['X_tsne'] = adata.obsm[obsm_tsne]
         # Setting up figures directory
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(
             args.path
