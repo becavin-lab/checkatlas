@@ -442,9 +442,10 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    # Search if tsne reduction exists
     atlas_name = atlas_info[0]
     sc.set_figure_params(dpi_save=150)
+    # Search if tsne reduction exists
+    obsm_keys = get_viable_obsm(adata, args)
     r = re.compile(".*tsne*.")
     obsm_tsne_keys = list(filter(r.match, obsm_keys))
     if len(obsm_tsne_keys) > 0:
