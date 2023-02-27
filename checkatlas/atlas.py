@@ -412,11 +412,15 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
     """
     atlas_name = atlas_info[0]
     sc.set_figure_params(dpi_save=150)
-    # Search if tsne reduction exists
+    # Search if umap reduction exists
+    obsm_keys = get_viable_obsm(adata, args)
     r = re.compile(".*umap*.")
-    if len(list(filter(r.match, adata.obsm_keys()))) > 0:
-        print("umazp list:   ",list(filter(r.match, adata.obsm_keys())))
-        logger.debug(f"Create UMAP figure for {atlas_name}")
+    obsm_umap_keys = list(filter(r.match, obsm_keys))
+    if len(obsm_umap_keys) > 0:
+        obsm_umap = obsm_umap_keys[0]
+        logger.debug(f"Create UMAP figure for {atlas_name} with obsm={obsm_umap}")
+        # Set the umap to display
+        adata.obsm['X_umap'] = adata.obsm[obsm_umap]
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(args.path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
@@ -442,8 +446,12 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
     atlas_name = atlas_info[0]
     sc.set_figure_params(dpi_save=150)
     r = re.compile(".*tsne*.")
-    if len(list(filter(r.match, adata.obsm_keys()))) > 0:
-        logger.debug(f"Create t-SNE figure for {atlas_name}")
+    obsm_tsne_keys = list(filter(r.match, obsm_keys))
+    if len(obsm_tsne_keys) > 0:
+        obsm_tsne = obsm_tsne_keys[0]
+        logger.debug(f"Create t-SNE figure for {atlas_name} with obsm={obsm_tsne}")
+        # Set the t-sne to display
+        adata.obsm['X_tsne'] = adata.obsm[obsm_tsne]
         # Setting up figures directory
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(
             args.path
