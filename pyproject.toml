@@ -6,7 +6,7 @@ authors = ["becavin-lab"]
 readme = "README.md"
 license = "MIT"
 packages = [{include = "checkatlas"}]
-include = ["checkatlas/convertSeurat.R"]
+include = ["checkatlas/convertSeurat.R", "checkatlas/checkatlas_workflow.nf"]
 exclude = ["tests/", ".github", "*dask-worker-space*"]
 homepage = "https://checkatlas.readthedocs.io/"
 repository = "https://github.com/becavin-lab/checkatlas/"
@@ -26,6 +26,7 @@ types-pyyaml = "^6.0.12.6"
 distributed = "^2023.2.0"
 scanpy = "^1.9.1"
 numpy = "^1.23.5"
+nextflow = "^22.10.7"
 
 [tool.poetry.group.dev]
 optional = true
@@ -57,3 +58,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 checkatlas = 'checkatlas.__main__:main'
+checkatlas-workflow = 'checkatlas.checkatlas_workflow:workflow'
+

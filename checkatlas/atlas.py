@@ -606,3 +606,4 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
     if len(df_dimred) != 0:
         df_dimred.to_csv(csv_path, index=False, sep="\t")
+
