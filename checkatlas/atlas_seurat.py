@@ -43,6 +43,15 @@ SEURAT_TO_SCANPY_OBS = {
 }
 
 
+def check_seurat_install():
+    """
+    Check if Seurat is installed, run installation if not
+    :return:
+    """
+    r_script = """install.packages(setdiff(c(\'Seurat\',\'SeuratObject\'), rownames(installed.packages())))"""
+    robjects.r(r_script)
+
+
 def read_atlas(atlas_path, atlas_info):
     """
     Read Seurat object in python using rpy2

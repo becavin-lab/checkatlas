@@ -12,6 +12,8 @@ CLUSTER = "cluster"
 ANNOTATION = "annotation"
 DIMRED = "dimred"
 SPECI = "specificity"
+TEMP = "temp"
+NEXTFLOW = "temp/nextflow"
 
 dict_folder = {
     SUMMARY: SUMMARY,
@@ -24,6 +26,8 @@ dict_folder = {
     ANNOTATION: ANNOTATION,
     DIMRED: DIMRED,
     SPECI: SPECI,
+    TEMP: TEMP,
+    NEXTFLOW: NEXTFLOW,
 }
 
 logger = logging.getLogger("checkatlas")
