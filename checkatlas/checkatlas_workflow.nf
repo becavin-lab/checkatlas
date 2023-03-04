@@ -1,6 +1,5 @@
 nextflow.enable.dsl=2
 
-params.query = checkatlaspath + "*.yaml"
 
 process checkatlas_workflow {
     input:
@@ -14,6 +13,6 @@ process checkatlas_workflow {
 }
 
 workflow {
-    config_file = channel.fromPath(params.query)
+    config_file = channel.fromPath(params.files)
     checkatlas_workflow(config_file)
 }

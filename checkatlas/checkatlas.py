@@ -252,9 +252,10 @@ def run(args):
     logger.info("Run chckatlas workflow with Nextflow")
     script_path = os.path.dirname(os.path.realpath(__file__))
     nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
-    nextflow_cmd = f"nextflow run -e.checkatlaspath={folders.get_folder(args.path, folders.TEMP)}" \
-                   f" -w {folders.get_folder(args.path, folders.NEXTFLOW)} -main-script {nextflow_main}" \
-                   f"-name checkatlas-workflow"
+    yaml_files = os.path.join(folders.get_folder(args.path, folders.TEMP),"*.yaml")
+    nextflow_cmd = f"nextflow run -w {folders.get_folder(args.path, folders.NEXTFLOW)}" \
+                   f" {nextflow_main}" \
+                   f" --files \"{yaml_files}\""
     logger.debug(f"Execute: {nextflow_cmd}")
     script_path = os.path.dirname(os.path.realpath(__file__))
     nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
@@ -262,7 +263,7 @@ def run(args):
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")
-        #multiqc.run_multiqc(args)
+        multiqc.run_multiqc(args)
 
 
 def create_checkatlas_worflows(clean_atlas, args):
