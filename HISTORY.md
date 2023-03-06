@@ -4,6 +4,28 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-7. [drbecavin]
+- Continuous integration 🔄 tests-0.1.20. [drbecavin]
+- Add nextflow and remove flask to dependencies. [drbecavin]
+- First nextflow workflow added. [drbecavin]
+- Create checkatlas-workflow and run it with nextflow. [drbecavin]
+- Add summary table at end of workflow to improve resume function.
+  [drbecavin]
+- Fix numpy conversion for umap and tsne reductions. [Christophe
+  Bécavin]
+- Fix umap and tsne obsm search. [drbecavin]
+- Fix poetry lock with numpy 1.23.5. [drbecavin]
+- Fix umap and tsne obsm search. [drbecavin]
+- Fix umap obsm search. [drbecavin]
+- Fix umap obsm search. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Ix raw.var_names not unique problem. [Christophe Bécavin]
+- Update poetry lock. [drbecavin]
+- Update poetry lock. [drbecavin]
+- Release: version 0.1.19 🚀 [drbecavin]
 - Modify docs. [drbecavin]
 - Modify readme. [drbecavin]
 - Release: version 0.1.18 🚀 [drbecavin]
