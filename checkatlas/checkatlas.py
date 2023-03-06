@@ -198,6 +198,8 @@ def run(args):
     :param logger:
     :return:
     """
+    logger.debug(f"Transform path to absolute:{args.path}")
+    args.path = os.path.abspath(args.path)
     logger.debug(f"Check checkatlas folders in:{args.path}")
     folders.checkatlas_folders(args.path)
 
