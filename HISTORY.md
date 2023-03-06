@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.1.21. [drbecavin]
+- Fix error in args.path being relative instead of absolute. [drbecavin]
+- Release: version 0.1.20 🚀 [drbecavin]
 - Continuous integration 🔄 tests-7. [drbecavin]
 - Continuous integration 🔄 tests-0.1.20. [drbecavin]
 - Add nextflow and remove flask to dependencies. [drbecavin]
