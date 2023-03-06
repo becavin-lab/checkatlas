@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.1.20"
+version = "0.1.21"
 description="One liner tool to check the quality of your single-cell atlases"
 authors = ["becavin-lab"]
 readme = "README.md"
