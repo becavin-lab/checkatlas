@@ -10,6 +10,8 @@ from . import atlas_seurat
 from . import folders
 
 logger = logging.getLogger("checkatlas-workflow")
+FUNCTION_TYPE = ['summary', 'qc', 'metric_cluster', 'metric_annot', 'metric_dimred']
+
 
 def workflow():
     # Set up logging
@@ -17,7 +19,7 @@ def workflow():
 
     parser = argparse.ArgumentParser(
         prog="checkatlas-workflow",
-        usage="checkatlas-workflow my_workflow.yaml",
+        usage="checkatlas-workflow summary my_workflow.yaml",
         description="CheckAtlas-workflow is the script ran by checkatlas for each detected "
                     "atlas in Scanpy, Seurat, and CellRanger format.",
         epilog="!!! You are not supposed to run checkatlas-workflow by yourself."
@@ -26,6 +28,14 @@ def workflow():
 
     # All Program arguments
     # main_options = parser.add_argument_group("Main arguments")
+    parser.add_argument(
+        "type",
+        type=str,
+        help="Provide the type of function to run in the workflow."
+             "Different type of function : summary, qc, metric_cluster, metric_annot, metric_dimred",
+        default="",
+    )
+
     parser.add_argument(
         "workflow",
         type=str,
@@ -141,7 +151,7 @@ def workflow():
              "To get a complete list of metrics, look here:"
              "https://github.com/becavin-lab/checkatlas/blob/"
              "main/checkatlas/metrics/metrics.py"
-             " Example: --metric_annot rand_i    ndex",
+             " Example: --metric_annot rand_index",
     )
     metric_options.add_argument(
         "--metric_dimred",
@@ -210,9 +220,42 @@ def run_scanpy(args, pipeline_functions):
         logger.info(
             f"Run checkatlas pipeline for {args.atlas_name} Scanpy atlas"
         )
-        # Run pipeline functions
-        for function in pipeline_functions:
-            function(adata, args.atlas_path, atlas_info, args)
+        # FUNCTION_TYPE = ['summary', 'qc', 'dimred', 'metric_cluster', 'metric_annot', 'metric_dimred']
+        if args.type == "summary":
+            if not args.NOADATA:
+                atlas.create_anndata_table(adata, args.atlas_path, atlas_info, args)
+            if not args.NOREDUCTION:
+                atlas.create_umap_fig(adata, args.atlas_path, atlas_info, args)
+                atlas.create_tsne_fig(adata, args.atlas_path, atlas_info, args)
+            atlas.create_summary_table(adata, args.atlas_path, atlas_info, args)
+        elif args.type == "qc" and not args.NOQC:
+            if "violin_plot" in args.qc_display:
+                atlas.create_qc_plots(adata, args.atlas_path, atlas_info, args)
+            if (
+                    "total-counts" in args.qc_display
+                    or "n_genes_by_counts" in args.qc_display
+                    or "pct_counts_mt" in args.qc_display
+            ):
+                atlas.create_qc_tables(adata, args.atlas_path, atlas_info, args)
+        elif args.type == "metric_cluster" and not args.NOMETRIC:
+            if len(args.metric_cluster) > 0:
+                atlas.metric_cluster(adata, args.atlas_path, atlas_info, args)
+            else:
+                logger.debug(
+                    "No clustering metric was specified in --metric_cluster"
+                )
+        elif args.type == "metric_annot" and not args.NOMETRIC:
+            if len(args.metric_annot) > 0:
+                atlas.metric_annot(adata, args.atlas_path, atlas_info, args)
+            else:
+                logger.debug(
+                    "No annotation metric was specified in --metric_annot"
+                )
+        elif args.type == "metric_annot" and not args.NOMETRIC:
+            if len(args.metric_dimred) > 0:
+                atlas.metric_dimred(adata, args.atlas_path, atlas_info, args)
+        else:
+            logger.debug("No dim red metric was specified in --metric_dimred")
 
 
 def run_seurat(args, pipeline_functions):
@@ -241,9 +284,41 @@ def run_seurat(args, pipeline_functions):
         logger.info(
             f"Run checkatlas pipeline for {args.atlas_name} Seurat atlas"
         )
-        # Run pipeline functions
-        for function in pipeline_functions:
-            function(seurat, args.atlas_path, atlas_info, args)
+        if args.type == "summary":
+            if not args.NOADATA:
+                atlas_seurat.create_anndata_table(seurat, args.atlas_path, atlas_info, args)
+            if not args.NOREDUCTION:
+                atlas_seurat.create_umap_fig(seurat, args.atlas_path, atlas_info, args)
+                atlas_seurat.create_tsne_fig(seurat, args.atlas_path, atlas_info, args)
+            atlas_seurat.create_summary_table(seurat, args.atlas_path, atlas_info, args)
+        elif args.type == "qc" and not args.NOQC:
+            if "violin_plot" in args.qc_display:
+                atlas_seurat.create_qc_plots(seurat, args.atlas_path, atlas_info, args)
+            if (
+                    "total-counts" in args.qc_display
+                    or "n_genes_by_counts" in args.qc_display
+                    or "pct_counts_mt" in args.qc_display
+            ):
+                atlas_seurat.create_qc_tables(seurat, args.atlas_path, atlas_info, args)
+        elif args.type == "metric_cluster" and not args.NOMETRIC:
+            if len(args.metric_cluster) > 0:
+                atlas_seurat.metric_cluster(seurat, args.atlas_path, atlas_info, args)
+            else:
+                logger.debug(
+                    "No clustering metric was specified in --metric_cluster"
+                )
+        elif args.type == "metric_annot" and not args.NOMETRIC:
+            if len(args.metric_annot) > 0:
+                atlas_seurat.metric_annot(seurat, args.atlas_path, atlas_info, args)
+            else:
+                logger.debug(
+                    "No annotation metric was specified in --metric_annot"
+                )
+        elif args.type == "metric_annot" and not args.NOMETRIC:
+            if len(args.metric_dimred) > 0:
+                atlas_seurat.metric_dimred(seurat, args.atlas_path, atlas_info, args)
+        else:
+            logger.debug("No dim red metric was specified in --metric_dimred")
 
 
 def load_arguments(args, yaml_name):

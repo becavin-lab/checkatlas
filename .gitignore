@@ -10,6 +10,9 @@ data*
 .nextflow/
 .nextflow.log*
 work/
+report-*
+timeline-*
+dag-*
 
 
 # C extensions

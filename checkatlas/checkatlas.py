@@ -136,19 +136,6 @@ def clean_list_atlases(atlas_list, path) -> tuple:
     return clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
 
 
-def start_multithread_client():
-    """
-    Open a dask localcluster and a status browser
-    :return:
-    """
-    # setup the cluster
-    cluster = LocalCluster()
-    client = Client(cluster)
-    print("Opening Dask browser: http://localhost:8787/status")
-    webbrowser.open("http://localhost:8787/status")
-    return client
-
-
 def get_pipeline_functions(module, args):
     """
     Using arguments of checkatlas program -> build
@@ -158,6 +145,7 @@ def get_pipeline_functions(module, args):
     :return: list of functions to run
     """
     checkatlas_functions = list()
+
     if not args.NOADATA:
         checkatlas_functions.append(module.create_anndata_table)
     if not args.NOQC:
@@ -249,13 +237,13 @@ def run(args):
     )
     create_checkatlas_worflows(clean_atlas, args)
 
-    logger.info("Run chckatlas workflow with Nextflow")
+    logger.info("Run checkatlas workflow with Nextflow")
     script_path = os.path.dirname(os.path.realpath(__file__))
     nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
     yaml_files = os.path.join(folders.get_folder(args.path, folders.TEMP),"*.yaml")
     nextflow_cmd = f"nextflow run -w {folders.get_folder(args.path, folders.NEXTFLOW)}" \
                    f" {nextflow_main}" \
-                   f" --files \"{yaml_files}\""
+                   f" --files \"{yaml_files}\" -with-dag -with-report -with-timeline"
     logger.debug(f"Execute: {nextflow_cmd}")
     script_path = os.path.dirname(os.path.realpath(__file__))
     nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
