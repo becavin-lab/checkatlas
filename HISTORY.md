@@ -4,6 +4,12 @@ Changelog
 
 (unreleased)
 ------------
+- Fix total number of threads with -nextflow param. [drbecavin]
+- Fix total number of threads with -nextflow param. [drbecavin]
+- Fix total number of threads with -nextflow param. [drbecavin]
+- Fix total number of threads with -nextflow param. [drbecavin]
+- Add nextflow parameters for multithread or not. [drbecavin]
+- Release: version 0.1.21 🚀 [drbecavin]
 - Continuous integration 🔄 tests-0.1.21. [drbecavin]
 - Fix error in args.path being relative instead of absolute. [drbecavin]
 - Release: version 0.1.20 🚀 [drbecavin]
