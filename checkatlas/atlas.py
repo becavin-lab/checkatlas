@@ -136,33 +136,45 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     if len(set(list_var)) == len(list_var):
         logger.debug("Var names unique")
     else:
-        logger.debug("Var names not unique, ran : adata.var_names_make_unique()")
+        logger.debug(
+            "Var names not unique, ran : adata.var_names_make_unique()"
+        )
         adata.var_names_make_unique()
         # Test a second time if it is unique (sometimes it helps)
         list_var = adata.var_names
         if len(set(list_var)) == len(list_var):
             logger.debug("Var names unique")
         else:
-            logger.debug("Var names not unique, ran : adata.var_names_make_unique()")
+            logger.debug(
+                "Var names not unique, ran : adata.var_names_make_unique()"
+            )
             adata.var_names_make_unique()
             # If it is still not unique, create unique var_names "by hand"
             list_var = adata.var_names
             if len(set(list_var)) == len(list_var):
                 logger.debug("Var names unique")
             else:
-                logger.debug("Var names not unique, ran : adata.var_names_make_unique()")
-                adata.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.var)),adata.var_names)]
+                logger.debug(
+                    "Var names not unique, ran : adata.var_names_make_unique()"
+                )
+                adata.var.index = [
+                    x + "_" + str(i)
+                    for i, x in zip(range(len(adata.var)), adata.var_names)
+                ]
                 list_var = adata.var_names
                 if len(set(list_var)) == len(list_var):
                     logger.debug("Var names unique")
     # Make var unique for Raw matrix
-    if adata.raw is not None :
+    if adata.raw is not None:
         list_var = adata.raw.var_names
         if len(set(list_var)) == len(list_var):
             logger.debug("Var names for Raw unique, transform ")
         else:
             logger.debug("Var names for Raw not unique")
-            adata.raw.var.index = [x + "_"+str(i) for i, x in zip(range(len(adata.raw.var)), adata.raw.var_names)]
+            adata.raw.var.index = [
+                x + "_" + str(i)
+                for i, x in zip(range(len(adata.raw.var)), adata.raw.var_names)
+            ]
             list_var = adata.raw.var_names
             if len(set(list_var)) == len(list_var):
                 logger.debug("Var names for Raw unique")
@@ -418,13 +430,15 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
     obsm_umap_keys = list(filter(r.match, obsm_keys))
     if len(obsm_umap_keys) > 0:
         obsm_umap = obsm_umap_keys[0]
-        logger.debug(f"Create UMAP figure for {atlas_name} with obsm={obsm_umap}")
+        logger.debug(
+            f"Create UMAP figure for {atlas_name} with obsm={obsm_umap}"
+        )
         # Set the umap to display
         if isinstance(adata.obsm[obsm_umap], pd.DataFrame):
             # Transform to numpy if it is a pandas dataframe
-            adata.obsm['X_umap'] = adata.obsm[obsm_umap].to_numpy()
+            adata.obsm["X_umap"] = adata.obsm[obsm_umap].to_numpy()
         else:
-            adata.obsm['X_umap'] = adata.obsm[obsm_umap]
+            adata.obsm["X_umap"] = adata.obsm[obsm_umap]
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(args.path)
         umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
@@ -454,13 +468,15 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
     obsm_tsne_keys = list(filter(r.match, obsm_keys))
     if len(obsm_tsne_keys) > 0:
         obsm_tsne = obsm_tsne_keys[0]
-        logger.debug(f"Create t-SNE figure for {atlas_name} with obsm={obsm_tsne}")
+        logger.debug(
+            f"Create t-SNE figure for {atlas_name} with obsm={obsm_tsne}"
+        )
         # Set the t-sne to display
         if isinstance(adata.obsm[obsm_tsne], pd.DataFrame):
             # Transform to numpy if it is a pandas dataframe
-            adata.obsm['X_tsne'] = adata.obsm[obsm_tsne].to_numpy()
+            adata.obsm["X_tsne"] = adata.obsm[obsm_tsne].to_numpy()
         else:
-            adata.obsm['X_tsne'] = adata.obsm[obsm_tsne]
+            adata.obsm["X_tsne"] = adata.obsm[obsm_tsne]
         # Setting up figures directory
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(
             args.path
@@ -606,4 +622,3 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
         df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
     if len(df_dimred) != 0:
         df_dimred.to_csv(csv_path, index=False, sep="\t")
-
