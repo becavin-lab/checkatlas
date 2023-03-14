@@ -251,10 +251,11 @@ def run(args):
         yaml_files = os.path.join(folders.get_folder(args.path, folders.TEMP),"*.yaml")
         nextflow_cmd = f"nextflow run -w {folders.get_folder(args.path, folders.NEXTFLOW)}" \
                        f" {nextflow_main}" \
-                       f" --files \"{yaml_files}\" -with-dag -with-report -with-timeline"
+                       f" -queue-size {args.nextflow} --files \"{yaml_files}\" -with-dag -with-report -with-timeline"
         logger.debug(f"Execute: {nextflow_cmd}")
         script_path = os.path.dirname(os.path.realpath(__file__))
         nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
+        # Run Nextflow
         os.system(nextflow_cmd)
 
 
