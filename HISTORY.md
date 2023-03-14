@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.1.22 🚀 [drbecavin]
 - Fix total number of threads with -nextflow param. [drbecavin]
 - Fix total number of threads with -nextflow param. [drbecavin]
 - Fix total number of threads with -nextflow param. [drbecavin]
