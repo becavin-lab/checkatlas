@@ -6,7 +6,11 @@ import webbrowser
 import yaml
 import matplotlib
 
-from . import atlas, atlas_seurat, folders, multiqc
+from . import checkatlas_workflow
+from . import atlas
+from . import atlas_seurat
+from . import folders
+from . import multiqc
 
 # try:
 #     from . import atlas, folders, multiqc
@@ -192,7 +196,7 @@ def run(args):
     - Extract summary tables
     - Create UMAP and T-sne figures
     - Calculate every metrics
-    Dask powered -- everything is done in parallel
+
 
     :param args:
     :param logger:
@@ -224,59 +228,88 @@ def run(args):
         f"file with .h5 extension"
     )
 
+    # Put all atlases together in the list
+    clean_atlas = dict(clean_atlas_scanpy)
+    clean_atlas.update(clean_atlas_cellranger)
+    clean_atlas.update(clean_atlas_seurat)
+
     if len(clean_atlas_cellranger) > 0:
         logger.debug("Install Seurat if needed")
         atlas_seurat.check_seurat_install()
 
     # Run all checkatlas analysis
-    clean_atlas = dict(clean_atlas_scanpy)
-    clean_atlas.update(clean_atlas_cellranger)
-    clean_atlas.update(clean_atlas_seurat)
-    pipeline_functions = get_pipeline_functions(atlas, args)
-    logger.debug(
-        f"List of functions which will be ran "
-        f"for each atlas: {pipeline_functions}"
-    )
-    create_checkatlas_worflows(clean_atlas, args)
+    if args.nextflow == 0:
+        logger.info("Run checkatlas workflow without Nextflow")
+        run_checkatlas(clean_atlas, args)
+    else:
+        clean_atlas.update(clean_atlas_seurat)
+        logger.info("Run checkatlas workflow with Nextflow")
+        logger.info(f"Use {args.nextflow} threads")
+        checkatlas_workflow.create_checkatlas_worflows(clean_atlas, args)
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
+        yaml_files = os.path.join(folders.get_folder(args.path, folders.TEMP),"*.yaml")
+        nextflow_cmd = f"nextflow run -w {folders.get_folder(args.path, folders.NEXTFLOW)}" \
+                       f" {nextflow_main}" \
+                       f" --files \"{yaml_files}\" -with-dag -with-report -with-timeline"
+        logger.debug(f"Execute: {nextflow_cmd}")
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
+        os.system(nextflow_cmd)
 
-    logger.info("Run checkatlas workflow with Nextflow")
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
-    yaml_files = os.path.join(folders.get_folder(args.path, folders.TEMP),"*.yaml")
-    nextflow_cmd = f"nextflow run -w {folders.get_folder(args.path, folders.NEXTFLOW)}" \
-                   f" {nextflow_main}" \
-                   f" --files \"{yaml_files}\" -with-dag -with-report -with-timeline"
-    logger.debug(f"Execute: {nextflow_cmd}")
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
-    os.system(nextflow_cmd)
+
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")
         multiqc.run_multiqc(args)
 
 
-def create_checkatlas_worflows(clean_atlas, args):
+def run_checkatlas(clean_atlas, args):
     """
-    Create Checkatlas workflow config files for each atlas
-    :param clean_atlas:
+    Run Checkatlas pipeline for all Scanpy and Cellranger objects
+    :param clean_atlas_scanpy:
     :param args:
     :return:
     """
-    # Create workflow config files
-    temp_path = folders.get_folder(args.path, folders.TEMP)
+
+    # List all functions to run
+    pipeline_functions_scanpy = get_pipeline_functions(atlas, args)
+    pipeline_functions_seurat = get_pipeline_functions(atlas_seurat, args)
+    logger.debug(
+        f"List of functions which will be ran "
+        f"for each Seurat atlas: {pipeline_functions_scanpy}"
+    )
+
+    # Go through all atls
     for atlas_path, atlas_info in clean_atlas.items():
         atlas_name = atlas_info[0]
-        atlas_dict = dict()
-        atlas_dict['atlas_name'] = atlas_name
-        atlas_dict['atlas_path'] = atlas_path
-        atlas_dict['atlas_type'] = atlas_info[1]
-
-        config_path = os.path.join(temp_path,f"Checkatlas_workflow_{atlas_name}.yaml")
-        with open(config_path, "w") as config_file:
-            yaml.dump(atlas_dict, config_file)
-            yaml.dump(args.__dict__, config_file)
-        logger.info(f"Workflow config file saved in : {config_path}")
+        # Load adata only if resume is not selected
+        # and if csv_summary_path do not exist
+        csv_summary_path = os.path.join(
+            folders.get_folder(args.path, folders.SUMMARY),
+            atlas_name + SUMMARY_EXTENSION,
+            )
+        if args.resume and os.path.exists(csv_summary_path):
+            logger.debug(f"Skip {atlas_name} summary file already exists: {csv_summary_path}")
+        else:
+            if atlas_info[1] == "Seurat":
+                seurat = atlas_seurat.read_atlas(atlas_path, atlas_info)
+                logger.info(
+                    f"Run checkatlas pipeline for {atlas_name} Seurat atlas"
+                )
+                # Run pipeline functions
+                for function in pipeline_functions_seurat:
+                    function(seurat, atlas_path, atlas_info, args)
+            else :
+                adata = atlas.read_atlas(atlas_path, atlas_info)
+                # Clean adata
+                adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+                logger.info(
+                    f"Run checkatlas pipeline for {atlas_name} Scanpy atlas"
+                )
+                # Run pipeline functions
+                for function in pipeline_functions_scanpy:
+                    function(adata, atlas_path, atlas_info, args)
 
 
 if __name__ == "__main__":

@@ -194,6 +194,29 @@ def workflow():
         run_scanpy(args, pipeline_functions)
 
 
+def create_checkatlas_worflows(clean_atlas, args):
+    """
+    Create Checkatlas workflow config files for each atlas
+    :param clean_atlas:
+    :param args:
+    :return:
+    """
+    # Create workflow config files
+    temp_path = folders.get_folder(args.path, folders.TEMP)
+    for atlas_path, atlas_info in clean_atlas.items():
+        atlas_name = atlas_info[0]
+        atlas_dict = dict()
+        atlas_dict['atlas_name'] = atlas_name
+        atlas_dict['atlas_path'] = atlas_path
+        atlas_dict['atlas_type'] = atlas_info[1]
+
+        config_path = os.path.join(temp_path,f"Checkatlas_workflow_{atlas_name}.yaml")
+        with open(config_path, "w") as config_file:
+            yaml.dump(atlas_dict, config_file)
+            yaml.dump(args.__dict__, config_file)
+        logger.info(f"Workflow config file saved in : {config_path}")
+
+
 def run_scanpy(args, pipeline_functions):
     """
     Run Checkatlas pipeline for Scanpy atlas
