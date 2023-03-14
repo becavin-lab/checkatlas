@@ -1,6 +1,5 @@
 import argparse  # pragma: no cover
 import logging
-import os.path
 
 import yaml
 
@@ -76,7 +75,7 @@ def main() -> None:  # pragma: no cover
         type=int,
         default=0,
         help="Activate Nextflow and specify the number of threads to use. \n"
-             "Example: --nextflow 8 (for 8 threads)",
+        "Example: --nextflow 8 (for 8 threads)",
     )
 
     parser.add_argument(
@@ -212,7 +211,7 @@ def main() -> None:  # pragma: no cover
 
     # Save all arguments to yaml (only run it when
     # generating example file config.yaml
-    #save_arguments(args, 'config/default_config.yaml')
+    # save_arguments(args, 'config/default_config.yaml')
     checkatlas.run(args)
 
 

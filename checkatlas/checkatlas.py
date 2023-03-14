@@ -2,15 +2,8 @@ import csv
 import inspect
 import logging
 import os
-import webbrowser
-import yaml
-import matplotlib
 
-from . import checkatlas_workflow
-from . import atlas
-from . import atlas_seurat
-from . import folders
-from . import multiqc
+from . import atlas, atlas_seurat, checkatlas_workflow, folders, multiqc
 
 # try:
 #     from . import atlas, folders, multiqc
@@ -127,7 +120,9 @@ def clean_list_atlases(atlas_list, path) -> tuple:
             ]
             clean_atlas_scanpy[atlas_path] = info
     # open file for writing, "w" is writing
-    dict_file = open(os.path.join(folders.get_workingdir(path),"list_atlases.csv"), "w")
+    dict_file = open(
+        os.path.join(folders.get_workingdir(path), "list_atlases.csv"), "w"
+    )
     w = csv.writer(dict_file)
     # loop over dictionary keys and values
     for key, val in clean_atlas_scanpy.items():
@@ -181,7 +176,8 @@ def get_pipeline_functions(module, args):
             checkatlas_functions.append(module.metric_dimred)
         else:
             logger.debug("No dim red metric was specified in --metric_dimred")
-    # Create summary by default, it is ran at last so it marks the end of the pipeline
+    # Create summary by default, it is ran at last so it marks
+    # the end of the pipeline
     # This table is then used by the resume option
     checkatlas_functions.append(module.create_summary_table)
     return checkatlas_functions
@@ -248,17 +244,20 @@ def run(args):
         checkatlas_workflow.create_checkatlas_worflows(clean_atlas, args)
         script_path = os.path.dirname(os.path.realpath(__file__))
         nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
-        yaml_files = os.path.join(folders.get_folder(args.path, folders.TEMP),"*.yaml")
-        nextflow_cmd = f"nextflow run -w {folders.get_folder(args.path, folders.NEXTFLOW)}" \
-                       f" {nextflow_main}" \
-                       f" -queue-size {args.nextflow} --files \"{yaml_files}\" -with-dag -with-report -with-timeline"
+        yaml_files = os.path.join(
+            folders.get_folder(args.path, folders.TEMP), "*.yaml"
+        )
+        nextflow_cmd = (
+            f"nextflow run -w "
+            f"{folders.get_folder(args.path, folders.NEXTFLOW)}"
+            f" {nextflow_main} -queue-size {args.nextflow} --files "
+            f"{yaml_files} -with-dag -with-report -with-timeline"
+        )
         logger.debug(f"Execute: {nextflow_cmd}")
         script_path = os.path.dirname(os.path.realpath(__file__))
         nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
         # Run Nextflow
         os.system(nextflow_cmd)
-
-
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")
@@ -289,9 +288,12 @@ def run_checkatlas(clean_atlas, args):
         csv_summary_path = os.path.join(
             folders.get_folder(args.path, folders.SUMMARY),
             atlas_name + SUMMARY_EXTENSION,
-            )
+        )
         if args.resume and os.path.exists(csv_summary_path):
-            logger.debug(f"Skip {atlas_name} summary file already exists: {csv_summary_path}")
+            logger.debug(
+                f"Skip {atlas_name} summary file already "
+                f"exists: {csv_summary_path}"
+            )
         else:
             if atlas_info[1] == "Seurat":
                 seurat = atlas_seurat.read_atlas(atlas_path, atlas_info)
@@ -301,7 +303,7 @@ def run_checkatlas(clean_atlas, args):
                 # Run pipeline functions
                 for function in pipeline_functions_seurat:
                     function(seurat, atlas_path, atlas_info, args)
-            else :
+            else:
                 adata = atlas.read_atlas(atlas_path, atlas_info)
                 # Clean adata
                 adata = atlas.clean_scanpy_atlas(adata, atlas_info)

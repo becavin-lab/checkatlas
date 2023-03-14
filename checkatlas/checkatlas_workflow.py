@@ -5,12 +5,16 @@ import os.path
 import yaml
 
 from . import checkatlas  # pragma: no cover
-from . import atlas
-from . import atlas_seurat
-from . import folders
+from . import atlas, atlas_seurat, folders
 
 logger = logging.getLogger("checkatlas-workflow")
-FUNCTION_TYPE = ['summary', 'qc', 'metric_cluster', 'metric_annot', 'metric_dimred']
+FUNCTION_TYPE = [
+    "summary",
+    "qc",
+    "metric_cluster",
+    "metric_annot",
+    "metric_dimred",
+]
 
 
 def workflow():
@@ -20,10 +24,12 @@ def workflow():
     parser = argparse.ArgumentParser(
         prog="checkatlas-workflow",
         usage="checkatlas-workflow summary my_workflow.yaml",
-        description="CheckAtlas-workflow is the script ran by checkatlas for each detected "
-                    "atlas in Scanpy, Seurat, and CellRanger format.",
-        epilog="!!! You are not supposed to run checkatlas-workflow by yourself."
-               " It is the main program (checkatlas) who ran it using Nextflow !!!",
+        description="CheckAtlas-workflow is the script ran by checkatlas "
+        "for each detected atlas in Scanpy, Seurat, "
+        "and CellRanger format.",
+        epilog="!!! You are not supposed to run checkatlas-workflow "
+        "by yourself. It is the main program (checkatlas) who"
+        " ran it using Nextflow !!!",
     )
 
     # All Program arguments
@@ -32,16 +38,17 @@ def workflow():
         "type",
         type=str,
         help="Provide the type of function to run in the workflow."
-             "Different type of function : summary, qc, metric_cluster, metric_annot, metric_dimred",
+        "Different type of function : summary, qc, metric_cluster, "
+        "metric_annot, metric_dimred",
         default="",
     )
 
     parser.add_argument(
         "workflow",
         type=str,
-        help="Provide a workflow file with all checkatlas-workflow arguments."
-             "The workflow config file are created by checkatlas directly"
-             "and saved in temp/ folder.",
+        help="Provide a workflow file with all checkatlas-workflow "
+        "arguments. The workflow config file are created by "
+        "checkatlas directly and saved in temp/ folder.",
         default="",
     )
     parser.add_argument(
@@ -54,8 +61,8 @@ def workflow():
         "--atlas_type",
         type=str,
         help="Required argument: The type of atlas "
-             "Scanpy, CellRanger and Seurat."
-             "Values : scanpy, seurat, cellranger",
+        "Scanpy, CellRanger and Seurat."
+        "Values : scanpy, seurat, cellranger",
         default="scanpy",
     )
     parser.add_argument(
@@ -114,10 +121,10 @@ def workflow():
             "pct_counts_mt",
         ],
         help="List of QC to display. "
-             "Available qc = violin_plot, total_counts, "
-             "n_genes_by_counts, pct_counts_mt. "
-             "Default: --qc_display violin_plot total_counts "
-             "n_genes_by_counts pct_counts_mt",
+        "Available qc = violin_plot, total_counts, "
+        "n_genes_by_counts, pct_counts_mt. "
+        "Default: --qc_display violin_plot total_counts "
+        "n_genes_by_counts pct_counts_mt",
     )
 
     # Arguments linked to metric
@@ -128,8 +135,8 @@ def workflow():
         type=str,
         default=atlas.OBS_CLUSTERS,
         help="List of obs from the adata file to "
-             "use in the clustering metric calculus."
-             "Example: --obs_cluster celltype leuven seurat_clusters",
+        "use in the clustering metric calculus."
+        "Example: --obs_cluster celltype leuven seurat_clusters",
     )
     metric_options.add_argument(
         "--metric_cluster",
@@ -137,10 +144,10 @@ def workflow():
         type=str,
         default=["silhouette", "davies_bouldin"],
         help="List of clustering metrics to calculate."
-             "To get a complete list of metrics, look here:"
-             "https://github.com/becavin-lab/checkatlas/"
-             "blob/main/checkatlas/metrics/metrics.py"
-             " Example: --metric_cluster silhouette davies_bouldin",
+        "To get a complete list of metrics, look here:"
+        "https://github.com/becavin-lab/checkatlas/"
+        "blob/main/checkatlas/metrics/metrics.py"
+        " Example: --metric_cluster silhouette davies_bouldin",
     )
     metric_options.add_argument(
         "--metric_annot",
@@ -148,10 +155,10 @@ def workflow():
         type=str,
         default=["rand_index"],
         help="List of clustering metrics to calculate."
-             "To get a complete list of metrics, look here:"
-             "https://github.com/becavin-lab/checkatlas/blob/"
-             "main/checkatlas/metrics/metrics.py"
-             " Example: --metric_annot rand_index",
+        "To get a complete list of metrics, look here:"
+        "https://github.com/becavin-lab/checkatlas/blob/"
+        "main/checkatlas/metrics/metrics.py"
+        " Example: --metric_annot rand_index",
     )
     metric_options.add_argument(
         "--metric_dimred",
@@ -159,10 +166,10 @@ def workflow():
         type=str,
         default=["kruskal_stress"],
         help="List of dimensionality reduction metrics to calculate."
-             "To get a complete list of metrics, look here:"
-             "https://github.com/becavin-lab/checkatlas/blob/"
-             "main/checkatlas/metrics/metrics.py"
-             " Example: --metric_dimred kruskal_stress",
+        "To get a complete list of metrics, look here:"
+        "https://github.com/becavin-lab/checkatlas/blob/"
+        "main/checkatlas/metrics/metrics.py"
+        " Example: --metric_dimred kruskal_stress",
     )
 
     # Parse all args
@@ -172,9 +179,8 @@ def workflow():
     # Normally a config file is always provided
     if args.workflow != "":
         logger.info(
-            "Read workflow config file {} to get new checkatlas configs".format(
-                args.workflow
-            )
+            "Read workflow config file {} to get new checkatlas "
+            "configs".format(args.workflow)
         )
         args = load_arguments(args, args.workflow)
 
@@ -186,12 +192,69 @@ def workflow():
 
     logger.debug(f"Program arguments: {args}")
 
-    if args.atlas_type=='Seurat' :
-        pipeline_functions = checkatlas.get_pipeline_functions(atlas_seurat, args)
-        run_seurat(args, pipeline_functions)
+    # !!! atlas_info should be removed in the future !
+    atlas_info = [args.atlas_name, args.atlas_type, ".rds", args.atlas_path]
+    csv_summary_path = os.path.join(
+        folders.get_folder(args.path, folders.SUMMARY),
+        args.atlas_name + checkatlas.SUMMARY_EXTENSION,
+    )
+    if args.resume and os.path.exists(csv_summary_path):
+        logger.debug(
+            f"Skip {args.atlas_name} summary file already "
+            f"exists: {csv_summary_path}"
+        )
     else:
-        pipeline_functions = checkatlas.get_pipeline_functions(atlas, args)
-        run_scanpy(args, pipeline_functions)
+        if args.atlas_type == "Seurat":
+            pipeline_functions = get_workflow_functions(atlas_seurat, args)
+            seurat = atlas_seurat.read_atlas(args.atlas_path, atlas_info)
+            # Run pipeline functions
+            for function in pipeline_functions:
+                function(seurat, args.atlas_path, atlas_info, args)
+        else:
+            pipeline_functions = get_workflow_functions(atlas, args)
+            adata = atlas.read_atlas(args.atlas_path, atlas_info)
+            # Clean adata
+            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+            # Run pipeline functions
+            for function in pipeline_functions:
+                function(adata, args.atlas_path, atlas_info, args)
+
+
+def get_workflow_functions(module, args):
+    """
+    Using arguments of checkatlas-workflow program -> build
+    the list of functions to run on each adata
+    and seurat object
+    :param args:
+    :return: list of functions to run
+    """
+    checkatlas_functions = list()
+    if args.type == "summary":
+        if not args.NOADATA:
+            checkatlas_functions.append(module.create_anndata_table)
+        if not args.NOREDUCTION:
+            checkatlas_functions.append(module.create_umap_fig)
+            checkatlas_functions.append(module.create_tsne_fig)
+        checkatlas_functions.append(module.create_summary_table)
+    elif args.type == "qc" and not args.NOQC:
+        if "violin_plot" in args.qc_display:
+            checkatlas_functions.append(module.create_qc_plots)
+        if (
+            "total-counts" in args.qc_display
+            or "n_genes_by_counts" in args.qc_display
+            or "pct_counts_mt" in args.qc_display
+        ):
+            checkatlas_functions.append(module.create_qc_tables)
+    elif args.type == "metric_cluster" and not args.NOMETRIC:
+        if len(args.metric_cluster) > 0:
+            checkatlas_functions.append(module.metric_cluster)
+    elif args.type == "metric_annot" and not args.NOMETRIC:
+        if len(args.metric_annot) > 0:
+            checkatlas_functions.append(module.metric_annot)
+    elif args.type == "metric_annot" and not args.NOMETRIC:
+        if len(args.metric_dimred) > 0:
+            checkatlas_functions.append(module.metric_dimred)
+    return checkatlas_functions
 
 
 def create_checkatlas_worflows(clean_atlas, args):
@@ -206,142 +269,17 @@ def create_checkatlas_worflows(clean_atlas, args):
     for atlas_path, atlas_info in clean_atlas.items():
         atlas_name = atlas_info[0]
         atlas_dict = dict()
-        atlas_dict['atlas_name'] = atlas_name
-        atlas_dict['atlas_path'] = atlas_path
-        atlas_dict['atlas_type'] = atlas_info[1]
+        atlas_dict["atlas_name"] = atlas_name
+        atlas_dict["atlas_path"] = atlas_path
+        atlas_dict["atlas_type"] = atlas_info[1]
 
-        config_path = os.path.join(temp_path,f"Checkatlas_workflow_{atlas_name}.yaml")
+        config_path = os.path.join(
+            temp_path, f"Checkatlas_workflow_{atlas_name}.yaml"
+        )
         with open(config_path, "w") as config_file:
             yaml.dump(atlas_dict, config_file)
             yaml.dump(args.__dict__, config_file)
         logger.info(f"Workflow config file saved in : {config_path}")
-
-
-def run_scanpy(args, pipeline_functions):
-    """
-    Run Checkatlas pipeline for Scanpy atlas
-    :param args:
-    :param pipeline_functions:
-    :return:
-    """
-    # Load adata only if resume is not selected
-    # and if csv_summary_path do not exist
-    csv_summary_path = os.path.join(
-        folders.get_folder(args.path, folders.SUMMARY),
-        args.atlas_name + checkatlas.SUMMARY_EXTENSION,
-        )
-    logger.debug(f"Search {csv_summary_path}")
-    ### !!! atlas_info should be removed in the future !
-    atlas_info = [args.atlas_name, args.atlas_type, ".rds", args.atlas_path]
-    if args.resume and os.path.exists(csv_summary_path):
-        adata = None
-    else:
-        adata = atlas.read_atlas(args.atlas_path, atlas_info)
-    if adata is not None:
-        # Clean adata
-        adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-        logger.info(
-            f"Run checkatlas pipeline for {args.atlas_name} Scanpy atlas"
-        )
-        # FUNCTION_TYPE = ['summary', 'qc', 'dimred', 'metric_cluster', 'metric_annot', 'metric_dimred']
-        if args.type == "summary":
-            if not args.NOADATA:
-                atlas.create_anndata_table(adata, args.atlas_path, atlas_info, args)
-            if not args.NOREDUCTION:
-                atlas.create_umap_fig(adata, args.atlas_path, atlas_info, args)
-                atlas.create_tsne_fig(adata, args.atlas_path, atlas_info, args)
-            atlas.create_summary_table(adata, args.atlas_path, atlas_info, args)
-        elif args.type == "qc" and not args.NOQC:
-            if "violin_plot" in args.qc_display:
-                atlas.create_qc_plots(adata, args.atlas_path, atlas_info, args)
-            if (
-                    "total-counts" in args.qc_display
-                    or "n_genes_by_counts" in args.qc_display
-                    or "pct_counts_mt" in args.qc_display
-            ):
-                atlas.create_qc_tables(adata, args.atlas_path, atlas_info, args)
-        elif args.type == "metric_cluster" and not args.NOMETRIC:
-            if len(args.metric_cluster) > 0:
-                atlas.metric_cluster(adata, args.atlas_path, atlas_info, args)
-            else:
-                logger.debug(
-                    "No clustering metric was specified in --metric_cluster"
-                )
-        elif args.type == "metric_annot" and not args.NOMETRIC:
-            if len(args.metric_annot) > 0:
-                atlas.metric_annot(adata, args.atlas_path, atlas_info, args)
-            else:
-                logger.debug(
-                    "No annotation metric was specified in --metric_annot"
-                )
-        elif args.type == "metric_annot" and not args.NOMETRIC:
-            if len(args.metric_dimred) > 0:
-                atlas.metric_dimred(adata, args.atlas_path, atlas_info, args)
-        else:
-            logger.debug("No dim red metric was specified in --metric_dimred")
-
-
-def run_seurat(args, pipeline_functions):
-    """
-    Run Checkatlas pipeline for Scanpy atlas
-    :param args:
-    :param pipeline_functions:
-    :return:
-    """
-    # Load adata only if resume is not selected
-    # and if csv_summary_path do not exist
-    csv_summary_path = os.path.join(
-        folders.get_folder(args.atlas_path, folders.SUMMARY),
-        args.atlas_name + checkatlas.SUMMARY_EXTENSION,
-        )
-    logger.debug(f"Search {csv_summary_path}")
-    ### !!! atlas_info should be removed in the future !
-    atlas_info = [args.atlas_name, args.atlas_type, ".rds", args.atlas_path]
-    if args.resume and os.path.exists(csv_summary_path):
-        seurat = None
-    else:
-        seurat = atlas_seurat.read_atlas(args.atlas_path, atlas_info)
-    if seurat is not None:
-        # Clean adata
-        # adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-        logger.info(
-            f"Run checkatlas pipeline for {args.atlas_name} Seurat atlas"
-        )
-        if args.type == "summary":
-            if not args.NOADATA:
-                atlas_seurat.create_anndata_table(seurat, args.atlas_path, atlas_info, args)
-            if not args.NOREDUCTION:
-                atlas_seurat.create_umap_fig(seurat, args.atlas_path, atlas_info, args)
-                atlas_seurat.create_tsne_fig(seurat, args.atlas_path, atlas_info, args)
-            atlas_seurat.create_summary_table(seurat, args.atlas_path, atlas_info, args)
-        elif args.type == "qc" and not args.NOQC:
-            if "violin_plot" in args.qc_display:
-                atlas_seurat.create_qc_plots(seurat, args.atlas_path, atlas_info, args)
-            if (
-                    "total-counts" in args.qc_display
-                    or "n_genes_by_counts" in args.qc_display
-                    or "pct_counts_mt" in args.qc_display
-            ):
-                atlas_seurat.create_qc_tables(seurat, args.atlas_path, atlas_info, args)
-        elif args.type == "metric_cluster" and not args.NOMETRIC:
-            if len(args.metric_cluster) > 0:
-                atlas_seurat.metric_cluster(seurat, args.atlas_path, atlas_info, args)
-            else:
-                logger.debug(
-                    "No clustering metric was specified in --metric_cluster"
-                )
-        elif args.type == "metric_annot" and not args.NOMETRIC:
-            if len(args.metric_annot) > 0:
-                atlas_seurat.metric_annot(seurat, args.atlas_path, atlas_info, args)
-            else:
-                logger.debug(
-                    "No annotation metric was specified in --metric_annot"
-                )
-        elif args.type == "metric_annot" and not args.NOMETRIC:
-            if len(args.metric_dimred) > 0:
-                atlas_seurat.metric_dimred(seurat, args.atlas_path, atlas_info, args)
-        else:
-            logger.debug("No dim red metric was specified in --metric_dimred")
 
 
 def load_arguments(args, yaml_name):
