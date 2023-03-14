@@ -45,6 +45,7 @@ process metric_dimred {
       """
 }
 
+
 workflow {
     config_file = channel.fromPath(params.files)
     summary(config_file)
