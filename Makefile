@@ -59,7 +59,7 @@ ci:          ## Create a new tag for continuous integration.
 	@echo "creating git tag : tests-$(VERSION)"
 	@git tag tests-$(VERSION)
 	@git push -u origin HEAD --tags
-	@echo "Github Actions will detect the new tag and release the new version."
+	@echo "Github Actions will detect the new tag and run the continuous integration process."
 
 .PHONY: release
 release:          ## Create a new tag for release.
