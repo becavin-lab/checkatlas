@@ -251,7 +251,7 @@ def run(args):
             f"nextflow run -w "
             f"{folders.get_folder(args.path, folders.NEXTFLOW)}"
             f" {nextflow_main} -queue-size {args.nextflow} --files "
-            f"{yaml_files} -with-dag -with-report -with-timeline"
+            f"\"{yaml_files}\" -with-dag -with-report -with-timeline"
         )
         logger.debug(f"Execute: {nextflow_cmd}")
         script_path = os.path.dirname(os.path.realpath(__file__))
