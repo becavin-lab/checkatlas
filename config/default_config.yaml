@@ -1,10 +1,11 @@
-NOADATA: true
+NOADATA: false
 NOMETRIC: false
-NOMULTIQC: true
-NOQC: true
-NOREDUCTION: true
-config: config/test_config.yaml
-debug: true
+NOMULTIQC: false
+NOQC: false
+NOREDUCTION: false
+config: config/default_config.yaml
+debug: false
+nextflow: 0
 metric_annot:
 - rand_index
 metric_cluster:
@@ -12,7 +13,6 @@ metric_cluster:
 metric_dimred:
 - kruskal_stress
 multiqc: CheckAtlas_MultiQC
-nextflow: 0
 obs_cluster:
 - cell_type
 - CellType
