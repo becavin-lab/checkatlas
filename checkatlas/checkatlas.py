@@ -2,6 +2,7 @@ import csv
 import inspect
 import logging
 import os
+from datetime import datetime
 
 from . import atlas, atlas_seurat, checkatlas_workflow, folders, multiqc
 
@@ -235,11 +236,16 @@ def run(args):
 
     # Run all checkatlas analysis
     if args.nextflow == 0:
-        logger.info("Run checkatlas workflow without Nextflow")
+        logger.info(
+            "--nextflow option not found: Run checkatlas workflow "
+            "without Nextflow"
+        )
         run_checkatlas(clean_atlas, args)
     else:
         clean_atlas.update(clean_atlas_seurat)
-        logger.info("Run checkatlas workflow with Nextflow")
+        logger.info(
+            "--nextflow option found: Run checkatlas workflow with Nextflow"
+        )
         logger.info(f"Use {args.nextflow} threads")
         checkatlas_workflow.create_checkatlas_worflows(clean_atlas, args)
         script_path = os.path.dirname(os.path.realpath(__file__))
@@ -247,17 +253,33 @@ def run(args):
         yaml_files = os.path.join(
             folders.get_folder(args.path, folders.TEMP), "*.yaml"
         )
+
+        # getting the current date and time
+        current_datetime = datetime.now()
+        current_time = current_datetime.strftime("%Y%d%m-%H%M%S")
+        report_file = os.path.join(
+            folders.get_workingdir(args.path),
+            f"Nextflow_report-{current_time}.html",
+        )
+        timeline_file = os.path.join(
+            folders.get_workingdir(args.path),
+            f"Nextflow_timeline-{current_time}.html",
+        )
+        working_dir_nextflow = folders.get_folder(args.path, folders.NEXTFLOW)
         nextflow_cmd = (
             f"nextflow run -w "
-            f"{folders.get_folder(args.path, folders.NEXTFLOW)}"
+            f"{working_dir_nextflow}"
             f" {nextflow_main} -queue-size {args.nextflow} --files "
-            f"\"{yaml_files}\" -with-dag -with-report -with-timeline"
+            f'"{yaml_files}" -with-report {report_file}'
+            f" -with-timeline {timeline_file}"
         )
         logger.debug(f"Execute: {nextflow_cmd}")
         script_path = os.path.dirname(os.path.realpath(__file__))
         nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
         # Run Nextflow
         os.system(nextflow_cmd)
+        logger.debug(f"Nextflow report saved in {report_file}")
+        logger.debug(f"Nextflow timeline saved in {timeline_file}")
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")
