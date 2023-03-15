@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
-from . import checkatlas, folders
+from . import checkatlas
+from . import folders
 from .metrics import metrics
 
 # try:
