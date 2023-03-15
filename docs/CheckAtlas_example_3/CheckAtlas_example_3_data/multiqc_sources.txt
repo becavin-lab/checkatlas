@@ -1,4 +1,0 @@
-Module	Section	Sample Name	Source
-CheckAtlas	all_sections	pbmc_3k_scanpy	/Users/christophebecavin/Documents/checkatlas/examples/data3/checkatlas_files/dimred/pbmc_3k_scanpy_checkatlas_mdimred.tsv
-CheckAtlas	all_sections	pbmc_3k_seurat	/Users/christophebecavin/Documents/checkatlas/examples/data3/checkatlas_files/dimred/pbmc_3k_seurat_checkatlas_mdimred.tsv
-CheckAtlas	all_sections	pbmc_3k_cellranger	/Users/christophebecavin/Documents/checkatlas/examples/data3/checkatlas_files/qc/pbmc_3k_cellranger_checkatlas_qc.tsv
