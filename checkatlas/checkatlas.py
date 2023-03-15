@@ -2,12 +2,9 @@ import csv
 import inspect
 import logging
 import os
-import webbrowser
+from datetime import datetime
 
-import matplotlib
-from dask.distributed import Client, LocalCluster, wait
-
-from . import atlas, atlas_seurat, folders, multiqc
+from . import atlas, atlas_seurat, checkatlas_workflow, folders, multiqc
 
 # try:
 #     from . import atlas, folders, multiqc
@@ -124,7 +121,9 @@ def clean_list_atlases(atlas_list, path) -> tuple:
             ]
             clean_atlas_scanpy[atlas_path] = info
     # open file for writing, "w" is writing
-    dict_file = open(folders.get_workingdir(path) + "list_atlases.csv", "w")
+    dict_file = open(
+        os.path.join(folders.get_workingdir(path), "list_atlases.csv"), "w"
+    )
     w = csv.writer(dict_file)
     # loop over dictionary keys and values
     for key, val in clean_atlas_scanpy.items():
@@ -137,19 +136,6 @@ def clean_list_atlases(atlas_list, path) -> tuple:
     return clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
 
 
-def start_multithread_client():
-    """
-    Open a dask localcluster and a status browser
-    :return:
-    """
-    # setup the cluster
-    cluster = LocalCluster()
-    client = Client(cluster)
-    print("Opening Dask browser: http://localhost:8787/status")
-    webbrowser.open("http://localhost:8787/status")
-    return client
-
-
 def get_pipeline_functions(module, args):
     """
     Using arguments of checkatlas program -> build
@@ -159,6 +145,7 @@ def get_pipeline_functions(module, args):
     :return: list of functions to run
     """
     checkatlas_functions = list()
+
     if not args.NOADATA:
         checkatlas_functions.append(module.create_anndata_table)
     if not args.NOQC:
@@ -190,7 +177,8 @@ def get_pipeline_functions(module, args):
             checkatlas_functions.append(module.metric_dimred)
         else:
             logger.debug("No dim red metric was specified in --metric_dimred")
-    # Create summary by default, it is ran at last so it marks the end of the pipeline
+    # Create summary by default, it is ran at last so it marks
+    # the end of the pipeline
     # This table is then used by the resume option
     checkatlas_functions.append(module.create_summary_table)
     return checkatlas_functions
@@ -205,12 +193,14 @@ def run(args):
     - Extract summary tables
     - Create UMAP and T-sne figures
     - Calculate every metrics
-    Dask powered -- everything is done in parallel
+
 
     :param args:
     :param logger:
     :return:
     """
+    logger.debug(f"Transform path to absolute:{args.path}")
+    args.path = os.path.abspath(args.path)
     logger.debug(f"Check checkatlas folders in:{args.path}")
     folders.checkatlas_folders(args.path)
 
@@ -235,135 +225,116 @@ def run(args):
         f"file with .h5 extension"
     )
 
+    # Put all atlases together in the list
+    clean_atlas = dict(clean_atlas_scanpy)
+    clean_atlas.update(clean_atlas_cellranger)
+    clean_atlas.update(clean_atlas_seurat)
+
+    if len(clean_atlas_cellranger) > 0:
+        logger.debug("Install Seurat if needed")
+        atlas_seurat.check_seurat_install()
+
     # Run all checkatlas analysis
-    clean_atlas_adata = dict(clean_atlas_scanpy)
-    clean_atlas_adata.update(clean_atlas_cellranger)
-    run_scanpy(clean_atlas_adata, args)
-    run_seurat(clean_atlas_seurat, args)
+    if args.nextflow == 0:
+        logger.info(
+            "--nextflow option not found: Run checkatlas workflow "
+            "without Nextflow"
+        )
+        run_checkatlas(clean_atlas, args)
+    else:
+        clean_atlas.update(clean_atlas_seurat)
+        logger.info(
+            "--nextflow option found: Run checkatlas workflow with Nextflow"
+        )
+        logger.info(f"Use {args.nextflow} threads")
+        checkatlas_workflow.create_checkatlas_worflows(clean_atlas, args)
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
+        yaml_files = os.path.join(
+            folders.get_folder(args.path, folders.TEMP), "*.yaml"
+        )
+
+        # getting the current date and time
+        current_datetime = datetime.now()
+        current_time = current_datetime.strftime("%Y%d%m-%H%M%S")
+        report_file = os.path.join(
+            folders.get_workingdir(args.path),
+            f"Nextflow_report-{current_time}.html",
+        )
+        timeline_file = os.path.join(
+            folders.get_workingdir(args.path),
+            f"Nextflow_timeline-{current_time}.html",
+        )
+        working_dir_nextflow = folders.get_folder(args.path, folders.NEXTFLOW)
+        nextflow_cmd = (
+            f"nextflow run -w "
+            f"{working_dir_nextflow}"
+            f" {nextflow_main} -queue-size {args.nextflow} --files "
+            f'"{yaml_files}" -with-report {report_file}'
+            f" -with-timeline {timeline_file}"
+        )
+        logger.debug(f"Execute: {nextflow_cmd}")
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
+        # Run Nextflow
+        os.system(nextflow_cmd)
+        logger.debug(f"Nextflow report saved in {report_file}")
+        logger.debug(f"Nextflow timeline saved in {timeline_file}")
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")
         multiqc.run_multiqc(args)
 
 
-def run_scanpy(clean_atlas_scanpy, args):
+def run_checkatlas(clean_atlas, args):
     """
     Run Checkatlas pipeline for all Scanpy and Cellranger objects
     :param clean_atlas_scanpy:
     :param args:
     :return:
     """
-    pipeline_functions = get_pipeline_functions(atlas, args)
+
+    # List all functions to run
+    pipeline_functions_scanpy = get_pipeline_functions(atlas, args)
+    pipeline_functions_seurat = get_pipeline_functions(atlas_seurat, args)
     logger.debug(
         f"List of functions which will be ran "
-        f"for each atlas: {pipeline_functions}"
+        f"for each Seurat atlas: {pipeline_functions_scanpy}"
     )
 
-    if args.thread > 1:
-        client = start_multithread_client()
-        futures = list()
-        matplotlib.pyplot.switch_backend("Agg")
-
-    # Create summary files
-    for atlas_path, atlas_info in clean_atlas_scanpy.items():
+    # Go through all atls
+    for atlas_path, atlas_info in clean_atlas.items():
         atlas_name = atlas_info[0]
-
         # Load adata only if resume is not selected
         # and if csv_summary_path do not exist
         csv_summary_path = os.path.join(
             folders.get_folder(args.path, folders.SUMMARY),
             atlas_name + SUMMARY_EXTENSION,
         )
-        logger.debug(f"Search {csv_summary_path}")
         if args.resume and os.path.exists(csv_summary_path):
-            adata = None
-        else:
-            adata = atlas.read_atlas(atlas_path, atlas_info)
-        if adata is not None:
-            # Clean adata
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            logger.info(
-                f"Run checkatlas pipeline for {atlas_name} Scanpy atlas"
+            logger.debug(
+                f"Skip {atlas_name} summary file already "
+                f"exists: {csv_summary_path}"
             )
-            # Run pipeline functions
-            for function in pipeline_functions:
-                if args.thread == 1:
-                    function(adata, atlas_path, atlas_info, args)
-                else:
-                    future_name = function.__name__ + "_" + atlas_name
-                    future = client.submit(
-                        function,
-                        adata,
-                        atlas_path,
-                        atlas_info,
-                        args,
-                        key=future_name,
-                    )
-                    futures.append(future)
-
-            if args.thread > 1:
-                # Wait for all thread to end
-                wait(futures)
-
-
-def run_seurat(clean_atlas_seurat, args):
-    """
-    Run Checkatlas pipeline for all Scanpy objects
-    :param clean_atlas_scanpy:
-    :param args:
-    :return:
-    """
-    pipeline_functions = get_pipeline_functions(atlas_seurat, args)
-    logger.debug(
-        f"List of functions which will be ran "
-        f"for each Seurat atlas: {pipeline_functions}"
-    )
-
-    if args.thread > 1:
-        client = start_multithread_client()
-        futures = list()
-        matplotlib.pyplot.switch_backend("Agg")
-
-    # Create summary files
-    for atlas_path, atlas_info in clean_atlas_seurat.items():
-        atlas_name = atlas_info[0]
-
-        # Load adata only if resume is not selected
-        # and if csv_summary_path do not exist
-        csv_summary_path = os.path.join(
-            folders.get_folder(args.path, folders.SUMMARY),
-            atlas_name + SUMMARY_EXTENSION,
-        )
-        logger.debug(f"Search {csv_summary_path}")
-        if args.resume and os.path.exists(csv_summary_path):
-            seurat = None
         else:
-            seurat = atlas_seurat.read_atlas(atlas_path, atlas_info)
-        if seurat is not None:
-            # Clean adata
-            # adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            logger.info(
-                f"Run checkatlas pipeline for {atlas_name} Seurat atlas"
-            )
-            # Run pipeline functions
-            for function in pipeline_functions:
-                if args.thread == 1:
+            if atlas_info[1] == "Seurat":
+                seurat = atlas_seurat.read_atlas(atlas_path, atlas_info)
+                logger.info(
+                    f"Run checkatlas pipeline for {atlas_name} Seurat atlas"
+                )
+                # Run pipeline functions
+                for function in pipeline_functions_seurat:
                     function(seurat, atlas_path, atlas_info, args)
-                else:
-                    future_name = function.__name__ + "_" + atlas_name
-                    future = client.submit(
-                        function,
-                        seurat,
-                        atlas_path,
-                        atlas_info,
-                        args,
-                        key=future_name,
-                    )
-                    futures.append(future)
-
-            if args.thread > 1:
-                # Wait for all thread to end
-                wait(futures)
+            else:
+                adata = atlas.read_atlas(atlas_path, atlas_info)
+                # Clean adata
+                adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+                logger.info(
+                    f"Run checkatlas pipeline for {atlas_name} Scanpy atlas"
+                )
+                # Run pipeline functions
+                for function in pipeline_functions_scanpy:
+                    function(adata, atlas_path, atlas_info, args)
 
 
 if __name__ == "__main__":

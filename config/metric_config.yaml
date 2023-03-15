@@ -12,6 +12,7 @@ metric_cluster:
 metric_dimred:
 - kruskal_stress
 multiqc: CheckAtlas_MultiQC
+nextflow: 4
 obs_cluster:
 - cell_type
 - CellType
@@ -28,4 +29,4 @@ qc_display:
 - total_counts
 - n_genes_by_counts
 - pct_counts_mt
-thread: 1
+resume: false

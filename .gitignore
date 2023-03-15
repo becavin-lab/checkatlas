@@ -6,6 +6,15 @@ dask-worker-space/
 data*
 # CheckAtlas_*
 
+# Nextflow
+.nextflow/
+.nextflow.log*
+work/
+report-*
+timeline-*
+dag-*
+
+
 # C extensions
 *.so
 

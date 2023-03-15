@@ -1,4 +1,0 @@
-Module	Section	Sample Name	Source
-CheckAtlas	all_sections	Fetal	/Users/christophebecavin/Documents/checkatlas/examples/data1/checkatlas_files/dimred/Fetal_checkatlas_mdimred.tsv
-CheckAtlas	all_sections	Tabula_Sapiens_Endothelial	/Users/christophebecavin/Documents/checkatlas/examples/data1/checkatlas_files/annotation/Tabula_Sapiens_Endothelial_checkatlas_mannot.tsv
-CheckAtlas	all_sections	B-cells_compartment	/Users/christophebecavin/Documents/checkatlas/examples/data1/checkatlas_files/annotation/B-cells_compartment_checkatlas_mannot.tsv

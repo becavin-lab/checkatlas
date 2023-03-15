@@ -1,6 +1,5 @@
 import argparse  # pragma: no cover
 import logging
-import os.path
 
 import yaml
 
@@ -70,15 +69,15 @@ def main() -> None:  # pragma: no cover
         "checkatlas and you want to check "
         "only the new files.",
     )
+
     parser.add_argument(
-        "-t",
-        "--thread",
+        "--nextflow",
         type=int,
-        default=1,
-        help="Number of threads for parallel computing. \nIf -t > 1,"
-        " this will activate automatically the parallel computing"
-        " mode using Dask.",
+        default=0,
+        help="Activate Nextflow and specify the number of threads to use. \n"
+        "Example: --nextflow 8 (for 8 threads)",
     )
+
     parser.add_argument(
         "-d",
         "--debug",
