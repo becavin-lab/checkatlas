@@ -4,7 +4,12 @@ import logging
 import os
 from datetime import datetime
 
-from . import atlas, atlas_seurat, checkatlas_workflow, folders, multiqc
+from . import atlas
+from . import atlas_seurat
+from . import checkatlas_workflow
+from . import folders
+from . import multiqc
+
 
 # try:
 #     from . import atlas, folders, multiqc
