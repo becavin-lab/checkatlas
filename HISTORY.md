@@ -4,6 +4,12 @@ Changelog
 
 (unreleased)
 ------------
+- Merge pull request #33 from becavin-lab/workflow. [drbecavin]
+
+  Workflow
+- Move examples to docs/examples/ [drbecavin]
+- Continuous integration 🔄 tests-0.2.0. [drbecavin]
+- Release: version 0.1.23 🚀 [drbecavin]
 - Release: version 0.1.22 🚀 [drbecavin]
 - Fix total number of threads with -nextflow param. [drbecavin]
 - Fix total number of threads with -nextflow param. [drbecavin]
