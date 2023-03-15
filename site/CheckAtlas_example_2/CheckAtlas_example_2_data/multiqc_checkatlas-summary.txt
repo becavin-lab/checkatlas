@@ -1,4 +1,0 @@
-Sample	AtlasFileType	NbCells	NbGenes	AnnData.raw	AnnData.X	File_extension	File_path
-Fetal_v1	Scanpy	16321	32828	True	True	.h5ad	V1/Fetal_v1.h5ad
-Fetal_v2	Scanpy	27203	32828	False	True	.h5ad	V2/Fetal_v2.h5ad
-Fetal_v3	Scanpy	27203	32828	True	True	.h5ad	V3/Fetal_v3.h5ad

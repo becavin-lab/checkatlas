@@ -2,17 +2,17 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://checkatlas.readthedocs.io/</loc>
-         <lastmod>2023-02-17</lastmod>
+         <lastmod>2023-03-15</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://checkatlas.readthedocs.io/contributing/</loc>
-         <lastmod>2023-02-17</lastmod>
+         <lastmod>2023-03-15</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://checkatlas.readthedocs.io/examples/</loc>
-         <lastmod>2023-02-17</lastmod>
+         <loc>https://checkatlas.readthedocs.io/examples/examples/</loc>
+         <lastmod>2023-03-15</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

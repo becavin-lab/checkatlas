@@ -1,4 +1,0 @@
-Module	Section	Sample Name	Source
-CheckAtlas	all_sections	Fetal_v2	/Users/christophebecavin/Documents/checkatlas/examples/data2/checkatlas_files/dimred/Fetal_v2_checkatlas_mdimred.tsv
-CheckAtlas	all_sections	Fetal_v3	/Users/christophebecavin/Documents/checkatlas/examples/data2/checkatlas_files/dimred/Fetal_v3_checkatlas_mdimred.tsv
-CheckAtlas	all_sections	Fetal_v1	/Users/christophebecavin/Documents/checkatlas/examples/data2/checkatlas_files/dimred/Fetal_v1_checkatlas_mdimred.tsv

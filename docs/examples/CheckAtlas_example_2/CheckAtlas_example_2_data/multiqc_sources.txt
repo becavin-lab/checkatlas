@@ -1,0 +1,4 @@
+Module	Section	Sample Name	Source
+CheckAtlas	all_sections	Fetal_v3	/data/analysis/data_becavin/checkatlas_test/tuto/data2/checkatlas_files/annotation/Fetal_v3_checkatlas_mannot.tsv
+CheckAtlas	all_sections	Fetal_v2	/data/analysis/data_becavin/checkatlas_test/tuto/data2/checkatlas_files/annotation/Fetal_v2_checkatlas_mannot.tsv
+CheckAtlas	all_sections	Fetal_v1	/data/analysis/data_becavin/checkatlas_test/tuto/data2/checkatlas_files/annotation/Fetal_v1_checkatlas_mannot.tsv

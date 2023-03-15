@@ -7,6 +7,7 @@ config: config/test_config.yaml
 debug: true
 metric_annot: []
 metric_cluster: []
+nextflow: 0
 metric_dimred:
 - kruskal_stress
 multiqc: CheckAtlas_MultiQC
@@ -26,4 +27,3 @@ qc_display:
 - total_counts
 - n_genes_by_counts
 - pct_counts_mt
-thread: 1

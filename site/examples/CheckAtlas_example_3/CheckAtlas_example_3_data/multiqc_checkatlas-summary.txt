@@ -1,0 +1,4 @@
+Sample	AtlasFileType	NbCells	NbGenes	AnnData.raw	AnnData.X	File_extension	File_path
+pbmc_3k_cellranger	Cellranger	5025	33538	False	True	.rds	/pbmc_3k_cellranger/outs/filtered_feature_bc_matrix.h5
+pbmc_3k_scanpy	Scanpy	2638	1838	True	True	.rds	/pbmc_3k_scanpy.h5ad
+pbmc_3k_seurat	Seurat	2638	13714	False	True	.rds	/pbmc_3k_seurat.rds
