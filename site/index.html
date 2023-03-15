@@ -71,7 +71,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="examples/">Examples</a>
+                <li class="toctree-l1"><a class="reference internal" href="examples/examples/">Examples</a>
                 </li>
               </ul>
               <ul>
@@ -104,14 +104,14 @@
               
                 <h1 id="checkatlas">CheckAtlas</h1>
 <p><a href="https://codecov.io/gh/becavin-lab/checkatlas"><img alt="codecov" src="https://codecov.io/gh/becavin-lab/checkatlas/branch/main/graph/badge.svg?token=checkatlas_token_here" /></a>
-<a href="https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml"><img alt="CI" src="https://github.com/becavin-lab/checkatlas/actions/workflows/main.yml/badge.svg" /></a>
+<a href="https://github.com/becavin-lab/checkatlas/actions/workflows/tests.yml"><img alt="CI" src="https://github.com/becavin-lab/checkatlas/actions/workflows/tests.yml/badge.svg" /></a>
 <a href="https://checkatlas.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="https://readthedocs.org/projects/checkatlas/badge/?version=latest" /></a></p>
 <p>CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
 quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
 and CellRanger files.</p>
 <h2 id="summary">Summary</h2>
 <h3 id="parse-scanpy-seurat-and-cellranger-objects">Parse Scanpy, Seurat and CellRanger objects</h3>
-<p>Fast crawl through your folder and detect Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.</p>
+<p>The checkatlas pipeline start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.</p>
 <h3 id="create-checkatlas-summary-files">Create checkatlas summary files</h3>
 <p>Go through all atlas files and produce summary information:</p>
 <ul>
@@ -128,15 +128,15 @@ and CellRanger files.</p>
 <ol>
 <li>Evaluate and compare different atlases: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Atlas_comparison.ipynb</li>
 </ol>
-<p>https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_1/CheckAtlas_example_1.html</p>
+<p>https://checkatlas.readthedocs.io/en/stable/examples/CheckAtlas_example_1/CheckAtlas_example_1.html</p>
 <ol>
 <li>Evaluate different version of your atlas: https://github.com/becavin-lab/checkatlas/blob/3a4f88e94716c09a3b9c86010f570743a5855461/examples/Version_comparison.ipynb</li>
 </ol>
-<p>https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_2/CheckAtlas_example_2.html</p>
+<p>https://checkatlas.readthedocs.io/en/stable/examples/CheckAtlas_example_2/CheckAtlas_example_2.html</p>
 <ol>
 <li>Explore Scanpy, Seurat and CellRanger objects in your folder: https://github.com/becavin-lab/checkatlas/blob/main/examples/AtlasType_comparison.ipynb</li>
 </ol>
-<p>https://checkatlas.readthedocs.io/en/stable/CheckAtlas_example_3/CheckAtlas_example_3.html</p>
+<p>https://checkatlas.readthedocs.io/en/stable/examples/CheckAtlas_example_3/CheckAtlas_example_3.html</p>
 <h2 id="installation">Installation</h2>
 <p>CheckAtlas can be downloaded from PyPI. However, the project is in an early development phase. We strongly recommend to use the developmental version.</p>
 <h3 id="install-checkatlas-development-version">Install checkatlas development version</h3>
@@ -178,7 +178,7 @@ checkatlas.run(path, atlas_list, multithread, n_cpus)
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="examples/" class="btn btn-neutral float-right" title="Examples">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="examples/examples/" class="btn btn-neutral float-right" title="Examples">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -206,7 +206,7 @@ checkatlas.run(path, atlas_list, multithread, n_cpus)
     
     
     
-      <span><a href="examples/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="examples/examples/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
@@ -225,5 +225,5 @@ checkatlas.run(path, atlas_list, multithread, n_cpus)
 
 <!--
 MkDocs version : 1.4.2
-Build Date UTC : 2023-02-17 15:18:52.556923+00:00
+Build Date UTC : 2023-03-15 17:37:39.066567+00:00
 -->

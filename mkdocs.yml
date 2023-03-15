@@ -5,5 +5,5 @@ site_url: https://checkatlas.readthedocs.io/
 
 nav:
   - Home: "index.md"
-  - Examples: "examples.md"
+  - Examples: "examples/examples.md"
   - Contributing: "contributing.md"
