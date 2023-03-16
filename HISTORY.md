@@ -4,6 +4,11 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.2.1. [drbecavin]
+- Modify all metrics, each metric is in individual python file. One can
+  add new metrics easily. [drbecavin]
+- Fix small import stuff. [drbecavin]
+- Release: version 0.2.0 🚀 [drbecavin]
 - Merge pull request #33 from becavin-lab/workflow. [drbecavin]
 
   Workflow
