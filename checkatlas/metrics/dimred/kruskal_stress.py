@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 
 
-def kruskal_stress(high_dim_counts, low_dim_counts):
+def run(high_dim_counts, low_dim_counts):
     """
     Computes the kruskal stress for the low dimension representation
     stored at adata.obsm.key_repr
@@ -18,7 +18,3 @@ def kruskal_stress(high_dim_counts, low_dim_counts):
         / np.square(low_dim_distances).sum()
     )
     return stress
-
-
-def spearmans_rho(adata, key_repr):
-    return
