@@ -395,40 +395,29 @@ def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(seurat, args)
     obsm_key_representation = "umap"
-    r_annot = robjects.r(
-        "type <- function(seurat, obs_key){ "
-        "return(seurat[[obs_key]][[obs_key]])}"
-    )
-    r_reduction = robjects.r(
-        "reduc <- function(seurat, obsm_key){"
-        " return(Embeddings(object = seurat, "
-        "reduction = obsm_key))}"
-    )
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")
+        for obs_key in obs_keys:
+            dict_line = {
+                "Sample": [atlas_name + "_" + obs_key],
+                "obs": [obs_key],
+            }
+            for metric in args.metric_cluster:
+                logger.debug(
+                    f"Calc {metric} for {atlas_name} "
+                    f"with obs {obs_key} and obsm {obsm_key_representation}"
+                )
+                metric_value = metrics.calc_metric_cluster_seurat(
+                    metric, seurat, obs_key, obsm_key_representation
+                )
+                dict_line[metric] = metric_value
+            df_line = pd.DataFrame(dict_line)
+            df_cluster = pd.concat(
+                [df_cluster, df_line], ignore_index=True, axis=0
+            )
+        df_cluster.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
-    for obs_key in obs_keys:
-        dict_line = {"Sample": [atlas_name + "_" + obs_key], "obs": [obs_key]}
-        for metric in args.metric_cluster:
-            logger.debug(
-                f"Calc {metric} for {atlas_name} "
-                f"with obs {obs_key} and obsm {obsm_key_representation}"
-            )
-            annotation = ro.conversion.rpy2py(r_annot(seurat, obs_key))
-            count_representation = ro.conversion.rpy2py(
-                r_reduction(seurat, obsm_key_representation)
-            )
-            metric_value = metrics.calc_metric_cluster(
-                metric, count_representation, annotation
-            )
-            dict_line[metric] = metric_value
-        df_line = pd.DataFrame(dict_line)
-        df_cluster = pd.concat(
-            [df_cluster, df_line], ignore_index=True, axis=0
-        )
-    if len(df_cluster) != 0:
-        df_cluster.to_csv(csv_path, index=False, sep="\t")
 
 
 def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
@@ -448,40 +437,33 @@ def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
     header = ["Sample", "Reference", "obs"] + args.metric_annot
     df_annot = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(seurat, args)
-    if len(obs_keys) > 0:
+    if len(obs_keys) > 1:
         logger.debug(f"Calc annotation metrics for {atlas_name}")
+        if len(obs_keys) != 0:
+            ref_obs = obs_keys[0]
+            for i in range(1, len(obs_keys)):
+                obs_key = obs_keys[i]
+                dict_line = {
+                    "Sample": [atlas_name + "_" + obs_key],
+                    "Reference": [ref_obs],
+                    "obs": [obs_key],
+                }
+                for metric in args.metric_annot:
+                    logger.debug(
+                        f"Calc {metric} for {atlas_name} "
+                        f"with obs {obs_key} vs ref_obs {ref_obs}"
+                    )
+                    metric_value = metrics.calc_metric_annot_seurat(
+                        metric, seurat, obs_key, ref_obs
+                    )
+                    dict_line[metric] = metric_value
+                df_line = pd.DataFrame(dict_line)
+                df_annot = pd.concat(
+                    [df_annot, df_line], ignore_index=True, axis=0
+                )
+            df_annot.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
-    r_annot = robjects.r(
-        "type <- function(seurat, obs_key){ "
-        "return(seurat[[obs_key]][[obs_key]])}"
-    )
-    if len(obs_keys) != 0:
-        ref_obs = obs_keys[0]
-        for i in range(1, len(obs_keys)):
-            obs_key = obs_keys[i]
-            dict_line = {
-                "Sample": [atlas_name + "_" + obs_key],
-                "Reference": [ref_obs],
-                "obs": [obs_key],
-            }
-            for metric in args.metric_annot:
-                logger.debug(
-                    f"Calc {metric} for {atlas_name} "
-                    f"with obs {obs_key} vs ref_obs {ref_obs}"
-                )
-                annotation = ro.conversion.rpy2py(r_annot(seurat, obs_key))
-                ref_annotation = ro.conversion.rpy2py(r_annot(seurat, ref_obs))
-                metric_value = metrics.calc_metric_annot(
-                    metric, annotation, ref_annotation
-                )
-                dict_line[metric] = metric_value
-            df_line = pd.DataFrame(dict_line)
-            df_annot = pd.concat(
-                [df_annot, df_line], ignore_index=True, axis=0
-            )
-        if len(df_annot) != 0:
-            df_annot.to_csv(csv_path, index=False, sep="\t")
 
 
 def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
@@ -507,33 +489,35 @@ def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
     obsm_keys = get_viable_obsm(seurat, args)
     if len(obsm_keys) > 0:
         logger.debug(f"Calc dim red metrics for {atlas_name}")
+        for obsm_key in obsm_keys:
+            dict_line = {
+                "Sample": [atlas_name + "_" + obsm_key],
+                "obsm": [obsm_key],
+            }
+            for metric in args.metric_dimred:
+                logger.debug(
+                    f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
+                )
+                # r_countmatrix = robjects.r(
+                #     "mat <- function(seurat)
+                #     { return(seurat@assays$RNA@counts)}"
+                # )
+                # high_dim_counts = ro.conversion.rpy2py(r_countmatrix(seurat))
+                # low_dim_counts = ro.conversion.rpy2py(
+                #    r_reduction(seurat, obsm_key)
+                # )
+                # metric_value = metrics.calc_metric_dimred(
+                # metric, high_dim_counts, low_dim_counts)
+                logger.warning(
+                    "!!! Dim reduction metrics not available for Seurat"
+                    " at the moment !!!"
+                )
+                # metric_value = -1
+                # dict_line[metric] = str(metric_value)
+            df_line = pd.DataFrame(dict_line)
+            df_dimred = pd.concat(
+                [df_dimred, df_line], ignore_index=True, axis=0
+            )
+        df_dimred.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obsm_key was found for {atlas_name}")
-    for obsm_key in obsm_keys:
-        dict_line = {
-            "Sample": [atlas_name + "_" + obsm_key],
-            "obsm": [obsm_key],
-        }
-        for metric in args.metric_dimred:
-            logger.debug(
-                f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
-            )
-            # r_countmatrix = robjects.r(
-            #     "mat <- function(seurat){ return(seurat@assays$RNA@counts)}"
-            # )
-            # high_dim_counts = ro.conversion.rpy2py(r_countmatrix(seurat))
-            # low_dim_counts = ro.conversion.rpy2py(
-            #    r_reduction(seurat, obsm_key)
-            # )
-            # metric_value = metrics.calc_metric_dimred(
-            # metric, high_dim_counts, low_dim_counts)
-            logger.warning(
-                "!!! Dim reduction metrics not available for Seurat"
-                " at the moment !!!"
-            )
-            # metric_value = -1
-            # dict_line[metric] = str(metric_value)
-        df_line = pd.DataFrame(dict_line)
-        df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
-    if len(df_dimred) != 0:
-        df_dimred.to_csv(csv_path, index=False, sep="\t")

@@ -7,8 +7,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 
-from . import checkatlas
-from . import folders
+from . import checkatlas, folders
 from .metrics import metrics
 
 # try:
@@ -511,27 +510,27 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
     obsm_key_representation = "X_umap"
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")
+        for obs_key in obs_keys:
+            dict_line = {
+                "Sample": [atlas_name + "_" + obs_key],
+                "obs": [obs_key],
+            }
+            for metric in args.metric_cluster:
+                logger.debug(
+                    f"Calc {metric} for {atlas_name} "
+                    f"with obs {obs_key} and obsm {obsm_key_representation}"
+                )
+                metric_value = metrics.calc_metric_cluster_scanpy(
+                    metric, adata, obs_key, obsm_key_representation
+                )
+                dict_line[metric] = metric_value
+            df_line = pd.DataFrame(dict_line)
+            df_cluster = pd.concat(
+                [df_cluster, df_line], ignore_index=True, axis=0
+            )
+        df_cluster.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
-    for obs_key in obs_keys:
-        dict_line = {"Sample": [atlas_name + "_" + obs_key], "obs": [obs_key]}
-        for metric in args.metric_cluster:
-            logger.debug(
-                f"Calc {metric} for {atlas_name} "
-                f"with obs {obs_key} and obsm {obsm_key_representation}"
-            )
-            annotation = adata.obs[obs_key]
-            count_representation = adata.obsm[obsm_key_representation]
-            metric_value = metrics.calc_metric_cluster(
-                metric, count_representation, annotation
-            )
-            dict_line[metric] = metric_value
-        df_line = pd.DataFrame(dict_line)
-        df_cluster = pd.concat(
-            [df_cluster, df_line], ignore_index=True, axis=0
-        )
-    if len(df_cluster) != 0:
-        df_cluster.to_csv(csv_path, index=False, sep="\t")
 
 
 def metric_annot(adata, atlas_path, atlas_info, args) -> None:
@@ -551,11 +550,8 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
     header = ["Sample", "Reference", "obs"] + args.metric_annot
     df_annot = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
-    if len(obs_keys) > 0:
+    if len(obs_keys) > 1:
         logger.debug(f"Calc annotation metrics for {atlas_name}")
-    else:
-        logger.debug(f"No viable obs_key was found for {atlas_name}")
-    if len(obs_keys) != 0:
         ref_obs = obs_keys[0]
         for i in range(1, len(obs_keys)):
             obs_key = obs_keys[i]
@@ -569,18 +565,17 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} vs ref_obs {ref_obs}"
                 )
-                annotation = adata.obs[obs_key]
-                ref_annotation = adata.obs[ref_obs]
-                metric_value = metrics.calc_metric_annot(
-                    metric, annotation, ref_annotation
+                metric_value = metrics.calc_metric_annot_scanpy(
+                    metric, adata, obs_key, ref_obs
                 )
                 dict_line[metric] = metric_value
             df_line = pd.DataFrame(dict_line)
             df_annot = pd.concat(
                 [df_annot, df_line], ignore_index=True, axis=0
             )
-        if len(df_annot) != 0:
-            df_annot.to_csv(csv_path, index=False, sep="\t")
+        df_annot.to_csv(csv_path, index=False, sep="\t")
+    else:
+        logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
 def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
@@ -602,24 +597,23 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
     obsm_keys = get_viable_obsm(adata, args)
     if len(obsm_keys) > 0:
         logger.debug(f"Calc dim red metrics for {atlas_name}")
+        for obsm_key in obsm_keys:
+            dict_line = {
+                "Sample": [atlas_name + "_" + obsm_key],
+                "obsm": [obsm_key],
+            }
+            for metric in args.metric_dimred:
+                logger.debug(
+                    f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
+                )
+                metric_value = metrics.calc_metric_dimred(
+                    metric, adata, obsm_key
+                )
+                dict_line[metric] = metric_value
+            df_line = pd.DataFrame(dict_line)
+            df_dimred = pd.concat(
+                [df_dimred, df_line], ignore_index=True, axis=0
+            )
+        df_dimred.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obsm_key was found for {atlas_name}")
-    for obsm_key in obsm_keys:
-        dict_line = {
-            "Sample": [atlas_name + "_" + obsm_key],
-            "obsm": [obsm_key],
-        }
-        for metric in args.metric_dimred:
-            logger.debug(
-                f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
-            )
-            high_dim_counts = adata.X
-            low_dim_counts = adata.obsm[obsm_key]
-            metric_value = metrics.calc_metric_dimred(
-                metric, high_dim_counts, low_dim_counts
-            )
-            dict_line[metric] = metric_value
-        df_line = pd.DataFrame(dict_line)
-        df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
-    if len(df_dimred) != 0:
-        df_dimred.to_csv(csv_path, index=False, sep="\t")

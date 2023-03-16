@@ -6,6 +6,8 @@ import yaml
 from . import checkatlas  # pragma: no cover
 from . import atlas
 
+# from .metrics import cluster, annot, dimred
+
 
 def main() -> None:  # pragma: no cover
     """
@@ -206,12 +208,15 @@ def main() -> None:  # pragma: no cover
 
     logger.debug(f"Program arguments: {args}")
 
-    # script_path = os.path.dirname(os.path.realpath(__file__))
-    # logger.debug("Path_script {}".format(script_path))
+    # args.metric_cluster = cluster.__all__
+    # args.metric_annot = annot.__all__
+    # args.metric_dimred = dimred.__all__
 
     # Save all arguments to yaml (only run it when
     # generating example file config.yaml
     # save_arguments(args, 'config/default_config.yaml')
+
+    # ######    Run Checkatlas   #########
     checkatlas.run(args)
 
 
