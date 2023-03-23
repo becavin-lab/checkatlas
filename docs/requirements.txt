@@ -12,3 +12,4 @@ types-pyyaml
 scanpy
 numpy
 nextflow
+rpy2
