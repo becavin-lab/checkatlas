@@ -4,6 +4,37 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.2.2. [drbecavin]
+- Continuous integration 🔄 tests-0.2.1. [drbecavin]
+- Add first metrics docs, reorganize doc. [drbecavin]
+- Fiix readthedoc issue with R. [drbecavin]
+- Fiix readthedoc issue with R. [drbecavin]
+- Add poetry in the readthedoc workflow. [drbecavin]
+- Add poetry in the readthedoc workflow. [drbecavin]
+- Add poetry in the readthedoc workflow. [drbecavin]
+- Dependecy problem inb readthedoc. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Modify docs. [drbecavin]
+- Release: version 0.2.1 🚀 [drbecavin]
 - Continuous integration 🔄 tests-0.2.1. [drbecavin]
 - Modify all metrics, each metric is in individual python file. One can
   add new metrics easily. [drbecavin]
