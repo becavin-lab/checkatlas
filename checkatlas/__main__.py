@@ -5,8 +5,7 @@ import yaml
 
 from . import checkatlas  # pragma: no cover
 from . import atlas
-
-# from .metrics import cluster, annot, dimred
+from .metrics import cluster, annot, dimred
 
 
 def main() -> None:  # pragma: no cover
@@ -159,33 +158,28 @@ def main() -> None:  # pragma: no cover
         nargs="+",
         type=str,
         default=["silhouette", "davies_bouldin"],
-        help="List of clustering metrics to calculate."
-        "To get a complete list of metrics, look here:"
-        "https://github.com/becavin-lab/checkatlas/"
-        "blob/main/checkatlas/metrics/metrics.py"
-        " Example: --metric_cluster silhouette davies_bouldin",
+        help="Specify the list of clustering metrics to calculate.\n"
+            "   Example: --metric_cluster silhouette davies_bouldin\n"
+            f"   List of cluster metrics: {cluster.__all__}"
+
     )
     metric_options.add_argument(
         "--metric_annot",
         nargs="+",
         type=str,
         default=["rand_index"],
-        help="List of clustering metrics to calculate."
-        "To get a complete list of metrics, look here:"
-        "https://github.com/becavin-lab/checkatlas/blob/"
-        "main/checkatlas/metrics/metrics.py"
-        " Example: --metric_annot rand_i    ndex",
+        help=f"Specify the list of clustering metrics to calculate."
+             f"   Example: --metric_annot rand_index"
+             f"   List of annotation metrics: {annot.__all__}",
     )
     metric_options.add_argument(
         "--metric_dimred",
         nargs="+",
         type=str,
         default=["kruskal_stress"],
-        help="List of dimensionality reduction metrics to calculate."
-        "To get a complete list of metrics, look here:"
-        "https://github.com/becavin-lab/checkatlas/blob/"
-        "main/checkatlas/metrics/metrics.py"
-        " Example: --metric_dimred kruskal_stress",
+        help="Specify the list of dimensionality reduction metrics to calculate.\n"
+             "   Example: --metric_dimred kruskal_stress\n"
+             f"   List of dim. red. metrics: {dimred.__all__}",
     )
 
     # Parse all args
@@ -208,15 +202,15 @@ def main() -> None:  # pragma: no cover
 
     logger.debug(f"Program arguments: {args}")
 
-    # args.metric_cluster = cluster.__all__
-    # args.metric_annot = annot.__all__
-    # args.metric_dimred = dimred.__all__
+    args.metric_cluster = cluster.__all__
+    args.metric_annot = annot.__all__
+    args.metric_dimred = dimred.__all__
 
     # Save all arguments to yaml (only run it when
     # generating example file config.yaml
     # save_arguments(args, 'config/default_config.yaml')
 
-    # ######    Run Checkatlas   #########
+    #   ######    Run Checkatlas   #########
     checkatlas.run(args)
 
 

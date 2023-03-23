@@ -4,6 +4,9 @@ repo_url: https://github.com/becavin-lab/checkatlas
 site_url: https://checkatlas.readthedocs.io/
 
 nav:
-  - Home: "index.md"
+  - Overview: "index.md"
+  - Installation: "installation.md"
   - Examples: "examples/examples.md"
+  - Metrics: "metrics/metrics.md"
+  - API: "API.md"
   - Contributing: "contributing.md"

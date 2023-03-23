@@ -52,10 +52,11 @@ docs:             ## Build the documentation.
 	URL="site/index.html"; open $$URL || xdg-open $$URL || sensible-browser $$URL || x-www-browser $$URL || gnome-open $$URL
 
 .PHONY: ci
-ci:          ## Create a new tag for continuous integration.
+ci:          ## Run a continuous integration : Add every change to git and create a new tag for continuous integration.
 	@echo "WARNING: You need first to add changes to git with git add"
 	@echo "Push change to github and run continous integration scripts"
 	@git commit -m "Continuous integration 🔄 tests-$(VERSION)"
+	@git add --all
 	@echo "creating git tag : tests-$(VERSION)"
 	@git tag tests-$(VERSION)
 	@git push -u origin HEAD --tags
