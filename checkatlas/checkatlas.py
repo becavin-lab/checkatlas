@@ -37,12 +37,16 @@ METRIC_SPECIFICITY_EXTENSION = "_checkatlas_mspecificity.tsv"
 logger = logging.getLogger("checkatlas")
 
 
-def list_atlases(path) -> list:
+def list_atlases(path: str) -> list:
     """
     List all atlases files in the path
     Detect .rds, .h5, .h5ad
-    :param path:
-    :return: List of files
+
+    Args:
+        path: Path for searching single-cell atlases.
+
+    Returns:
+        List of file atlases to check.
     """
     atlas_list = list()
     for root, dirs, files in os.walk(path):
@@ -56,8 +60,10 @@ def list_atlases(path) -> list:
 def get_atlas_name(atlas_path):
     """
     From atlas_path extract the atlas_name
-    :param atlas_path:
-    :return:
+    Args:
+        atlas_path:
+    Returns:
+
     """
     return os.path.splitext(os.path.basename(atlas_path))[0]
 
@@ -65,8 +71,10 @@ def get_atlas_name(atlas_path):
 def get_atlas_extension(atlas_path):
     """
     From atlas_path extract the atlas file extension
-    :param atlas_path:
-    :return:
+    Args:
+        atlas_path:
+    Returns:
+
     """
     return os.path.splitext(os.path.basename(atlas_path))[1]
 
@@ -77,8 +85,10 @@ def clean_list_atlases(atlas_list, path) -> tuple:
     Then:
     - Convert Seurat files to Scanpy
     - Clean Scanpy files
-    :param atlas_list:
-    :return: clean_list_atlas will only cleaned Scanpy atlas. A dict with
+    Args:
+        atlas_list:
+    Returns:
+         clean_list_atlas will only cleaned Scanpy atlas. A dict with
     these info ['Atlas_Name','Type','Atlas_file_extension',
     'Checkatlas_folder']
     """
@@ -96,7 +106,7 @@ def clean_list_atlases(atlas_list, path) -> tuple:
                 "Seurat",
                 ".rds",
                 os.path.dirname(atlas_path) + "/",
-            ]
+                ]
             clean_atlas_seurat[atlas_path] = info
         elif atlas_path.endswith(".h5"):
             # detect if its a cellranger output
@@ -109,7 +119,7 @@ def clean_list_atlases(atlas_list, path) -> tuple:
                     "Cellranger",
                     ".h5",
                     os.path.dirname(atlas_h5) + "/",
-                ]
+                    ]
                 clean_atlas_cellranger[atlas_path] = info
         elif atlas_path.endswith(".h5ad"):
             logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
@@ -118,7 +128,7 @@ def clean_list_atlases(atlas_list, path) -> tuple:
                 "Scanpy",
                 ".h5ad",
                 os.path.dirname(atlas_path) + "/",
-            ]
+                ]
             clean_atlas_scanpy[atlas_path] = info
     # open file for writing, "w" is writing
     dict_file = open(
@@ -141,8 +151,11 @@ def get_pipeline_functions(module, args):
     Using arguments of checkatlas program -> build
     the list of functions to run on each adata
     and seurat object
-    :param args:
-    :return: list of functions to run
+    Args:
+        module:
+        args:
+    Returns:
+         list of functions to run
     """
     checkatlas_functions = list()
 
@@ -152,9 +165,9 @@ def get_pipeline_functions(module, args):
         if "violin_plot" in args.qc_display:
             checkatlas_functions.append(module.create_qc_plots)
         if (
-            "total-counts" in args.qc_display
-            or "n_genes_by_counts" in args.qc_display
-            or "pct_counts_mt" in args.qc_display
+                "total-counts" in args.qc_display
+                or "n_genes_by_counts" in args.qc_display
+                or "pct_counts_mt" in args.qc_display
         ):
             checkatlas_functions.append(module.create_qc_tables)
     if not args.NOREDUCTION:
@@ -194,10 +207,10 @@ def run(args):
     - Create UMAP and T-sne figures
     - Calculate every metrics
 
+    Args:
+        args:
+    Returns:
 
-    :param args:
-    :param logger:
-    :return:
     """
     logger.debug(f"Transform path to absolute:{args.path}")
     args.path = os.path.abspath(args.path)
@@ -289,9 +302,11 @@ def run(args):
 def run_checkatlas(clean_atlas, args):
     """
     Run Checkatlas pipeline for all Scanpy and Cellranger objects
-    :param clean_atlas_scanpy:
-    :param args:
-    :return:
+    Args:
+        clean_atlas_scanpy:
+        args:
+    Returns:
+
     """
 
     # List all functions to run
@@ -310,7 +325,7 @@ def run_checkatlas(clean_atlas, args):
         csv_summary_path = os.path.join(
             folders.get_folder(args.path, folders.SUMMARY),
             atlas_name + SUMMARY_EXTENSION,
-        )
+            )
         if args.resume and os.path.exists(csv_summary_path):
             logger.debug(
                 f"Skip {atlas_name} summary file already "

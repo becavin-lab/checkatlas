@@ -10,3 +10,17 @@ nav:
   - Metrics: "metrics/metrics.md"
   - API: "API.md"
   - Contributing: "contributing.md"
+
+plugins:
+  - search
+  - mkdocstrings:
+      enabled: !ENV [ ENABLE_MKDOCSTRINGS, true ]
+      custom_templates: templates
+      default_handler: python
+      handlers:
+        python:
+          import:
+            - https://docs.python-requests.org/en/master/objects.inv
+          options:
+            show_source: false
+            heading_level: 4
