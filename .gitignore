@@ -30,6 +30,7 @@ lib/
 lib64/
 parts/
 sdist/
+site/
 var/
 wheels/
 pip-wheel-metadata/
