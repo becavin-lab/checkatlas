@@ -20,7 +20,6 @@ build:
     post_install:
       # Install dependencies with 'docs' dependency group
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
-      - apt install r-base
       - poetry install --with docs
 
 mkdocs:
