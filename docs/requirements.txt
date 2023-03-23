@@ -1,4 +1,5 @@
 # This requirements are for building the doc, not for production.
+Jinja2
 mkdocs
 pytkdocs
 anndata
