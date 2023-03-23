@@ -4,12 +4,22 @@ repo_url: https://github.com/becavin-lab/checkatlas
 site_url: https://checkatlas.readthedocs.io/
 
 nav:
-  - Overview: "index.md"
-  - Installation: "installation.md"
-  - Examples: "examples/examples.md"
-  - Metrics: "metrics/metrics.md"
-  - API: "API.md"
-  - Contributing: "contributing.md"
+  - Overview:
+    - Summary: "index.md"
+    - Installation: "installation.md"
+    - API: "API.md"
+    - Contributing: "contributing.md"
+  - Examples:
+    - Starting examples: "examples/examples.md"
+  - Metrics:
+      - Summary: "metrics/metrics.md"
+      - Clustering:
+        - Silhouette: "metrics/silhouette.md"
+      - Classification:
+          - 'Rand index': "metrics/rand_index.md"
+      - 'Dimensionality reduction':
+          - 'Kruskal stress': "metrics/kruskal_stress.md"
+
 
 plugins:
   - search
