@@ -106,7 +106,7 @@ def clean_list_atlases(atlas_list, path) -> tuple:
                 "Seurat",
                 ".rds",
                 os.path.dirname(atlas_path) + "/",
-                ]
+            ]
             clean_atlas_seurat[atlas_path] = info
         elif atlas_path.endswith(".h5"):
             # detect if its a cellranger output
@@ -119,7 +119,7 @@ def clean_list_atlases(atlas_list, path) -> tuple:
                     "Cellranger",
                     ".h5",
                     os.path.dirname(atlas_h5) + "/",
-                    ]
+                ]
                 clean_atlas_cellranger[atlas_path] = info
         elif atlas_path.endswith(".h5ad"):
             logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
@@ -128,7 +128,7 @@ def clean_list_atlases(atlas_list, path) -> tuple:
                 "Scanpy",
                 ".h5ad",
                 os.path.dirname(atlas_path) + "/",
-                ]
+            ]
             clean_atlas_scanpy[atlas_path] = info
     # open file for writing, "w" is writing
     dict_file = open(
@@ -165,9 +165,9 @@ def get_pipeline_functions(module, args):
         if "violin_plot" in args.qc_display:
             checkatlas_functions.append(module.create_qc_plots)
         if (
-                "total-counts" in args.qc_display
-                or "n_genes_by_counts" in args.qc_display
-                or "pct_counts_mt" in args.qc_display
+            "total-counts" in args.qc_display
+            or "n_genes_by_counts" in args.qc_display
+            or "pct_counts_mt" in args.qc_display
         ):
             checkatlas_functions.append(module.create_qc_tables)
     if not args.NOREDUCTION:
@@ -325,7 +325,7 @@ def run_checkatlas(clean_atlas, args):
         csv_summary_path = os.path.join(
             folders.get_folder(args.path, folders.SUMMARY),
             atlas_name + SUMMARY_EXTENSION,
-            )
+        )
         if args.resume and os.path.exists(csv_summary_path):
             logger.debug(
                 f"Skip {atlas_name} summary file already "
