@@ -6,7 +6,6 @@ mkdocstrings-python-legacy
 multiqc
 scikit-learn
 matplotlib
-rpy2
 llvmlite
 numba
 types-pyyaml
