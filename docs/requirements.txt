@@ -3,3 +3,13 @@ mkdocs
 pytkdocs
 anndata
 mkdocstrings-python-legacy
+multiqc
+scikit-learn
+matplotlib
+rpy2
+llvmlite
+numba
+types-pyyaml
+scanpy
+numpy
+nextflow
