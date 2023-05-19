@@ -18,6 +18,10 @@ def main() -> None:  # pragma: no cover
     Arguments are managed here
     Search fo atlases is managed here
     Then checkatlas is ran with the list of atlases found
+
+    Returns:
+        None
+
     """
     # Set up logging
     logger = logging.getLogger("checkatlas")
