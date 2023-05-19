@@ -1,0 +1,1 @@
+python -m checkatlas /Users/christophebecavin/Documents/checkatlas/examples/data1
