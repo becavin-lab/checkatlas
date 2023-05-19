@@ -1,3 +1,4 @@
+import argparse
 import csv
 import inspect
 import logging
@@ -46,7 +47,7 @@ def list_atlases(path: str) -> list:
         path: Path for searching single-cell atlases.
 
     Returns:
-        List of file atlases to check.
+        list: List of file atlases to check.
     """
     atlas_list = list()
     for root, dirs, files in os.walk(path):
@@ -57,43 +58,38 @@ def list_atlases(path: str) -> list:
     return atlas_list
 
 
-def get_atlas_name(atlas_path):
+def get_atlas_name(atlas_path: str) -> str:
     """
     From atlas_path extract the atlas_name
     Args:
         atlas_path:
     Returns:
-
+        str: The atlas_name
     """
     return os.path.splitext(os.path.basename(atlas_path))[0]
 
 
-def get_atlas_extension(atlas_path):
+def get_atlas_extension(atlas_path: str) -> str:
     """
     From atlas_path extract the atlas file extension
     Args:
         atlas_path:
     Returns:
-
+        None
     """
     return os.path.splitext(os.path.basename(atlas_path))[1]
 
 
-def clean_list_atlases(atlas_list, path) -> tuple:
+def clean_list_atlases(atlas_list: list, checkatlas_path: str) -> tuple:
     """
-    Go through all files and detect Seurat or Scanpy Atlas
-    Then:
-    - Convert Seurat files to Scanpy
-    - Clean Scanpy files
+    Go through all files and detect Seurat, CellRanger or Scanpy Atlas
+    The "cleaning means that we test if the atlas is valid or not.
     Args:
-        atlas_list:
+        atlas_list: list of atlases found with proper extension
+        checkatlas_path: the path where checkatlas files are saved
     Returns:
-         clean_list_atlas will only cleaned Scanpy atlas. A dict with
-    these info ['Atlas_Name','Type','Atlas_file_extension',
-    'Checkatlas_folder']
+         tuple: clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
     """
-    # Create dict with these info ['Atlas_Name','Type','Converted',
-    # 'Checkatlas_path']
     clean_atlas_scanpy = dict()
     clean_atlas_seurat = dict()
     clean_atlas_cellranger = dict()
@@ -130,10 +126,10 @@ def clean_list_atlases(atlas_list, path) -> tuple:
                 os.path.dirname(atlas_path) + "/",
             ]
             clean_atlas_scanpy[atlas_path] = info
-    # open file for writing, "w" is writing
+    # Save the list of atlas taken into account
     dict_file = open(
-        os.path.join(folders.get_workingdir(path), "list_atlases.csv"), "w"
-    )
+        os.path.join(folders.get_workingdir(checkatlas_path),
+                     "list_atlases.csv"), "w")
     w = csv.writer(dict_file)
     # loop over dictionary keys and values
     for key, val in clean_atlas_scanpy.items():
@@ -146,16 +142,16 @@ def clean_list_atlases(atlas_list, path) -> tuple:
     return clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
 
 
-def get_pipeline_functions(module, args):
+def get_pipeline_functions(module, args) -> list:
     """
     Using arguments of checkatlas program -> build
     the list of functions to run on each adata
     and seurat object
     Args:
-        module:
-        args:
+        module: Module to use either atlas or atlas_seurat
+        args: List of args for checkatlas program
     Returns:
-         list of functions to run
+         list: list of functions to run
     """
     checkatlas_functions = list()
 
@@ -197,7 +193,7 @@ def get_pipeline_functions(module, args):
     return checkatlas_functions
 
 
-def run(args):
+def run(args: argparse.Namespace) -> None:
     """
     Main function of checkatlas
     Run all functions for all atlases:
@@ -208,10 +204,11 @@ def run(args):
     - Calculate every metrics
 
     Args:
-        args:
+        args: List of args for checkatlas program
     Returns:
-
+        None
     """
+
     logger.debug(f"Transform path to absolute:{args.path}")
     args.path = os.path.abspath(args.path)
     logger.debug(f"Check checkatlas folders in:{args.path}")
@@ -260,53 +257,69 @@ def run(args):
             "--nextflow option found: Run checkatlas workflow with Nextflow"
         )
         logger.info(f"Use {args.nextflow} threads")
-        checkatlas_workflow.create_checkatlas_worflows(clean_atlas, args)
-        script_path = os.path.dirname(os.path.realpath(__file__))
-        nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
-        yaml_files = os.path.join(
-            folders.get_folder(args.path, folders.TEMP), "*.yaml"
-        )
-
-        # getting the current date and time
-        current_datetime = datetime.now()
-        current_time = current_datetime.strftime("%Y%d%m-%H%M%S")
-        report_file = os.path.join(
-            folders.get_workingdir(args.path),
-            f"Nextflow_report-{current_time}.html",
-        )
-        timeline_file = os.path.join(
-            folders.get_workingdir(args.path),
-            f"Nextflow_timeline-{current_time}.html",
-        )
-        working_dir_nextflow = folders.get_folder(args.path, folders.NEXTFLOW)
-        nextflow_cmd = (
-            f"nextflow run -w "
-            f"{working_dir_nextflow}"
-            f" {nextflow_main} -queue-size {args.nextflow} --files "
-            f'"{yaml_files}" -with-report {report_file}'
-            f" -with-timeline {timeline_file}"
-        )
-        logger.debug(f"Execute: {nextflow_cmd}")
-        script_path = os.path.dirname(os.path.realpath(__file__))
-        nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
-        # Run Nextflow
-        os.system(nextflow_cmd)
-        logger.debug(f"Nextflow report saved in {report_file}")
-        logger.debug(f"Nextflow timeline saved in {timeline_file}")
+        run_checkatlas_nextflow(clean_atlas, args)
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")
         multiqc.run_multiqc(args)
 
 
-def run_checkatlas(clean_atlas, args):
+def run_checkatlas_nextflow(clean_atlas, args) -> None:
+    """
+    Run the checkatlas pipeline by using Nextflow.
+    checkatlas_workflow.nf will be run with specific
+    parameters.
+
+    Args:
+        clean_atlas: List of atlases
+        args: List of args for checkatlas program
+
+    Returns:
+        None
+    """
+    checkatlas_workflow.create_checkatlas_worflows(clean_atlas, args)
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
+    yaml_files = os.path.join(
+        folders.get_folder(args.path, folders.TEMP), "*.yaml"
+    )
+
+    # getting the current date and time
+    current_datetime = datetime.now()
+    current_time = current_datetime.strftime("%Y%d%m-%H%M%S")
+    report_file = os.path.join(
+        folders.get_workingdir(args.path),
+        f"Nextflow_report-{current_time}.html",
+    )
+    timeline_file = os.path.join(
+        folders.get_workingdir(args.path),
+        f"Nextflow_timeline-{current_time}.html",
+    )
+    working_dir_nextflow = folders.get_folder(args.path, folders.NEXTFLOW)
+    nextflow_cmd = (
+        f"nextflow run -w "
+        f"{working_dir_nextflow}"
+        f" {nextflow_main} -queue-size {args.nextflow} --files "
+        f'"{yaml_files}" -with-report {report_file}'
+        f" -with-timeline {timeline_file}"
+    )
+    logger.debug(f"Execute: {nextflow_cmd}")
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    nextflow_main = os.path.join(script_path, "checkatlas_workflow.nf")
+    # Run Nextflow
+    os.system(nextflow_cmd)
+    logger.debug(f"Nextflow report saved in {report_file}")
+    logger.debug(f"Nextflow timeline saved in {timeline_file}")
+
+
+def run_checkatlas(clean_atlas, args) -> None:
     """
     Run Checkatlas pipeline for all Scanpy and Cellranger objects
     Args:
-        clean_atlas_scanpy:
-        args:
+        clean_atlas: List of atlas
+        args: List of args for checkatlas program
     Returns:
-
+        None
     """
 
     # List all functions to run
@@ -358,31 +371,3 @@ if __name__ == "__main__":
     atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
     # folders.checkatlas_folders(path)
     # atlas_list = list_atlases(path)
-    # clean_atlas_dict = clean_list_atlases(atlas_list, path)
-    #
-    # for atlas_path, atlas_info in clean_atlas_dict.items():
-    #     print(atlas_path, atlas_info)
-    #     adata = read_atlas(atlas_path, atlas_info)
-    #     print(adata is not None)
-    #     if adata is not None:
-    #         adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-    #         atlas.create_summary_table(adata, atlas_path, atlas_info, path)
-    #         atlas.create_anndata_table(adata, atlas_path, atlas_info, path)
-    #         # atlas.create_qc_plots(adata, atlas_path, atlas_info, path)
-    #         atlas.create_umap_fig(adata, atlas_path, atlas_info, path)
-    #         # atlas.create_tsne_fig(adata, atlas_path, atlas_info, path)
-    #         atlas.metric_cluster(adata, atlas_path, atlas_info, path)
-    #         atlas.metric_annot(adata, atlas_path, atlas_info, path)
-    #         atlas.metric_dimred(adata, atlas_path, atlas_info, path)
-# atlas_path = '/Users/christophebecavin/Documents/testatlas/hca/
-# HCA_Barbry_Grch38_Raw_filter_Norm.h5ad'
-# atlas_path = '/Users/christophebecavin/Documents/testatlas/Endothelial.h5ad'
-# atlas_name = get_atlas_name(atlas_path)
-# print('Read atlas')
-#     adata = read_atlas(atlas_path, atlas_info)
-#     sc.pp.subsample(adata, fraction=0.05)
-#     adata.write('/Users/christophebecavin/Documents/testatlas/Endothelial_lite.h5ad')
-#     print(adata)
-# print('Calc QC')
-# figure_path = '/Users/christophebecavin/Documents/testatlas/'
-# atlas.create_qc_plots(adata, atlas_path, atlas_name, figure_path)

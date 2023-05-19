@@ -7,18 +7,18 @@ nav:
   - Overview:
     - Summary: "index.md"
     - Installation: "installation.md"
-    - API: "API.md"
+    - Examples: "examples/examples.md"
     - Contributing: "contributing.md"
-  - Examples:
-    - Starting examples: "examples/examples.md"
   - Metrics:
-      - Summary: "metrics/metrics.md"
-      - Clustering:
-        - Silhouette: "metrics/silhouette.md"
-      - Classification:
-          - 'Rand index': "metrics/rand_index.md"
-      - 'Dimensionality reduction':
-          - 'Kruskal stress': "metrics/kruskal_stress.md"
+    - Summary: "metrics/metrics.md"
+    - Clustering:
+      - Silhouette: "metrics/silhouette.md"
+    - Classification:
+      - 'Rand index': "metrics/rand_index.md"
+    - 'Dimensionality reduction':
+      - 'Kruskal stress': "metrics/kruskal_stress.md"
+  - API:
+    - API: "API.md"
 
 
 plugins:
@@ -32,5 +32,5 @@ plugins:
           import:
             - https://docs.python-requests.org/en/master/objects.inv
           options:
-            show_source: false
+            show_source: true
             heading_level: 4

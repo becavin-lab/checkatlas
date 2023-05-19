@@ -1,7 +1,19 @@
 import os
+import logging
 
+logger = logging.getLogger("checkatlas")
 
 def run_multiqc(args):
+    """
+    Run Multiqc software after running checkatlas
+    It creates the final html file with al checkatlas
+    tables and figures.
+
+    Args:
+        args: List of args for checkatlas program
+    Returns:
+        None: None
+    """
     title = '"Check Single-Cell Atlas"'
     name = "CheckAtlas"
     multiqc_script = (
@@ -15,5 +27,5 @@ def run_multiqc(args):
         + ' -f -e "snippy" --cl-config "ignore_images: false" '
         + args.path
     )
-    print(multiqc_script)
+    logger.debug("Run: "+multiqc_script)
     os.system(multiqc_script)
