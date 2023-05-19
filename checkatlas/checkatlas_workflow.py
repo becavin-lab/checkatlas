@@ -17,47 +17,6 @@ FUNCTION_TYPE = [
 ]
 
 
-def recurs_node(dict_nodes:dict, parent_node_name, level:int):
-    """
-
-    Args:
-        dict_nodes:
-        parent_node_name:
-        level:
-
-    Returns:
-
-    """
-    for node_name, node_info in dict_nodes.items():
-        level_layer = f"lv_{level}"
-        cluster_layer = f"cluster_{level}"
-        dot.node(node_name, label=node_name, color="black", layer= level_layer)
-        dot.edge(parent_node_name, node_name)
-
-        if node_info is not None:
-            for child_nodes in node_info:
-                if type(child_nodes) == dict:
-
-                    recurs_node(child_nodes, node_name, level + 1)
-
-                else:
-                    if len(child_nodes.split(';'))>1:
-                        ## what dictionaries contain the
-                        ## synonyms
-                        dict_list = []
-                        print(child_nodes)
-                        dict_list.append(child_nodes.split(';')[1].strip())
-                        print(dict_list)
-                        ## parameters of the node (they reflect the lv)
-                        node_param = [node_name, level_layer, node_info]
-                        dict_rectangles(dot, dict_list, node_param, cluster_layer)
-                        print(level_layer)
-                        print(node_info)
-                        print('\n')
-
-
-
-
 
 
 def workflow():
@@ -348,4 +307,3 @@ def load_arguments(args, yaml_name):
 
 if __name__ == "__main__":  # pragma: no cover
     workflow()
-

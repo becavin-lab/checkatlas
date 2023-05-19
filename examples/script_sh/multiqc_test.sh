@@ -1,0 +1,1 @@
+pip install .;cd /Users/christophebecavin/Documents/testatlas; multiqc -f -e "snippy" --cl-config "ignore_images: false" -c /Users/christophebecavin/Documents/checkatlas/config/multiqc_config.yaml -n "CheckAtlas" -o "CheckAtlas_MultiQC" .

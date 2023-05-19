@@ -43,6 +43,8 @@ process metric_dimred {
       """
       checkatlas-workflow metric_dimred ${config_file}
       """
+
+
 }
 
 

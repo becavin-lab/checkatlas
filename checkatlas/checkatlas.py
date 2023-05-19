@@ -128,8 +128,11 @@ def clean_list_atlases(atlas_list: list, checkatlas_path: str) -> tuple:
             clean_atlas_scanpy[atlas_path] = info
     # Save the list of atlas taken into account
     dict_file = open(
-        os.path.join(folders.get_workingdir(checkatlas_path),
-                     "list_atlases.csv"), "w")
+        os.path.join(
+            folders.get_workingdir(checkatlas_path), "list_atlases.csv"
+        ),
+        "w",
+    )
     w = csv.writer(dict_file)
     # loop over dictionary keys and values
     for key, val in clean_atlas_scanpy.items():

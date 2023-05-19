@@ -1,7 +1,8 @@
-import os
 import logging
+import os
 
 logger = logging.getLogger("checkatlas")
+
 
 def run_multiqc(args):
     """
@@ -27,5 +28,5 @@ def run_multiqc(args):
         + ' -f -e "snippy" --cl-config "ignore_images: false" '
         + args.path
     )
-    logger.debug("Run: "+multiqc_script)
+    logger.debug("Run: " + multiqc_script)
     os.system(multiqc_script)
