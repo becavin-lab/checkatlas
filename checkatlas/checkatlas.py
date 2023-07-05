@@ -248,19 +248,19 @@ def run(args: argparse.Namespace) -> None:
         atlas_seurat.check_seurat_install()
 
     # Run all checkatlas analysis
-    if args.nextflow == 0:
-        logger.info(
-            "--nextflow option not found: Run checkatlas workflow "
-            "without Nextflow"
-        )
-        run_checkatlas(clean_atlas, args)
-    else:
+    # if args.nextflow == 0:
+    logger.info(
+        "--nextflow option not found: Run checkatlas workflow "
+        "without Nextflow"
+    )
+    run_checkatlas(clean_atlas, args)
+    """ else:
         clean_atlas.update(clean_atlas_seurat)
         logger.info(
             "--nextflow option found: Run checkatlas workflow with Nextflow"
         )
         logger.info(f"Use {args.nextflow} threads")
-        run_checkatlas_nextflow(clean_atlas, args)
+        run_checkatlas_nextflow(clean_atlas, args) """
 
     if not args.NOMULTIQC:
         logger.info("Run MultiQC")

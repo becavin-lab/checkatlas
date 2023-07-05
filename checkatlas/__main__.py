@@ -75,13 +75,13 @@ def main() -> None:  # pragma: no cover
         "only the new files.",
     )
 
-    parser.add_argument(
+    """     parser.add_argument(
         "--nextflow",
         type=int,
         default=0,
         help="Activate Nextflow and specify the number of threads to use. \n"
         "Example: --nextflow 8 (for 8 threads)",
-    )
+    ) """
 
     parser.add_argument(
         "-d",
@@ -161,7 +161,8 @@ def main() -> None:  # pragma: no cover
         "--metric_cluster",
         nargs="+",
         type=str,
-        default=["silhouette", "davies_bouldin"],
+        # default=["silhouette", "davies_bouldin"],
+        default=["davies_bouldin"],
         help="Specify the list of clustering metrics to calculate.\n"
         "   Example: --metric_cluster silhouette davies_bouldin\n"
         f"   List of cluster metrics: {cluster.__all__}",
@@ -170,7 +171,8 @@ def main() -> None:  # pragma: no cover
         "--metric_annot",
         nargs="+",
         type=str,
-        default=["rand_index"],
+        default=[],
+        # default=["rand_index"],
         help=f"Specify the list of clustering metrics to calculate."
         f"   Example: --metric_annot rand_index"
         f"   List of annotation metrics: {annot.__all__}",
@@ -179,15 +181,30 @@ def main() -> None:  # pragma: no cover
         "--metric_dimred",
         nargs="+",
         type=str,
-        default=["kruskal_stress"],
+        # default=["kruskal_stress"],
+        default=[],
         help="Specify the list of dimensionality reduction "
         "metrics to calculate.\n"
         "   Example: --metric_dimred kruskal_stress\n"
         f"   List of dim. red. metrics: {dimred.__all__}",
     )
+    metric_options.add_argument(
+        "--TEST_ALLMETRICS",
+        action="store_true",
+        help="Run the pipeline with all metrics available.\n"
+        f"   List of cluster metrics: {cluster.__all__}\n"
+        f"   List of annotation metrics: {annot.__all__}\n"
+        f"   List of dim. red. metrics: {dimred.__all__}",
+    )
 
     # Parse all args
     args = parser.parse_args()
+
+    # Validate TEST_ALLMETRICS
+    if args.TEST_ALLMETRICS:
+        args.metric_cluster = cluster.__all__
+        args.metric_annot = annot.__all__
+        args.metric_dimred = dimred.__all__
 
     # If a config file was provided, load the new args
     if args.config != "":
@@ -205,10 +222,6 @@ def main() -> None:  # pragma: no cover
         logger.setLevel(getattr(logging, "INFO"))
 
     logger.debug(f"Program arguments: {args}")
-
-    args.metric_cluster = cluster.__all__
-    args.metric_annot = annot.__all__
-    args.metric_dimred = dimred.__all__
 
     # Save all arguments to yaml (only run it when
     # generating example file config.yaml

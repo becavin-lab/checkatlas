@@ -24,7 +24,6 @@ numba = "^0.56.4"
 types-pyyaml = "^6.0.12.6"
 scanpy = "^1.9.1"
 numpy = "^1.23.5"
-nextflow = "^22.10.7"
 
 [tool.poetry.group.dev]
 optional = true
