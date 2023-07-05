@@ -1422,6 +1422,16 @@ extra = ["lxml (>=4.6)", "pydot (>=1.4.2)", "pygraphviz (>=1.10)", "sympy (>=1.1
 test = ["codecov (>=2.1)", "pytest (>=7.2)", "pytest-cov (>=4.0)"]
 
 [[package]]
+name = "nextflow"
+version = "23.4.2"
+description = "A Python wrapper that installs the Nextflow launcher"
+optional = false
+python-versions = "*"
+files = [
+    {file = "nextflow-23.4.2.tar.gz", hash = "sha256:449cb7e3a5db4e536ed4511e1b6b5d833fd95af74e5096e21d2723977bae3569"},
+]
+
+[[package]]
 name = "no-implicit-optional"
 version = "1.4"
 description = "A codemod to make your implicit optional type hints PEP 484 compliant."
@@ -2731,4 +2741,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d51207bffe051f703cfa568e12b4933534e8a6072ccb42fe76aecbd4a43c7983"
+content-hash = "446630e77dbf50af35fd45ad17e5d352c0e488e231756a4c0b547bdf756ac0a4"
