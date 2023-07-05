@@ -17,8 +17,6 @@ FUNCTION_TYPE = [
 ]
 
 
-
-
 def workflow():
     # Set up logging
     logging.basicConfig(format="|--- %(levelname)-8s %(message)s")
