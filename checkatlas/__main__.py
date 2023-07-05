@@ -202,6 +202,10 @@ def main() -> None:  # pragma: no cover
 
     # Validate TEST_ALLMETRICS
     if args.TEST_ALLMETRICS:
+        logger.info(
+            "TEST_ALLMETRICS parameter is present : "
+            "All Metrics will be added for processing"
+        )
         args.metric_cluster = cluster.__all__
         args.metric_annot = annot.__all__
         args.metric_dimred = dimred.__all__
