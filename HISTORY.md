@@ -4,12 +4,38 @@ Changelog
 
 (unreleased)
 ------------
+- Make new release without nextflow for bioconda. [Christophe Bécavin]
+- Remove nextflow dependency. [Christophe Bécavin]
+- Format files, switch to VScode, remove .idea. [drbecavin]
+- Format files, switch to VScode, remove .idea. [drbecavin]
+- Release: version 0.2.2 🚀 [drbecavin]
 - Continuous integration 🔄 tests-0.2.2. [drbecavin]
 - Continuous integration 🔄 tests-0.2.1. [drbecavin]
 - Add first metrics docs, reorganize doc. [drbecavin]
 - Fiix readthedoc issue with R. [drbecavin]
+- Fiix readthedoc issue with R. [drbecavin]
+- Add poetry in the readthedoc workflow. [drbecavin]
+- Add poetry in the readthedoc workflow. [drbecavin]
 - Add poetry in the readthedoc workflow. [drbecavin]
 - Dependecy problem inb readthedoc. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
 - Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
   google style. [drbecavin]
 - Modify docs. [drbecavin]
@@ -50,7 +76,10 @@ Changelog
 - Fix umap obsm search. [drbecavin]
 - Fix umap obsm search. [drbecavin]
 - Fix makesunique for atlas cleaning. [drbecavin]
-- Fix raw.var_names not unique problem. [Christophe Bécavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Ix raw.var_names not unique problem. [Christophe Bécavin]
 - Update poetry lock. [drbecavin]
 - Update poetry lock. [drbecavin]
 - Release: version 0.1.19 🚀 [drbecavin]
