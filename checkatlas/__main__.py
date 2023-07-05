@@ -75,13 +75,13 @@ def main() -> None:  # pragma: no cover
         "only the new files.",
     )
 
-    """     parser.add_argument(
+    parser.add_argument(
         "--nextflow",
         type=int,
         default=0,
         help="Activate Nextflow and specify the number of threads to use. \n"
         "Example: --nextflow 8 (for 8 threads)",
-    ) """
+    )
 
     parser.add_argument(
         "-d",
