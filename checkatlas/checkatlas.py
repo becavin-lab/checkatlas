@@ -161,10 +161,11 @@ def get_pipeline_functions(module, args) -> list:
     if not args.NOADATA:
         checkatlas_functions.append(module.create_anndata_table)
     if not args.NOQC:
-        if "violin_plot" in args.qc_display:
-            checkatlas_functions.append(module.create_qc_plots)
+        #if "violin_plot" in args.qc_display:
+        #    checkatlas_functions.append(module.create_qc_plots)
         if (
             "total-counts" in args.qc_display
+            or "violin_plot" in args.qc_display
             or "n_genes_by_counts" in args.qc_display
             or "pct_counts_mt" in args.qc_display
         ):

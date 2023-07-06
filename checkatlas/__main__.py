@@ -76,6 +76,16 @@ def main() -> None:  # pragma: no cover
     )
 
     parser.add_argument(
+        "--plot_celllimit",
+        type=int,
+        default=10000,
+        help="Set the maximum number of cells"
+        "to plot in QC, UMAP, t-SNE, etc...."
+        "If plot_celllimit=0, no limit will"
+        "be applied.",
+    )
+
+    parser.add_argument(
         "--nextflow",
         type=int,
         default=0,
