@@ -360,14 +360,24 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
         atlas_name + checkatlas.QC_EXTENSION,
     )
     logger.debug(f"Create QC tables for {atlas_name}")
+    qc_genes = []
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
-    #print(adata.var_names)
+    if len(adata.var[adata.var["mt"]]) != 0:
+        qc_genes.append("mt")
+        logger.debug(f"Mitochondrial genes in {atlas_name} for QC")
+    else:
+        logger.debug(f"No mitochondrial genes in {atlas_name} for QC")
     # ribosomal genes
     adata.var["ribo"] = adata.var_names.str.startswith(("RPS", "RPL"))
+    if len(adata.var[adata.var["mt"]]) != 0:
+        qc_genes.append("ribo")
+        logger.debug(f"Ribosomal genes in {atlas_name} for QC")
+    else:
+        logger.debug(f"No ribosomal genes in {atlas_name} for QC")
     sc.pp.calculate_qc_metrics(
         adata,
-        qc_vars=["mt", "ribo"],
+        qc_vars=qc_genes,
         percent_top=None,
         log1p=False,
         inplace=True,
@@ -379,15 +389,13 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
     for header in df_annot.columns:
         if header != CELLINDEX_HEADER:
             new_header = f"cellrank_{header}"
-            df_annot.sort_values(header)
-            #print(df_annot)
-            rank_list = df_annot[header].rank(method = 'dense')
-            df_annot.loc[:, [new_header]] = rank_list
+            df_annot = df_annot.sort_values(header)
+            df_annot.loc[:, [new_header]] = range(1,adata.n_obs+1)
+            #rank_list = df_annot[header].rank(method = 'dense')
+            #df_annot.loc[:, [new_header]] = rank_list
     
     # Sample QC table when more cells than args.plot_celllimit are present
     df_annot = atlas_sampling(df_annot, "QC", args)
-    
-
     df_annot.to_csv(qc_path, index = False, quoting=False, sep="\t")
 
 
