@@ -1,6 +1,9 @@
+from ast import arg
 import logging
 import os
 import re
+from tkinter import HORIZONTAL
+from traceback import print_list
 
 import anndata
 import numpy as np
@@ -71,6 +74,8 @@ OBS_QC = [
     "total_counts_ribo",
     "pct_counts_ribo",
 ]
+
+CELLINDEX_HEADER = 'cell_index'
 
 logger = logging.getLogger("checkatlas")
 
@@ -357,6 +362,7 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
     logger.debug(f"Create QC tables for {atlas_name}")
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
+    #print(adata.var_names)
     # ribosomal genes
     adata.var["ribo"] = adata.var_names.str.startswith(("RPS", "RPL"))
     sc.pp.calculate_qc_metrics(
@@ -367,7 +373,22 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
         inplace=True,
     )
     df_annot = adata.obs[get_viable_obs_qc(adata, args)]
-    df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
+    #print(df_annot)
+    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1,adata.n_obs+1)
+    # Rank cell by qc metric
+    for header in df_annot.columns:
+        if header != CELLINDEX_HEADER:
+            new_header = f"cellrank_{header}"
+            df_annot.sort_values(header)
+            #print(df_annot)
+            rank_list = df_annot[header].rank(method = 'dense')
+            df_annot.loc[:, [new_header]] = rank_list
+    
+    # Sample QC table when more cells than args.plot_celllimit are present
+    df_annot = atlas_sampling(df_annot, "QC", args)
+    
+
+    df_annot.to_csv(qc_path, index = False, quoting=False, sep="\t")
 
 
 def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
@@ -617,3 +638,20 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
         df_dimred.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obsm_key was found for {atlas_name}")
+
+
+def atlas_sampling(df_annot, type_df, args):
+    """_summary_
+
+    Args:
+        df_annot (_type_): _description_
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
+    if args.plot_celllimit != 0 and args.plot_celllimit < len(df_annot):
+        logger.debug(f"Sample {type_df} table with {len(df_annot)} cells")
+        df_annot = df_annot.sample(args.plot_celllimit)
+        logger.debug(f"{type_df} table sampled to {len(df_annot)} cells")
+    return df_annot
