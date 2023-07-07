@@ -11,6 +11,10 @@
 [![Documentation Status](https://readthedocs.org/projects/checkatlas/badge/?version=latest)](https://checkatlas.readthedocs.io/en/latest/?badge=latest)
 [![Gitter](https://badges.gitter.im/checkatlas/checkatlas.svg)](https://app.gitter.im/#/room/!KpJcsVTOlGjwJgtLwF:gitter.im)
 
+![Static Badge](https://img.shields.io/badge/Packaging-Poetry-blue)
+![Static Badge](https://img.shields.io/badge/Docs-Mkdocs-red)
+![Static Badge](https://img.shields.io/badge/Linting-flake8%20black%20mypy-yellow)
+
 CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
 quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
 and CellRanger files.
