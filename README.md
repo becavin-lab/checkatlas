@@ -1,4 +1,4 @@
-# ![CheckAtlas](docs/images/checkAtlas_logo.png) 
+# ![CheckAtlas](docs/images/checkatlas_logo.png) 
 
 
 ![PyPI](https://img.shields.io/pypi/v/checkatlas)
