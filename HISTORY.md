@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Add poetry to dependencies (for bioconda) [Christophe Bécavin]
+- Fix minor bugs after separation of workflow. [Christophe Bécavin]
+- Release: version 0.2.6 🚀 [Christophe Bécavin]
 - Prepare for test release without workflow (all moved to nf-core-
   checkatlas) [Christophe Bécavin]
 - Remove dependecies nextflow, multiqc and clean toml project.
