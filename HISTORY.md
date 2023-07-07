@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Prepare for test release for bioconda. [Christophe Bécavin]
+- Remove matplotlib. [Christophe Bécavin]
+- Release: version 0.2.3 🚀 [Christophe Bécavin]
 - Make new release without nextflow for bioconda. [Christophe Bécavin]
 - Remove nextflow dependency. [Christophe Bécavin]
 - Format files, switch to VScode, remove .idea. [drbecavin]
