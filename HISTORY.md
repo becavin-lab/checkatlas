@@ -4,6 +4,16 @@ Changelog
 
 (unreleased)
 ------------
+- Add logo to doc, remove lint test on windows. [Christophe Bécavin]
+- Update README.md. [drbecavin]
+- Update README.md. [drbecavin]
+
+  Add logo to readme
+- Update README.md. [drbecavin]
+
+  Add lg to readme
+- Move logo. [Christophe Bécavin]
+- Release: version 0.2.8 🚀 [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.2.8. [Christophe Bécavin]
 - Update index.md. [drbecavin]
 
