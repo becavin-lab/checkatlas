@@ -6,7 +6,7 @@ authors = ["becavin-lab"]
 readme = "README.md"
 license = "MIT"
 packages = [{include = "checkatlas"}]
-include = ["checkatlas/convertSeurat.R", "checkatlas/checkatlas_workflow.nf"]
+include = ["checkatlas/checkatlas_workflow.nf"]
 exclude = ["tests/", ".github", "*dask-worker-space*"]
 homepage = "https://checkatlas.readthedocs.io/"
 repository = "https://github.com/becavin-lab/checkatlas/"
