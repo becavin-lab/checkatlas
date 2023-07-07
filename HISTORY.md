@@ -4,6 +4,36 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.2.8. [Christophe Bécavin]
+- Update index.md. [drbecavin]
+
+  change index in doc with badges
+- Update README.md. [drbecavin]
+
+  add bioconda badge
+- Update README.md. [drbecavin]
+
+  fix gitter
+- Update README.md. [drbecavin]
+
+  add pypi badge
+- Update pyproject.toml. [drbecavin]
+
+  Change license in toml
+- Update README.md. [drbecavin]
+
+  Add pypi license badge
+- Update README.md. [drbecavin]
+
+  Add Pypi dl badge
+- Update README.md. [drbecavin]
+
+  gitter badge
+- Update README.md. [drbecavin]
+- Update README.md. [drbecavin]
+
+  add gitter badge
+- Release: version 0.2.7 🚀 [Christophe Bécavin]
 - Add poetry to dependencies (for bioconda) [Christophe Bécavin]
 - Fix minor bugs after separation of workflow. [Christophe Bécavin]
 - Release: version 0.2.6 🚀 [Christophe Bécavin]
