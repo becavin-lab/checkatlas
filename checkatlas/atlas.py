@@ -72,6 +72,8 @@ OBS_QC = [
     "pct_counts_ribo",
 ]
 
+CELLINDEX_HEADER = 'cell_index'
+
 logger = logging.getLogger("checkatlas")
 
 
@@ -355,19 +357,41 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
         atlas_name + checkatlas.QC_EXTENSION,
     )
     logger.debug(f"Create QC tables for {atlas_name}")
+    qc_genes = []
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
+    if len(adata.var[adata.var["mt"]]) != 0:
+        qc_genes.append("mt")
+        logger.debug(f"Mitochondrial genes in {atlas_name} for QC")
+    else:
+        logger.debug(f"No mitochondrial genes in {atlas_name} for QC")
     # ribosomal genes
     adata.var["ribo"] = adata.var_names.str.startswith(("RPS", "RPL"))
+    if len(adata.var[adata.var["mt"]]) != 0:
+        qc_genes.append("ribo")
+        logger.debug(f"Ribosomal genes in {atlas_name} for QC")
+    else:
+        logger.debug(f"No ribosomal genes in {atlas_name} for QC")
+
     sc.pp.calculate_qc_metrics(
         adata,
-        qc_vars=["mt", "ribo"],
+        qc_vars=qc_genes,
         percent_top=None,
         log1p=False,
         inplace=True,
     )
     df_annot = adata.obs[get_viable_obs_qc(adata, args)]
-    df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
+    # Rank cell by qc metric
+    for header in df_annot.columns:
+        if header != CELLINDEX_HEADER:
+            new_header = f"cellrank_{header}"
+            df_annot = df_annot.sort_values(header, ascending = False)
+            df_annot.loc[:, [new_header]] = range(1,adata.n_obs+1)
+    
+    # Sample QC table when more cells than args.plot_celllimit are present
+    df_annot = atlas_sampling(df_annot, "QC", args)
+    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1,len(df_annot)+1)
+    df_annot.to_csv(qc_path, index = False, quoting=False, sep="\t")
 
 
 def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
@@ -617,3 +641,20 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
         df_dimred.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obsm_key was found for {atlas_name}")
+
+
+def atlas_sampling(df_annot, type_df, args):
+    """_summary_
+
+    Args:
+        df_annot (_type_): _description_
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
+    if args.plot_celllimit != 0 and args.plot_celllimit < len(df_annot):
+        logger.debug(f"Sample {type_df} table with {len(df_annot)} cells")
+        df_annot = df_annot.sample(args.plot_celllimit)
+        logger.debug(f"{type_df} table sampled to {len(df_annot)} cells")
+    return df_annot
