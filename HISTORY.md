@@ -7,6 +7,8 @@ Changelog
 - Prepare for test release for bioconda. [Christophe Bécavin]
 - Release: version 0.2.4 🚀 [Christophe Bécavin]
 - Prepare for test release for bioconda. [Christophe Bécavin]
+- Release: version 0.2.4 🚀 [Christophe Bécavin]
+- Prepare for test release for bioconda. [Christophe Bécavin]
 - Remove matplotlib. [Christophe Bécavin]
 - Release: version 0.2.3 🚀 [Christophe Bécavin]
 - Make new release without nextflow for bioconda. [Christophe Bécavin]
