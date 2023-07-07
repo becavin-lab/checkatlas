@@ -1,5 +1,5 @@
+# ![CheckAtlas](docs/images/CheckAtlas_logo.png#gh-light-mode-only) 
 
-# CheckAtlas
 
 ![PyPI](https://img.shields.io/pypi/v/checkatlas)
 ![PyPI - Downloads](https://img.shields.io/pypi/dw/checkatlas)
