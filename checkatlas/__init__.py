@@ -1,3 +1,3 @@
-from . import atlas, checkatlas, folders, multiqc
+from . import atlas, atlas_seurat, checkatlas, folders
 
-__all__ = ["atlas", "checkatlas", "folders"]
+__all__ = ["atlas", "atlas_seurat", "checkatlas", "folders"]
