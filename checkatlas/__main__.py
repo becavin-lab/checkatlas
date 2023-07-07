@@ -3,7 +3,7 @@ import logging
 
 import yaml
 
-from . import checkatlas  # pragma: no cover
+from . import nfcheckatlas  # pragma: no cover
 from . import atlas
 from .metrics import annot, cluster, dimred
 
@@ -238,7 +238,7 @@ def main() -> None:  # pragma: no cover
     # save_arguments(args, 'config/default_config.yaml')
 
     #   ######    Run Checkatlas   #########
-    checkatlas.run(args)
+    nfcheckatlas.run(args)
 
 
 def load_arguments(args, yaml_name):
