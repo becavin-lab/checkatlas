@@ -72,7 +72,7 @@ OBS_QC = [
     "pct_counts_ribo",
 ]
 
-CELLINDEX_HEADER = 'cell_index'
+CELLINDEX_HEADER = "cell_index"
 
 logger = logging.getLogger("checkatlas")
 
@@ -385,13 +385,13 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
     for header in df_annot.columns:
         if header != CELLINDEX_HEADER:
             new_header = f"cellrank_{header}"
-            df_annot = df_annot.sort_values(header, ascending = False)
-            df_annot.loc[:, [new_header]] = range(1,adata.n_obs+1)
-    
+            df_annot = df_annot.sort_values(header, ascending=False)
+            df_annot.loc[:, [new_header]] = range(1, adata.n_obs + 1)
+
     # Sample QC table when more cells than args.plot_celllimit are present
     df_annot = atlas_sampling(df_annot, "QC", args)
-    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1,len(df_annot)+1)
-    df_annot.to_csv(qc_path, index = False, quoting=False, sep="\t")
+    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1, len(df_annot) + 1)
+    df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
 
 
 def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
@@ -652,7 +652,7 @@ def atlas_sampling(df_annot, type_df, args):
 
     Returns:
         _type_: _description_
-    """    
+    """
     if args.plot_celllimit != 0 and args.plot_celllimit < len(df_annot):
         logger.debug(f"Sample {type_df} table with {len(df_annot)} cells")
         df_annot = df_annot.sample(args.plot_celllimit)

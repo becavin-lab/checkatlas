@@ -157,7 +157,7 @@ def get_pipeline_functions(module, args) -> list:
     if not args.NOADATA:
         checkatlas_functions.append(module.create_anndata_table)
     if not args.NOQC:
-        #if "violin_plot" in args.qc_display:
+        # if "violin_plot" in args.qc_display:
         #    checkatlas_functions.append(module.create_qc_plots)
         if (
             "total-counts" in args.qc_display
@@ -191,9 +191,6 @@ def get_pipeline_functions(module, args) -> list:
     # This table is then used by the resume option
     checkatlas_functions.append(module.create_summary_table)
     return checkatlas_functions
-
-
-
 
 
 if __name__ == "__main__":
