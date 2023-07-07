@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.2.4"
+version = "0.2.5"
 description="One liner tool to check the quality of your single-cell atlases."
-authors = ["becavin-lab"]
+authors = ["becavinlab"]
 readme = "README.md"
 license = "MIT"
 packages = [{include = "checkatlas"}]
