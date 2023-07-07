@@ -89,7 +89,6 @@ def clean_list_atlases(atlas_list: list, checkatlas_path: str) -> tuple:
     clean_atlas_scanpy = dict()
     clean_atlas_seurat = dict()
     clean_atlas_cellranger = dict()
-    print("yyeeeeeeppppppp")
     for atlas_path in atlas_list:
         atlas_name = get_atlas_name(atlas_path)
         if atlas_path.endswith(".rds"):
