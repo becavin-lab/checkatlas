@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.2.3"
+version = "0.2.6"
 description="One liner tool to check the quality of your single-cell atlases."
 authors = ["becavin-lab"]
 readme = "README.md"
@@ -15,16 +15,13 @@ documentation = "https://checkatlas.readthedocs.io/"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-multiqc = "^1.14"
 scikit-learn = "^1.2.1"
-matplotlib = "^3.7.0"
 rpy2 = "^3.5.8"
 llvmlite = "^0.39.1"
 numba = "^0.56.4"
 types-pyyaml = "^6.0.12.6"
 scanpy = "^1.9.1"
 numpy = "^1.23.5"
-nextflow = "^23.4.2"
 
 [tool.poetry.group.dev]
 optional = true
@@ -54,8 +51,4 @@ no_implicit_optional = true
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-checkatlas = 'checkatlas.__main__:main'
-checkatlas-workflow = 'checkatlas.checkatlas_workflow:workflow'
 
