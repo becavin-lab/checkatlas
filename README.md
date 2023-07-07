@@ -1,4 +1,4 @@
-# ![CheckAtlas](docs/images/CheckAtlas_logo.png#gh-light-mode-only) 
+# ![CheckAtlas](docs/images/checkAtlas_logo.png) 
 
 
 ![PyPI](https://img.shields.io/pypi/v/checkatlas)
