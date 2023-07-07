@@ -23,6 +23,7 @@ numba = "^0.56.4"
 types-pyyaml = "^6.0.12.6"
 scanpy = "^1.9.1"
 numpy = "^1.23.5"
+poetry = "^1.5.1"
 
 [tool.poetry.group.dev]
 optional = true
