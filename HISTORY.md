@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Fix few things in the doc. [Christophe Bécavin]
+- Release: version 0.2.9 🚀 [Christophe Bécavin]
 - Add logo to doc, remove lint test on windows. [Christophe Bécavin]
 - Update README.md. [drbecavin]
 - Update README.md. [drbecavin]
