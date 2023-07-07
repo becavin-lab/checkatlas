@@ -1,9 +1,6 @@
-from ast import arg
 import logging
 import os
 import re
-from tkinter import HORIZONTAL
-from traceback import print_list
 
 import anndata
 import numpy as np
@@ -375,6 +372,7 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
         logger.debug(f"Ribosomal genes in {atlas_name} for QC")
     else:
         logger.debug(f"No ribosomal genes in {atlas_name} for QC")
+
     sc.pp.calculate_qc_metrics(
         adata,
         qc_vars=qc_genes,
@@ -383,19 +381,16 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
         inplace=True,
     )
     df_annot = adata.obs[get_viable_obs_qc(adata, args)]
-    #print(df_annot)
-    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1,adata.n_obs+1)
     # Rank cell by qc metric
     for header in df_annot.columns:
         if header != CELLINDEX_HEADER:
             new_header = f"cellrank_{header}"
-            df_annot = df_annot.sort_values(header)
+            df_annot = df_annot.sort_values(header, ascending = False)
             df_annot.loc[:, [new_header]] = range(1,adata.n_obs+1)
-            #rank_list = df_annot[header].rank(method = 'dense')
-            #df_annot.loc[:, [new_header]] = rank_list
     
     # Sample QC table when more cells than args.plot_celllimit are present
     df_annot = atlas_sampling(df_annot, "QC", args)
+    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1,len(df_annot)+1)
     df_annot.to_csv(qc_path, index = False, quoting=False, sep="\t")
 
 
