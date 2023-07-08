@@ -3,12 +3,10 @@ import scanpy as sc
 
 import checkatlas.atlas as atlas
 
-
-
 given = pytest.mark.parametrize
 
 
-#@given("path_input,expected", [("/home/checkatlas_data/", 
+# @given("path_input,expected", [("/home/checkatlas_data/",
 #                                os.path.join("/home/checkatlas_data/",
 #                                              "checkatlas_files"))])
 def test_atlas_object():

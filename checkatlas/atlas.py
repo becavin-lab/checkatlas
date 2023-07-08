@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import re
@@ -78,19 +79,20 @@ CELLINDEX_HEADER = "cell_index"
 logger = logging.getLogger("checkatlas")
 
 
-def read_atlas(atlas_path) -> anndata:
+def read_atlas(atlas_path: str) -> anndata:
     """
     Read Scanpy or Cellranger data : .h5ad or .h5
 
     Args:
-        atlas_path (_type_): _description_
-        atlas_info (_type_): _description_
+        atlas_path (str): path of the .h5ad atlas
 
     Returns:
-        anndata: _description_
+        anndata: scanpy object from .h5ad
     """
-    logger.info(f"Load {checkatlas.get_atlas_name(atlas_path)} "\
-                f"in {checkatlas.get_atlas_directory(atlas_path)}")
+    logger.info(
+        f"Load {checkatlas.get_atlas_name(atlas_path)} "
+        f"in {checkatlas.get_atlas_directory(atlas_path)}"
+    )
     try:
         if atlas_path.endswith(".h5"):
             logger.debug(f"Read Cellranger results {atlas_path}")
@@ -100,12 +102,29 @@ def read_atlas(atlas_path) -> anndata:
             adata = sc.read_h5ad(atlas_path)
         return adata
     except anndata._io.utils.AnnDataReadError:
-        logger.warning(f"AnnDataReadError, cannot read: "\
-                       f"{checkatlas.get_atlas_name(atlas_path)}")
+        logger.warning(
+            f"AnnDataReadError, cannot read: "
+            f"{checkatlas.get_atlas_name(atlas_path)}"
+        )
         return None
 
 
-def read_cellranger(atlas_path):
+def read_cellranger(atlas_path: str) -> anndata:
+    """
+    Read cellranger files.
+
+    Load first /outs/filtered_feature_bc_matrix.h5
+    Then add (if found):
+    - Clustering
+    - PCA-
+    - UMAP
+    - TSNE
+    Args:
+        atlas_path (str): path of the atlas
+
+    Returns:
+        anndata: scanpy object from cellranger
+    """
     cellranger_path = atlas_path.replace(checkatlas.CELLRANGER_FILE, "")
     cellranger_path = os.path.join(cellranger_path, "outs")
     clust_path = os.path.join(
@@ -139,13 +158,23 @@ def read_cellranger(atlas_path):
     return adata
 
 
-def clean_scanpy_atlas(adata, atlas_info) -> bool:
+def clean_scanpy_atlas(adata: anndata, atlas_path: str) -> anndata:
     """
     Clean the Scanpy object to be sure to get all information out of it
-    :param adata:
-    :return:
+
+    - Make var names unique
+    - Make var unique for Raw matrix
+    - If OBS_CLUSTERS are present and in int32 -> be sure to
+    transform them in categorical
+
+    Args:
+        adata (anndata): atlas to analyse
+        atlas_path (str): path to the atlas
+
+    Returns:
+        anndata: cleaned atlas
     """
-    logger.debug(f"Clean scanpy: {atlas_info[0]}")
+    logger.debug(f"Clean scanpy: {checkatlas.get_atlas_name(atlas_path)}")
     # Make var names unique
     list_var = adata.var_names
     if len(set(list_var)) == len(list_var):
@@ -207,12 +236,17 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     return adata
 
 
-def get_viable_obs_qc(adata, args):
+def get_viable_obs_qc(adata: anndata, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
-    :param adata:
-    :return:
+
+    Args:
+        adata (anndata): atlas to analyse
+        args (argparse.Namespace): list of arguments from checkatlas workflow
+
+    Returns:
+        list: obs_keys
     """
     obs_keys = list()
     for obs_key in adata.obs_keys():
@@ -221,13 +255,18 @@ def get_viable_obs_qc(adata, args):
     return obs_keys
 
 
-def get_viable_obs_annot(adata, args):
+def get_viable_obs_annot(adata: anndata, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_CLUSTERS values
     ! Remove obs_key with only one category !
     Extract sorted obs_keys in same order then OBS_CLUSTERS
-    :param adata:
-    :return:
+
+    Args:
+        adata (anndata): atlas to analyse
+        args (argparse.Namespace): list of arguments from checkatlas workflow
+
+    Returns:
+        list: obs_keys
     """
     obs_keys = list()
     # Get keys from OBS_CLUSTERS
@@ -253,14 +292,17 @@ def get_viable_obs_annot(adata, args):
     return sorted(obs_keys_final)
 
 
-def get_viable_obsm(adata, args):
+def get_viable_obsm(adata: anndata, args: argparse.Namespace) -> list:
     """
     Search viable obsm for dimensionality reduction metric
     calc.
     ! No filter on osbm is appled for now !
-    :param adata:
-    :param args:
-    :return:
+    Args:
+        adata (anndata): atlas to analyse
+        args (argparse.Namespace): list of arguments from checkatlas workflow
+
+    Returns:
+        list: obsm_keys
     """
     obsm_keys = list()
     # for obsm_key in adata.obsm_keys():
