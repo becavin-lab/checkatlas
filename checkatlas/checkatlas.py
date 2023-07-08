@@ -19,6 +19,10 @@ This is the principal module of the checkatlas project.
 """
 
 EXTENSIONS = [".rds", ".h5ad", ".h5"]
+SCANPY_EXTENSION = ".h5ad"
+CELLRANGER_EXTENSION = ".h5"
+SEURAT_EXTENSION = ".rds"
+
 CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
@@ -63,6 +67,26 @@ def get_atlas_name(atlas_path: str) -> str:
         str: The atlas_name
     """
     return os.path.splitext(os.path.basename(atlas_path))[0]
+
+
+def get_atlas_type(atlas_path: str) -> str:
+    """
+    Return the type of atlas using its extension
+    TO DO : Need to be more smart then just using extension.
+    It should use function type() or class() in R
+    Args:
+        atlas_path (str): path of the atlas
+
+    Returns:
+        str: Type of atlas among : Scanpy, Cellranger, Seurat
+    """
+    atlas_extension = get_atlas_extension(atlas_path)
+    if atlas_extension == SCANPY_EXTENSION:
+        return "Scanpy"
+    elif atlas_extension == CELLRANGER_EXTENSION:
+        return "CellRanger"
+    else:
+        return "Seurat"
 
 
 def get_atlas_extension(atlas_path: str) -> str:
