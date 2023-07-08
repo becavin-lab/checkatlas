@@ -33,42 +33,43 @@ DICT_FOLDER = {
 logger = logging.getLogger("checkatlas")
 
 
-def get_workingdir(path):
-    """
-    Return the working_dir = path of search
+def get_workingdir(path: str) -> str:
+    """Return the working_dir = path of search
     + working_dir
     with working_dir = checkatlas_files/
+
     Args:
-        path: Search path for atlas given by user
+        path (str): Search path for atlas given by user
+
     Returns:
         str: os.path.join(path, working_dir)
     """
     return os.path.join(path, working_dir)
 
 
-def get_folder(path, key_folder):
-    """
-    Get the folder path giving the search path and
+def get_folder(path: str, key_folder: str) -> str:
+    """Get the folder path giving the search path and
     the folder key in DICT_FOLDER
+
     Args:
-        path: Search path for atlas given by user
-        key_folder: key folder in the DICT_FOLDER
+        path (str): Search path for atlas given by user
+        key_folder (str): key folder in the DICT_FOLDER
             example: ANNDATA, SUMMARY, UMAP
 
     Returns:
         str: the folder path
-
     """
     return os.path.join(get_workingdir(path), DICT_FOLDER[key_folder])
 
 
-def checkatlas_folders(path):
-    """
-    Check in path if the different checkatlas folders exists.<br>
+def checkatlas_folders(path: str) -> None:
+    """Check in path if the different checkatlas folders exists.<br>
     Create them if needed.
     All folders are given by DICT_FOLDER
+
     Args:
-        path: Search path for atlas given by user
+        path (str): Search path for atlas given by user
+
     Returns:
         None: None
     """
