@@ -78,8 +78,19 @@ CELLINDEX_HEADER = "cell_index"
 logger = logging.getLogger("checkatlas")
 
 
-def read_atlas(atlas_path, atlas_info):
-    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
+def read_atlas(atlas_path) -> anndata:
+    """
+    Read Scanpy or Cellranger data : .h5ad or .h5
+
+    Args:
+        atlas_path (_type_): _description_
+        atlas_info (_type_): _description_
+
+    Returns:
+        anndata: _description_
+    """
+    logger.info(f"Load {checkatlas.get_atlas_name(atlas_path)} "\
+                f"in {checkatlas.get_atlas_directory(atlas_path)}")
     try:
         if atlas_path.endswith(".h5"):
             logger.debug(f"Read Cellranger results {atlas_path}")
@@ -89,7 +100,8 @@ def read_atlas(atlas_path, atlas_info):
             adata = sc.read_h5ad(atlas_path)
         return adata
     except anndata._io.utils.AnnDataReadError:
-        logger.warning(f"AnnDataReadError, cannot read: {atlas_info[0]}")
+        logger.warning(f"AnnDataReadError, cannot read: "\
+                       f"{checkatlas.get_atlas_name(atlas_path)}")
         return None
 
 

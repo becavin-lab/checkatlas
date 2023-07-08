@@ -76,6 +76,17 @@ def get_atlas_extension(atlas_path: str) -> str:
     return os.path.splitext(os.path.basename(atlas_path))[1]
 
 
+def get_atlas_directory(atlas_path: str) -> str:
+    """
+    From atlas_path extract the atlas directory
+    Args:
+        atlas_path:
+    Returns:
+        None
+    """
+    return os.path.dirname(atlas_path)
+
+
 def clean_list_atlases(atlas_list: list, checkatlas_path: str) -> tuple:
     """
     Go through all files and detect Seurat, CellRanger or Scanpy Atlas
