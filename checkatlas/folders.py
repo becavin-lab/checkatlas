@@ -1,7 +1,7 @@
 import logging
 import os
 
-working_dir = "checkatlas_files"
+WORKING_DIR = "checkatlas_files"
 SUMMARY = "summary"
 ANNDATA = "adata"
 QC = "qc"
@@ -44,7 +44,7 @@ def get_workingdir(path: str) -> str:
     Returns:
         str: os.path.join(path, working_dir)
     """
-    return os.path.join(path, working_dir)
+    return os.path.join(path, WORKING_DIR)
 
 
 def get_folder(path: str, key_folder: str) -> str:
