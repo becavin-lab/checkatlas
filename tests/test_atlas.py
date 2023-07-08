@@ -1,15 +1,20 @@
 import pytest
 import scanpy as sc
 
-from checkatlas.atlas import clean_scanpy_atlas
+import checkatlas.atlas as atlas
+
+
 
 given = pytest.mark.parametrize
 
 
+#@given("path_input,expected", [("/home/checkatlas_data/", 
+#                                os.path.join("/home/checkatlas_data/",
+#                                              "checkatlas_files"))])
 def test_atlas_object():
     adata = sc.datasets.pbmc68k_reduced()
     atlas_info = ["PBMC68k", "Scanpy", ".h5ad", "Scanpy module"]
-    assert clean_scanpy_atlas(adata, atlas_info)
+    assert atlas.clean_scanpy_atlas(adata, atlas_info)
 
 
 # test_atlas_object()
