@@ -38,6 +38,7 @@ OBS_CLUSTERS = [
     "ann_finest_level",
     "cellranger_graphclust",
     "seurat_clusters",
+    "RNA_snn_res.0.5",
     "louvain",
     "leiden",
     "orig.ident",
