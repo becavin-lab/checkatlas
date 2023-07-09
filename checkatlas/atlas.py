@@ -3,10 +3,11 @@ import logging
 import os
 import re
 
-import anndata
 import numpy as np
 import pandas as pd
 import scanpy as sc
+from anndata import AnnData
+from anndata import _io as _io
 
 from . import checkatlas, folders
 from .metrics import metrics
@@ -79,7 +80,7 @@ CELLINDEX_HEADER = "cell_index"
 logger = logging.getLogger("checkatlas")
 
 
-def read_atlas(atlas_path: str) -> anndata:
+def read_atlas(atlas_path: str) -> AnnData:
     """
     Read Scanpy or Cellranger data : .h5ad or .h5
 
@@ -87,7 +88,7 @@ def read_atlas(atlas_path: str) -> anndata:
         atlas_path (str): path of the .h5ad atlas
 
     Returns:
-        anndata: scanpy object from .h5ad
+        AnnData: scanpy object from .h5ad
     """
     logger.info(
         f"Load {checkatlas.get_atlas_name(atlas_path)} "
@@ -101,7 +102,7 @@ def read_atlas(atlas_path: str) -> anndata:
             logger.debug(f"Read Scanpy file {atlas_path}")
             adata = sc.read_h5ad(atlas_path)
         return adata
-    except anndata._io.utils.AnnDataReadError:
+    except _io.utils.AnnDataReadError:
         logger.warning(
             f"AnnDataReadError, cannot read: "
             f"{checkatlas.get_atlas_name(atlas_path)}"
@@ -109,7 +110,7 @@ def read_atlas(atlas_path: str) -> anndata:
         return None
 
 
-def read_cellranger(atlas_path: str) -> anndata:
+def read_cellranger(atlas_path: str) -> AnnData:
     """
     Read cellranger files.
 
@@ -123,7 +124,7 @@ def read_cellranger(atlas_path: str) -> anndata:
         atlas_path (str): path of the atlas
 
     Returns:
-        anndata: scanpy object from cellranger
+        AnnData: scanpy object from cellranger
     """
     cellranger_path = atlas_path.replace(checkatlas.CELLRANGER_FILE, "")
     cellranger_path = os.path.join(cellranger_path, "outs")
@@ -158,7 +159,7 @@ def read_cellranger(atlas_path: str) -> anndata:
     return adata
 
 
-def clean_scanpy_atlas(adata: anndata, atlas_path: str) -> anndata:
+def clean_scanpy_atlas(adata: AnnData, atlas_path: str) -> AnnData:
     """
     Clean the Scanpy object to be sure to get all information out of it
 
@@ -168,11 +169,11 @@ def clean_scanpy_atlas(adata: anndata, atlas_path: str) -> anndata:
     transform them in categorical
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path to the atlas
 
     Returns:
-        anndata: cleaned atlas
+        AnnData: cleaned atlas
     """
     logger.debug(f"Clean scanpy: {checkatlas.get_atlas_name(atlas_path)}")
     # Make var names unique
@@ -236,13 +237,13 @@ def clean_scanpy_atlas(adata: anndata, atlas_path: str) -> anndata:
     return adata
 
 
-def get_viable_obs_qc(adata: anndata, args: argparse.Namespace) -> list:
+def get_viable_obs_qc(adata: AnnData, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         args (argparse.Namespace): list of arguments from checkatlas workflow
 
     Returns:
@@ -255,14 +256,14 @@ def get_viable_obs_qc(adata: anndata, args: argparse.Namespace) -> list:
     return obs_keys
 
 
-def get_viable_obs_annot(adata: anndata, args: argparse.Namespace) -> list:
+def get_viable_obs_annot(adata: AnnData, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_CLUSTERS values
     ! Remove obs_key with only one category !
     Extract sorted obs_keys in same order then OBS_CLUSTERS
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         args (argparse.Namespace): list of arguments from checkatlas workflow
 
     Returns:
@@ -292,13 +293,13 @@ def get_viable_obs_annot(adata: anndata, args: argparse.Namespace) -> list:
     return sorted(obs_keys_final)
 
 
-def get_viable_obsm(adata: anndata, args: argparse.Namespace) -> list:
+def get_viable_obsm(adata: AnnData, args: argparse.Namespace) -> list:
     """
     Search viable obsm for dimensionality reduction metric
     calc.
     ! No filter on osbm is appled for now !
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         args (argparse.Namespace): list of arguments from checkatlas workflow
 
     Returns:
@@ -313,13 +314,13 @@ def get_viable_obsm(adata: anndata, args: argparse.Namespace) -> list:
 
 
 def create_summary_table(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Create a table with all summarizing variables
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -355,13 +356,13 @@ def create_summary_table(
 
 
 def create_anndata_table(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Create an html table with all AnnData arguments
     The html code will make all elements of the table visible in MultiQC
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -404,7 +405,7 @@ def create_anndata_table(
 
 
 def create_qc_tables(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Display the atlas QC table
@@ -412,7 +413,7 @@ def create_qc_tables(
      MT_ratio, RT_ratio
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -460,7 +461,7 @@ def create_qc_tables(
 
 
 def create_qc_plots(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Display the atlas QC plot
@@ -468,7 +469,7 @@ def create_qc_plots(
      MT_ratio, RT_ratio
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -504,14 +505,14 @@ def create_qc_plots(
 
 
 def create_umap_fig(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -544,14 +545,14 @@ def create_umap_fig(
 
 
 def create_tsne_fig(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -586,13 +587,13 @@ def create_tsne_fig(
 
 
 def metric_cluster(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Calc clustering metrics
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -631,13 +632,13 @@ def metric_cluster(
 
 
 def metric_annot(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Calc annotation metrics
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
@@ -678,13 +679,13 @@ def metric_annot(
 
 
 def metric_dimred(
-    adata: anndata, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_path: str, args: argparse.Namespace
 ) -> None:
     """
     Calc dimensionality reduction metrics
 
     Args:
-        adata (anndata): atlas to analyse
+        adata (AnnData): atlas to analyse
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """

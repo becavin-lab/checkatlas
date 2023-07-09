@@ -23,7 +23,7 @@ SCANPY_EXTENSION = ".h5ad"
 CELLRANGER_EXTENSION = ".h5"
 SEURAT_EXTENSION = ".rds"
 
-CELLRANGER_FILE = "/outs/filtered_feature_bc_matrix.h5"
+CELLRANGER_FILE = os.path.join("outs", "filtered_feature_bc_matrix.h5")
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
 QC_FIG_EXTENSION = "_checkatlas_qc.png"

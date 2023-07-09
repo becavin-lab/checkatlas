@@ -31,6 +31,7 @@ fmt:              ## Format code using black & isort.
 lint:             ## Run pep8, black, mypy linters.
 	@echo "Run project linting"
 	$(ENV_PREFIX)poetry run flake8 checkatlas/
+	$(ENV_PREFIX)poetry run flake8 tests/
 	$(ENV_PREFIX)poetry run black -l 79 --check checkatlas/
 	$(ENV_PREFIX)poetry run black -l 79 --check tests/
 	$(ENV_PREFIX)poetry run mypy --ignore-missing-imports checkatlas/
