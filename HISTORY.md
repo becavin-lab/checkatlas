@@ -4,6 +4,10 @@ Changelog
 
 (unreleased)
 ------------
+- Mve argumentparser to checkatlas core, add tests functions for
+  get_viable- functions in atlas.py. [Christophe Bécavin]
+- Start adding test function for atlas.py. [Christophe Bécavin]
+- Release: version 0.2.12 🚀 [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.2.12. [Christophe Bécavin]
 - Format and lint. [Christophe Bécavin]
 - Release: version 0.2.11 🚀 [Christophe Bécavin]
