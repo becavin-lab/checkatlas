@@ -7,7 +7,7 @@ from anndata import AnnData
 from checkatlas import atlas, checkatlas
 from checkatlas.utils import files, folders
 
-from checkatlas.data import datasets
+from tests.data import datasets
 
 given = pytest.mark.parametrize
 
