@@ -592,6 +592,7 @@ def metric_cluster(
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
     obsm_key_representation = "X_umap"
+    
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")
         for obs_key in obs_keys:
