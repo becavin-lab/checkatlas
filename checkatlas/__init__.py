@@ -1,3 +1,3 @@
-from . import atlas, atlas_seurat, checkatlas, folders
+from . import atlas, atlas_seurat, checkatlas, folders, checkatlas_arguments
 
-__all__ = ["atlas", "atlas_seurat", "checkatlas", "folders"]
+__all__ = ["atlas", "atlas_seurat", "checkatlas", "folders", "checkatlas_arguments"]
