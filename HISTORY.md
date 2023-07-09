@@ -4,6 +4,17 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Clean init.py in tests. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Modify atlas_seurat docstrings. [Christophe Bécavin]
+- Modify atlas_seurat docstrings. [Christophe Bécavin]
+- Add tests function for atlas_seurat.py. [Christophe Bécavin]
+- Add all tests function for atlas.py. [Christophe Bécavin]
+- Create utils module with folders.py and files.py. [Christophe Bécavin]
+- Release: version 0.2.13 🚀 [Christophe Bécavin]
 - Mve argumentparser to checkatlas core, add tests functions for
   get_viable- functions in atlas.py. [Christophe Bécavin]
 - Start adding test function for atlas.py. [Christophe Bécavin]
