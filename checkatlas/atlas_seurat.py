@@ -11,7 +11,10 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FactorVector
 
-from . import atlas, checkatlas, folders
+from .utils import folders
+
+from checkatlas import atlas
+from checkatlas import checkatlas
 from .metrics import metrics
 
 """

@@ -2,14 +2,7 @@ import csv
 import logging
 import os
 
-from . import folders
-
-# try:
-#     from . import atlas, folders, multiqc
-# except ImportError:
-#     import atlas
-#     import folders
-#     import multiqc
+from .utils import folders
 
 
 """
