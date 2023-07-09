@@ -71,7 +71,6 @@ def read_atlas(atlas_path):
     rclass = robjects.r["class"]
     if rclass(seurat)[0] == "Seurat":
         importr("Seurat")
-        print(seurat)
         return seurat
     else:
         logger.info(
