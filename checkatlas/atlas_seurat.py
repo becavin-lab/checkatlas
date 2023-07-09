@@ -81,7 +81,7 @@ def read_atlas(atlas_path: str) -> RS4:
         return None
 
 
-def get_viable_obs_qc(seurat : RS4, args:  argparse.Namespace) -> list:
+def get_viable_obs_qc(seurat: RS4, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
