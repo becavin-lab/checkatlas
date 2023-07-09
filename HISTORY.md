@@ -4,6 +4,22 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.2.11. [Christophe Bécavin]
+- Fromat and lint. [Christophe Bécavin]
+- Fix rpy2 to 3.5.10. [Christophe Bécavin]
+- Remove atlas-info from atlas_seurat, Downgrade rpy2 to 3.5.10
+  otherwise it crashes with 3.5.13. [Christophe Bécavin]
+- Remove all atlasinfo from atlas.py, clean all docstrings in atlas.py.
+  [Christophe Bécavin]
+- Remove condainfo variable (obsolete) [Christophe Bécavin]
+- Remove condainfo variable (obsolete) [Christophe Bécavin]
+- Add all function and datasets for testing. [Christophe Bécavin]
+- Add all folders.py tests. [Christophe Bécavin]
+- Parse doc to gogle style in folders. [Christophe Bécavin]
+- Update README.md. [drbecavin]
+
+  Add static badges
+- Release: version 0.2.10 🚀 [Christophe Bécavin]
 - Fix few things in the doc. [Christophe Bécavin]
 - Release: version 0.2.9 🚀 [Christophe Bécavin]
 - Add logo to doc, remove lint test on windows. [Christophe Bécavin]
