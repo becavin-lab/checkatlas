@@ -11,7 +11,7 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FactorVector
 
-from . import checkatlas, folders, atlas
+from . import atlas, checkatlas, folders
 from .metrics import metrics
 
 """
@@ -223,7 +223,7 @@ def create_anndata_table(seurat, atlas_path, args) -> None:
     r_uns = robjects.r(
         "uns <- function(seurat){ return(colnames(seurat@misc))}"
     )
-    
+
     obs_list = r_obs(seurat)
     obsm_list = r_obsm(seurat)
     var_list = [""]
@@ -278,7 +278,7 @@ def create_qc_tables(seurat, atlas_path, args) -> None:
         for column in df_annot.columns:
             new_columns.append(SEURAT_TO_SCANPY_OBS[column])
         df_annot.columns = new_columns
-        
+
         # Rank cell by qc metric
         for header in df_annot.columns:
             if header != atlas.CELLINDEX_HEADER:
@@ -290,7 +290,6 @@ def create_qc_tables(seurat, atlas_path, args) -> None:
         df_annot = atlas.atlas_sampling(df_annot, "QC", args)
         df_annot.loc[:, [atlas.CELLINDEX_HEADER]] = range(1, len(df_annot) + 1)
         df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
-    
 
 
 def create_qc_plots(seurat, atlas_path, args) -> None:

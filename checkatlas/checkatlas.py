@@ -1,7 +1,6 @@
 import csv
 import logging
 import os
-from traceback import print_list
 
 from . import folders
 
