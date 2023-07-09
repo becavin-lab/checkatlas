@@ -8,6 +8,7 @@ import rpy2.robjects as robjects
 from rpy2.rinterface_lib.sexp import NULLType
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
+from rpy2.robjects.methods import RS4
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FactorVector
 
@@ -44,22 +45,21 @@ SEURAT_TO_SCANPY_OBS = {
 }
 
 
-def check_seurat_install():
-    """
-    Check if Seurat is installed, run installation if not
-    :return:
-    """
+def check_seurat_install() -> None:
+    """Check if Seurat is installed, run installation if not"""
     r_script = """install.packages(setdiff(c(\'Seurat\',\'SeuratObject\'),
                 rownames(installed.packages())))"""
     robjects.r(r_script)
 
 
-def read_atlas(atlas_path):
-    """
-    Read Seurat object in python using rpy2
-    :param atlas_path:
-    :param atlas_info:
-    :return:
+def read_atlas(atlas_path: str) -> RS4:
+    """Read Seurat object in python using rpy2
+
+    Args:
+        atlas_path (str): _description_
+
+    Returns:
+        RS4: _description_
     """
     importr("Seurat")
     importr("SeuratObject")
@@ -80,12 +80,17 @@ def read_atlas(atlas_path):
         return None
 
 
-def get_viable_obs_qc(seurat, args):
+def get_viable_obs_qc(seurat, args) -> list:
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
-    :param adata:
-    :return:
+
+    Args:
+        seurat (_type_): _description_
+        args (_type_): _description_
+
+    Returns:
+        list: _description_
     """
     r_obs = robjects.r(
         "obs <- function(seurat){ return(colnames(seurat@meta.data))}"
