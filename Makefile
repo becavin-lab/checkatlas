@@ -59,7 +59,7 @@ ci:          ## Run a continuous integration : Add every change to git and creat
 	@git add --all
 	@git commit -m "Continuous integration 🔄 tests-$(VERSION)"
 	@echo "creating git tag : tests-$(VERSION)"
-	@git tag tests-$(VERSION)-5
+	@git tag tests-$(VERSION)-6
 	@git push -u origin HEAD --tags
 	@echo "Github Actions will detect the new tag and run the continuous integration process."
 
