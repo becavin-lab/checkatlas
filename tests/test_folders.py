@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-import checkatlas.folders as folders
+import checkatlas.utils.folders as folders
 
 given = pytest.mark.parametrize
 
@@ -45,8 +45,6 @@ def test_getfolder(path_input, key_folder, expected):
 
 def test_checkfolders():
     folders.checkatlas_folders(os.getcwd())
-    print(os.getcwd())
-    print(os.listdir("checkatlas_files"))
     path_summary_folder = os.path.join(
         os.getcwd(), "checkatlas_files", "summary"
     )

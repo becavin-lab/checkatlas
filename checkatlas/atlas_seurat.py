@@ -11,11 +11,11 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FactorVector
 
-from .utils import folders
+from checkatlas.utils import folders
 
 from checkatlas import atlas
 from checkatlas import checkatlas
-from .metrics import metrics
+from checkatlas.metrics import metrics
 
 """
 Module for management of Atlas n Seurat format
