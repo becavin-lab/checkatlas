@@ -7,7 +7,7 @@ from rpy2.robjects.methods import RS4
 from checkatlas import atlas, atlas_seurat, checkatlas
 from checkatlas.utils import files, folders
 
-from tests.data import datasets
+from .data import datasets
 
 given = pytest.mark.parametrize
 
