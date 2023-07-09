@@ -295,6 +295,7 @@ def get_viable_obs_annot(adata: AnnData, args: argparse.Namespace) -> list:
 
 def get_viable_obsm(adata: AnnData, args: argparse.Namespace) -> list:
     """
+    TO DO
     Search viable obsm for dimensionality reduction metric
     calc.
     ! No filter on osbm is appled for now !
