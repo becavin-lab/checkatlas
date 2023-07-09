@@ -9,12 +9,10 @@ import scanpy as sc
 from anndata import AnnData
 from anndata import _io as _io
 
-from .utils import folders
-from .utils import files
-
 from checkatlas import checkatlas
-from .metrics import metrics
 
+from .metrics import metrics
+from .utils import files, folders
 
 """
 Atlas module
@@ -315,9 +313,9 @@ def create_summary_table(
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
     logger.debug(f"Create Summary table for {atlas_name}")
-    csv_path = files.get_file_path(atlas_name, folders.SUMMARY,
-                                   checkatlas.SUMMARY_EXTENSION,
-                                   args.path)
+    csv_path = files.get_file_path(
+        atlas_name, folders.SUMMARY, checkatlas.SUMMARY_EXTENSION, args.path
+    )
     # Create summary table
     header = [
         "AtlasFileType",
@@ -356,9 +354,9 @@ def create_anndata_table(
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
     logger.debug(f"Create Adata table for {atlas_name}")
-    csv_path = files.get_file_path(atlas_name, folders.ANNDATA,
-                                   checkatlas.ADATA_EXTENSION,
-                                   args.path)
+    csv_path = files.get_file_path(
+        atlas_name, folders.ANNDATA, checkatlas.ADATA_EXTENSION, args.path
+    )
     # Create AnnData table
     header = ["obs", "obsm", "var", "varm", "uns"]
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
@@ -405,9 +403,9 @@ def create_qc_tables(
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
-    qc_path = files.get_file_path(atlas_name, folders.QC,
-                                   checkatlas.QC_EXTENSION,
-                                   args.path)
+    qc_path = files.get_file_path(
+        atlas_name, folders.QC, checkatlas.QC_EXTENSION, args.path
+    )
     logger.debug(f"Create QC tables for {atlas_name}")
     qc_genes = []
     # mitochondrial genes
@@ -584,9 +582,12 @@ def metric_cluster(
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
-    csv_path = files.get_file_path(atlas_name, folders.CLUSTER,
-                                   checkatlas.METRIC_CLUSTER_EXTENSION,
-                                   args.path)
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.CLUSTER,
+        checkatlas.METRIC_CLUSTER_EXTENSION,
+        args.path,
+    )
     header = ["Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
@@ -628,9 +629,12 @@ def metric_annot(
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
-    csv_path = files.get_file_path(atlas_name, folders.ANNOTATION,
-                                   checkatlas.METRIC_ANNOTATION_EXTENSION,
-                                   args.path)
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.ANNOTATION,
+        checkatlas.METRIC_ANNOTATION_EXTENSION,
+        args.path,
+    )
     header = ["Sample", "Reference", "obs"] + args.metric_annot
     df_annot = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
@@ -674,9 +678,12 @@ def metric_dimred(
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
-    csv_path = files.get_file_path(atlas_name, folders.DIMRED,
-                                   checkatlas.METRIC_DIMRED_EXTENSION,
-                                   args.path)
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.DIMRED,
+        checkatlas.METRIC_DIMRED_EXTENSION,
+        args.path,
+    )
     header = ["Sample", "obsm"] + args.metric_dimred
     df_dimred = pd.DataFrame(columns=header)
     obsm_keys = get_viable_obsm(adata, args)

@@ -4,7 +4,6 @@ import os
 
 from .utils import folders
 
-
 """
 checkatlas base module.
 This is the principal module of the checkatlas project.

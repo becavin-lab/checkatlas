@@ -1,21 +1,23 @@
 import argparse
+
 import yaml
-from .metrics import annot, cluster, dimred
+
 from . import atlas
+from .metrics import annot, cluster, dimred
 
 
 def create_parser():
     parser = argparse.ArgumentParser(
-            prog="checkatlas",
-            usage="checkatlas [OPTIONS] your_search_folder/",
-            description="CheckAtlas is a one liner tool to check the "
-            "quality of your single-cell atlases. For "
-            "every atlas, it produces the quality control "
-            "tables and figures which can be then processed "
-            "by multiqc. CheckAtlas is able to load Scanpy, "
-            "Seurat, and CellRanger files.",
-            epilog="Enjoy the checkatlas functionality!",
-        )
+        prog="checkatlas",
+        usage="checkatlas [OPTIONS] your_search_folder/",
+        description="CheckAtlas is a one liner tool to check the "
+        "quality of your single-cell atlases. For "
+        "every atlas, it produces the quality control "
+        "tables and figures which can be then processed "
+        "by multiqc. CheckAtlas is able to load Scanpy, "
+        "Seurat, and CellRanger files.",
+        epilog="Enjoy the checkatlas functionality!",
+    )
 
     # All Program arguments
     # main_options = parser.add_argument_group("Main arguments")

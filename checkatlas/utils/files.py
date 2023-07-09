@@ -1,8 +1,11 @@
 import os
+
 from . import folders
 
 
-def get_file_path(atlas_name:str, folder: str, extension: str, path: str) -> str:
+def get_file_path(
+    atlas_name: str, folder: str, extension: str, path: str
+) -> str:
     """_summary_
 
     Args:
@@ -11,7 +14,7 @@ def get_file_path(atlas_name:str, folder: str, extension: str, path: str) -> str
 
     Returns:
         str: _description_
-    """    
+    """
     csv_path = os.path.join(
         folders.get_folder(path, folder),
         atlas_name + extension,

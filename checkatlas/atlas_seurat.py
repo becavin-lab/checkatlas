@@ -11,11 +11,9 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FactorVector
 
-from checkatlas.utils import folders
-
-from checkatlas import atlas
-from checkatlas import checkatlas
+from checkatlas import atlas, checkatlas
 from checkatlas.metrics import metrics
+from checkatlas.utils import folders
 
 """
 Module for management of Atlas n Seurat format
@@ -150,7 +148,11 @@ def get_viable_obsm(seurat, args):
     r_obsm = robjects.r(
         "f<-function(seurat){return(names(seurat@reductions))}"
     )
-    obsm_keys = r_obsm(seurat)
+    obsm_keys_r = r_obsm(seurat)
+    obsm_keys = list()
+    for obsm_key in obsm_keys_r:
+        print(obsm_key)
+        obsm_keys.append(obsm_key)
     logger.debug(f"Add obsm {obsm_keys}")
     return obsm_keys
 
