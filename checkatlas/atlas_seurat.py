@@ -11,7 +11,7 @@ from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FactorVector
 
-from . import checkatlas, folders
+from . import checkatlas, folders, atlas
 from .metrics import metrics
 
 """
@@ -53,7 +53,7 @@ def check_seurat_install():
     robjects.r(r_script)
 
 
-def read_atlas(atlas_path, atlas_info):
+def read_atlas(atlas_path):
     """
     Read Seurat object in python using rpy2
     :param atlas_path:
@@ -62,15 +62,21 @@ def read_atlas(atlas_path, atlas_info):
     """
     importr("Seurat")
     importr("SeuratObject")
-    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
+    logger.info(
+        f"Load {checkatlas.get_atlas_name(atlas_path)} in "
+        f"{checkatlas.get_atlas_directory(atlas_path)}"
+    )
     rcode = f'readRDS("{atlas_path}")'
     seurat = robjects.r(rcode)
     rclass = robjects.r["class"]
     if rclass(seurat)[0] == "Seurat":
         importr("Seurat")
+        print(seurat)
         return seurat
     else:
-        logger.info(f"{atlas_info[0]} is not a Seurat object")
+        logger.info(
+            f"{checkatlas.get_atlas_name(atlas_path)} is not a Seurat object"
+        )
         return None
 
 
@@ -147,7 +153,7 @@ def get_viable_obsm(seurat, args):
     return obsm_keys
 
 
-def create_summary_table(seurat, atlas_path, atlas_info, args) -> None:
+def create_summary_table(seurat, atlas_path, args) -> None:
     """
     Create a table with all interesting variables
     :param seurat:
@@ -155,10 +161,10 @@ def create_summary_table(seurat, atlas_path, atlas_info, args) -> None:
     :param csv_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     logger.debug(f"Create Summary table for {atlas_name}")
-    atlas_file_type = atlas_info[1]
-    atlas_extension = atlas_info[2]
+    atlas_file_type = checkatlas.get_atlas_type(atlas_path)
+    atlas_extension = checkatlas.get_atlas_extension(atlas_path)
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.SUMMARY),
         atlas_name + checkatlas.SUMMARY_EXTENSION,
@@ -190,7 +196,7 @@ def create_summary_table(seurat, atlas_path, atlas_info, args) -> None:
     df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
-def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
+def create_anndata_table(seurat, atlas_path, args) -> None:
     """
     Create a table with all AnnData-like arguments in Seurat object
     :param seurat:
@@ -198,7 +204,7 @@ def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     logger.debug(f"Create Adata table for {atlas_name}")
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.ANNDATA),
@@ -218,6 +224,7 @@ def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
     r_uns = robjects.r(
         "uns <- function(seurat){ return(colnames(seurat@misc))}"
     )
+    
     obs_list = r_obs(seurat)
     obsm_list = r_obsm(seurat)
     var_list = [""]
@@ -244,7 +251,7 @@ def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
     df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_tables(seurat, atlas_path, atlas_info, args) -> None:
+def create_qc_tables(seurat, atlas_path, args) -> None:
     """
     Display the atlas QC of seurat
     Search for the metadata variable which correspond
@@ -255,7 +262,7 @@ def create_qc_tables(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     qc_path = os.path.join(
         folders.get_folder(args.path, folders.QC),
         atlas_name + checkatlas.QC_EXTENSION,
@@ -272,10 +279,22 @@ def create_qc_tables(seurat, atlas_path, atlas_info, args) -> None:
         for column in df_annot.columns:
             new_columns.append(SEURAT_TO_SCANPY_OBS[column])
         df_annot.columns = new_columns
+        
+        # Rank cell by qc metric
+        for header in df_annot.columns:
+            if header != atlas.CELLINDEX_HEADER:
+                new_header = f"cellrank_{header}"
+                df_annot = df_annot.sort_values(header, ascending=False)
+                df_annot.loc[:, [new_header]] = range(1, len(df_annot) + 1)
+
+        # Sample QC table when more cells than args.plot_celllimit are present
+        df_annot = atlas.atlas_sampling(df_annot, "QC", args)
+        df_annot.loc[:, [atlas.CELLINDEX_HEADER]] = range(1, len(df_annot) + 1)
         df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
+    
 
 
-def create_qc_plots(seurat, atlas_path, atlas_info, args) -> None:
+def create_qc_plots(seurat, atlas_path, args) -> None:
     """
     Display the atlas QC
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
@@ -286,7 +305,7 @@ def create_qc_plots(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     qc_path = os.path.join(
         folders.get_folder(args.path, folders.QC_FIG),
         atlas_name + checkatlas.QC_FIG_EXTENSION,
@@ -305,7 +324,7 @@ def create_qc_plots(seurat, atlas_path, atlas_info, args) -> None:
     r_violin(seurat, r_obs, qc_path)
 
 
-def create_umap_fig(seurat, atlas_path, atlas_info, args) -> None:
+def create_umap_fig(seurat, atlas_path, args) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -315,7 +334,7 @@ def create_umap_fig(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
     r_names = robjects.r["names"]
@@ -341,7 +360,7 @@ def create_umap_fig(seurat, atlas_path, atlas_info, args) -> None:
         r_umap(seurat, obs_keys[0], umap_path)
 
 
-def create_tsne_fig(seurat, atlas_path, atlas_info, args) -> None:
+def create_tsne_fig(seurat, atlas_path, args) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -351,7 +370,7 @@ def create_tsne_fig(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     # Search if tsne reduction exists
     r = re.compile(".*tsne*.")
     r_names = robjects.r["names"]
@@ -377,7 +396,7 @@ def create_tsne_fig(seurat, atlas_path, atlas_info, args) -> None:
         r_tsne(seurat, obs_keys[0], tsne_path)
 
 
-def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
+def metric_cluster(seurat, atlas_path, args) -> None:
     """
     Calc clustering metrics
     :param seurat:
@@ -386,7 +405,7 @@ def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
     :param args:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.CLUSTER),
         atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION,
@@ -420,7 +439,7 @@ def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
+def metric_annot(seurat, atlas_path, args) -> None:
     """
     Calc annotation metrics
     :param adata:
@@ -429,7 +448,7 @@ def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
     :param args:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.ANNOTATION),
         atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION,
@@ -466,7 +485,7 @@ def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
+def metric_dimred(seurat, atlas_path, args) -> None:
     """
     Calc dimensionality reduction metrics
     :param adata:
@@ -475,7 +494,7 @@ def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
     :param args:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = checkatlas.get_atlas_name(atlas_path)
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.DIMRED),
         atlas_name + checkatlas.METRIC_DIMRED_EXTENSION,

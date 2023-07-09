@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+from traceback import print_list
 
 from . import folders
 
@@ -66,7 +67,12 @@ def get_atlas_name(atlas_path: str) -> str:
     Returns:
         str: The atlas_name
     """
-    return os.path.splitext(os.path.basename(atlas_path))[0]
+    atlas_type = get_atlas_type(atlas_path)
+    if atlas_type == "CellRanger":
+        # If cellranger take the name of the first folder
+        return atlas_path.split(os.sep)[-3]
+    else:
+        return os.path.splitext(os.path.basename(atlas_path))[0]
 
 
 def get_atlas_type(atlas_path: str) -> str:
