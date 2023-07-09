@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 import re
@@ -80,14 +81,14 @@ def read_atlas(atlas_path: str) -> RS4:
         return None
 
 
-def get_viable_obs_qc(seurat, args) -> list:
+def get_viable_obs_qc(seurat : RS4, args:  argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
 
     Args:
-        seurat (_type_): _description_
-        args (_type_): _description_
+        seurat (RS4): _description_
+        args (argparse.Namespace): _description_
 
     Returns:
         list: _description_
@@ -103,13 +104,18 @@ def get_viable_obs_qc(seurat, args) -> list:
     return obs_keys
 
 
-def get_viable_obs_annot(seurat, args):
+def get_viable_obs_annot(seurat: RS4, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_CLUSTERS values
     ! Remove obs_key with only one category !
     Extract sorted obs_keys in same order then OBS_CLUSTERS
-    :param adata:
-    :return:
+
+    Args:
+        seurat (RS4): _description_
+        args (argparse.Namespace): _description_
+
+    Returns:
+        list: _description_
     """
     obs_keys = list()
     r_obs = robjects.r(
