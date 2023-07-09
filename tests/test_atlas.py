@@ -1,10 +1,10 @@
-from enum import unique
-from traceback import print_list
+import os
 import pytest
 from anndata import AnnData
 import argparse
-import checkatlas
-import checkatlas.atlas as atlas
+from checkatlas import atlas
+from checkatlas import folders
+from checkatlas import checkatlas
 
 from .data import datasets
 
@@ -66,12 +66,20 @@ def test_viable_obs_annot(path_input, expected):
 
 
 @given("path_input,expected", [(datasets.ADATA_TEST_PATH, 
-                                ['X_draw_graph_fr', 'X_pca', 'X_tsne', 'X_umap'])])
-def test_viable_obsm(path_input, expected):
+                                True)])
+def test_summary_table(path_input, expected):
     adata = atlas.read_atlas(path_input)
     parser = argparse.ArgumentParser()
-    parser.add_argument("--obs_cluster")
-    args = parser.parse_args(['--obs_cluster',atlas.OBS_CLUSTERS])
-    obs_keys = atlas.get_viable_obsm(adata, args)
-    print(obs_keys)
-    assert obs_keys == expected
+    parser.add_argument("--path")
+    checkatlas_path = os.getcwd()
+    args = parser.parse_args(['--path',checkatlas_path])
+    folders.checkatlas_folders(checkatlas_path)
+    atlas.create_summary_table(adata, checkatlas_path, args)
+    atlas_name = checkatlas.get_atlas_name(path_input)
+    csv_path = os.path.join(
+        folders.get_folder(args.path, folders.SUMMARY),
+        atlas_name + checkatlas.SUMMARY_EXTENSION,
+    )
+    print("exiists",os.path.exists(csv_path))
+    print(csv_path)
+    assert os.path.exists(csv_path)

@@ -9,23 +9,11 @@ import scanpy as sc
 from anndata import AnnData
 from anndata import _io as _io
 
-from . import checkatlas, folders
-from .metrics import metrics
+from .utils import folders
+from .utils import files
 
-# try:
-#     from .metrics.cluster import clust_compute
-# except ImportError:
-#     from metrics.cluster import clust_compute
-# try:
-#     from .metrics.dim_red import dr_compute
-# except ImportError:
-#     from metrics.dim_red import dr_compute
-#
-# try:
-#     from . import checkatlas, folders
-# except ImportError:
-#     import folders
-#     import checkatlas
+from checkatlas import checkatlas
+from .metrics import metrics
 
 
 """
@@ -327,10 +315,7 @@ def create_summary_table(
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
     logger.debug(f"Create Summary table for {atlas_name}")
-    csv_path = os.path.join(
-        folders.get_folder(args.path, folders.SUMMARY),
-        atlas_name + checkatlas.SUMMARY_EXTENSION,
-    )
+    csv_path = files.get_summary_table_path(atlas_name, args.path)
     # Create summary table
     header = [
         "AtlasFileType",
@@ -369,10 +354,7 @@ def create_anndata_table(
     """
     atlas_name = checkatlas.get_atlas_name(atlas_path)
     logger.debug(f"Create Adata table for {atlas_name}")
-    csv_path = os.path.join(
-        folders.get_folder(args.path, folders.ANNDATA),
-        atlas_name + checkatlas.ADATA_EXTENSION,
-    )
+    csv_path = files.get_anndata_table_path(atlas_name, args.path)
     # Create AnnData table
     header = ["obs", "obsm", "var", "varm", "uns"]
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
