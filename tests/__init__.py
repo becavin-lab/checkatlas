@@ -1,6 +1,5 @@
 from . import (
     conftest,
-    data,
     test_atlas_seurat,
     test_checkatlas,
     test_folders,
@@ -13,5 +12,4 @@ __all__ = [
     "test_checkatlas",
     "test_folders",
     "test_metrics",
-    "data",
 ]
