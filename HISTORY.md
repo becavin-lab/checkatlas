@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.2.12. [Christophe Bécavin]
+- Format and lint. [Christophe Bécavin]
+- Release: version 0.2.11 🚀 [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.2.11. [Christophe Bécavin]
 - Fromat and lint. [Christophe Bécavin]
 - Fix rpy2 to 3.5.10. [Christophe Bécavin]
