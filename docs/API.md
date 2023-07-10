@@ -22,4 +22,4 @@
 
 ### checkatlas.folders
 
-::: checkatlas.folders
+::: checkatlas.utils.folders
