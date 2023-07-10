@@ -51,7 +51,7 @@ def check_seurat_install() -> None:
     r_script = """install.packages(setdiff(c(\'Seurat\',\'SeuratObject\'),
                 rownames(installed.packages())))"""
     yo = robjects.r(r_script)
-    print("yo",yo)
+    print("yo", yo)
     return yo
 
 
