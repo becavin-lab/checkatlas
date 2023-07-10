@@ -15,6 +15,7 @@ def test_r():
     if len(names_to_install) > 0:
         rcode = """Sys.getenv("R_LIBS_USER")"""
         print(robjects.r(rcode))
+        # create personal library
         rcode = """dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)"""
         print(robjects.r(rcode))
         # add to the path
