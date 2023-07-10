@@ -31,12 +31,15 @@ fmt:              ## Format code using black & isort.
 lint:             ## Run pep8, black, mypy linters.
 	@echo "Run project linting"
 	$(ENV_PREFIX)poetry run flake8 checkatlas/
+	$(ENV_PREFIX)poetry run flake8 tests/
 	$(ENV_PREFIX)poetry run black -l 79 --check checkatlas/
+	$(ENV_PREFIX)poetry run black -l 79 --check tests/
 	$(ENV_PREFIX)poetry run mypy --ignore-missing-imports checkatlas/
+	$(ENV_PREFIX)poetry run mypy --ignore-missing-imports tests/
 
 .PHONY: test
 test:             ## Run tests and generate coverage report.
-	$(ENV_PREFIX)poetry run pytest -v --cov-config .coveragerc --cov=checkatlas -l --tb=short --maxfail=1 checkatlas/tests/
+	$(ENV_PREFIX)poetry run pytest -v --cov-config .coveragerc --cov=checkatlas -l --tb=short --maxfail=1 tests/
 	$(ENV_PREFIX)poetry run coverage xml
 	$(ENV_PREFIX)poetry run coverage html
 
@@ -57,7 +60,7 @@ ci:          ## Run a continuous integration : Add every change to git and creat
 	@git add --all
 	@git commit -m "Continuous integration 🔄 tests-$(VERSION)"
 	@echo "creating git tag : tests-$(VERSION)"
-	@git tag tests-$(VERSION)-15
+	@git tag tests-$(VERSION)-16
 	@git push -u origin HEAD --tags
 	@echo "Github Actions will detect the new tag and run the continuous integration process."
 
@@ -88,4 +91,5 @@ clean:            ## Clean unused files.
 	@rm -rf *.egg-info
 	@rm -rf htmlcov
 	@rm -rf .tox/
+	@rm -rf .nextflow/
 	@rm -rf docs/_build
