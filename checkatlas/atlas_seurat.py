@@ -60,10 +60,10 @@ def check_seurat_install() -> None:
     if len(names_to_install) > 0:
         # create personal library
         rcode = """dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)"""
-        robjects.R(rcode)
+        robjects.r(rcode)
         # add to the path
         rcode = """.libPaths(Sys.getenv("R_LIBS_USER"))"""
-        robjects.R(rcode)
+        robjects.r(rcode)
         print("Rlibpaths", robjects.R(rcode))
         utils.install_packages(StrVector(names_to_install))
 
