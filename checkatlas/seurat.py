@@ -30,6 +30,10 @@ Module for management of Atlas n Seurat format
 
 logger = logging.getLogger("checkatlas")
 
+SEURAT_TYPE = "Seurat"
+SEURAT_EXTENSION = ".rds"
+
+
 SCANPY_TO_SEURAT_OBS = {
     "total_counts": "nCount_RNA",
     "n_genes_by_counts": "nFeature_RNA",
@@ -44,6 +48,20 @@ SEURAT_TO_SCANPY_OBS = {
     "percent.mito": "pct_counts_mt",
     "percent.ribo": "pct_counts_ribo",
 }
+
+
+def detect_seurat(atlas_path: str) -> dict:
+    if atlas_path.endswith(SEURAT_EXTENSION):
+        atlas_info = dict()
+        atlas_info[checkatlas.ATLAS_NAME_KEY] = os.path.splitext(
+            os.path.basename(atlas_path)
+        )[0]
+        atlas_info[checkatlas.ATLAS_TYPE_KEY] = SEURAT_TYPE
+        atlas_info[checkatlas.ATLAS_EXTENSION_KEY] = SEURAT_EXTENSION
+        atlas_info[checkatlas.ATLAS_PATH_KEY] = atlas_path
+        return atlas_info
+    else:
+        return dict()
 
 
 def check_seurat_install() -> None:

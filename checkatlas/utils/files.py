@@ -20,3 +20,10 @@ def get_file_path(
         atlas_name + extension,
     )
     return csv_path
+
+
+def get_table_atlas_path(checkatlas_path: str) -> str:
+    file_path = os.path.join(
+        folders.get_workingdir(checkatlas_path), "List_atlases.csv"
+    )
+    return file_path
