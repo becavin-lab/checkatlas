@@ -17,7 +17,6 @@ on:
 
 jobs:
   tests_linux:
-    needs: linter
     strategy:
       fail-fast: false
       matrix:
