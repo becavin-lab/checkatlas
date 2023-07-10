@@ -16,7 +16,6 @@ given = pytest.mark.parametrize
 def test_read_seurat_atlas(atlas_path, expected):
     atlas_seurat.check_seurat_install()
     seurat_data = atlas_seurat.read_atlas(atlas_path)
-    print(type(seurat_data))
     assert type(seurat_data) == expected
 
 

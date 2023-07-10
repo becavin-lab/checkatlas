@@ -6,12 +6,12 @@ import re
 import pandas as pd
 import rpy2.robjects as ro
 import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
 from rpy2.rinterface_lib.sexp import NULLType
 from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
 from rpy2.robjects.methods import RS4
 from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import FactorVector
+from rpy2.robjects.vectors import FactorVector, StrVector
 
 from checkatlas import atlas, checkatlas
 from checkatlas.metrics import metrics
@@ -48,11 +48,17 @@ SEURAT_TO_SCANPY_OBS = {
 
 def check_seurat_install() -> None:
     """Check if Seurat is installed, run installation if not"""
-    r_script = """install.packages(setdiff(c(\'Seurat\',\'SeuratObject\'),
-                rownames(installed.packages())))"""
-    yo = robjects.r(r_script)
-    print("yo", yo)
-    return yo
+    # import R's utility package
+    utils = rpackages.importr("utils")
+    # select a mirror for R packages
+    utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
+    # R package names
+    packnames = ("Seurat", "SeuratObject")
+    # Selectively install what needs to be install.
+    # We are fancy, just because we can.
+    names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+    if len(names_to_install) > 0:
+        utils.install_packages(StrVector(names_to_install))
 
 
 def read_atlas(atlas_path: str) -> RS4:
@@ -288,8 +294,8 @@ def create_qc_tables(seurat, atlas_path, args) -> None:
     obs_keys = get_viable_obs_qc(seurat, args)
     r_meta = robjects.r("obs <- function(seurat){ return(seurat@meta.data)}")
     r_metadata = r_meta(seurat)
-    with localconverter(ro.default_converter + pandas2ri.converter):
-        df_metadata = ro.conversion.rpy2py(r_metadata)
+    with (ro.default_converter + pandas2ri.converter).context():
+        df_metadata = ro.conversion.get_conversion().rpy2py(r_metadata)
         df_annot = df_metadata[obs_keys]
         # rename columns with scanpy names
         new_columns = list()
