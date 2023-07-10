@@ -5,7 +5,7 @@ import pytest
 from anndata import AnnData
 
 from checkatlas import atlas, checkatlas
-from checkatlas.tests import datasets
+from . import datasets
 from checkatlas.utils import files, folders
 
 given = pytest.mark.parametrize
