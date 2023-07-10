@@ -4,17 +4,13 @@ import os
 import pandas as pd
 
 from . import atlas, cellranger, seurat
+from .utils import files as chk_files
 
 """
 checkatlas base module.
 This is the principal module of the checkatlas project.
 
 """
-
-EXTENSIONS = [".rds", ".h5ad", ".h5", ".mtx"]
-SCANPY_EXTENSION = ".h5ad"
-CELLRANGER_EXTENSION = ".h5"
-SEURAT_EXTENSION = ".rds"
 
 CELLRANGER_FILE = "filtered_feature_bc_matrix.h5"
 CELLRANGER_MATRIX_FILE = "matrix.mtx"
@@ -34,101 +30,33 @@ ATLAS_NAME_KEY = "Atlas_name"
 ATLAS_TYPE_KEY = "Atlas_type"
 ATLAS_EXTENSION_KEY = "Atlas_extension"
 ATLAS_PATH_KEY = "Atlas_path"
+ATLAS_TABLE_HEADER = [
+    ATLAS_NAME_KEY,
+    ATLAS_TYPE_KEY,
+    ATLAS_EXTENSION_KEY,
+    ATLAS_PATH_KEY,
+]
 
 
 logger = logging.getLogger("checkatlas")
 
 
-def list_atlases(path: str) -> list:
-    """
-    List all atlases files in the path
-    Detect .rds, .h5, .h5ad
-
-    Args:
-        path: Path for searching single-cell atlases.
-
-    Returns:
-        list: List of file atlases to check.
-    """
+def list_all_atlases(checkatlas_path: str) -> tuple:
+    # Get all files with matching extension
+    EXTENSIONS = [
+        atlas.ANNDATA_EXTENSION,
+        cellranger.CELLRANGER_FILE,
+        cellranger.CELLRANGER_MATRIX_FILE,
+        seurat.SEURAT_EXTENSION,
+    ]
     atlas_list = list()
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(checkatlas_path):
         for file in files:
             for extension in EXTENSIONS:
                 if file.endswith(extension):
                     atlas_list.append(os.path.join(root, file))
-    print(atlas_list)
-    return atlas_list
 
-
-def get_atlas_name(atlas_path: str) -> str:
-    """
-    From atlas_path extract the atlas_name
-    Args:
-        atlas_path:
-    Returns:
-        str: The atlas_name
-    """
-    atlas_type = get_atlas_type(atlas_path)
-    if atlas_type == "CellRanger":
-        # If cellranger take the name of the first folder
-        return atlas_path.split(os.sep)[-3]
-    else:
-        return os.path.splitext(os.path.basename(atlas_path))[0]
-
-
-def get_atlas_type(atlas_path: str) -> str:
-    """
-    Return the type of atlas using its extension
-    TO DO : Need to be more smart then just using extension.
-    It should use function type() or class() in R
-    Args:
-        atlas_path (str): path of the atlas
-
-    Returns:
-        str: Type of atlas among : Scanpy, Cellranger, Seurat
-    """
-    atlas_extension = get_atlas_extension(atlas_path)
-    if atlas_extension == SCANPY_EXTENSION:
-        return "Scanpy"
-    elif atlas_extension == CELLRANGER_EXTENSION:
-        return "CellRanger"
-    else:
-        return "Seurat"
-
-
-def get_atlas_extension(atlas_path: str) -> str:
-    """
-    From atlas_path extract the atlas file extension
-    Args:
-        atlas_path:
-    Returns:
-        None
-    """
-    return os.path.splitext(os.path.basename(atlas_path))[1]
-
-
-def get_atlas_directory(atlas_path: str) -> str:
-    """
-    From atlas_path extract the atlas directory
-    Args:
-        atlas_path:
-    Returns:
-        None
-    """
-    return os.path.dirname(atlas_path)
-
-
-def clean_list_atlases(atlas_list: list, checkatlas_path: str) -> tuple:
-    """
-    Go through all files and detect Seurat, CellRanger or Scanpy Atlas
-    The "cleaning means that we test if the atlas is valid or not.
-    Args:
-        atlas_list: list of atlases found with proper extension
-        checkatlas_path: the path where checkatlas files are saved
-    Returns:
-         tuple: clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
-    """
-
+    # Filter the lists keepng only atlases
     clean_atlas_scanpy = list()
     clean_atlas_seurat = list()
     clean_atlas_cellranger = list()
@@ -160,10 +88,78 @@ def clean_list_atlases(atlas_list: list, checkatlas_path: str) -> tuple:
                 f"from {atlas_info[ATLAS_PATH_KEY]}"
             )
             clean_atlas_seurat.append(atlas_info)
+
     # Save the list of atlas taken into account
-    df_atlas = pd.DataFrame.from_dict(atlas_info)
-    print(df_atlas)
+    df_summary = pd.DataFrame(columns=ATLAS_TABLE_HEADER)
+    for table_info in clean_atlas_scanpy:
+        df_summary.loc[table_info[ATLAS_NAME_KEY]] = table_info.values()
+    df_summary.to_csv(
+        chk_files.get_table_atlas_path(checkatlas_path), index=False, sep="\t"
+    )
+    print(df_summary)
     return clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
+
+
+def get_atlas_name(atlas_path: str) -> str:
+    """
+    OBSOLETE
+    From atlas_path extract the atlas_name
+    Args:
+        atlas_path:
+    Returns:
+        str: The atlas_name
+    """
+    atlas_type = get_atlas_type(atlas_path)
+    if atlas_type == cellranger.CELLRANGER_TYPE_CURRENT:
+        # If cellranger take the name of the first folder
+        return atlas_path.split(os.sep)[-3]
+    else:
+        return os.path.splitext(os.path.basename(atlas_path))[0]
+
+
+def get_atlas_type(atlas_path: str) -> str:
+    """
+    OBSOLETE
+    Return the type of atlas using its extension
+    TO DO : Need to be more smart then just using extension.
+    It should use function type() or class() in R
+    Args:
+        atlas_path (str): path of the atlas
+
+    Returns:
+        str: Type of atlas among : Scanpy, Cellranger, Seurat
+    """
+    atlas_extension = get_atlas_extension(atlas_path)
+    if atlas_extension == atlas.ANNDATA_EXTENSION:
+        return "Scanpy"
+    elif atlas_extension == cellranger.CELLRANGER_TYPE_CURRENT:
+        return "CellRanger"
+    else:
+        return "Seurat"
+
+
+def get_atlas_extension(atlas_path: str) -> str:
+    """
+    OBSOLETE
+    From atlas_path extract the atlas file extension
+    Args:
+        atlas_path:
+    Returns:
+        None
+    """
+    return os.path.splitext(os.path.basename(atlas_path))[1]
+
+
+def get_atlas_directory(atlas_path: str) -> str:
+    """
+    OBSOLETE
+    From atlas_path extract the atlas directory
+    Args:
+        atlas_path:
+    Returns:
+        None
+    """
+    return os.path.dirname(atlas_path)
 
 
 def get_pipeline_functions(module, args) -> list:
