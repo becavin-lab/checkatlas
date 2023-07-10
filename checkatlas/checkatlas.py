@@ -1,8 +1,9 @@
-import csv
 import logging
 import os
 
-from .utils import folders
+import pandas as pd
+
+from . import atlas, cellranger, seurat
 
 """
 checkatlas base module.
@@ -10,12 +11,14 @@ This is the principal module of the checkatlas project.
 
 """
 
-EXTENSIONS = [".rds", ".h5ad", ".h5"]
+EXTENSIONS = [".rds", ".h5ad", ".h5", ".mtx"]
 SCANPY_EXTENSION = ".h5ad"
 CELLRANGER_EXTENSION = ".h5"
 SEURAT_EXTENSION = ".rds"
 
-CELLRANGER_FILE = os.path.join("outs", "filtered_feature_bc_matrix.h5")
+CELLRANGER_FILE = "filtered_feature_bc_matrix.h5"
+CELLRANGER_MATRIX_FILE = "matrix.mtx"
+
 SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
 ADATA_EXTENSION = "_checkatlas_adata.tsv"
 QC_FIG_EXTENSION = "_checkatlas_qc.png"
@@ -26,6 +29,12 @@ METRIC_CLUSTER_EXTENSION = "_checkatlas_mcluster.tsv"
 METRIC_ANNOTATION_EXTENSION = "_checkatlas_mannot.tsv"
 METRIC_DIMRED_EXTENSION = "_checkatlas_mdimred.tsv"
 METRIC_SPECIFICITY_EXTENSION = "_checkatlas_mspecificity.tsv"
+
+ATLAS_NAME_KEY = "Atlas_name"
+ATLAS_TYPE_KEY = "Atlas_type"
+ATLAS_EXTENSION_KEY = "Atlas_extension"
+ATLAS_PATH_KEY = "Atlas_path"
+
 
 logger = logging.getLogger("checkatlas")
 
@@ -47,6 +56,7 @@ def list_atlases(path: str) -> list:
             for extension in EXTENSIONS:
                 if file.endswith(extension):
                     atlas_list.append(os.path.join(root, file))
+    print(atlas_list)
     return atlas_list
 
 
@@ -118,58 +128,41 @@ def clean_list_atlases(atlas_list: list, checkatlas_path: str) -> tuple:
     Returns:
          tuple: clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
     """
-    clean_atlas_scanpy = dict()
-    clean_atlas_seurat = dict()
-    clean_atlas_cellranger = dict()
+
+    clean_atlas_scanpy = list()
+    clean_atlas_seurat = list()
+    clean_atlas_cellranger = list()
     for atlas_path in atlas_list:
-        atlas_name = get_atlas_name(atlas_path)
-        if atlas_path.endswith(".rds"):
-            logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
-            info = [
-                atlas_name,
-                "Seurat",
-                ".rds",
-                os.path.dirname(atlas_path) + "/",
-            ]
-            clean_atlas_seurat[atlas_path] = info
-        elif atlas_path.endswith(".h5"):
+        atlas_info = atlas.detect_scanpy(atlas_path)
+        if len(atlas_info) != 0:
             # detect if its a cellranger output
-            if atlas_path.endswith(CELLRANGER_FILE):
-                atlas_h5 = atlas_path.replace(CELLRANGER_FILE, "")
-                atlas_name = get_atlas_name(atlas_h5)
-                logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
-                info = [
-                    atlas_name,
-                    "Cellranger",
-                    ".h5",
-                    os.path.dirname(atlas_h5) + "/",
-                ]
-                clean_atlas_cellranger[atlas_path] = info
-        elif atlas_path.endswith(".h5ad"):
-            logger.debug(f"Include Atlas: {atlas_name} from {atlas_path}")
-            info = [
-                atlas_name,
-                "Scanpy",
-                ".h5ad",
-                os.path.dirname(atlas_path) + "/",
-            ]
-            clean_atlas_scanpy[atlas_path] = info
+            logger.debug(
+                f"Include Atlas: {atlas_info[ATLAS_NAME_KEY]}"
+                f" of type {atlas_info[ATLAS_TYPE_KEY]}"
+                f"from {atlas_info[ATLAS_PATH_KEY]}"
+            )
+            clean_atlas_scanpy.append(atlas_info)
+        atlas_info = cellranger.detect_cellranger(atlas_path)
+        if len(atlas_info) != 0:
+            # detect if its a cellranger output
+            logger.debug(
+                f"Include Atlas: {atlas_info[ATLAS_NAME_KEY]}"
+                f" of type {atlas_info[ATLAS_TYPE_KEY]}"
+                f"from {atlas_info[ATLAS_PATH_KEY]}"
+            )
+            clean_atlas_cellranger.append(atlas_info)
+        atlas_info = seurat.detect_seurat(atlas_path)
+        if len(atlas_info) != 0:
+            # detect if its a cellranger output
+            logger.debug(
+                f"Include Atlas: {atlas_info[ATLAS_NAME_KEY]}"
+                f" of type {atlas_info[ATLAS_TYPE_KEY]}"
+                f"from {atlas_info[ATLAS_PATH_KEY]}"
+            )
+            clean_atlas_seurat.append(atlas_info)
     # Save the list of atlas taken into account
-    dict_file = open(
-        os.path.join(
-            folders.get_workingdir(checkatlas_path), "list_atlases.csv"
-        ),
-        "w",
-    )
-    w = csv.writer(dict_file)
-    # loop over dictionary keys and values
-    for key, val in clean_atlas_scanpy.items():
-        w.writerow([key, ",".join(val)])
-    for key, val in clean_atlas_seurat.items():
-        w.writerow([key, ",".join(val)])
-    for key, val in clean_atlas_cellranger.items():
-        w.writerow([key, ",".join(val)])
-    dict_file.close()
+    df_atlas = pd.DataFrame.from_dict(atlas_info)
+    print(df_atlas)
     return clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
 
 
@@ -225,6 +218,7 @@ def get_pipeline_functions(module, args) -> list:
 
 
 if __name__ == "__main__":
+    path = "/data/analysis/data_becavin/checkatlas_test/tuto"
     path = "/Users/christophebecavin/Documents/testatlas/"
     # atlas_path = "/Users/christophebecavin/Documents/testatlas/"
     atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
