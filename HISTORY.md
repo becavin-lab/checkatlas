@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.2.15 🚀 [Christophe Bécavin]
 - New release after tests implementation. [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
