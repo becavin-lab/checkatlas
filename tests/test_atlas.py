@@ -4,7 +4,7 @@ import os
 import pytest
 from anndata import AnnData
 
-from checkatlas import atlas, checkatlas
+from checkatlas import atlas, atlas_seurat, checkatlas
 from checkatlas.utils import files, folders
 
 from . import datasets
@@ -14,6 +14,7 @@ given = pytest.mark.parametrize
 
 @given("atlas_path,expected", [(datasets.ADATA_TEST_PATH, AnnData)])
 def test_read_scanpy_atlas(atlas_path, expected):
+    atlas_seurat.check_seurat_install()
     adata = atlas.read_atlas(atlas_path)
     assert type(adata) == expected
 
