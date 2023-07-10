@@ -37,8 +37,8 @@ jobs:
       - name: Install project
         run: poetry install --with dev
       - name: Install Seurat
-        run: echo """install.packages("Seurat")""" > r_script.txt
-        run: Rscript r_script.txt
+        run: echo """install.packages("Seurat")""" > r_script.txt;
+             Rscript r_script.txt
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
