@@ -7,7 +7,7 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
     tags:
-      - 'test*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'tqzdzqdest*' # Push events to matching v*, i.e. v1.0, v20.15.10
   #branches: [ main ]
   #pull_request:
   #  branches: [ main ]
@@ -16,7 +16,32 @@ on:
   workflow_dispatch:
 
 jobs:
+  linter:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+        poetry-version: ["1.3.2"]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.6
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Test token
+        run: echo ${{ secrets.PYPI_API_TOKEN }}
+      - name: Install project
+        run: poetry install --with dev
+      - name: Run linter
+        run: make lint
+
   tests_linux:
+    needs: linter
     strategy:
       fail-fast: false
       matrix:
@@ -35,11 +60,33 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
       - name: Install project
         run: poetry install --with dev
-      - name: Install Seurat
-        run: Rscript tests/data/install_Seurat.R
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v1
         # with:
         #   fail_ci_if_error: true
+
+  tests_mac:
+    needs: linter
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.10" ]
+        poetry-version: [ "1.3.2" ]
+        os: [macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.6
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+      - name: Install project
+        run: poetry install --with dev
+      - name: Run tests
+        run: make test
+
