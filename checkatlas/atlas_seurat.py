@@ -64,7 +64,7 @@ def check_seurat_install() -> None:
         # add to the path
         rcode = """.libPaths(Sys.getenv("R_LIBS_USER"))"""
         robjects.r(rcode)
-        print("Rlibpaths", robjects.R(rcode))
+        print("Rlibpaths", robjects.r(rcode))
         utils.install_packages(StrVector(names_to_install))
 
 
