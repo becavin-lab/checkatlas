@@ -58,6 +58,12 @@ def check_seurat_install() -> None:
     # We are fancy, just because we can.
     names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
     if len(names_to_install) > 0:
+        rcode = """dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)"""
+        robjects.R(rcode)
+        # add to the path
+        rcode = """.libPaths(Sys.getenv("R_LIBS_USER"))"""
+        robjects.R(rcode)
+        print("Rlibpaths", robjects.R(rcode))
         utils.install_packages(StrVector(names_to_install))
 
 
