@@ -36,7 +36,7 @@ jobs:
       - name: Install project
         run: poetry install --with dev
       - name: Install Seurat
-        run: Rscript install_Seurat.R
+        run: Rscript tests/data/install_Seurat.R
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
