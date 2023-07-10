@@ -7,7 +7,7 @@ on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
     tags:
-      - 'tqzdzqdest*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'test*' # Push events to matching v*, i.e. v1.0, v20.15.10
   #branches: [ main ]
   #pull_request:
   #  branches: [ main ]
