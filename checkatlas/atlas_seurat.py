@@ -50,7 +50,9 @@ def check_seurat_install() -> None:
     """Check if Seurat is installed, run installation if not"""
     r_script = """install.packages(setdiff(c(\'Seurat\',\'SeuratObject\'),
                 rownames(installed.packages())))"""
-    robjects.r(r_script)
+    yo = robjects.r(r_script)
+    print("yo",yo)
+    return yo
 
 
 def read_atlas(atlas_path: str) -> RS4:

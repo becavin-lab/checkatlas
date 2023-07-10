@@ -11,11 +11,12 @@ This module should be ran as a stand-alone :
 python create-test_data.py
 """
 
-DATA_PATH = os.path.join(os.getcwd(), "checkatlas", "tests", "data")
+DATA_PATH = os.path.join(os.getcwd(), "tests", "data")
 ADATA_TEST_PATH = os.path.join(DATA_PATH, "pbmc3k_scanpy.h5ad")
 CELLRANGER_FOLDER_PATH = os.path.join(DATA_PATH, "pbmc3k_cellranger")
-CELLRANGER_TEST_PATH = os.path.join(CELLRANGER_FOLDER_PATH,
-                                    checkatlas.CELLRANGER_FILE)
+CELLRANGER_TEST_PATH = os.path.join(
+    CELLRANGER_FOLDER_PATH, checkatlas.CELLRANGER_FILE
+)
 SEURAT_TEST_PATH = os.path.join(DATA_PATH, "pbmc3k_seurat.rds")
 
 
@@ -26,8 +27,10 @@ def create_adata_data():
     Than sampling to 100 cells and 1000 genes
     adata is saved in ADATA_TEST_PATH
     """
-    url_data = "https://github.com/chanzuckerberg/"\
-               "cellxgene/raw/main/example-dataset/pbmc3k.h5ad"
+    url_data = (
+        "https://github.com/chanzuckerberg/"
+        "cellxgene/raw/main/example-dataset/pbmc3k.h5ad"
+    )
     download_cmd = f"curl --location -o {ADATA_TEST_PATH} {url_data}"
     print(f"Run download : {download_cmd}")
     os.system(download_cmd)
@@ -56,8 +59,7 @@ def create_adata_data():
     adata.var[1:1000]
     adata = adata[:, adata.var[1:1000].index]
     adata.write_h5ad(ADATA_TEST_PATH)
-    print("Adata for tests saved in : "
-          f"{ADATA_TEST_PATH}")
+    print("Adata for tests saved in : " f"{ADATA_TEST_PATH}")
 
 
 def create_cellranger_data():
@@ -67,8 +69,10 @@ def create_cellranger_data():
     """
     os.mkdir(CELLRANGER_FOLDER_PATH)
     os.mkdir(os.path.join(CELLRANGER_FOLDER_PATH, "outs"))
-    url_data = "https://cf.10xgenomics.com/samples/cell-exp/3.0.2/5k_pbmc_v3/"\
-               "5k_pbmc_v3_filtered_feature_bc_matrix.h5"
+    url_data = (
+        "https://cf.10xgenomics.com/samples/cell-exp/3.0.2/5k_pbmc_v3/"
+        "5k_pbmc_v3_filtered_feature_bc_matrix.h5"
+    )
     download_cmd = "curl --location -o " + f"{CELLRANGER_TEST_PATH} {url_data}"
     print(f"Run download : {download_cmd}")
     os.system(download_cmd)
@@ -81,8 +85,9 @@ def create_seurat_data():
 
     """
 
-    url_data = "https://www.dropbox.com/s/63gnlw45jf7cje8/"\
-               "pbmc3k_final.rds?dl=1"
+    url_data = (
+        "https://www.dropbox.com/s/63gnlw45jf7cje8/" "pbmc3k_final.rds?dl=1"
+    )
     download_cmd = "curl --location -o " + f"{SEURAT_TEST_PATH} {url_data}"
     print(f"Run download : {download_cmd}")
     os.system(download_cmd)
