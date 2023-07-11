@@ -1,7 +1,6 @@
 import logging
 
-from . import atlas, cellranger, checkatlas
-from . import seurat
+from . import atlas, cellranger, checkatlas, seurat
 from .utils import checkatlas_arguments
 
 
@@ -38,7 +37,6 @@ def main() -> None:  # pragma: no cover
     logger.debug(f"Program arguments: {args}")
 
     #   ######    Run Checkatlas   #########
-    print(args)
     (
         clean_scanpy_list,
         clean_cellranger_list,
@@ -57,9 +55,7 @@ def main() -> None:  # pragma: no cover
         atlas_info = clean_seurat_list[args.atlas_name]
     else:
         logger.error(f"Cannot found {args.atlas_name}")
-
     logger.debug(f"Found atlas: {atlas_info}")
-
     # Run process
     process = args.process
     atlas_type = atlas_info[checkatlas.ATLAS_TYPE_KEY]

@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import re
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -66,6 +67,10 @@ OBS_QC = [
 CELLINDEX_HEADER = "cell_index"
 
 logger = logging.getLogger("checkatlas")
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.simplefilter(action="ignore", category=UserWarning)
+sc.settings.verbosity = 0
 
 
 def detect_scanpy(atlas_path: str) -> dict:

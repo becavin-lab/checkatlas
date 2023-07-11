@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import re
+import warnings
 
 import pandas as pd
 import rpy2.robjects as ro
@@ -29,6 +30,7 @@ Module for management of Atlas n Seurat format
 """
 
 logger = logging.getLogger("checkatlas")
+warnings.filterwarnings(action="ignore", message="R[write to console]")
 
 SEURAT_TYPE = "Seurat"
 SEURAT_EXTENSION = ".rds"
@@ -96,8 +98,6 @@ def read_atlas(atlas_info: dict) -> RS4:
         RS4: _description_
     """
     atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
-    importr("Seurat")
-    importr("SeuratObject")
     logger.info(
         f"Load {checkatlas.get_atlas_name(atlas_path)} in "
         f"{checkatlas.get_atlas_directory(atlas_path)}"
@@ -458,7 +458,7 @@ def create_tsne_fig(
         r_tsne(seurat, obs_keys[0], tsne_path)
 
 
-def metric_cluster(
+def create_metric_cluster(
     seurat: RS4, atlas_info: dict, args=argparse.Namespace
 ) -> None:
     """
@@ -503,7 +503,7 @@ def metric_cluster(
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_annot(
+def create_metric_annot(
     seurat: RS4, atlas_info: dict, args=argparse.Namespace
 ) -> None:
     """
@@ -551,7 +551,7 @@ def metric_annot(
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_dimred(
+def create_metric_dimred(
     seurat: RS4, atlas_info: dict, args=argparse.Namespace
 ) -> None:
     """
