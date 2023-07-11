@@ -97,11 +97,9 @@ def read_atlas(atlas_info: dict) -> RS4:
     Returns:
         RS4: _description_
     """
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
-    logger.info(
-        f"Load {checkatlas.get_atlas_name(atlas_path)} in "
-        f"{checkatlas.get_atlas_directory(atlas_path)}"
-    )
+    logger.info(f"Load {atlas_name} in " f"{atlas_path}")
     rcode = f'readRDS("{atlas_path}")'
     seurat = robjects.r(rcode)
     rclass = robjects.r["class"]
@@ -109,9 +107,7 @@ def read_atlas(atlas_info: dict) -> RS4:
         importr("Seurat")
         return seurat
     else:
-        logger.info(
-            f"{checkatlas.get_atlas_name(atlas_path)} is not a Seurat object"
-        )
+        logger.info(f"{atlas_name} is not a Seurat object")
         return None
 
 
