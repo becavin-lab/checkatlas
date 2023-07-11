@@ -97,7 +97,7 @@ jobs:
       matrix:
         python-version: [ "3.10" ]
         poetry-version: [ "1.3.2" ]
-        os: [wiindows-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
