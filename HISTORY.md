@@ -4,6 +4,45 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.3.0. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.3.0. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.3.0. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.3.0. [Christophe Bécavin]
+- Update tests functions. [Christophe Bécavin]
+- Merge pull request #38 from becavin-lab/nf-core. [drbecavin]
+
+  Nf core
+- Remove obsolete function, update  __init__  files. [Christophe
+  Bécavin]
+- Ready to switch to woorkflow nf-core; Checkatlas reduced to iits
+  simplest. [Christophe Bécavin]
+- Add Seurat processes in checkatlas executable. [Christophe Bécavin]
+- Modify seurat for future nextflow workflow. [Christophe Bécavin]
+- Modify all checkatlas architecture, ready to develop nf-core workflow.
+  [Christophe Bécavin]
+- Add checkatlas process command line: summary, qc, metric_cluster,
+  etc... [Christophe Bécavin]
+- Add saving to pandas csv the list of atlases found, and
+  checkatlas.read_list_atlases function. [Christophe Bécavin]
+- Add Ceation of samplesheet table with all atlas information.
+  [Christophe Bécavin]
+- Put back atlas_info, but as a dictionnary. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Remove seurat tests becauyse Seurat is impossible to install on github
+  actions. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.16. [Christophe Bécavin]
+- Modif install Seurat for github workflow. [Christophe Bécavin]
+- Release: version 0.2.16 🚀 [Christophe Bécavin]
 - Release: version 0.2.15 🚀 [Christophe Bécavin]
 - New release after tests implementation. [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
@@ -116,6 +155,9 @@ Changelog
   checkatlas. [Christophe Bécavin]
 - Create nfworkflow.py, and add all workflow related scrpts. [Christophe
   Bécavin]
+- Update LICENSE. [drbecavin]
+
+  Change license to BSD
 - Merge pull request #37 from becavin-lab/multiqc. [drbecavin]
 
   Multiqc
