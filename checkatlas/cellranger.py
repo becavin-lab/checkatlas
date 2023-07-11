@@ -1,4 +1,6 @@
+import logging
 import os
+import warnings
 
 import pandas as pd
 import scanpy as sc
@@ -11,6 +13,11 @@ CELLRANGER_FILE = "filtered_feature_bc_matrix.h5"
 CELLRANGER_MATRIX_FILE = "matrix.mtx"
 CELLRANGER_TYPE_OBSOLETE = "Cellranger < v3"
 CELLRANGER_TYPE_CURRENT = "Cellranger >= v3"
+
+logger = logging.getLogger("checkatlas")
+warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.simplefilter(action="ignore", category=UserWarning)
+sc.settings.verbosity = 0
 
 
 def detect_cellranger(atlas_path: str) -> dict:

@@ -85,9 +85,9 @@ def calc_metric_annot_seurat(metric, seurat, obs_key, ref_obs):
         metric_module = getattr(annot, metric)
         annotation = ro.conversion.rpy2py(R_ANNOT(seurat, obs_key))
         ref_annotation = ro.conversion.rpy2py(R_ANNOT(seurat, ref_obs))
-        annotation, ref_annotation = annotation_to_num(
-            annotation, ref_annotation
-        )
+        # annotation, ref_annotation = annotation_to_num(
+        #    annotation, ref_annotation
+        # )
         return metric_module.run(annotation, ref_annotation)
     else:
         logger.warning(
