@@ -1,6 +1,3 @@
-from . import atlas
-from . import checkatlas
-from . import seurat
-from . import cellranger
+from . import atlas, cellranger, checkatlas, seurat
 
 __all__ = ["atlas", "seurat", "checkatlas", "cellranger"]

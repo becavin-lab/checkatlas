@@ -1,5 +1,3 @@
-from . import checkatlas_arguments
-from . import files
-from . import folders
+from . import checkatlas_arguments, files, folders
 
 __all__ = ["checkatlas_arguments", "files", "folders"]
