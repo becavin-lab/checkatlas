@@ -28,32 +28,7 @@ def create_parser():
         "Scanpy, CellRanger and Seurat atlasesv",
         default=".",
     )
-    parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        help="Provide a config file with all checkatlas arguments. "
-        "The default config file is provided in "
-        "https://github.com/becavin-lab/checkatlas/"
-        "config/checkatlas_config.yaml",
-        default="",
-    )
-    parser.add_argument(
-        "-m",
-        "--multiqc",
-        type=str,
-        help="Set Multiqc out folder. Default: CheckAtlas_MultiQC",
-        default="CheckAtlas_MultiQC",
-    )
-    parser.add_argument(
-        "-r",
-        "--resume",
-        action="store_true",
-        help="Set this argument, if you added "
-        "atlas files since the last run of "
-        "checkatlas and you want to check "
-        "only the new files.",
-    )
+    
 
     parser.add_argument(
         "--plot_celllimit",
