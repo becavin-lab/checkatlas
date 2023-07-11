@@ -41,7 +41,7 @@ ATLAS_TABLE_HEADER = [
 logger = logging.getLogger("checkatlas")
 
 
-def list_all_atlases(checkatlas_path: str) -> tuple:
+def list_all_atlases(checkatlas_path: str) -> None:
     # Get all files with matching extension
     EXTENSIONS = [
         atlas.ANNDATA_EXTENSION,
@@ -57,9 +57,9 @@ def list_all_atlases(checkatlas_path: str) -> tuple:
                     atlas_list.append(os.path.join(root, file))
 
     # Filter the lists keepng only atlases
-    clean_atlas_scanpy = list()
-    clean_atlas_seurat = list()
-    clean_atlas_cellranger = list()
+    clean_scanpy_list = list()
+    clean_cellranger_list = list()
+    clean_seurat_list = list()
     for atlas_path in atlas_list:
         atlas_info = atlas.detect_scanpy(atlas_path)
         if len(atlas_info) != 0:
@@ -69,7 +69,7 @@ def list_all_atlases(checkatlas_path: str) -> tuple:
                 f" of type {atlas_info[ATLAS_TYPE_KEY]}"
                 f"from {atlas_info[ATLAS_PATH_KEY]}"
             )
-            clean_atlas_scanpy.append(atlas_info)
+            clean_scanpy_list.append(atlas_info)
         atlas_info = cellranger.detect_cellranger(atlas_path)
         if len(atlas_info) != 0:
             # detect if its a cellranger output
@@ -78,7 +78,7 @@ def list_all_atlases(checkatlas_path: str) -> tuple:
                 f" of type {atlas_info[ATLAS_TYPE_KEY]}"
                 f"from {atlas_info[ATLAS_PATH_KEY]}"
             )
-            clean_atlas_cellranger.append(atlas_info)
+            clean_cellranger_list.append(atlas_info)
         atlas_info = seurat.detect_seurat(atlas_path)
         if len(atlas_info) != 0:
             # detect if its a cellranger output
@@ -87,17 +87,25 @@ def list_all_atlases(checkatlas_path: str) -> tuple:
                 f" of type {atlas_info[ATLAS_TYPE_KEY]}"
                 f"from {atlas_info[ATLAS_PATH_KEY]}"
             )
-            clean_atlas_seurat.append(atlas_info)
+            clean_seurat_list.append(atlas_info)
 
     # Save the list of atlas taken into account
-    df_summary = pd.DataFrame(columns=ATLAS_TABLE_HEADER)
-    for table_info in clean_atlas_scanpy:
-        df_summary.loc[table_info[ATLAS_NAME_KEY]] = table_info.values()
-    df_summary.to_csv(
-        chk_files.get_table_atlas_path(checkatlas_path), index=False, sep="\t"
+    chk_files.save_list_scanpy(clean_scanpy_list, checkatlas_path)
+    chk_files.save_list_cellranger(clean_cellranger_list, checkatlas_path)
+    chk_files.save_list_seurat(clean_seurat_list, checkatlas_path)
+
+
+def read_list_atlases(checkatlas_path: str) -> tuple:
+    clean_scanpy_list = pd.read_csv(
+        chk_files.get_table_scanpy_path(checkatlas_path)
     )
-    print(df_summary)
-    return clean_atlas_scanpy, clean_atlas_seurat, clean_atlas_cellranger
+    clean_cellranger_list = pd.read_csv(
+        chk_files.get_table_cellranger_path(checkatlas_path)
+    )
+    clean_seurat_list = pd.read_csv(
+        chk_files.get_table_seurat_path(checkatlas_path)
+    )
+    return clean_scanpy_list, clean_cellranger_list, clean_seurat_list
 
 
 def get_atlas_name(atlas_path: str) -> str:
