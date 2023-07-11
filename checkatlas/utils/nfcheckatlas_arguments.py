@@ -2,8 +2,8 @@ import argparse
 
 import yaml
 
-from . import atlas
-from .metrics import annot, cluster, dimred
+from .. import atlas
+from ..metrics import annot, cluster, dimred
 
 
 def create_parser():

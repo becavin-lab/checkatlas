@@ -12,6 +12,14 @@ This is the principal module of the checkatlas project.
 
 """
 
+PROCESS_TYPE = [
+    "summary",
+    "qc",
+    "metric_cluster",
+    "metric_annot",
+    "metric_dimred",
+]
+
 CELLRANGER_FILE = "filtered_feature_bc_matrix.h5"
 CELLRANGER_MATRIX_FILE = "matrix.mtx"
 
@@ -99,12 +107,15 @@ def read_list_atlases(checkatlas_path: str) -> tuple:
     clean_scanpy_list = pd.read_csv(
         chk_files.get_table_scanpy_path(checkatlas_path)
     )
+    clean_scanpy_list.index = clean_scanpy_list[ATLAS_NAME_KEY]
     clean_cellranger_list = pd.read_csv(
         chk_files.get_table_cellranger_path(checkatlas_path)
     )
+    clean_cellranger_list.index = clean_cellranger_list[ATLAS_NAME_KEY]
     clean_seurat_list = pd.read_csv(
         chk_files.get_table_seurat_path(checkatlas_path)
     )
+    clean_seurat_list.index = clean_seurat_list[ATLAS_NAME_KEY]
     return clean_scanpy_list, clean_cellranger_list, clean_seurat_list
 
 

@@ -129,7 +129,7 @@ def read_atlas(atlas_info: dict) -> AnnData:
         return dict()
 
 
-def clean_scanpy_atlas(adata: AnnData, atlas_path: str) -> AnnData:
+def clean_scanpy_atlas(adata: AnnData, atlas_info: dict) -> AnnData:
     """
     Clean the Scanpy object to be sure to get all information out of it
 
@@ -140,12 +140,12 @@ def clean_scanpy_atlas(adata: AnnData, atlas_path: str) -> AnnData:
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path to the atlas
+        atlas_info (dict): info on the atlas
 
     Returns:
         AnnData: cleaned atlas
     """
-    logger.debug(f"Clean scanpy: {checkatlas.get_atlas_name(atlas_path)}")
+    logger.debug(f"Clean scanpy: {atlas_info[checkatlas.ATLAS_NAME_KEY]}")
     # Make var names unique
     list_var = adata.var_names
     if len(set(list_var)) == len(list_var):
@@ -285,7 +285,7 @@ def get_viable_obsm(adata: AnnData, args: argparse.Namespace) -> list:
 
 
 def create_summary_table(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Create a table with all summarizing variables
@@ -295,7 +295,9 @@ def create_summary_table(
         atlas_path (str): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_type = atlas_info[checkatlas.ATLAS_TYPE_KEY]
+    atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
     logger.debug(f"Create Summary table for {atlas_name}")
     csv_path = files.get_file_path(
         atlas_name, folders.SUMMARY, checkatlas.SUMMARY_EXTENSION, args.path
@@ -311,32 +313,29 @@ def create_summary_table(
         "File_path",
     ]
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
-    df_summary["AtlasFileType"][atlas_name] = checkatlas.get_atlas_type(
-        atlas_path
-    )
+    df_summary["AtlasFileType"][atlas_name] = atlas_type
     df_summary["NbCells"][atlas_name] = adata.n_obs
     df_summary["NbGenes"][atlas_name] = adata.n_vars
     df_summary["AnnData.raw"][atlas_name] = adata.raw is not None
     df_summary["AnnData.X"][atlas_name] = adata.X is not None
-    df_summary["File_extension"][atlas_name] = checkatlas.get_atlas_extension(
-        atlas_path
-    )
-    df_summary["File_path"][atlas_name] = atlas_path.replace(args.path, "")
+    df_summary["File_extension"][atlas_name] = atlas_name
+    df_summary["File_path"][atlas_name] = atlas_path
     df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
 def create_anndata_table(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Create an html table with all AnnData arguments
     The html code will make all elements of the table visible in MultiQC
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+
     logger.debug(f"Create Adata table for {atlas_name}")
     csv_path = files.get_file_path(
         atlas_name, folders.ANNDATA, checkatlas.ADATA_EXTENSION, args.path
@@ -374,7 +373,7 @@ def create_anndata_table(
 
 
 def create_qc_tables(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Display the atlas QC table
@@ -383,10 +382,10 @@ def create_qc_tables(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     qc_path = files.get_file_path(
         atlas_name, folders.QC, checkatlas.QC_EXTENSION, args.path
     )
@@ -429,7 +428,7 @@ def create_qc_tables(
 
 
 def create_qc_plots(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Display the atlas QC plot
@@ -438,10 +437,10 @@ def create_qc_plots(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     sc.settings.figdir = folders.get_workingdir(args.path)
     sc.set_figure_params(dpi_save=80)
     qc_path = os.sep + atlas_name + checkatlas.QC_FIG_EXTENSION
@@ -473,7 +472,7 @@ def create_qc_plots(
 
 
 def create_umap_fig(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Display the UMAP of celltypes
@@ -481,10 +480,10 @@ def create_umap_fig(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     sc.set_figure_params(dpi_save=150)
     # Search if umap reduction exists
     obsm_keys = get_viable_obsm(adata, args)
@@ -513,7 +512,7 @@ def create_umap_fig(
 
 
 def create_tsne_fig(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Display the TSNE of celltypes
@@ -521,10 +520,10 @@ def create_tsne_fig(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     sc.set_figure_params(dpi_save=150)
     # Search if tsne reduction exists
     obsm_keys = get_viable_obsm(adata, args)
@@ -554,18 +553,18 @@ def create_tsne_fig(
             sc.pl.tsne(adata, show=False, save=tsne_path)
 
 
-def metric_cluster(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+def create_metric_cluster(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Calc clustering metrics
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (dict): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.CLUSTER,
@@ -602,18 +601,18 @@ def metric_cluster(
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_annot(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+def create_metric_annot(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Calc annotation metrics
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_path (dict): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.ANNOTATION,
@@ -651,18 +650,18 @@ def metric_annot(
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_dimred(
-    adata: AnnData, atlas_path: str, args: argparse.Namespace
+def create_metric_dimred(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
     Calc dimensionality reduction metrics
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (dict): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = checkatlas.get_atlas_name(atlas_path)
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.DIMRED,
