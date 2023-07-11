@@ -1,6 +1,7 @@
 import logging
 
 from . import atlas, cellranger, checkatlas
+from . import seurat
 from .utils import checkatlas_arguments
 
 
@@ -91,5 +92,25 @@ def main() -> None:  # pragma: no cover
             adata = atlas.read_atlas(atlas_info)
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)
             atlas.create_metric_dimred(adata, atlas_info, args)
+    elif atlas_type == seurat.SEURAT_TYPE:
+        if process == checkatlas.PROCESS_TYPE[0]:
+            seurat_data = seurat.read_atlas(atlas_info)
+            seurat.create_summary_table(seurat_data, atlas_info, args)
+            seurat.create_anndata_table(seurat_data, atlas_info, args)
+            seurat.create_umap_fig(seurat_data, atlas_info, args)
+            seurat.create_tsne_fig(seurat_data, atlas_info, args)
+        elif process == checkatlas.PROCESS_TYPE[1]:
+            seurat_data = seurat.read_atlas(atlas_info)
+            seurat.create_qc_tables(seurat_data, atlas_info, args)
+            seurat.create_qc_plots(seurat_data, atlas_info, args)
+        elif process == checkatlas.PROCESS_TYPE[2]:
+            seurat_data = seurat.read_atlas(atlas_info)
+            seurat.create_metric_cluster(seurat_data, atlas_info, args)
+        elif process == checkatlas.PROCESS_TYPE[3]:
+            seurat_data = seurat.read_atlas(atlas_info)
+            seurat.create_metric_annot(seurat_data, atlas_info, args)
+        elif process == checkatlas.PROCESS_TYPE[4]:
+            seurat_data = seurat.read_atlas(atlas_info)
+            seurat.create_metric_dimred(seurat_data, atlas_info, args)
     else:
         logger.debug("TO DO : Seurat is no longer managed here !!!")
