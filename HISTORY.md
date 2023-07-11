@@ -4,12 +4,159 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.2.15 🚀 [Christophe Bécavin]
+- New release after tests implementation. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Fix Seurat install. [Christophe Bécavin]
+- Fix Seurat install. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Move back test outside of checkatlas package. BUGFIX : .gitignore was
+  wrongly configured and was ignoring datasets.py. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Add datasets for test. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Move tests in checkatlas package. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Release: version 0.2.15 🚀 [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Clean init.py in tests. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.15. [Christophe Bécavin]
+- Modify atlas_seurat docstrings. [Christophe Bécavin]
+- Modify atlas_seurat docstrings. [Christophe Bécavin]
+- Add tests function for atlas_seurat.py. [Christophe Bécavin]
+- Add all tests function for atlas.py. [Christophe Bécavin]
+- Create utils module with folders.py and files.py. [Christophe Bécavin]
+- Release: version 0.2.13 🚀 [Christophe Bécavin]
+- Mve argumentparser to checkatlas core, add tests functions for
+  get_viable- functions in atlas.py. [Christophe Bécavin]
+- Start adding test function for atlas.py. [Christophe Bécavin]
+- Release: version 0.2.12 🚀 [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.12. [Christophe Bécavin]
+- Format and lint. [Christophe Bécavin]
+- Release: version 0.2.11 🚀 [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.11. [Christophe Bécavin]
+- Fromat and lint. [Christophe Bécavin]
+- Fix rpy2 to 3.5.10. [Christophe Bécavin]
+- Remove atlas-info from atlas_seurat, Downgrade rpy2 to 3.5.10
+  otherwise it crashes with 3.5.13. [Christophe Bécavin]
+- Remove all atlasinfo from atlas.py, clean all docstrings in atlas.py.
+  [Christophe Bécavin]
+- Remove condainfo variable (obsolete) [Christophe Bécavin]
+- Remove condainfo variable (obsolete) [Christophe Bécavin]
+- Add all function and datasets for testing. [Christophe Bécavin]
+- Add all folders.py tests. [Christophe Bécavin]
+- Parse doc to gogle style in folders. [Christophe Bécavin]
+- Update README.md. [drbecavin]
+
+  Add static badges
+- Release: version 0.2.10 🚀 [Christophe Bécavin]
+- Fix few things in the doc. [Christophe Bécavin]
+- Release: version 0.2.9 🚀 [Christophe Bécavin]
+- Add logo to doc, remove lint test on windows. [Christophe Bécavin]
+- Update README.md. [drbecavin]
+- Update README.md. [drbecavin]
+
+  Add logo to readme
+- Update README.md. [drbecavin]
+
+  Add lg to readme
+- Move logo. [Christophe Bécavin]
+- Release: version 0.2.8 🚀 [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.2.8. [Christophe Bécavin]
+- Update index.md. [drbecavin]
+
+  change index in doc with badges
+- Update README.md. [drbecavin]
+
+  add bioconda badge
+- Update README.md. [drbecavin]
+
+  fix gitter
+- Update README.md. [drbecavin]
+
+  add pypi badge
+- Update pyproject.toml. [drbecavin]
+
+  Change license in toml
+- Update README.md. [drbecavin]
+
+  Add pypi license badge
+- Update README.md. [drbecavin]
+
+  Add Pypi dl badge
+- Update README.md. [drbecavin]
+
+  gitter badge
+- Update README.md. [drbecavin]
+- Update README.md. [drbecavin]
+
+  add gitter badge
+- Release: version 0.2.7 🚀 [Christophe Bécavin]
+- Add poetry to dependencies (for bioconda) [Christophe Bécavin]
+- Fix minor bugs after separation of workflow. [Christophe Bécavin]
+- Release: version 0.2.6 🚀 [Christophe Bécavin]
+- Prepare for test release without workflow (all moved to nf-core-
+  checkatlas) [Christophe Bécavin]
+- Remove dependecies nextflow, multiqc and clean toml project.
+  [Christophe Bécavin]
+- Remove all files related to workflow; Moved them to nf-core-
+  checkatlas. [Christophe Bécavin]
+- Create nfworkflow.py, and add all workflow related scrpts. [Christophe
+  Bécavin]
+- Merge pull request #37 from becavin-lab/multiqc. [drbecavin]
+
+  Multiqc
+- Fix celllimit argument and QC tables export. [Christophe Bécavin]
+- Change the QC tables by adding directly rank of each cells for each QC
+  metric (This was previously done in MultiQC) [Christophe Bécavin]
+- Add plot_celllimit argument for table export limit. In order to allow
+  multiqc to manage the plots. [Christophe Bécavin]
+- Put back nextflow in main branch for MultiQC tests. [Christophe
+  Bécavin]
+- Remove nextflow dependency. [Christophe Bécavin]
+- Format files, switch to VScode, remove .idea. [drbecavin]
+- Format files, switch to VScode, remove .idea. [drbecavin]
+- Release: version 0.2.2 🚀 [drbecavin]
 - Continuous integration 🔄 tests-0.2.2. [drbecavin]
 - Continuous integration 🔄 tests-0.2.1. [drbecavin]
 - Add first metrics docs, reorganize doc. [drbecavin]
 - Fiix readthedoc issue with R. [drbecavin]
+- Fiix readthedoc issue with R. [drbecavin]
+- Add poetry in the readthedoc workflow. [drbecavin]
+- Add poetry in the readthedoc workflow. [drbecavin]
 - Add poetry in the readthedoc workflow. [drbecavin]
 - Dependecy problem inb readthedoc. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
+- Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
+  google style. [drbecavin]
 - Add mkdocsstrings to autogenerate API doncs. Docstrings switch to
   google style. [drbecavin]
 - Modify docs. [drbecavin]
@@ -50,7 +197,10 @@ Changelog
 - Fix umap obsm search. [drbecavin]
 - Fix umap obsm search. [drbecavin]
 - Fix makesunique for atlas cleaning. [drbecavin]
-- Fix raw.var_names not unique problem. [Christophe Bécavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Fix makesunique for atlas cleaning. [drbecavin]
+- Ix raw.var_names not unique problem. [Christophe Bécavin]
 - Update poetry lock. [drbecavin]
 - Update poetry lock. [drbecavin]
 - Release: version 0.1.19 🚀 [drbecavin]

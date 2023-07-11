@@ -1,35 +1,26 @@
+import argparse
 import logging
 import os
 import re
+import warnings
 
-import anndata
 import numpy as np
 import pandas as pd
 import scanpy as sc
+from anndata import AnnData
+from anndata import _io as _io
 
-from . import checkatlas, folders
+from . import cellranger, checkatlas
 from .metrics import metrics
-
-# try:
-#     from .metrics.cluster import clust_compute
-# except ImportError:
-#     from metrics.cluster import clust_compute
-# try:
-#     from .metrics.dim_red import dr_compute
-# except ImportError:
-#     from metrics.dim_red import dr_compute
-#
-# try:
-#     from . import checkatlas, folders
-# except ImportError:
-#     import folders
-#     import checkatlas
-
+from .utils import files, folders
 
 """
-Atlas module
+Atlas module for AnnData (Scanpy)
 All the function to screen the atlases
 """
+
+ANNDATA_TYPE = "AnnData"
+ANNDATA_EXTENSION = ".h5ad"
 
 OBS_CLUSTERS = [
     "cell_type",
@@ -38,6 +29,7 @@ OBS_CLUSTERS = [
     "ann_finest_level",
     "cellranger_graphclust",
     "seurat_clusters",
+    "RNA_snn_res.0.5",
     "louvain",
     "leiden",
     "orig.ident",
@@ -72,67 +64,93 @@ OBS_QC = [
     "pct_counts_ribo",
 ]
 
-CELLINDEX_HEADER = 'cell_index'
+CELLINDEX_HEADER = "cell_index"
 
 logger = logging.getLogger("checkatlas")
 
+warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.simplefilter(action="ignore", category=UserWarning)
+sc.settings.verbosity = 0
 
-def read_atlas(atlas_path, atlas_info):
-    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
+
+def detect_scanpy(atlas_path: str) -> dict:
+    if atlas_path.endswith(ANNDATA_EXTENSION):
+        atlas_info = dict()
+        atlas_info[checkatlas.ATLAS_NAME_KEY] = os.path.splitext(
+            os.path.basename(atlas_path)
+        )[0]
+        atlas_info[checkatlas.ATLAS_TYPE_KEY] = ANNDATA_TYPE
+        atlas_info[checkatlas.ATLAS_EXTENSION_KEY] = ANNDATA_EXTENSION
+        atlas_info[checkatlas.ATLAS_PATH_KEY] = atlas_path
+        return atlas_info
+    else:
+        return dict()
+
+
+def read_atlas(atlas_info: dict) -> AnnData:
+    """
+    Read Scanpy or Cellranger data : .h5ad or .h5
+
+    Args:
+        atlas_path (dict): info about the atlas
+
+    Returns:
+        AnnData: scanpy object from .h5ad
+    """
+    logger.info(
+        f"Load {atlas_info[checkatlas.ATLAS_NAME_KEY]} "
+        f"in {atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+    )
     try:
-        if atlas_path.endswith(".h5"):
-            logger.debug(f"Read Cellranger results {atlas_path}")
-            adata = read_cellranger(atlas_path)
+        if (
+            atlas_info[checkatlas.ATLAS_TYPE_KEY]
+            == cellranger.CELLRANGER_TYPE_CURRENT
+        ):
+            logger.debug(
+                "Read Cellranger results "
+                f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+            )
+            adata = cellranger.read_cellranger_current(atlas_info)
+        elif (
+            atlas_info[checkatlas.ATLAS_TYPE_KEY]
+            == cellranger.CELLRANGER_TYPE_OBSOLETE
+        ):
+            logger.debug(
+                "Read Cellranger results "
+                f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+            )
+            adata = cellranger.read_cellranger_obsolete(atlas_info)
         else:
-            logger.debug(f"Read Scanpy file {atlas_path}")
-            adata = sc.read_h5ad(atlas_path)
+            logger.debug(
+                f"Read Scanpy file {atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+            )
+            adata = sc.read_h5ad(atlas_info[checkatlas.ATLAS_PATH_KEY])
         return adata
-    except anndata._io.utils.AnnDataReadError:
-        logger.warning(f"AnnDataReadError, cannot read: {atlas_info[0]}")
-        return None
+    except _io.utils.AnnDataReadError:
+        logger.warning(
+            "AnnDataReadError, cannot read: "
+            f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+        )
+        return dict()
 
 
-def read_cellranger(atlas_path):
-    cellranger_path = atlas_path.replace(checkatlas.CELLRANGER_FILE, "")
-    cellranger_path = os.path.join(cellranger_path, "outs")
-    clust_path = os.path.join(
-        cellranger_path, "analysis", "clustering", "graphclust", "clusters.csv"
-    )
-    rna_umap = os.path.join(
-        cellranger_path, "analysis", "umap", "2_components", "projection.csv"
-    )
-    rna_tsne = os.path.join(
-        cellranger_path, "analysis", "tsne", "2_components", "projection.csv"
-    )
-    rna_pca = os.path.join(
-        cellranger_path, "analysis", "pca", "10_components", "projection.csv"
-    )
-    adata = sc.read_10x_h5(atlas_path)
-    adata.var_names_make_unique()
-    # Add cluster
-    if os.path.exists(clust_path):
-        df_cluster = pd.read_csv(clust_path, index_col=0)
-        adata.obs["cellranger_graphclust"] = df_cluster["Cluster"]
-    # Add reduction
-    if os.path.exists(rna_umap):
-        df_umap = pd.read_csv(rna_umap, index_col=0)
-        adata.obsm["X_umap"] = df_umap
-    if os.path.exists(rna_tsne):
-        df_tsne = pd.read_csv(rna_tsne, index_col=0)
-        adata.obsm["X_tsne"] = df_tsne
-    if os.path.exists(rna_pca):
-        df_pca = pd.read_csv(rna_pca, index_col=0)
-        adata.obsm["X_pca"] = df_pca
-    return adata
-
-
-def clean_scanpy_atlas(adata, atlas_info) -> bool:
+def clean_scanpy_atlas(adata: AnnData, atlas_info: dict) -> AnnData:
     """
     Clean the Scanpy object to be sure to get all information out of it
-    :param adata:
-    :return:
+
+    - Make var names unique
+    - Make var unique for Raw matrix
+    - If OBS_CLUSTERS are present and in int32 -> be sure to
+    transform them in categorical
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): info on the atlas
+
+    Returns:
+        AnnData: cleaned atlas
     """
-    logger.debug(f"Clean scanpy: {atlas_info[0]}")
+    logger.debug(f"Clean scanpy: {atlas_info[checkatlas.ATLAS_NAME_KEY]}")
     # Make var names unique
     list_var = adata.var_names
     if len(set(list_var)) == len(list_var):
@@ -194,12 +212,17 @@ def clean_scanpy_atlas(adata, atlas_info) -> bool:
     return adata
 
 
-def get_viable_obs_qc(adata, args):
+def get_viable_obs_qc(adata: AnnData, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
-    :param adata:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        args (argparse.Namespace): list of arguments from checkatlas workflow
+
+    Returns:
+        list: obs_keys
     """
     obs_keys = list()
     for obs_key in adata.obs_keys():
@@ -208,13 +231,18 @@ def get_viable_obs_qc(adata, args):
     return obs_keys
 
 
-def get_viable_obs_annot(adata, args):
+def get_viable_obs_annot(adata: AnnData, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_CLUSTERS values
     ! Remove obs_key with only one category !
     Extract sorted obs_keys in same order then OBS_CLUSTERS
-    :param adata:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        args (argparse.Namespace): list of arguments from checkatlas workflow
+
+    Returns:
+        list: obs_keys
     """
     obs_keys = list()
     # Get keys from OBS_CLUSTERS
@@ -240,14 +268,18 @@ def get_viable_obs_annot(adata, args):
     return sorted(obs_keys_final)
 
 
-def get_viable_obsm(adata, args):
+def get_viable_obsm(adata: AnnData, args: argparse.Namespace) -> list:
     """
+    TO DO
     Search viable obsm for dimensionality reduction metric
     calc.
     ! No filter on osbm is appled for now !
-    :param adata:
-    :param args:
-    :return:
+    Args:
+        adata (AnnData): atlas to analyse
+        args (argparse.Namespace): list of arguments from checkatlas workflow
+
+    Returns:
+        list: obsm_keys
     """
     obsm_keys = list()
     # for obsm_key in adata.obsm_keys():
@@ -257,21 +289,23 @@ def get_viable_obsm(adata, args):
     return obsm_keys
 
 
-def create_summary_table(adata, atlas_path, atlas_info, args) -> None:
+def create_summary_table(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
-    Create a table with all interesting variables
-    :param adata:
-    :param atlas_name:
-    :param csv_path:
-    :return:
+    Create a table with all summarizing variables
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_path (str): path of the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_type = atlas_info[checkatlas.ATLAS_TYPE_KEY]
+    atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
     logger.debug(f"Create Summary table for {atlas_name}")
-    atlas_file_type = atlas_info[1]
-    atlas_extension = atlas_info[2]
-    csv_path = os.path.join(
-        folders.get_folder(args.path, folders.SUMMARY),
-        atlas_name + checkatlas.SUMMARY_EXTENSION,
+    csv_path = files.get_file_path(
+        atlas_name, folders.SUMMARY, checkatlas.SUMMARY_EXTENSION, args.path
     )
     # Create summary table
     header = [
@@ -284,29 +318,32 @@ def create_summary_table(adata, atlas_path, atlas_info, args) -> None:
         "File_path",
     ]
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
-    df_summary["AtlasFileType"][atlas_name] = atlas_file_type
+    df_summary["AtlasFileType"][atlas_name] = atlas_type
     df_summary["NbCells"][atlas_name] = adata.n_obs
     df_summary["NbGenes"][atlas_name] = adata.n_vars
     df_summary["AnnData.raw"][atlas_name] = adata.raw is not None
     df_summary["AnnData.X"][atlas_name] = adata.X is not None
-    df_summary["File_extension"][atlas_name] = atlas_extension
-    df_summary["File_path"][atlas_name] = atlas_path.replace(args.path, "")
+    df_summary["File_extension"][atlas_name] = atlas_name
+    df_summary["File_path"][atlas_name] = atlas_path
     df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
-def create_anndata_table(adata, atlas_path, atlas_info, args) -> None:
+def create_anndata_table(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
-    Create a table with all AnnData arguments
-    :param adata:
-    :param atlas_name:
-    :param atlas_path:
-    :return:
+    Create an html table with all AnnData arguments
+    The html code will make all elements of the table visible in MultiQC
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): info on the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+
     logger.debug(f"Create Adata table for {atlas_name}")
-    csv_path = os.path.join(
-        folders.get_folder(args.path, folders.ANNDATA),
-        atlas_name + checkatlas.ADATA_EXTENSION,
+    csv_path = files.get_file_path(
+        atlas_name, folders.ANNDATA, checkatlas.ADATA_EXTENSION, args.path
     )
     # Create AnnData table
     header = ["obs", "obsm", "var", "varm", "uns"]
@@ -340,21 +377,22 @@ def create_anndata_table(adata, atlas_path, atlas_info, args) -> None:
     df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
+def create_qc_tables(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
-    Display the atlas QC
+    Display the atlas QC table
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
      MT_ratio, RT_ratio
-    :param path:
-    :param adata:
-    :param atlas_name:
-    :param atlas_path:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): info on the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
-    qc_path = os.path.join(
-        folders.get_folder(args.path, folders.QC),
-        atlas_name + checkatlas.QC_EXTENSION,
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    qc_path = files.get_file_path(
+        atlas_name, folders.QC, checkatlas.QC_EXTENSION, args.path
     )
     logger.debug(f"Create QC tables for {atlas_name}")
     qc_genes = []
@@ -385,27 +423,29 @@ def create_qc_tables(adata, atlas_path, atlas_info, args) -> None:
     for header in df_annot.columns:
         if header != CELLINDEX_HEADER:
             new_header = f"cellrank_{header}"
-            df_annot = df_annot.sort_values(header, ascending = False)
-            df_annot.loc[:, [new_header]] = range(1,adata.n_obs+1)
-    
+            df_annot = df_annot.sort_values(header, ascending=False)
+            df_annot.loc[:, [new_header]] = range(1, adata.n_obs + 1)
+
     # Sample QC table when more cells than args.plot_celllimit are present
     df_annot = atlas_sampling(df_annot, "QC", args)
-    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1,len(df_annot)+1)
-    df_annot.to_csv(qc_path, index = False, quoting=False, sep="\t")
+    df_annot.loc[:, [CELLINDEX_HEADER]] = range(1, len(df_annot) + 1)
+    df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
+def create_qc_plots(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
-    Display the atlas QC
+    Display the atlas QC plot
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
      MT_ratio, RT_ratio
-    :param path:
-    :param adata:
-    :param atlas_name:
-    :param atlas_path:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): info on the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     sc.settings.figdir = folders.get_workingdir(args.path)
     sc.set_figure_params(dpi_save=80)
     qc_path = os.sep + atlas_name + checkatlas.QC_FIG_EXTENSION
@@ -436,17 +476,19 @@ def create_qc_plots(adata, atlas_path, atlas_info, args) -> None:
     )
 
 
-def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
+def create_umap_fig(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
-    :param path:
-    :param adata:
-    :param atlas_name:
-    :param atlas_path:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): info on the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     sc.set_figure_params(dpi_save=150)
     # Search if umap reduction exists
     obsm_keys = get_viable_obsm(adata, args)
@@ -474,17 +516,19 @@ def create_umap_fig(adata, atlas_path, atlas_info, args) -> None:
             sc.pl.umap(adata, show=False, save=umap_path)
 
 
-def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
+def create_tsne_fig(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
-    :param path:
-    :param adata:
-    :param atlas_name:
-    :param atlas_path:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): info on the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     sc.set_figure_params(dpi_save=150)
     # Search if tsne reduction exists
     obsm_keys = get_viable_obsm(adata, args)
@@ -514,24 +558,29 @@ def create_tsne_fig(adata, atlas_path, atlas_info, args) -> None:
             sc.pl.tsne(adata, show=False, save=tsne_path)
 
 
-def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
+def create_metric_cluster(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
     Calc clustering metrics
-    :param adata:
-    :param atlas_path:
-    :param atlas_info:
-    :param args:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): path of the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
-    csv_path = os.path.join(
-        folders.get_folder(args.path, folders.CLUSTER),
-        atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION,
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.CLUSTER,
+        checkatlas.METRIC_CLUSTER_EXTENSION,
+        args.path,
     )
     header = ["Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
     obsm_key_representation = "X_umap"
+
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")
         for obs_key in obs_keys:
@@ -557,19 +606,23 @@ def metric_cluster(adata, atlas_path, atlas_info, args) -> None:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_annot(adata, atlas_path, atlas_info, args) -> None:
+def create_metric_annot(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
     Calc annotation metrics
-    :param adata:
-    :param atlas_path:
-    :param atlas_info:
-    :param args:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_path (dict): path of the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
-    csv_path = os.path.join(
-        folders.get_folder(args.path, folders.ANNOTATION),
-        atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION,
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.ANNOTATION,
+        checkatlas.METRIC_ANNOTATION_EXTENSION,
+        args.path,
     )
     header = ["Sample", "Reference", "obs"] + args.metric_annot
     df_annot = pd.DataFrame(columns=header)
@@ -602,19 +655,23 @@ def metric_annot(adata, atlas_path, atlas_info, args) -> None:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
+def create_metric_dimred(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
     """
     Calc dimensionality reduction metrics
-    :param adata:
-    :param atlas_path:
-    :param atlas_info:
-    :param args:
-    :return:
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): path of the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[0]
-    csv_path = os.path.join(
-        folders.get_folder(args.path, folders.DIMRED),
-        atlas_name + checkatlas.METRIC_DIMRED_EXTENSION,
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.DIMRED,
+        checkatlas.METRIC_DIMRED_EXTENSION,
+        args.path,
     )
     header = ["Sample", "obsm"] + args.metric_dimred
     df_dimred = pd.DataFrame(columns=header)
@@ -643,16 +700,21 @@ def metric_dimred(adata, atlas_path, atlas_info, args) -> None:
         logger.debug(f"No viable obsm_key was found for {atlas_name}")
 
 
-def atlas_sampling(df_annot, type_df, args):
-    """_summary_
+def atlas_sampling(
+    df_annot: pd.DataFrame, type_df: str, args: argparse.Namespace
+) -> pd.DataFrame:
+    """
+    If args.plot_celllimit != 0 and args.plot_celllimit < len(df_annot)
+    The atlas qC table will be sampled for MultiQC
 
     Args:
-        df_annot (_type_): _description_
-        args (_type_): _description_
+        df_annot (pd.DataFrame): Table to sample
+        type_df (str): type of table
+        args (argparse.Namespace): arguments of checkatlas workflow
 
     Returns:
-        _type_: _description_
-    """    
+        pd.DataFrame: Sampled QC table
+    """
     if args.plot_celllimit != 0 and args.plot_celllimit < len(df_annot):
         logger.debug(f"Sample {type_df} table with {len(df_annot)} cells")
         df_annot = df_annot.sample(args.plot_celllimit)

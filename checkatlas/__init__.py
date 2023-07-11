@@ -1,3 +1,6 @@
-from . import atlas, checkatlas, folders, multiqc
+from . import atlas
+from . import checkatlas
+from . import seurat
+from . import cellranger
 
-__all__ = ["atlas", "checkatlas", "checkatlas-workflow", "multiqc", "folders"]
+__all__ = ["atlas", "seurat", "checkatlas", "cellranger"]
