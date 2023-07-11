@@ -1,18 +1,22 @@
+import argparse
 import logging
 import os
 import re
+import warnings
 
 import pandas as pd
 import rpy2.robjects as ro
 import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
 from rpy2.rinterface_lib.sexp import NULLType
 from rpy2.robjects import pandas2ri
-from rpy2.robjects.conversion import localconverter
+from rpy2.robjects.methods import RS4
 from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import FactorVector
+from rpy2.robjects.vectors import FactorVector, StrVector
 
-from . import checkatlas, folders
-from .metrics import metrics
+from checkatlas import atlas, checkatlas
+from checkatlas.metrics import metrics
+from checkatlas.utils import folders
 
 """
 Module for management of Atlas n Seurat format
@@ -26,6 +30,11 @@ Module for management of Atlas n Seurat format
 """
 
 logger = logging.getLogger("checkatlas")
+warnings.filterwarnings(action="ignore", message="R[write to console]")
+
+SEURAT_TYPE = "Seurat"
+SEURAT_EXTENSION = ".rds"
+
 
 SCANPY_TO_SEURAT_OBS = {
     "total_counts": "nCount_RNA",
@@ -43,26 +52,54 @@ SEURAT_TO_SCANPY_OBS = {
 }
 
 
-def check_seurat_install():
-    """
-    Check if Seurat is installed, run installation if not
-    :return:
-    """
-    r_script = """install.packages(setdiff(c(\'Seurat\',\'SeuratObject\'),
-                rownames(installed.packages())))"""
-    robjects.r(r_script)
+def detect_seurat(atlas_path: str) -> dict:
+    if atlas_path.endswith(SEURAT_EXTENSION):
+        atlas_info = dict()
+        atlas_info[checkatlas.ATLAS_NAME_KEY] = os.path.splitext(
+            os.path.basename(atlas_path)
+        )[0]
+        atlas_info[checkatlas.ATLAS_TYPE_KEY] = SEURAT_TYPE
+        atlas_info[checkatlas.ATLAS_EXTENSION_KEY] = SEURAT_EXTENSION
+        atlas_info[checkatlas.ATLAS_PATH_KEY] = atlas_path
+        return atlas_info
+    else:
+        return dict()
 
 
-def read_atlas(atlas_path, atlas_info):
+def check_seurat_install() -> None:
+    """Check if Seurat is installed, run installation if not"""
+    # import R's utility package
+    utils = rpackages.importr("utils")
+    # select a mirror for R packages
+    utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
+    # R package names
+    packnames = ("Seurat", "SeuratObject")
+    # Selectively install what needs to be install.
+    # We are fancy, just because we can.
+    names_to_install = [x for x in packnames if not rpackages.isinstalled(x)]
+    if len(names_to_install) > 0:
+        # create personal library
+        rcode = """dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE)"""
+        robjects.r(rcode)
+        # add to the path
+        rcode = """.libPaths(Sys.getenv("R_LIBS_USER"))"""
+        robjects.r(rcode)
+        logger.debug(f"Set Rlibpaths: {robjects.r(rcode)}")
+        utils.install_packages(StrVector(names_to_install))
+
+
+def read_atlas(atlas_info: dict) -> RS4:
+    """Read Seurat object in python using rpy2
+
+    Args:
+        atlas_path (str): _description_
+
+    Returns:
+        RS4: _description_
     """
-    Read Seurat object in python using rpy2
-    :param atlas_path:
-    :param atlas_info:
-    :return:
-    """
-    importr("Seurat")
-    importr("SeuratObject")
-    logger.info(f"Load {atlas_info[0]} in {atlas_info[-1]}")
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
+    logger.info(f"Load {atlas_name} in " f"{atlas_path}")
     rcode = f'readRDS("{atlas_path}")'
     seurat = robjects.r(rcode)
     rclass = robjects.r["class"]
@@ -70,16 +107,21 @@ def read_atlas(atlas_path, atlas_info):
         importr("Seurat")
         return seurat
     else:
-        logger.info(f"{atlas_info[0]} is not a Seurat object")
+        logger.info(f"{atlas_name} is not a Seurat object")
         return None
 
 
-def get_viable_obs_qc(seurat, args):
+def get_viable_obs_qc(seurat: RS4, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_QC values
     Extract sorted obs_keys in same order then OBS_QC
-    :param adata:
-    :return:
+
+    Args:
+        seurat (RS4): _description_
+        args (argparse.Namespace): _description_
+
+    Returns:
+        list: _description_
     """
     r_obs = robjects.r(
         "obs <- function(seurat){ return(colnames(seurat@meta.data))}"
@@ -92,13 +134,18 @@ def get_viable_obs_qc(seurat, args):
     return obs_keys
 
 
-def get_viable_obs_annot(seurat, args):
+def get_viable_obs_annot(seurat: RS4, args: argparse.Namespace) -> list:
     """
     Search in obs_keys a match to OBS_CLUSTERS values
     ! Remove obs_key with only one category !
     Extract sorted obs_keys in same order then OBS_CLUSTERS
-    :param adata:
-    :return:
+
+    Args:
+        seurat (RS4): _description_
+        args (argparse.Namespace): _description_
+
+    Returns:
+        list: _description_
     """
     obs_keys = list()
     r_obs = robjects.r(
@@ -142,12 +189,18 @@ def get_viable_obsm(seurat, args):
     r_obsm = robjects.r(
         "f<-function(seurat){return(names(seurat@reductions))}"
     )
-    obsm_keys = r_obsm(seurat)
+    obsm_keys_r = r_obsm(seurat)
+    obsm_keys = list()
+    for obsm_key in obsm_keys_r:
+        print(obsm_key)
+        obsm_keys.append(obsm_key)
     logger.debug(f"Add obsm {obsm_keys}")
     return obsm_keys
 
 
-def create_summary_table(seurat, atlas_path, atlas_info, args) -> None:
+def create_summary_table(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Create a table with all interesting variables
     :param seurat:
@@ -155,10 +208,8 @@ def create_summary_table(seurat, atlas_path, atlas_info, args) -> None:
     :param csv_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     logger.debug(f"Create Summary table for {atlas_name}")
-    atlas_file_type = atlas_info[1]
-    atlas_extension = atlas_info[2]
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.SUMMARY),
         atlas_name + checkatlas.SUMMARY_EXTENSION,
@@ -180,17 +231,23 @@ def create_summary_table(seurat, atlas_path, atlas_info, args) -> None:
     x_raw = False
     x_norm = True
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
-    df_summary["AtlasFileType"][atlas_name] = atlas_file_type
+    df_summary["AtlasFileType"][atlas_name] = atlas_info[
+        checkatlas.ATLAS_TYPE_KEY
+    ]
     df_summary["NbCells"][atlas_name] = ncells
     df_summary["NbGenes"][atlas_name] = ngenes
     df_summary["AnnData.raw"][atlas_name] = x_raw
     df_summary["AnnData.X"][atlas_name] = x_norm
-    df_summary["File_extension"][atlas_name] = atlas_extension
-    df_summary["File_path"][atlas_name] = atlas_path.replace(args.path, "")
+    df_summary["File_extension"][atlas_name] = atlas_info[
+        checkatlas.ATLAS_EXTENSION_KEY
+    ]
+    df_summary["File_path"][atlas_name] = atlas_info[checkatlas.ATLAS_PATH_KEY]
     df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
-def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
+def create_anndata_table(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Create a table with all AnnData-like arguments in Seurat object
     :param seurat:
@@ -198,7 +255,7 @@ def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     logger.debug(f"Create Adata table for {atlas_name}")
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.ANNDATA),
@@ -218,6 +275,7 @@ def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
     r_uns = robjects.r(
         "uns <- function(seurat){ return(colnames(seurat@misc))}"
     )
+
     obs_list = r_obs(seurat)
     obsm_list = r_obsm(seurat)
     var_list = [""]
@@ -244,7 +302,9 @@ def create_anndata_table(seurat, atlas_path, atlas_info, args) -> None:
     df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_tables(seurat, atlas_path, atlas_info, args) -> None:
+def create_qc_tables(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Display the atlas QC of seurat
     Search for the metadata variable which correspond
@@ -255,7 +315,7 @@ def create_qc_tables(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     qc_path = os.path.join(
         folders.get_folder(args.path, folders.QC),
         atlas_name + checkatlas.QC_EXTENSION,
@@ -264,18 +324,31 @@ def create_qc_tables(seurat, atlas_path, atlas_info, args) -> None:
     obs_keys = get_viable_obs_qc(seurat, args)
     r_meta = robjects.r("obs <- function(seurat){ return(seurat@meta.data)}")
     r_metadata = r_meta(seurat)
-    with localconverter(ro.default_converter + pandas2ri.converter):
-        df_metadata = ro.conversion.rpy2py(r_metadata)
+    with (ro.default_converter + pandas2ri.converter).context():
+        df_metadata = ro.conversion.get_conversion().rpy2py(r_metadata)
         df_annot = df_metadata[obs_keys]
         # rename columns with scanpy names
         new_columns = list()
         for column in df_annot.columns:
             new_columns.append(SEURAT_TO_SCANPY_OBS[column])
         df_annot.columns = new_columns
+
+        # Rank cell by qc metric
+        for header in df_annot.columns:
+            if header != atlas.CELLINDEX_HEADER:
+                new_header = f"cellrank_{header}"
+                df_annot = df_annot.sort_values(header, ascending=False)
+                df_annot.loc[:, [new_header]] = range(1, len(df_annot) + 1)
+
+        # Sample QC table when more cells than args.plot_celllimit are present
+        df_annot = atlas.atlas_sampling(df_annot, "QC", args)
+        df_annot.loc[:, [atlas.CELLINDEX_HEADER]] = range(1, len(df_annot) + 1)
         df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_plots(seurat, atlas_path, atlas_info, args) -> None:
+def create_qc_plots(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Display the atlas QC
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
@@ -286,7 +359,7 @@ def create_qc_plots(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     qc_path = os.path.join(
         folders.get_folder(args.path, folders.QC_FIG),
         atlas_name + checkatlas.QC_FIG_EXTENSION,
@@ -305,7 +378,9 @@ def create_qc_plots(seurat, atlas_path, atlas_info, args) -> None:
     r_violin(seurat, r_obs, qc_path)
 
 
-def create_umap_fig(seurat, atlas_path, atlas_info, args) -> None:
+def create_umap_fig(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -315,7 +390,7 @@ def create_umap_fig(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
     r_names = robjects.r["names"]
@@ -341,7 +416,9 @@ def create_umap_fig(seurat, atlas_path, atlas_info, args) -> None:
         r_umap(seurat, obs_keys[0], umap_path)
 
 
-def create_tsne_fig(seurat, atlas_path, atlas_info, args) -> None:
+def create_tsne_fig(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -351,7 +428,7 @@ def create_tsne_fig(seurat, atlas_path, atlas_info, args) -> None:
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     # Search if tsne reduction exists
     r = re.compile(".*tsne*.")
     r_names = robjects.r["names"]
@@ -377,7 +454,9 @@ def create_tsne_fig(seurat, atlas_path, atlas_info, args) -> None:
         r_tsne(seurat, obs_keys[0], tsne_path)
 
 
-def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
+def create_metric_cluster(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Calc clustering metrics
     :param seurat:
@@ -386,7 +465,7 @@ def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
     :param args:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.CLUSTER),
         atlas_name + checkatlas.METRIC_CLUSTER_EXTENSION,
@@ -420,7 +499,9 @@ def metric_cluster(seurat, atlas_path, atlas_info, args) -> None:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
+def create_metric_annot(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Calc annotation metrics
     :param adata:
@@ -429,7 +510,7 @@ def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
     :param args:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.ANNOTATION),
         atlas_name + checkatlas.METRIC_ANNOTATION_EXTENSION,
@@ -466,7 +547,9 @@ def metric_annot(seurat, atlas_path, atlas_info, args) -> None:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
+def create_metric_dimred(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
     """
     Calc dimensionality reduction metrics
     :param adata:
@@ -475,7 +558,7 @@ def metric_dimred(seurat, atlas_path, atlas_info, args) -> None:
     :param args:
     :return:
     """
-    atlas_name = atlas_info[0]
+    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.DIMRED),
         atlas_name + checkatlas.METRIC_DIMRED_EXTENSION,
