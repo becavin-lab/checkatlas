@@ -12,7 +12,12 @@
 
 ### checkatlas.atlas_seurat
 
-::: checkatlas.atlas_seurat
+::: checkatlas.seurat
+
+
+### checkatlas.cellranger
+
+::: checkatlas.cellranger
 
 
 ### checkatlas.metrics.metrics
@@ -20,6 +25,16 @@
 ::: checkatlas.metrics.metrics
 
 
-### checkatlas.folders
+### checkatlas.utils.folders
 
 ::: checkatlas.utils.folders
+
+
+### checkatlas.utils.files
+
+::: checkatlas.utils.files
+
+
+### checkatlas.utils.checkatlas_arguments
+
+::: checkatlas.utils.checkatlas_arguments
