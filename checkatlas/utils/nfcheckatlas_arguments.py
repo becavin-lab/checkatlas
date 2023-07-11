@@ -28,7 +28,6 @@ def create_parser():
         "Scanpy, CellRanger and Seurat atlasesv",
         default=".",
     )
-    
 
     parser.add_argument(
         "--plot_celllimit",
