@@ -56,7 +56,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
         AnnData: scanpy object from cellranger
     """
     cellranger_path = atlas_info[checkatlas.ATLAS_PATH_KEY].replace(
-        checkatlas.CELLRANGER_FILE, ""
+        CELLRANGER_FILE, ""
     )
     cellranger_path = os.path.join(cellranger_path, "outs")
     clust_path = os.path.join(
@@ -107,7 +107,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
         AnnData: scanpy object from cellranger
     """
     cellranger_path = atlas_info[checkatlas.ATLAS_PATH_KEY].replace(
-        checkatlas.CELLRANGER_FILE, ""
+        CELLRANGER_MATRIX_FILE, ""
     )
     cellranger_path = os.path.join(cellranger_path, "outs")
     clust_path = os.path.join(

@@ -2,7 +2,7 @@ import os
 
 import scanpy as sc
 
-from checkatlas import checkatlas
+from checkatlas import atlas, cellranger, seurat
 
 """
 Module in which we create the data for all tests
@@ -15,9 +15,39 @@ DATA_PATH = os.path.join(os.getcwd(), "tests", "data")
 ADATA_TEST_PATH = os.path.join(DATA_PATH, "pbmc3k_scanpy.h5ad")
 CELLRANGER_FOLDER_PATH = os.path.join(DATA_PATH, "pbmc3k_cellranger")
 CELLRANGER_TEST_PATH = os.path.join(
-    CELLRANGER_FOLDER_PATH, checkatlas.CELLRANGER_FILE
+    CELLRANGER_FOLDER_PATH, "outs", cellranger.CELLRANGER_FILE
 )
 SEURAT_TEST_PATH = os.path.join(DATA_PATH, "pbmc3k_seurat.rds")
+
+
+def get_scanpy_atlas_info():
+    atlas_info = {
+        "Atlas_name": "pbmc3k_scanpy",
+        "Atlas_type": atlas.ANNDATA_TYPE,
+        "Atlas_extension": atlas.ANNDATA_EXTENSION,
+        "Atlas_path": ADATA_TEST_PATH,
+    }
+    return atlas_info
+
+
+def get_cellranger_atlas_info():
+    atlas_info = {
+        "Atlas_name": "pbmc3k_cellranger",
+        "Atlas_type": cellranger.CELLRANGER_TYPE_CURRENT,
+        "Atlas_extension": ".h5",
+        "Atlas_path": CELLRANGER_TEST_PATH,
+    }
+    return atlas_info
+
+
+def get_seurat_atlas_info():
+    atlas_info = {
+        "Atlas_name": "pbmc3k_seurat",
+        "Atlas_type": seurat.SEURAT_TYPE,
+        "Atlas_extension": seurat.SEURAT_EXTENSION,
+        "Atlas_path": SEURAT_TEST_PATH,
+    }
+    return atlas_info
 
 
 def create_adata_data():

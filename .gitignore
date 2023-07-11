@@ -5,6 +5,7 @@ __pycache__/
 dask-worker-space/
 
 # CheckAtlas_*
+tests/data/checkatlas_files/
 
 # Nextflow
 .nextflow/
