@@ -10,7 +10,7 @@
 ::: checkatlas.atlas
 
 
-### checkatlas.atlas_seurat
+### checkatlas.seurat
 
 ::: checkatlas.seurat
 
