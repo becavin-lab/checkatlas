@@ -89,7 +89,7 @@ def test_summary_table(atlas_info):
     atlas.create_summary_table(adata, atlas_info, args)
     atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.SUMMARY, checkatlas.SUMMARY_EXTENSION, args.path
+        atlas_name, folders.SUMMARY, checkatlas.TSV_EXTENSION, args.path
     )
     assert os.path.exists(csv_path)
 
@@ -105,7 +105,7 @@ def test_adata_table(atlas_info):
     atlas.create_anndata_table(adata, atlas_info, args)
     atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.ANNDATA, checkatlas.ADATA_EXTENSION, args.path
+        atlas_name, folders.ANNDATA, checkatlas.TSV_EXTENSION, args.path
     )
     print(csv_path)
     assert os.path.exists(csv_path)
@@ -138,7 +138,7 @@ def test_qc_table(atlas_info):
     atlas.create_qc_tables(adata, atlas_info, args)
     atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.QC, checkatlas.QC_EXTENSION, args.path
+        atlas_name, folders.QC, checkatlas.TSV_EXTENSION, args.path
     )
     assert os.path.exists(csv_path)
 
@@ -223,7 +223,7 @@ def test_cluster_metric(atlas_info):
     csv_path = files.get_file_path(
         atlas_name,
         folders.CLUSTER,
-        checkatlas.METRIC_CLUSTER_EXTENSION,
+        checkatlas.TSV_EXTENSION,
         args.path,
     )
     assert os.path.exists(csv_path)
@@ -253,7 +253,7 @@ def test_annot_metric(atlas_info):
     csv_path = files.get_file_path(
         atlas_name,
         folders.ANNOTATION,
-        checkatlas.METRIC_ANNOTATION_EXTENSION,
+        checkatlas.TSV_EXTENSION,
         args.path,
     )
     assert os.path.exists(csv_path)
@@ -283,7 +283,7 @@ def test_dimred_metric(atlas_info):
     csv_path = files.get_file_path(
         atlas_name,
         folders.DIMRED,
-        checkatlas.METRIC_DIMRED_EXTENSION,
+        checkatlas.TSV_EXTENSION,
         args.path,
     )
     assert os.path.exists(csv_path)

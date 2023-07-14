@@ -15,6 +15,8 @@ SPECI = "specificity"
 TEMP = "temp"
 NEXTFLOW = "temp/nextflow"
 
+MULTIQC_FOLDER = "CheckAtlas_MultiQC"
+
 DICT_FOLDER = {
     SUMMARY: SUMMARY,
     ANNDATA: ANNDATA,
@@ -27,7 +29,6 @@ DICT_FOLDER = {
     DIMRED: DIMRED,
     SPECI: SPECI,
     TEMP: TEMP,
-    NEXTFLOW: NEXTFLOW,
 }
 
 logger = logging.getLogger("checkatlas")
@@ -82,3 +83,7 @@ def checkatlas_folders(path: str) -> None:
         if not os.path.exists(temp_path):
             logger.debug(f"Create folder: {temp_path}")
             os.mkdir(temp_path)
+
+
+def get_multiqc_folder(path: str) -> str:
+    return os.path.join(path, MULTIQC_FOLDER)
