@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Modify tables extension for multiqc to work. [Christophe Bécavin]
+- Fix dc. [Christophe Bécavin]
+- Release: version 0.3.0 🚀 [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.3.0. [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.3.0. [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.3.0. [Christophe Bécavin]
