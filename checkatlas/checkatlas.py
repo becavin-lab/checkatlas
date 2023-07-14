@@ -5,6 +5,7 @@ import pandas as pd
 
 from . import atlas, cellranger, seurat
 from .utils import files as chk_files
+from .utils import folders
 
 """
 checkatlas base module.
@@ -20,17 +21,10 @@ PROCESS_TYPE = [
     "metric_dimred",
 ]
 
-
-SUMMARY_EXTENSION = "_checkatlas_summ.tsv"
-ADATA_EXTENSION = "_checkatlas_adata.tsv"
-QC_FIG_EXTENSION = "_checkatlas_qc.png"
-QC_EXTENSION = "_checkatlas_qc.tsv"
-UMAP_EXTENSION = "_checkatlas_umap.png"
-TSNE_EXTENSION = "_checkatlas_tsne.png"
-METRIC_CLUSTER_EXTENSION = "_checkatlas_mcluster.tsv"
-METRIC_ANNOTATION_EXTENSION = "_checkatlas_mannot.tsv"
-METRIC_DIMRED_EXTENSION = "_checkatlas_mdimred.tsv"
-METRIC_SPECIFICITY_EXTENSION = "_checkatlas_mspecificity.tsv"
+TSV_EXTENSION = ".tsv"
+QC_FIG_EXTENSION = "_mqc.png"
+UMAP_EXTENSION = "_umap_mqc.png"
+TSNE_EXTENSION = "_tsne_mqc.png"
 
 ATLAS_NAME_KEY = "Atlas_name"
 ATLAS_TYPE_KEY = "Atlas_type"
@@ -43,6 +37,23 @@ ATLAS_TABLE_HEADER = [
     ATLAS_PATH_KEY,
 ]
 
+openpng_html_script = """
+<script>
+function openPNG(evt, pngName, tablinks_id, tabcontent_id) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName(tabcontent_id);
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName(tablinks_id);
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(pngName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+"""
 
 logger = logging.getLogger("checkatlas")
 
@@ -115,6 +126,131 @@ def read_list_atlases(checkatlas_path: str) -> tuple:
     )
     clean_seurat_list.index = clean_seurat_list[ATLAS_NAME_KEY]
     return clean_scanpy_list, clean_cellranger_list, clean_seurat_list
+
+
+def generate_fig_html(checkatlas_path: str, type_viz: str):
+    logger.info("Generate html reports with all figs for {type}")
+    # shutil.copy2(os.path.join(f["root"], f["fn"]), fig_dir
+    if type_viz == "qc":
+        # data is a dictionnary wth key = data_name and value = fig_path
+        qc_dict = dict()
+        qc_fig_path = folders.get_folder(checkatlas_path, folders.QC_FIG)
+        for qc_fig in os.listdir(qc_fig_path):
+            if qc_fig.endswith(".png"):
+                atlas_name = os.path.splitext(os.path.basename(qc_fig))[0]
+                print(atlas_name)
+                print("qc", qc_fig)
+                qc_dict[atlas_name] = qc_fig
+        html = create_img_html_content(type_viz, qc_dict)
+        with open(
+            os.path.join("../", qc_fig_path, "QC_report_mqc.html"), "w"
+        ) as html_report:
+            html_report.write(html)
+    elif type_viz == "reductions":
+        umap_dict = dict()
+        umap_fig_path = folders.get_folder(checkatlas_path, folders.UMAP)
+        for umap_fig in os.listdir(umap_fig_path):
+            if umap_fig.endswith(".png"):
+                atlas_name = os.path.splitext(os.path.basename(umap_fig))[0]
+                print(umap_fig)
+                umap_dict[atlas_name] = umap_fig
+        html = create_img_html_content(type_viz, umap_dict)
+        with open(
+            os.path.join("../", umap_fig_path, "Umap_report_mqc.html"), "w"
+        ) as html_report:
+            html_report.write(html)
+
+        tsne_dict = dict()
+        tsne_fig_path = folders.get_folder(checkatlas_path, folders.TSNE)
+        for tsne_fig in os.listdir(tsne_fig_path):
+            if tsne_fig.endswith(".png"):
+                atlas_name = os.path.splitext(os.path.basename(tsne_fig))[0]
+                print(atlas_name)
+                print("tsne", tsne_fig)
+                tsne_dict[atlas_name] = tsne_fig
+        html = create_img_html_content(type_viz, tsne_dict)
+        with open(
+            os.path.join(tsne_fig_path, "Tsne_report_mqc.html"), "w"
+        ) as html_report:
+            html_report.write(html)
+    else:
+        logger.error(f"Type of vsualization not recognized {type_viz}")
+
+
+def create_img_html_content(type_viz, data):
+    html_content = """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head></head>
+            <body>
+            <div class="tab">\n"""
+    counter = 0
+    tablinks = type_viz + "_tablinks"
+    tabcontent = type_viz + "_tabcontent"
+    for atlas_name, fig_path in data.items():
+        class_tab = tablinks
+        if counter == 0:
+            class_tab = tablinks + " active"
+        html_content += add_selection_img_button(
+            class_tab, type_viz, atlas_name, tablinks, tabcontent
+        )
+        counter += 1
+    html_content += """</div>"""
+
+    counter = 0
+    for atlas_name, fig_path in data.items():
+        style = "display: none;"
+        if counter == 0:
+            style = "display: block;"
+        html_content += add_div_img(
+            fig_path, type_viz, atlas_name, style, tabcontent
+        )
+        counter += 1
+
+    html_content += openpng_html_script
+    html_content += """
+        </body>
+        </html>
+        """
+
+    return html_content
+
+
+def add_selection_img_button(
+    class_tab, type_viz, atlas_name, tablinks, tabcontent
+):
+    return (
+        """  <button class=\""""
+        + class_tab
+        + """\" onclick="openPNG(event, '"""
+        + type_viz
+        + "_"
+        + atlas_name
+        + """',
+                            '"""
+        + tablinks
+        + "','"
+        + tabcontent
+        + """')">"""
+        + atlas_name
+        + """</button>\n"""
+    )
+
+
+def add_div_img(path_fig, type_viz, atlas_name, style, tabcontent):
+    return (
+        """<div id=\""""
+        + type_viz
+        + "_"
+        + atlas_name
+        + """\" class=\""""
+        + tabcontent
+        + """\" style =\""""
+        + style
+        + """\"><img src=\""""
+        + path_fig
+        + """\" >\n</div>\n"""
+    )
 
 
 if __name__ == "__main__":

@@ -305,7 +305,7 @@ def create_summary_table(
     atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
     logger.debug(f"Create Summary table for {atlas_name}")
     csv_path = files.get_file_path(
-        atlas_name, folders.SUMMARY, checkatlas.SUMMARY_EXTENSION, args.path
+        atlas_name, folders.SUMMARY, checkatlas.TSV_EXTENSION, args.path
     )
     # Create summary table
     header = [
@@ -343,17 +343,17 @@ def create_anndata_table(
 
     logger.debug(f"Create Adata table for {atlas_name}")
     csv_path = files.get_file_path(
-        atlas_name, folders.ANNDATA, checkatlas.ADATA_EXTENSION, args.path
+        atlas_name, folders.ANNDATA, checkatlas.TSV_EXTENSION, args.path
     )
     # Create AnnData table
-    header = ["obs", "obsm", "var", "varm", "uns"]
+    header = ["atlas_obs", "obsm", "var", "varm", "uns"]
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
     # html_element = "<span class=\"label label-primary\">"
     # new_line = ''
     # for value in list(adata.obs.columns):
     #     new_line += html_element + value + "</span><br>"
     #     print(new_line)
-    df_summary["obs"][atlas_name] = (
+    df_summary["atlas_obs"][atlas_name] = (
         "<code>"
         + "</code><br><code>".join(list(adata.obs.columns))
         + "</code>"
@@ -392,7 +392,7 @@ def create_qc_tables(
     """
     atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
     qc_path = files.get_file_path(
-        atlas_name, folders.QC, checkatlas.QC_EXTENSION, args.path
+        atlas_name, folders.QC, checkatlas.TSV_EXTENSION, args.path
     )
     logger.debug(f"Create QC tables for {atlas_name}")
     qc_genes = []
@@ -573,10 +573,10 @@ def create_metric_cluster(
     csv_path = files.get_file_path(
         atlas_name,
         folders.CLUSTER,
-        checkatlas.METRIC_CLUSTER_EXTENSION,
+        checkatlas.TSV_EXTENSION,
         args.path,
     )
-    header = ["Sample", "obs"] + args.metric_cluster
+    header = ["Clust_Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
     obsm_key_representation = "X_umap"
@@ -585,7 +585,7 @@ def create_metric_cluster(
         logger.debug(f"Calc clustering metrics for {atlas_name}")
         for obs_key in obs_keys:
             dict_line = {
-                "Sample": [atlas_name + "_" + obs_key],
+                "Clust_Sample": [atlas_name + "_" + obs_key],
                 "obs": [obs_key],
             }
             for metric in args.metric_cluster:
@@ -621,10 +621,10 @@ def create_metric_annot(
     csv_path = files.get_file_path(
         atlas_name,
         folders.ANNOTATION,
-        checkatlas.METRIC_ANNOTATION_EXTENSION,
+        checkatlas.TSV_EXTENSION,
         args.path,
     )
-    header = ["Sample", "Reference", "obs"] + args.metric_annot
+    header = ["Annot_Sample", "Reference", "obs"] + args.metric_annot
     df_annot = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
     if len(obs_keys) > 1:
@@ -633,7 +633,7 @@ def create_metric_annot(
         for i in range(1, len(obs_keys)):
             obs_key = obs_keys[i]
             dict_line = {
-                "Sample": [atlas_name + "_" + obs_key],
+                "Annot_Sample": [atlas_name + "_" + obs_key],
                 "Reference": [ref_obs],
                 "obs": [obs_key],
             }
@@ -670,17 +670,17 @@ def create_metric_dimred(
     csv_path = files.get_file_path(
         atlas_name,
         folders.DIMRED,
-        checkatlas.METRIC_DIMRED_EXTENSION,
+        checkatlas.TSV_EXTENSION,
         args.path,
     )
-    header = ["Sample", "obsm"] + args.metric_dimred
+    header = ["Dimred_Sample", "obsm"] + args.metric_dimred
     df_dimred = pd.DataFrame(columns=header)
     obsm_keys = get_viable_obsm(adata, args)
     if len(obsm_keys) > 0:
         logger.debug(f"Calc dim red metrics for {atlas_name}")
         for obsm_key in obsm_keys:
             dict_line = {
-                "Sample": [atlas_name + "_" + obsm_key],
+                "Dimred_Sample": [atlas_name + "_" + obsm_key],
                 "obsm": [obsm_key],
             }
             for metric in args.metric_dimred:
