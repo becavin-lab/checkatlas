@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Add checkatlas-workflow executable for search and html reports.
+  [Christophe Bécavin]
+- Release: version 0.3.2 🚀 [Christophe Bécavin]
 - Add test data. [Christophe Bécavin]
 - Release: version 0.3.1 🚀 [Christophe Bécavin]
 - Modify tables extension for multiqc to work. [Christophe Bécavin]
