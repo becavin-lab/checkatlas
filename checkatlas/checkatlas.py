@@ -143,7 +143,7 @@ def generate_fig_html(checkatlas_path: str, type_viz: str):
                 qc_dict[atlas_name] = qc_fig
         html = create_img_html_content(type_viz, qc_dict)
         with open(
-            os.path.join("../", qc_fig_path, "QC_report_mqc.html"), "w"
+            chk_files.get_html_qc_report_path(checkatlas_path), "w"
         ) as html_report:
             html_report.write(html)
     elif type_viz == "reductions":
@@ -156,7 +156,7 @@ def generate_fig_html(checkatlas_path: str, type_viz: str):
                 umap_dict[atlas_name] = umap_fig
         html = create_img_html_content(type_viz, umap_dict)
         with open(
-            os.path.join("../", umap_fig_path, "Umap_report_mqc.html"), "w"
+            chk_files.get_html_umap_report_path(checkatlas_path), "w"
         ) as html_report:
             html_report.write(html)
 
@@ -170,7 +170,7 @@ def generate_fig_html(checkatlas_path: str, type_viz: str):
                 tsne_dict[atlas_name] = tsne_fig
         html = create_img_html_content(type_viz, tsne_dict)
         with open(
-            os.path.join(tsne_fig_path, "Tsne_report_mqc.html"), "w"
+            chk_files.get_html_tsne_report_path(checkatlas_path), "w"
         ) as html_report:
             html_report.write(html)
     else:

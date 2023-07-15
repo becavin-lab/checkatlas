@@ -80,3 +80,24 @@ def save_list_seurat(clean_seurat_list: list, checkatlas_path: str) -> None:
     df_summary.to_csv(
         get_table_seurat_path(checkatlas_path), index=False, sep=","
     )
+
+
+def get_html_qc_report_path(checkatlas_path: str):
+    return os.path.join(
+        folders.get_folder(checkatlas_path, folders.QC_FIG),
+        "QC_report_mqc.html",
+    )
+
+
+def get_html_umap_report_path(checkatlas_path: str):
+    return os.path.join(
+        folders.get_folder(checkatlas_path, folders.UMAP),
+        "UMAP_report_mqc.html",
+    )
+
+
+def get_html_tsne_report_path(checkatlas_path: str):
+    return os.path.join(
+        folders.get_folder(checkatlas_path, folders.TSNE),
+        "tSNE_report_mqc.html",
+    )
