@@ -1,13 +1,13 @@
 import argparse
 
-from checkatlas import atlas, checkatlas
+from checkatlas import atlas, checkatlas_workflow
 from checkatlas.metrics import annot, cluster, dimred
 
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        prog="checkatlas",
-        usage="checkatlas [OPTIONS] process atlas_name your_search_folder/",
+        prog="nfcheckatlas",
+        usage="nfcheckatlas [OPTIONS] process your_search_folder/",
         description="CheckAtlas is a one liner tool to check the "
         "quality of your single-cell atlases. For "
         "every atlas, it produces the quality control "
@@ -24,18 +24,8 @@ def create_parser():
         "process",
         type=str,
         help="Required argument: Type of process to run"
-        f" among {checkatlas.PROCESS_TYPE}",
+        f" among {checkatlas_workflow.PROCESS_TYPE}",
         default="",
-    )
-
-    parser.add_argument(
-        "atlas_name",
-        type=str,
-        help="Required argument: The name of the atlas to process."
-        "Atlas_name should be found in one of the samplesheet provided to"
-        "nf-checkatlas, or directly created by checkatlas.list_all_atlases()"
-        " function",
-        default=".",
     )
 
     parser.add_argument(

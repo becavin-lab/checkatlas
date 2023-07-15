@@ -109,4 +109,4 @@ def main() -> None:  # pragma: no cover
             seurat_data = seurat.read_atlas(atlas_info)
             seurat.create_metric_dimred(seurat_data, atlas_info, args)
     else:
-        logger.debug("TO DO : Seurat is no longer managed here !!!")
+        logger.debug("TO DO : Spatial Transcriptomics not yet managed.")

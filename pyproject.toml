@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.3.2"
+version = "0.3.3"
 description="One liner tool to check the quality of your single-cell atlases."
 authors = ["becavin-lab"]
 readme = "README.md"
@@ -56,3 +56,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 checkatlas = 'checkatlas.__main__:main'
+checkatlas-workflow = 'checkatlas.checkatlas_workflow:main'
