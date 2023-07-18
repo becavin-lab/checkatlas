@@ -8,4 +8,5 @@ def run(count_repr, annotations):
     :param annotations:
     :return:
     """
+    print(count_repr, annotations)
     return davies_bouldin_score(count_repr, annotations)

@@ -9,6 +9,7 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 from anndata import _io as _io
+from sklearn.utils.fixes import _object_dtype_isnan
 
 from . import cellranger, checkatlas
 from .metrics import metrics
@@ -251,20 +252,23 @@ def get_viable_obs_annot(adata: AnnData, args: argparse.Namespace) -> list:
             if obs_key_celltype in obs_key:
                 if type(adata.obs[obs_key].dtype) == pd.CategoricalDtype:
                     obs_keys.append(obs_key)
-    # Remove keys with only one category
+    # Remove keys with only one category and no NaN in the array
     obs_keys_final = list()
     for obs_key in obs_keys:
         annotations = adata.obs[obs_key]
-        categories_temp = annotations.cat.categories
-        # remove nan if found
-        categories = categories_temp.dropna()
-        if True in categories.isin(["nan"]):
-            index = categories.get_loc("nan")
-            categories = categories.delete(index)
-        # Add obs_key with more than one category (with Nan removed)
-        if len(categories) != 1:
-            logger.debug(f"Add obs_key {obs_key} with cat {categories_temp}")
-            obs_keys_final.append(obs_key)
+        if not _object_dtype_isnan(annotations).any():
+            categories_temp = annotations.cat.categories
+            # remove nan if found
+            categories = categories_temp.dropna()
+            if True in categories.isin(["nan"]):
+                index = categories.get_loc("nan")
+                categories = categories.delete(index)
+            # Add obs_key with more than one category (with Nan removed)
+            if len(categories) != 1:
+                logger.debug(
+                    f"Add obs_key {obs_key} with cat {categories_temp}"
+                )
+                obs_keys_final.append(obs_key)
     return sorted(obs_keys_final)
 
 
@@ -579,7 +583,15 @@ def create_metric_cluster(
     header = ["Clust_Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(adata, args)
-    obsm_key_representation = "X_umap"
+    obsm_keys = get_viable_obsm(adata, args)
+    r = re.compile(".*umap*.")
+    obsm_umap_keys = list(filter(r.match, obsm_keys))
+    r = re.compile(".*tsne*.")
+    obsm_tsne_keys = list(filter(r.match, obsm_keys))
+    if len(obsm_umap_keys) > 0:
+        obsm_key_representation = obsm_umap_keys[0]
+    elif len(obsm_tsne_keys) > 0:
+        obsm_key_representation = obsm_tsne_keys[0]
 
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")

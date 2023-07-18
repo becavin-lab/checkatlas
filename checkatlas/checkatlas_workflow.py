@@ -42,7 +42,6 @@ def main() -> None:  # pragma: no cover
     logger.debug(f"Program arguments: {args}")
 
     process = args.process
-    print(process)
     if process == PROCESS_TYPE[0]:
         logger.debug(f"Search path {args.path} with checkatlas_workflow")
         logger.debug(f"Transform path to absolute:{args.path}")
