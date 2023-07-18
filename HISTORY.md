@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Add checkatlas-workflow executable. [Christophe Bécavin]
+- Release: version 0.3.3 🚀 [Christophe Bécavin]
 - Add checkatlas-workflow executable for search and html reports.
   [Christophe Bécavin]
 - Release: version 0.3.2 🚀 [Christophe Bécavin]
