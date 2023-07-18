@@ -103,8 +103,8 @@ def create_parser():
         "--metric_cluster",
         nargs="+",
         type=str,
-        # default=["silhouette", "davies_bouldin"],
-        default=["davies_bouldin"],
+        default=["silhouette", "davies_bouldin"],
+        # default=["davies_bouldin"],
         help="Specify the list of clustering metrics to calculate.\n"
         "   Example: --metric_cluster silhouette davies_bouldin\n"
         f"   List of cluster metrics: {cluster.__all__}",
@@ -123,8 +123,8 @@ def create_parser():
         "--metric_dimred",
         nargs="+",
         type=str,
-        # default=["kruskal_stress"],
-        default=[],
+        # default=[],
+        default=["kruskal_stress"],
         help="Specify the list of dimensionality reduction "
         "metrics to calculate.\n"
         "   Example: --metric_dimred kruskal_stress\n"
