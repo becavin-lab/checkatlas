@@ -6,7 +6,7 @@ from checkatlas.utils import files
 from . import checkatlas
 from .utils import checkatlas_workflow_arguments, folders
 
-PROCESS_TYPE = ["list_scanpy", "list_cellranger", "list_seurat", "report"]
+PROCESS_TYPE = ["list_scanpy", "list_cellranger", "list_seurat", "html_report"]
 
 
 def main() -> None:  # pragma: no cover
@@ -66,7 +66,7 @@ def main() -> None:  # pragma: no cover
         folders.checkatlas_folders(args.path)
         logger.info("Searching Seurat, Cellranger and Scanpy files")
         checkatlas.list_seurat_atlases(args.path)
-    elif process == PROCESS_TYPE[1]:
+    elif process == "html_report":
         logger.info(
             "Generate QC plots html report in "
             f"{files.get_html_qc_report_path(args.path)}"
