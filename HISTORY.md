@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Fix html reports production. [Christophe Bécavin]
+- Add version display. [Christophe Bécavin]
+- Release: version 0.3.5 🚀 [Christophe Bécavin]
 - Release: version 0.3.5 🚀 [Christophe Bécavin]
 - Release: version 0.3.5 🚀 [Christophe Bécavin]
 - Release: version 0.3.5 🚀 [Christophe Bécavin]
