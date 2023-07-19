@@ -23,7 +23,6 @@ scanpy = "^1.9.1"
 numpy = "^1.23.5"
 poetry = "^1.5.1"
 rpy2 = "3.5.10"
-toml = "^0.10.2"
 
 [tool.poetry.group.dev]
 optional = true
