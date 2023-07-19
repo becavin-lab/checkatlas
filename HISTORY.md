@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Some minor modif. [Christophe Bécavin]
+- Add list scanpy, list seurat, list cellranger. [Christophe Bécavin]
+- Release: version 0.3.4 🚀 [Christophe Bécavin]
 - Add checkatlas-workflow executable. [Christophe Bécavin]
 - Release: version 0.3.3 🚀 [Christophe Bécavin]
 - Add checkatlas-workflow executable for search and html reports.
