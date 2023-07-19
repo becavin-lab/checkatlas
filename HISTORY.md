@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.3.5 🚀 [Christophe Bécavin]
 - Some minor modif. [Christophe Bécavin]
 - Add list scanpy, list seurat, list cellranger. [Christophe Bécavin]
 - Release: version 0.3.4 🚀 [Christophe Bécavin]
