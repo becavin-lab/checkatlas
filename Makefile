@@ -68,6 +68,8 @@ ci:          ## Run a continuous integration : Add every change to git and creat
 release:          ## Create a new tag for release.
 	@echo "WARNING: This operation will create a version tag and push to github"
 	@echo "Reading version $(VERSION) from: pyproject.toml"
+	@echo "Saving version to: checkatlas/utils/VERSION"
+	@echo "${VERSION}" > "checkatlas/utils/VERSION"
 	@$(ENV_PREFIX)poetry run gitchangelog > HISTORY.md
 	@git add HISTORY.md pyproject.toml
 	@git commit -m "release: version $(VERSION) 🚀"

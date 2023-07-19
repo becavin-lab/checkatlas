@@ -1,8 +1,7 @@
 import argparse
-
+from importlib.resources import files
 from checkatlas import atlas, checkatlas
 from checkatlas.metrics import annot, cluster, dimred
-
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -56,7 +55,7 @@ def create_parser():
         "-v",
         "--version",
         action="version",
-        version=f"Checkatlas {get_version()}",
+        version=f"Checkatlas, version {get_version()}",
         help="Display checkatlas version.",
     )
 
@@ -138,8 +137,7 @@ def get_version():
     Get version of checkatlas from checkatlas/VERSION file
     :return: checkatlas version
     """
-    return "Need to Fix version reading!"
-    # script_path = os.path.dirname(os.path.realpath(__file__))
-    # version_file = os.path.join(script_path, "VERSION")
-    # with open(version_file, "r") as version:
-    #     return version.readlines()[0].strip()
+    version_file = files(__package__).joinpath("VERSION")
+    with open(version_file) as file:
+        version = file.readline()
+        return version
