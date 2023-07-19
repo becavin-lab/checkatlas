@@ -57,22 +57,14 @@ function openPNG(evt, pngName, tablinks_id, tabcontent_id) {
 
 logger = logging.getLogger("checkatlas")
 
-EXTENSIONS = [
-    atlas.ANNDATA_EXTENSION,
-    cellranger.CELLRANGER_FILE,
-    cellranger.CELLRANGER_MATRIX_FILE,
-    seurat.SEURAT_EXTENSION,
-]
-
 
 def list_scanpy_atlases(checkatlas_path: str) -> None:
     # Get all files with matching extension
     atlas_list = list()
     for root, dirs, files in os.walk(checkatlas_path):
         for file in files:
-            for extension in EXTENSIONS:
-                if file.endswith(extension):
-                    atlas_list.append(os.path.join(root, file))
+            if file.endswith(atlas.ANNDATA_EXTENSION):
+                atlas_list.append(os.path.join(root, file))
 
     # Filter the lists keepng only atlases
     clean_scanpy_list = list()
@@ -96,6 +88,10 @@ def list_scanpy_atlases(checkatlas_path: str) -> None:
 
 def list_cellranger_atlases(checkatlas_path: str) -> None:
     # Get all files with matching extension
+    EXTENSIONS = [
+        cellranger.CELLRANGER_FILE,
+        cellranger.CELLRANGER_MATRIX_FILE,
+    ]
     atlas_list = list()
     for root, dirs, files in os.walk(checkatlas_path):
         for file in files:
@@ -128,9 +124,8 @@ def list_seurat_atlases(checkatlas_path: str) -> None:
     atlas_list = list()
     for root, dirs, files in os.walk(checkatlas_path):
         for file in files:
-            for extension in EXTENSIONS:
-                if file.endswith(extension):
-                    atlas_list.append(os.path.join(root, file))
+            if file.endswith(seurat.SEURAT_EXTENSION):
+                atlas_list.append(os.path.join(root, file))
 
     # Filter the lists keepng only atlases
     clean_seurat_list = list()
@@ -153,6 +148,9 @@ def list_seurat_atlases(checkatlas_path: str) -> None:
 
 
 def read_list_atlases(checkatlas_path: str) -> tuple:
+    clean_scanpy_list = pd.DataFrame()
+    clean_cellranger_list = pd.DataFrame()
+    clean_seurat_list = pd.DataFrame()
     if os.path.exists(chk_files.get_table_scanpy_path(checkatlas_path)):
         clean_scanpy_list = pd.read_csv(
             chk_files.get_table_scanpy_path(checkatlas_path)
