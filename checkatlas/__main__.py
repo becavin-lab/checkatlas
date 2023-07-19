@@ -75,7 +75,7 @@ def main() -> None:  # pragma: no cover
             adata = atlas.read_atlas(atlas_info)
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)
             atlas.create_qc_tables(adata, atlas_info, args)
-            atlas.create_qc_plots(adata, atlas_info, args)
+            # atlas.create_qc_plots(adata, atlas_info, args)
         elif process == checkatlas.PROCESS_TYPE[2]:
             adata = atlas.read_atlas(atlas_info)
             adata = atlas.clean_scanpy_atlas(adata, atlas_info)

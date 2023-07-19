@@ -57,15 +57,16 @@ function openPNG(evt, pngName, tablinks_id, tabcontent_id) {
 
 logger = logging.getLogger("checkatlas")
 
+EXTENSIONS = [
+    atlas.ANNDATA_EXTENSION,
+    cellranger.CELLRANGER_FILE,
+    cellranger.CELLRANGER_MATRIX_FILE,
+    seurat.SEURAT_EXTENSION,
+]
 
-def list_all_atlases(checkatlas_path: str) -> None:
+
+def list_scanpy_atlases(checkatlas_path: str) -> None:
     # Get all files with matching extension
-    EXTENSIONS = [
-        atlas.ANNDATA_EXTENSION,
-        cellranger.CELLRANGER_FILE,
-        cellranger.CELLRANGER_MATRIX_FILE,
-        seurat.SEURAT_EXTENSION,
-    ]
     atlas_list = list()
     for root, dirs, files in os.walk(checkatlas_path):
         for file in files:
@@ -75,8 +76,6 @@ def list_all_atlases(checkatlas_path: str) -> None:
 
     # Filter the lists keepng only atlases
     clean_scanpy_list = list()
-    clean_cellranger_list = list()
-    clean_seurat_list = list()
     for atlas_path in atlas_list:
         atlas_info = atlas.detect_scanpy(atlas_path)
         if len(atlas_info) != 0:
@@ -87,6 +86,26 @@ def list_all_atlases(checkatlas_path: str) -> None:
                 f"from {atlas_info[ATLAS_PATH_KEY]}"
             )
             clean_scanpy_list.append(atlas_info)
+    logger.info(
+        f"Found {len(clean_scanpy_list)} potential "
+        f"seurat files with .rds extension"
+    )
+    # Save the list of atlas taken into account
+    chk_files.save_list_scanpy(clean_scanpy_list, checkatlas_path)
+
+
+def list_cellranger_atlases(checkatlas_path: str) -> None:
+    # Get all files with matching extension
+    atlas_list = list()
+    for root, dirs, files in os.walk(checkatlas_path):
+        for file in files:
+            for extension in EXTENSIONS:
+                if file.endswith(extension):
+                    atlas_list.append(os.path.join(root, file))
+
+    # Filter the lists keepng only atlases
+    clean_cellranger_list = list()
+    for atlas_path in atlas_list:
         atlas_info = cellranger.detect_cellranger(atlas_path)
         if len(atlas_info) != 0:
             # detect if its a cellranger output
@@ -96,6 +115,26 @@ def list_all_atlases(checkatlas_path: str) -> None:
                 f"from {atlas_info[ATLAS_PATH_KEY]}"
             )
             clean_cellranger_list.append(atlas_info)
+    logger.info(
+        f"Found {len(clean_cellranger_list)} potential "
+        f"seurat files with .rds extension"
+    )
+    # Save the list of atlas taken into account
+    chk_files.save_list_cellranger(clean_cellranger_list, checkatlas_path)
+
+
+def list_seurat_atlases(checkatlas_path: str) -> None:
+    # Get all files with matching extension
+    atlas_list = list()
+    for root, dirs, files in os.walk(checkatlas_path):
+        for file in files:
+            for extension in EXTENSIONS:
+                if file.endswith(extension):
+                    atlas_list.append(os.path.join(root, file))
+
+    # Filter the lists keepng only atlases
+    clean_seurat_list = list()
+    for atlas_path in atlas_list:
         atlas_info = seurat.detect_seurat(atlas_path)
         if len(atlas_info) != 0:
             # detect if its a seurat output
@@ -105,10 +144,11 @@ def list_all_atlases(checkatlas_path: str) -> None:
                 f"from {atlas_info[ATLAS_PATH_KEY]}"
             )
             clean_seurat_list.append(atlas_info)
-
+    logger.info(
+        f"Found {len(clean_seurat_list)} potential "
+        f"seurat files with .rds extension"
+    )
     # Save the list of atlas taken into account
-    chk_files.save_list_scanpy(clean_scanpy_list, checkatlas_path)
-    chk_files.save_list_cellranger(clean_cellranger_list, checkatlas_path)
     chk_files.save_list_seurat(clean_seurat_list, checkatlas_path)
 
 
