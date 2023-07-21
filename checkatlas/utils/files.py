@@ -84,20 +84,20 @@ def save_list_seurat(clean_seurat_list: list, checkatlas_path: str) -> None:
 
 def get_html_qc_report_path(checkatlas_path: str):
     return os.path.join(
-        folders.get_folder(checkatlas_path, folders.QC_FIG),
-        "QC_report_mqc.html",
+        folders.get_workingdir(checkatlas_path),
+        "Checkatlas_QC_report_mqc.html",
     )
 
 
 def get_html_umap_report_path(checkatlas_path: str):
     return os.path.join(
-        folders.get_folder(checkatlas_path, folders.UMAP),
-        "UMAP_report_mqc.html",
+        folders.get_workingdir(checkatlas_path),
+        "Checkatlas_UMAP_report_mqc.html",
     )
 
 
 def get_html_tsne_report_path(checkatlas_path: str):
     return os.path.join(
-        folders.get_folder(checkatlas_path, folders.TSNE),
-        "tSNE_report_mqc.html",
+        folders.get_workingdir(checkatlas_path),
+        "Checkatlas_tSNE_report_mqc.html",
     )
