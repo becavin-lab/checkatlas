@@ -29,6 +29,7 @@ OBS_CLUSTERS = [
     "celltype",
     "ann_finest_level",
     "cellranger_graphclust",
+    "cellranger_kmeans",
     "seurat_clusters",
     "RNA_snn_res.0.5",
     "louvain",
@@ -108,7 +109,7 @@ def read_atlas(atlas_info: dict) -> AnnData:
             == cellranger.CELLRANGER_TYPE_CURRENT
         ):
             logger.debug(
-                "Read Cellranger results "
+                "Read Cellranger >= v3 results "
                 f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
             )
             adata = cellranger.read_cellranger_current(atlas_info)
@@ -117,7 +118,7 @@ def read_atlas(atlas_info: dict) -> AnnData:
             == cellranger.CELLRANGER_TYPE_OBSOLETE
         ):
             logger.debug(
-                "Read Cellranger results "
+                "Read Cellranger < v3 results "
                 f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
             )
             adata = cellranger.read_cellranger_obsolete(atlas_info)
@@ -588,10 +589,13 @@ def create_metric_cluster(
     obsm_umap_keys = list(filter(r.match, obsm_keys))
     r = re.compile(".*tsne*.")
     obsm_tsne_keys = list(filter(r.match, obsm_keys))
+    obsm_key_representation = ""
     if len(obsm_umap_keys) > 0:
         obsm_key_representation = obsm_umap_keys[0]
+        print('reach', obsm_key_representation)
     elif len(obsm_tsne_keys) > 0:
         obsm_key_representation = obsm_tsne_keys[0]
+        print('reach', obsm_key_representation)
 
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")

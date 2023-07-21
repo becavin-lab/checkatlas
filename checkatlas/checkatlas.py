@@ -296,8 +296,41 @@ def add_div_img(path_fig, type_viz, atlas_name, style, tabcontent):
 
 if __name__ == "__main__":
     path = "/data/analysis/data_becavin/checkatlas_test/tuto"
-    path = "/Users/christophebecavin/Documents/testatlas/"
-    # atlas_path = "/Users/christophebecavin/Documents/testatlas/"
-    atlas_info = ["test_version", "Scanpy", ".h5ad", "data/test_version.h5ad"]
-    # folders.checkatlas_folders(path)
+    atlas_info = {'Atlas_name': 'pbmc_6k_v1_v1',
+                   'Atlas_type': 'Cellranger < v3',
+                     'Atlas_extension': '.mtx',
+                       'Atlas_path': 
+                       '/data/analysis/data_becavin/'
+                       'checkatlas_test/tuto/data5/'
+                       'pbmc_6k_v1_v1/outs/'
+                       'filtered_matrices_mex/hg19/matrix.mtx'}
+    
+    """ atlas_info = {'Atlas_name': 'pbmc_5k_v3_v3',
+                   'Atlas_type': 'Cellranger >= v3',
+                     'Atlas_extension': '.h5',
+                       'Atlas_path': 
+                       '/data/analysis/data_becavin/'
+                       'checkatlas_test/tuto/data5/'
+                       'pbmc_5k_v3_v3/outs/'
+                       '5k_pbmc_v3_filtered_feature_bc_matrix.h5'}
+
+    atlas_info = {'Atlas_name': 'pbmc_5k_v3_v7',
+                   'Atlas_type': 'Cellranger >= v3',
+                     'Atlas_extension': '.h5',
+                       'Atlas_path': 
+                       '/data/analysis/data_becavin/'
+                       'checkatlas_test/tuto/data5/'
+                       'pbmc_5k_v3_v7/outs/'
+                       'SC3pv3_GEX_Human_PBMC_filtered_feature_bc_matrix.h5'}
+    
+    atlas_info = {'Atlas_name': 'pbmc_3k_multiome',
+                   'Atlas_type': 'Cellranger >= v3',
+                     'Atlas_extension': '.h5',
+                       'Atlas_path': 
+                       '/data/analysis/data_becavin/'
+                       'checkatlas_test/tuto/data5/'
+                       'pbmc_3k_multiome/outs/'
+                       'pbmc_unsorted_3k_filtered_feature_bc_matrix.h5'} """
+    
+    adata = atlas.read_atlas(atlas_info)
     # atlas_list = list_atlases(path)
