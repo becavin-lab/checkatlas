@@ -171,7 +171,6 @@ def read_list_atlases(checkatlas_path: str) -> tuple:
 
 def generate_fig_html(checkatlas_path: str, type_viz: str):
     logger.info("Generate html reports with all figs for {type}")
-    # shutil.copy2(os.path.join(f["root"], f["fn"]), fig_dir
     if type_viz == "qc":
         # data is a dictionnary wth key = data_name and value = fig_path
         qc_dict = dict()
@@ -179,51 +178,51 @@ def generate_fig_html(checkatlas_path: str, type_viz: str):
         for qc_fig in os.listdir(qc_fig_path):
             if qc_fig.endswith(".png"):
                 atlas_name = os.path.splitext(os.path.basename(qc_fig))[0]
-                print(atlas_name)
-                print("qc", qc_fig)
-                qc_dict[atlas_name] = qc_fig
-        html = create_img_html_content(type_viz, qc_dict)
-        with open(
-            chk_files.get_html_qc_report_path(checkatlas_path), "w"
-        ) as html_report:
-            html_report.write(html)
+                qc_dict[atlas_name] = os.path.join("violin", qc_fig)
+        if len(qc_dict) > 0:
+            html = create_img_html_content(type_viz, qc_dict)
+            with open(
+                chk_files.get_html_qc_report_path(checkatlas_path), "w"
+            ) as html_report:
+                html_report.write(html)
     elif type_viz == "reductions":
         umap_dict = dict()
         umap_fig_path = folders.get_folder(checkatlas_path, folders.UMAP)
         for umap_fig in os.listdir(umap_fig_path):
             if umap_fig.endswith(".png"):
                 atlas_name = os.path.splitext(os.path.basename(umap_fig))[0]
-                print(umap_fig)
-                umap_dict[atlas_name] = umap_fig
-        html = create_img_html_content(type_viz, umap_dict)
-        with open(
-            chk_files.get_html_umap_report_path(checkatlas_path), "w"
-        ) as html_report:
-            html_report.write(html)
+                umap_dict[atlas_name] = os.path.join("umap", umap_fig)
+        if len(umap_dict) > 0:
+            html = create_img_html_content(type_viz, umap_dict)
+            with open(
+                chk_files.get_html_umap_report_path(checkatlas_path), "w"
+            ) as html_report:
+                html_report.write(html)
 
         tsne_dict = dict()
         tsne_fig_path = folders.get_folder(checkatlas_path, folders.TSNE)
         for tsne_fig in os.listdir(tsne_fig_path):
             if tsne_fig.endswith(".png"):
                 atlas_name = os.path.splitext(os.path.basename(tsne_fig))[0]
-                print(atlas_name)
-                print("tsne", tsne_fig)
-                tsne_dict[atlas_name] = tsne_fig
-        html = create_img_html_content(type_viz, tsne_dict)
-        with open(
-            chk_files.get_html_tsne_report_path(checkatlas_path), "w"
-        ) as html_report:
-            html_report.write(html)
+                tsne_dict[atlas_name] = os.path.join("tsne", tsne_fig)
+        if len(tsne_dict) > 0:
+            html = create_img_html_content(type_viz, tsne_dict)
+            with open(
+                chk_files.get_html_tsne_report_path(checkatlas_path), "w"
+            ) as html_report:
+                html_report.write(html)
     else:
         logger.error(f"Type of vsualization not recognized {type_viz}")
 
 
 def create_img_html_content(type_viz, data):
-    html_content = """
+    html_content = f"""
             <!DOCTYPE html>
             <html lang="en">
-            <head></head>
-            <body>
+            <head>Custom content
+            with all {type_viz} plots found
+            in your atlases</head>
+            <body><br><br>
             <div class="tab">\n"""
     counter = 0
     tablinks = type_viz + "_tablinks"
