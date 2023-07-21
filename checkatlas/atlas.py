@@ -592,10 +592,10 @@ def create_metric_cluster(
     obsm_key_representation = ""
     if len(obsm_umap_keys) > 0:
         obsm_key_representation = obsm_umap_keys[0]
-        print('reach', obsm_key_representation)
+        print("reach", obsm_key_representation)
     elif len(obsm_tsne_keys) > 0:
         obsm_key_representation = obsm_tsne_keys[0]
-        print('reach', obsm_key_representation)
+        print("reach", obsm_key_representation)
 
     if len(obs_keys) > 0:
         logger.debug(f"Calc clustering metrics for {atlas_name}")

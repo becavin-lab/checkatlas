@@ -1,6 +1,5 @@
 import logging
 import os
-from shlex import join
 import warnings
 
 import pandas as pd
@@ -56,13 +55,17 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     Returns:
         AnnData: scanpy object from cellranger
     """
-    cellranger_out_path = os.path.dirname(atlas_info[checkatlas.ATLAS_PATH_KEY])
-    cellranger_analysis_path = os.path.join(cellranger_out_path,"analysis")
-    cellranger_clust_path = os.path.join(cellranger_analysis_path, "clustering")
+    cellranger_out_path = os.path.dirname(
+        atlas_info[checkatlas.ATLAS_PATH_KEY]
+    )
+    cellranger_analysis_path = os.path.join(cellranger_out_path, "analysis")
+    cellranger_clust_path = os.path.join(
+        cellranger_analysis_path, "clustering"
+    )
     cellranger_umap_path = os.path.join(cellranger_analysis_path, "umap")
     cellranger_tsne_path = os.path.join(cellranger_analysis_path, "tsne")
     cellranger_pca_path = os.path.join(cellranger_analysis_path, "pca")
-    
+
     print(cellranger_out_path)
     print(cellranger_analysis_path)
     print(cellranger_clust_path)
@@ -72,7 +75,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     for root, dirs, files in os.walk(cellranger_clust_path):
         for dir in dirs:
             if dir.endswith("graphclust"):
-                cluster_path = os.path.join(root, dir, 'clusters.csv')
+                cluster_path = os.path.join(root, dir, "clusters.csv")
                 if os.path.exists(cluster_path) and not root.endswith("atac"):
                     graphclust_path = cluster_path
                     break
@@ -84,9 +87,9 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
         for dir in dirs:
             # Search the highest kmeans = 10
             dir_prefix = "kmeans_10"
-            if dir_prefix in dir and not found_kmeans:                
+            if dir_prefix in dir and not found_kmeans:
                 print(dir)
-                cluster_path = os.path.join(root, dir, 'clusters.csv')
+                cluster_path = os.path.join(root, dir, "clusters.csv")
                 print(cluster_path)
                 if os.path.exists(cluster_path):
                     kmeans_path = cluster_path
@@ -94,24 +97,24 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
                     found_kmeans = True
                     break
             # Or search the highest kmeans = 5 (for multiome atlas)
-            dir_prefix = os.path.join("gex","kmeans_5")
-            if dir_prefix in os.path.join(root,dir) and not found_kmeans:                
+            dir_prefix = os.path.join("gex", "kmeans_5")
+            if dir_prefix in os.path.join(root, dir) and not found_kmeans:
                 print(dir)
-                cluster_path = os.path.join(root, dir, 'clusters.csv')
+                cluster_path = os.path.join(root, dir, "clusters.csv")
                 print(cluster_path)
                 if os.path.exists(cluster_path):
                     kmeans_path = cluster_path
                     k_value = 5
                     found_kmeans = True
                     break
-                
+
     # Search umap
     rna_umap = ""
     for root, dirs, files in os.walk(cellranger_umap_path):
         for file in files:
             print(file)
-            if file.endswith('projection.csv') and not root.endswith("atac"):
-                print('found', file)
+            if file.endswith("projection.csv") and not root.endswith("atac"):
+                print("found", file)
                 rna_umap = os.path.join(root, file)
                 print(rna_umap)
                 break
@@ -121,8 +124,8 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     for root, dirs, files in os.walk(cellranger_tsne_path):
         for file in files:
             print(file)
-            if file.endswith('projection.csv') and not root.endswith("atac"):
-                print('found', file)
+            if file.endswith("projection.csv") and not root.endswith("atac"):
+                print("found", file)
                 rna_tsne = os.path.join(root, file)
                 print(rna_tsne)
                 break
@@ -131,14 +134,16 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     for root, dirs, files in os.walk(cellranger_pca_path):
         for file in files:
             print(file)
-            if file.endswith('projection.csv') and not root.endswith("atac"):
-                print('found', file)
+            if file.endswith("projection.csv") and not root.endswith("atac"):
+                print("found", file)
                 rna_pca = os.path.join(root, file)
                 print(rna_pca)
                 break
-    
+
     # Manage multiome cellranger files
-    dim_red_path = os.path.join(cellranger_analysis_path, "dimensionality_reduction")
+    dim_red_path = os.path.join(
+        cellranger_analysis_path, "dimensionality_reduction"
+    )
     if os.path.exists(dim_red_path):
         gex_path = os.path.join(dim_red_path, "gex")
         if os.path.exists(gex_path):
@@ -149,16 +154,16 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     # Read 10x h5 file
     adata = sc.read_10x_h5(atlas_info[checkatlas.ATLAS_PATH_KEY])
     adata.var_names_make_unique()
-    
+
     # Add cluster
     if os.path.exists(graphclust_path):
         df_cluster = pd.read_csv(graphclust_path, index_col=0)
         adata.obs["cellranger_graphclust"] = df_cluster["Cluster"]
     if os.path.exists(kmeans_path):
         df_cluster = pd.read_csv(kmeans_path, index_col=0)
-        adata.obs["cellranger_kmeans_"+str(k_value)] = df_cluster["Cluster"]
+        adata.obs["cellranger_kmeans_" + str(k_value)] = df_cluster["Cluster"]
     print(adata.obs.columns)
-    
+
     # Add reduction
     if os.path.exists(rna_umap):
         df_umap = pd.read_csv(rna_umap, index_col=0)
@@ -192,9 +197,13 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     cellranger_path = atlas_info[checkatlas.ATLAS_PATH_KEY].replace(
         CELLRANGER_MATRIX_FILE, ""
     )
-    cellranger_out_path = os.path.join(cellranger_path, os.pardir,os.pardir)
-    cellranger_analysis_path = os.path.join(cellranger_out_path,"analysis_csv")
-    cellranger_clust_path = os.path.join(cellranger_analysis_path, "clustering")
+    cellranger_out_path = os.path.join(cellranger_path, os.pardir, os.pardir)
+    cellranger_analysis_path = os.path.join(
+        cellranger_out_path, "analysis_csv"
+    )
+    cellranger_clust_path = os.path.join(
+        cellranger_analysis_path, "clustering"
+    )
     cellranger_umap_path = os.path.join(cellranger_analysis_path, "umap")
     cellranger_tsne_path = os.path.join(cellranger_analysis_path, "tsne")
     cellranger_pca_path = os.path.join(cellranger_analysis_path, "pca")
@@ -208,7 +217,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     for root, dirs, files in os.walk(cellranger_out_path):
         for dir in dirs:
             if dir.endswith("graphclust"):
-                cluster_path = os.path.join(root, dir, 'clusters.csv')
+                cluster_path = os.path.join(root, dir, "clusters.csv")
                 if os.path.exists(cluster_path):
                     graphclust_path = cluster_path
                     break
@@ -219,23 +228,18 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
         for dir in dirs:
             if dir.endswith("kmeans"):
                 # Search the highest kmeans from 15 to 3
-                for k in reversed(range(3,16)):
-                    cluster_path = os.path.join(root, dir, str(k)+'_clusters', 'clusters.csv')
+                for k in reversed(range(3, 16)):
+                    cluster_path = os.path.join(
+                        root, dir, str(k) + "_clusters", "clusters.csv"
+                    )
                     if os.path.exists(cluster_path):
                         kmeans_path = cluster_path
                         k_value = k
                         break
 
-
-    rna_umap = os.path.join(
-        cellranger_umap_path, "projection.csv"
-    )
-    rna_tsne = os.path.join(
-        cellranger_tsne_path, "projection.csv"
-    )
-    rna_pca = os.path.join(
-        cellranger_pca_path, "projection.csv"
-    )
+    rna_umap = os.path.join(cellranger_umap_path, "projection.csv")
+    rna_tsne = os.path.join(cellranger_tsne_path, "projection.csv")
+    rna_pca = os.path.join(cellranger_pca_path, "projection.csv")
     # get matrix folder
     matrix_folder = os.path.dirname(atlas_info[checkatlas.ATLAS_PATH_KEY])
     adata = sc.read_10x_mtx(matrix_folder)
@@ -247,7 +251,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
         adata.obs["cellranger_graphclust"] = df_cluster["Cluster"]
     if os.path.exists(kmeans_path):
         df_cluster = pd.read_csv(kmeans_path, index_col=0)
-        adata.obs["cellranger_kmeans_"+str(k_value)] = df_cluster["Cluster"]
+        adata.obs["cellranger_kmeans_" + str(k_value)] = df_cluster["Cluster"]
     print(adata.obs.columns)
 
     # Add reduction

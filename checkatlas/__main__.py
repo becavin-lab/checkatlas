@@ -35,7 +35,7 @@ def main() -> None:  # pragma: no cover
         logger.setLevel(getattr(logging, "INFO"))
 
     logger.debug(f"Program arguments: {args}")
-    
+
     #   ######    Run Checkatlas   #########
     (
         clean_scanpy_list,

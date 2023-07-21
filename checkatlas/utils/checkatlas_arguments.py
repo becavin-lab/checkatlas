@@ -1,7 +1,9 @@
 import argparse
 from importlib.resources import files
+
 from checkatlas import atlas, checkatlas
 from checkatlas.metrics import annot, cluster, dimred
+
 
 def create_parser():
     parser = argparse.ArgumentParser(
