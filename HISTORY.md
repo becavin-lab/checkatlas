@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Remove qc, uma,tsne from multiqc custom content. [Christophe Bécavin]
+- Release: version 0.3.7 🚀 [Christophe Bécavin]
 - Newreleasewith cellranger management improved. [Christophe Bécavin]
 - Add multiple cellranger types management. Clustering and reductions
   from subfolders in outs folder are processed for Cellranger v1to v7and
