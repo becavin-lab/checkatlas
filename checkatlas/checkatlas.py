@@ -22,9 +22,9 @@ PROCESS_TYPE = [
 ]
 
 TSV_EXTENSION = ".tsv"
-QC_FIG_EXTENSION = "_mqc.png"
-UMAP_EXTENSION = "_umap_mqc.png"
-TSNE_EXTENSION = "_tsne_mqc.png"
+QC_FIG_EXTENSION = "_qc.png"
+UMAP_EXTENSION = "_umap.png"
+TSNE_EXTENSION = "_tsne.png"
 
 ATLAS_NAME_KEY = "Atlas_name"
 ATLAS_TYPE_KEY = "Atlas_type"
