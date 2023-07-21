@@ -60,7 +60,7 @@ ci:          ## Run a continuous integration : Add every change to git and creat
 	@git add --all
 	@git commit -m "Continuous integration 🔄 tests-$(VERSION)"
 	@echo "creating git tag : tests-$(VERSION)"
-	@git tag tests-$(VERSION)-4
+	@git tag tests-$(VERSION)-1
 	@git push -u origin HEAD --tags
 	@echo "Github Actions will detect the new tag and run the continuous integration process."
 
@@ -71,7 +71,7 @@ release:          ## Create a new tag for release.
 	@echo "Saving version to: checkatlas/utils/VERSION"
 	@echo "${VERSION}" > "checkatlas/utils/VERSION"
 	@$(ENV_PREFIX)poetry run gitchangelog > HISTORY.md
-	@git add HISTORY.md pyproject.toml
+	@git add HISTORY.md pyproject.toml checkatlas/utils/VERSION
 	@git commit -m "release: version $(VERSION) 🚀"
 	@echo "creating git tag : release-$(VERSION)"
 	@git tag release-$(VERSION)

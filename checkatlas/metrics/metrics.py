@@ -29,11 +29,11 @@ def calc_metric_cluster_scanpy(
     if metric in METRICS_CLUST:
         metric_module = getattr(cluster, metric)
         annotations = adata.obs[obs_key]
-        if obsm_key_representation:
+        if obsm_key_representation != "":
             count_repr = adata.obsm[obsm_key_representation]
             return metric_module.run(count_repr, annotations)
         else:
-            original_count = adata.X
+            original_count = adata.X.toarray()
             return metric_module.run(original_count, annotations)
     else:
         logger.warning(
