@@ -1,0 +1,40 @@
+
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>Custom content
+            with all reductions plots found
+            in your atlases</head>
+            <body><br><br>
+            <div class="tab">
+  <button class="reductions_tablinks active" onclick="openPNG(event, 'reductions_Fetal_v2_umap',
+                            'reductions_tablinks','reductions_tabcontent')">Fetal_v2_umap</button>
+  <button class="reductions_tablinks" onclick="openPNG(event, 'reductions_Fetal_v3_umap',
+                            'reductions_tablinks','reductions_tabcontent')">Fetal_v3_umap</button>
+  <button class="reductions_tablinks" onclick="openPNG(event, 'reductions_Fetal_v1_umap',
+                            'reductions_tablinks','reductions_tabcontent')">Fetal_v1_umap</button>
+</div><div id="reductions_Fetal_v2_umap" class="reductions_tabcontent" style ="display: block;"><img src="umap/Fetal_v2_umap.png" >
+</div>
+<div id="reductions_Fetal_v3_umap" class="reductions_tabcontent" style ="display: none;"><img src="umap/Fetal_v3_umap.png" >
+</div>
+<div id="reductions_Fetal_v1_umap" class="reductions_tabcontent" style ="display: none;"><img src="umap/Fetal_v1_umap.png" >
+</div>
+
+<script>
+function openPNG(evt, pngName, tablinks_id, tabcontent_id) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName(tabcontent_id);
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName(tablinks_id);
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(pngName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+
+        </body>
+        </html>
+        

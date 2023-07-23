@@ -1,0 +1,4 @@
+Sample	AtlasFileType	NbCells	NbGenes	AnnData.raw	AnnData.X	File_extension	File_path
+B-cells_compartment	AnnData	54934	36503	True	True	B-cells_compartment	/data/analysis/data_becavin/checkatlas_test/tuto/data1/B-cells_compartment.h5ad
+Fetal	AnnData	27203	32828	True	True	Fetal	/data/analysis/data_becavin/checkatlas_test/tuto/data1/Fetal.h5ad
+Tabula_Sapiens_Endothelial	AnnData	31691	58559	True	True	Tabula_Sapiens_Endothelial	/data/analysis/data_becavin/checkatlas_test/tuto/data1/Tabula_Sapiens_Endothelial.h5ad

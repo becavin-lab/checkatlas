@@ -1,4 +1,0 @@
-Sample	AtlasFileType	NbCells	NbGenes	AnnData.raw	AnnData.X	File_extension	File_path
-B-cells_compartment	Scanpy	54934	36503	True	True	.rds	/B-cells_compartment.h5ad
-Fetal	Scanpy	27203	32828	True	True	.rds	/Fetal.h5ad
-Tabula_Sapiens_Endothelial	Scanpy	31691	58559	True	True	.rds	/Tabula_Sapiens_Endothelial.h5ad

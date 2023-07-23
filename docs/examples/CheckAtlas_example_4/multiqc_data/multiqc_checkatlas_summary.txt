@@ -1,0 +1,5 @@
+Sample	AtlasFileType	NbCells	NbGenes	AnnData.raw	AnnData.X	File_extension	File_path
+pbmc_3k_68k_integrated	AnnData	700	208	True	True	pbmc_3k_68k_integrated	/data/analysis/data_becavin/checkatlas_test/tuto/data4/pbmc_3k_68k_integrated.h5ad
+pbmc_3k_68k_integrated_checkatlas_summ	Scanpy	700	208	True	True	.h5ad	/pbmc_3k_68k_integrated.h5ad
+pbmc_3k_v1	Cellranger < v3	2700	32738	False	True	pbmc_3k_v1	/data/analysis/data_becavin/checkatlas_test/tuto/data4/pbmc_3k_v1/outs/filtered_gene_bc_matrices/hg19/matrix.mtx
+pbmc_68k_v1	Cellranger < v3	68579	32738	False	True	pbmc_68k_v1	/data/analysis/data_becavin/checkatlas_test/tuto/data4/pbmc_68k_v1/outs/filtered_matrices_mex/hg19/matrix.mtx
