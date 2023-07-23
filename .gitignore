@@ -11,6 +11,7 @@ tests/data/checkatlas_files/
 .nextflow/
 .nextflow.log*
 work/
+null/
 report-*
 timeline-*
 dag-*
