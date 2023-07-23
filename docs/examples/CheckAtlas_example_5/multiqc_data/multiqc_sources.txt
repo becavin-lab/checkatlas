@@ -1,0 +1,6 @@
+Module	Section	Sample Name	Source
+CheckAtlas	all_sections	pbmc_5k_v3_v7	/data/analysis/data_becavin/checkatlas_test/tuto/work/2a/2331793a40995f995033511fd51186/data5/checkatlas_files/dimred/pbmc_5k_v3_v7.tsv
+CheckAtlas	all_sections	pbmc_3k_multiome	/data/analysis/data_becavin/checkatlas_test/tuto/work/2a/2331793a40995f995033511fd51186/data5/checkatlas_files/dimred/pbmc_3k_multiome.tsv
+CheckAtlas	all_sections	pbmc_6k_v1_v1	/data/analysis/data_becavin/checkatlas_test/tuto/work/2a/2331793a40995f995033511fd51186/data5/checkatlas_files/dimred/pbmc_6k_v1_v1.tsv
+CheckAtlas	all_sections	pbmc_5k_v3_v3	/data/analysis/data_becavin/checkatlas_test/tuto/work/2a/2331793a40995f995033511fd51186/data5/checkatlas_files/dimred/pbmc_5k_v3_v3.tsv
+cellranger	count	SC3pv3_GEX_Human_PBMC	/data/analysis/data_becavin/checkatlas_test/tuto/work/2a/2331793a40995f995033511fd51186/data5/pbmc_5k_v3_v7/outs/SC3pv3_GEX_Human_PBMC_web_summary.html

@@ -1,0 +1,5 @@
+Sample	AtlasFileType	NbCells	NbGenes	AnnData.raw	AnnData.X	File_extension	File_path
+pbmc_3k_multiome	Cellranger >= v3	3009	36601	False	True	pbmc_3k_multiome	/data/analysis/data_becavin/checkatlas_test/tuto/data5/pbmc_3k_multiome/outs/pbmc_unsorted_3k_filtered_feature_bc_matrix.h5
+pbmc_5k_v3_v3	Cellranger >= v3	5025	33538	False	True	pbmc_5k_v3_v3	/data/analysis/data_becavin/checkatlas_test/tuto/data5/pbmc_5k_v3_v3/outs/5k_pbmc_v3_filtered_feature_bc_matrix.h5
+pbmc_5k_v3_v7	Cellranger >= v3	5140	36601	False	True	pbmc_5k_v3_v7	/data/analysis/data_becavin/checkatlas_test/tuto/data5/pbmc_5k_v3_v7/outs/SC3pv3_GEX_Human_PBMC_filtered_feature_bc_matrix.h5
+pbmc_6k_v1_v1	Cellranger < v3	5419	32738	False	True	pbmc_6k_v1_v1	/data/analysis/data_becavin/checkatlas_test/tuto/data5/pbmc_6k_v1_v1/outs/filtered_matrices_mex/hg19/matrix.mtx

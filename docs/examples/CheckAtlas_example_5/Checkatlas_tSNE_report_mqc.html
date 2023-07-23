@@ -1,0 +1,44 @@
+
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>Custom content
+            with all reductions plots found
+            in your atlases</head>
+            <body><br><br>
+            <div class="tab">
+  <button class="reductions_tablinks active" onclick="openPNG(event, 'reductions_pbmc_5k_v3_v3_tsne',
+                            'reductions_tablinks','reductions_tabcontent')">pbmc_5k_v3_v3_tsne</button>
+  <button class="reductions_tablinks" onclick="openPNG(event, 'reductions_pbmc_3k_multiome_tsne',
+                            'reductions_tablinks','reductions_tabcontent')">pbmc_3k_multiome_tsne</button>
+  <button class="reductions_tablinks" onclick="openPNG(event, 'reductions_pbmc_6k_v1_v1_tsne',
+                            'reductions_tablinks','reductions_tabcontent')">pbmc_6k_v1_v1_tsne</button>
+  <button class="reductions_tablinks" onclick="openPNG(event, 'reductions_pbmc_5k_v3_v7_tsne',
+                            'reductions_tablinks','reductions_tabcontent')">pbmc_5k_v3_v7_tsne</button>
+</div><div id="reductions_pbmc_5k_v3_v3_tsne" class="reductions_tabcontent" style ="display: block;"><img src="tsne/pbmc_5k_v3_v3_tsne.png" >
+</div>
+<div id="reductions_pbmc_3k_multiome_tsne" class="reductions_tabcontent" style ="display: none;"><img src="tsne/pbmc_3k_multiome_tsne.png" >
+</div>
+<div id="reductions_pbmc_6k_v1_v1_tsne" class="reductions_tabcontent" style ="display: none;"><img src="tsne/pbmc_6k_v1_v1_tsne.png" >
+</div>
+<div id="reductions_pbmc_5k_v3_v7_tsne" class="reductions_tabcontent" style ="display: none;"><img src="tsne/pbmc_5k_v3_v7_tsne.png" >
+</div>
+
+<script>
+function openPNG(evt, pngName, tablinks_id, tabcontent_id) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName(tabcontent_id);
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName(tablinks_id);
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(pngName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+
+        </body>
+        </html>
+        
