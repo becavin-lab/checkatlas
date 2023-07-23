@@ -4,6 +4,17 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.3.10. [drbecavin]
+- Add exampleto docs. [drbecavin]
+- Merge branch 'main' of github.com:becavin-lab/checkatlas yeswq.
+  [Christophe Bécavin]
+- Clean examples. [drbecavin]
+- Add example 5. [Christophe Bécavin]
+- Update examples notebok. [Christophe Bécavin]
+- Update examples, put them in docs, put jupyter ntbook examples in
+  docs. [Christophe Bécavin]
+- Update examples. [Christophe Bécavin]
+- Release: version 0.3.9 🚀 [Christophe Bécavin]
 - Ready for new release with improved html reports. [Christophe Bécavin]
 - Fix html reports creation. [Christophe Bécavin]
 - Release: version 0.3.8 🚀 [Christophe Bécavin]
