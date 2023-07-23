@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.3.12. [drbecavin]
+- Modify readmle and docs. [drbecavin]
+- Release: version 0.3.11 🚀 [drbecavin]
 - Release: version 0.3.11 🚀 [drbecavin]
 - Modify readmle and docs. [drbecavin]
 - Release: version 0.3.10 🚀 [drbecavin]
