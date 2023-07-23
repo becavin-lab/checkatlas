@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Modify readmle and docs. [drbecavin]
+- Release: version 0.3.10 🚀 [drbecavin]
 - Continuous integration 🔄 tests-0.3.10. [drbecavin]
 - Add exampleto docs. [drbecavin]
 - Merge branch 'main' of github.com:becavin-lab/checkatlas yeswq.
