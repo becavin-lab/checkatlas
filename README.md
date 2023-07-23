@@ -48,26 +48,26 @@ https://checkatlas.readthedocs.io/en/latest/
 ### Example 1 - Evaluate and compare heterogenous scanpy atlases
 
 Evaluate and compare different atlases:
-![Example 1](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_1/Checkatlas_MultiQC.html)
+[Example 1](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_1/Checkatlas_MultiQC.html)
 
 ### Example 2 - Evaluate different version of the same atlas
 
 Evaluate different version of your atlas:
-![Example 2](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_2/Checkatlas_MultiQC.html)
+[Example 2](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_2/Checkatlas_MultiQC.html)
 
 ### Example 3 - Evaluate Scanpy, Seurat and CellRanger atlases
 
 Evaluate Scanpy, Seurat and CellRanger objects in your folder:
-![Example 3](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_3/Checkatlas_MultiQC.html)
+[Example 3](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_3/Checkatlas_MultiQC.html)
 
 ### Example 4 - Evaluate post-process and raw atlases
 
 Evaluate an integrated Scanpy atlas with the corresponding raw CellRanger atlases:
-![Example 3](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_4/Checkatlas_MultiQC.html)
+[Example 4](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_4/Checkatlas_MultiQC.html)
 
 ### Example 5 - Avaluate different cellranger version atlases
 Evaluate different Cellranger atlases with multiple chemistry version and cellranger version:
-![Example 3](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_5/Checkatlas_MultiQC.html)
+[Example 5](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_5/Checkatlas_MultiQC.html)
 
 
 ## Installation
