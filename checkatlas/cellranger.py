@@ -145,7 +145,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     if os.path.exists(kmeans_path):
         df_cluster = pd.read_csv(kmeans_path, index_col=0)
         adata.obs["cellranger_kmeans_" + str(k_value)] = df_cluster["Cluster"]
-    
+
     # Add reduction
     if os.path.exists(rna_umap):
         df_umap = pd.read_csv(rna_umap, index_col=0)
@@ -156,7 +156,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     if os.path.exists(rna_pca):
         df_pca = pd.read_csv(rna_pca, index_col=0)
         adata.obsm["X_pca"] = df_pca
-    
+
     return adata
 
 
@@ -183,7 +183,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     cellranger_analysis_path = os.path.join(
         cellranger_out_path, "analysis_csv"
     )
-    
+
     cellranger_umap_path = os.path.join(cellranger_analysis_path, "umap")
     cellranger_tsne_path = os.path.join(cellranger_analysis_path, "tsne")
     cellranger_pca_path = os.path.join(cellranger_analysis_path, "pca")
@@ -219,7 +219,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     rna_umap = os.path.join(cellranger_umap_path, "projection.csv")
     rna_tsne = os.path.join(cellranger_tsne_path, "projection.csv")
     rna_pca = os.path.join(cellranger_pca_path, "projection.csv")
-    
+
     # get matrix folder
     matrix_folder = os.path.dirname(atlas_info[checkatlas.ATLAS_PATH_KEY])
     adata = sc.read_10x_mtx(matrix_folder)
@@ -232,7 +232,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     if os.path.exists(kmeans_path):
         df_cluster = pd.read_csv(kmeans_path, index_col=0)
         adata.obs["cellranger_kmeans_" + str(k_value)] = df_cluster["Cluster"]
-    
+
     # Add reduction
     if os.path.exists(rna_umap):
         df_umap = pd.read_csv(rna_umap, index_col=0)
