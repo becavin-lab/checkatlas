@@ -1,0 +1,4 @@
+Module	Section	Sample Name	Source
+CheckAtlas	all_sections	Fetal	/data/analysis/data_becavin/checkatlas_test/tuto/work/9c/2553b551000879f5f2747f4fc4b036/data1/checkatlas_files/dimred/Fetal.tsv
+CheckAtlas	all_sections	Tabula_Sapiens_Endothelial	/data/analysis/data_becavin/checkatlas_test/tuto/work/9c/2553b551000879f5f2747f4fc4b036/data1/checkatlas_files/dimred/Tabula_Sapiens_Endothelial.tsv
+CheckAtlas	all_sections	B-cells_compartment	/data/analysis/data_becavin/checkatlas_test/tuto/work/9c/2553b551000879f5f2747f4fc4b036/data1/checkatlas_files/dimred/B-cells_compartment.tsv

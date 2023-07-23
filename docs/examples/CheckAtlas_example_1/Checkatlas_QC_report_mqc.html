@@ -1,0 +1,40 @@
+
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>Custom content
+            with all qc plots found
+            in your atlases</head>
+            <body><br><br>
+            <div class="tab">
+  <button class="qc_tablinks active" onclick="openPNG(event, 'qc_B-cells_compartment_qc',
+                            'qc_tablinks','qc_tabcontent')">B-cells_compartment_qc</button>
+  <button class="qc_tablinks" onclick="openPNG(event, 'qc_Tabula_Sapiens_Endothelial_qc',
+                            'qc_tablinks','qc_tabcontent')">Tabula_Sapiens_Endothelial_qc</button>
+  <button class="qc_tablinks" onclick="openPNG(event, 'qc_Fetal_qc',
+                            'qc_tablinks','qc_tabcontent')">Fetal_qc</button>
+</div><div id="qc_B-cells_compartment_qc" class="qc_tabcontent" style ="display: block;"><img src="violin/B-cells_compartment_qc.png" >
+</div>
+<div id="qc_Tabula_Sapiens_Endothelial_qc" class="qc_tabcontent" style ="display: none;"><img src="violin/Tabula_Sapiens_Endothelial_qc.png" >
+</div>
+<div id="qc_Fetal_qc" class="qc_tabcontent" style ="display: none;"><img src="violin/Fetal_qc.png" >
+</div>
+
+<script>
+function openPNG(evt, pngName, tablinks_id, tabcontent_id) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName(tabcontent_id);
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName(tablinks_id);
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(pngName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+
+        </body>
+        </html>
+        

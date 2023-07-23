@@ -1,0 +1,4 @@
+Module	Section	Sample Name	Source
+CheckAtlas	all_sections	pbmc_3k_seurat	/data/analysis/data_becavin/checkatlas_test/tuto/work/f5/face1e71460f5c293919bd7810cf22/data3/checkatlas_files/dimred/pbmc_3k_seurat.tsv
+CheckAtlas	all_sections	pbmc_3k_scanpy	/data/analysis/data_becavin/checkatlas_test/tuto/work/f5/face1e71460f5c293919bd7810cf22/data3/checkatlas_files/dimred/pbmc_3k_scanpy.tsv
+CheckAtlas	all_sections	pbmc_3k_cellranger	/data/analysis/data_becavin/checkatlas_test/tuto/work/f5/face1e71460f5c293919bd7810cf22/data3/checkatlas_files/qc/pbmc_3k_cellranger.tsv

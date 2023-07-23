@@ -1,0 +1,7 @@
+Module	Section	Sample Name	Source
+CheckAtlas	all_sections	pbmc_3k_v1	/data/analysis/data_becavin/checkatlas_test/tuto/work/65/9ba8bb82797022b592961641925d3d/data4/checkatlas_files/cluster/pbmc_3k_v1.tsv
+CheckAtlas	all_sections	pbmc_3k_68k_integrated	/data/analysis/data_becavin/checkatlas_test/tuto/work/65/9ba8bb82797022b592961641925d3d/data4/checkatlas_files/dimred/pbmc_3k_68k_integrated.tsv
+CheckAtlas	all_sections	pbmc_3k_68k_integrated_checkatlas_summ	/data/analysis/data_becavin/checkatlas_test/tuto/work/65/9ba8bb82797022b592961641925d3d/data4/checkatlas_files/summary/pbmc_3k_68k_integrated_checkatlas_summ.tsv
+CheckAtlas	all_sections	pbmc_68k_v1	/data/analysis/data_becavin/checkatlas_test/tuto/work/65/9ba8bb82797022b592961641925d3d/data4/checkatlas_files/qc/pbmc_68k_v1.tsv
+CheckAtlas	all_sections	pbmc_5k_cellranger_checkatlas_qc	/data/analysis/data_becavin/checkatlas_test/tuto/work/65/9ba8bb82797022b592961641925d3d/data4/checkatlas_files/qc/pbmc_5k_cellranger_checkatlas_qc.tsv
+CheckAtlas	all_sections	pbmc_3k_68k_integrated_checkatlas_qc	/data/analysis/data_becavin/checkatlas_test/tuto/work/65/9ba8bb82797022b592961641925d3d/data4/checkatlas_files/qc/pbmc_3k_68k_integrated_checkatlas_qc.tsv

@@ -1,0 +1,48 @@
+
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>Custom content
+            with all qc plots found
+            in your atlases</head>
+            <body><br><br>
+            <div class="tab">
+  <button class="qc_tablinks active" onclick="openPNG(event, 'qc_pbmc_5k_cellranger_checkatlas_qc',
+                            'qc_tablinks','qc_tabcontent')">pbmc_5k_cellranger_checkatlas_qc</button>
+  <button class="qc_tablinks" onclick="openPNG(event, 'qc_pbmc_3k_68k_integrated_qc',
+                            'qc_tablinks','qc_tabcontent')">pbmc_3k_68k_integrated_qc</button>
+  <button class="qc_tablinks" onclick="openPNG(event, 'qc_pbmc_3k_68k_integrated_checkatlas_qc',
+                            'qc_tablinks','qc_tabcontent')">pbmc_3k_68k_integrated_checkatlas_qc</button>
+  <button class="qc_tablinks" onclick="openPNG(event, 'qc_pbmc_3k_v1_qc',
+                            'qc_tablinks','qc_tabcontent')">pbmc_3k_v1_qc</button>
+  <button class="qc_tablinks" onclick="openPNG(event, 'qc_pbmc_68k_v1_qc',
+                            'qc_tablinks','qc_tabcontent')">pbmc_68k_v1_qc</button>
+</div><div id="qc_pbmc_5k_cellranger_checkatlas_qc" class="qc_tabcontent" style ="display: block;"><img src="violin/pbmc_5k_cellranger_checkatlas_qc.png" >
+</div>
+<div id="qc_pbmc_3k_68k_integrated_qc" class="qc_tabcontent" style ="display: none;"><img src="violin/pbmc_3k_68k_integrated_qc.png" >
+</div>
+<div id="qc_pbmc_3k_68k_integrated_checkatlas_qc" class="qc_tabcontent" style ="display: none;"><img src="violin/pbmc_3k_68k_integrated_checkatlas_qc.png" >
+</div>
+<div id="qc_pbmc_3k_v1_qc" class="qc_tabcontent" style ="display: none;"><img src="violin/pbmc_3k_v1_qc.png" >
+</div>
+<div id="qc_pbmc_68k_v1_qc" class="qc_tabcontent" style ="display: none;"><img src="violin/pbmc_68k_v1_qc.png" >
+</div>
+
+<script>
+function openPNG(evt, pngName, tablinks_id, tabcontent_id) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName(tabcontent_id);
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName(tablinks_id);
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(pngName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>
+
+        </body>
+        </html>
+        
