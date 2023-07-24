@@ -16,7 +16,7 @@
 ![Static Badge](https://img.shields.io/badge/Linting-flake8%20black%20mypy-yellow)
 
 CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
-quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
+quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to check the quality of Scanpy, Seurat,
 and CellRanger files.
 
 More information on the [read the doc page](https://checkatlas.readthedocs.io/en/latest/)
@@ -24,7 +24,7 @@ More information on the [read the doc page](https://checkatlas.readthedocs.io/en
 
 ## Summary
 
-Poowered by nextflow, checkatlas can be ran in one command line:
+Powered by nextflow, checkatlas can be ran in one command line:
 
 ```bash
 nextflow run nf-core-checkatlas --path search_folder/
@@ -40,15 +40,17 @@ Then, it goes through all atlas files and produce summary information:
 - Reductions (pca, umap, tsne)
 - All metrics (clustering, annotation, dimreduction, specificity)
 
+A single html report is produced, using MultiQC.
+
 ![Checkatlas woorkflow](docs/checkatlas_workflow.png)
 
 
 ## Examples
 
-- Evaluate and compare different atlases:
+- Evaluate and compare different scanpy atlases:
 [Example 1](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_1/Checkatlas_MultiQC.html)
 
-- Evaluate different version of your atlas:
+- Evaluate different version of one atlas:
 [Example 2](https://checkatlas.readthedocs.io/en/latest/examples/CheckAtlas_example_2/Checkatlas_MultiQC.html)
 
 - Evaluate Scanpy, Seurat and CellRanger objects in your folder:
@@ -89,8 +91,6 @@ Finally, checkatlas comes with rpy2 to perform the interface between python and 
 > install.packages('Seurat')
 > library(Seurat)
 ```
-
-
 
 
 ## Development
