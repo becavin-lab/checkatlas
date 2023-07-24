@@ -7,6 +7,9 @@ dask-worker-space/
 # CheckAtlas_*
 tests/data/checkatlas_files/
 
+# powerpoint / office
+docs/~$*
+
 # Nextflow
 .nextflow/
 .nextflow.log*
