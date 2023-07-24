@@ -19,17 +19,20 @@ CheckAtlas is a one liner tool to check the quality of your single-cell atlases.
 quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
 and CellRanger files.
 
+More information on the [read the doc page](https://checkatlas.readthedocs.io/en/latest/)
+
 
 ## Summary
 
-### Parse Scanpy, Seurat and CellRanger objects
+Poowered by nextflow, checkatlas can be ran in one command line:
 
-The checkatlas pipeline start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
+```bash
+nextflow run nf-core-checkatlas --path search_folder/
+```
 
+The checkatlas workflow start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
 
-### Create checkatlas summary files
-
-Go through all atlas files and produce summary information:
+Then, it goes through all atlas files and produce summary information:
 
 - All basic QC (nRNA, nFeature, ratio_mito)
 - General information (nbcells, nbgenes, nblayers)
@@ -37,11 +40,8 @@ Go through all atlas files and produce summary information:
 - Reductions (pca, umap, tsne)
 - All metrics (clustering, annotation, dimreduction, specificity)
 
-### Parse checkatlas files in MultiQC
+![Checkatlas woorkflow](docs/checkatlas_workflow.png)
 
-   Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
-
-https://checkatlas.readthedocs.io/en/latest/
 
 ## Examples
 
@@ -63,16 +63,17 @@ https://checkatlas.readthedocs.io/en/latest/
 
 ## Installation
 
-CheckAtlas can be downloaded from PyPI. However, the project is in an early development phase. We strongly recommend to use the developmental version.
-
-### Install checkatlas development version
+CheckAtlas is in two parts. The checkatlas pythn module which can be downloaded with PyPi, and the checkatlas workflow which can be downloaded with nextflow.
 
 ```bash
-git clone git@github.com:becavin-lab/checkatlas.git
-pip install checkatlas/.
+pip install checkatlas
 ```
 
-Install MultiQC with checkatlas file management. This version of MultiQC is available at checkatlas branch of github.com:becavin-lab/MultiQC.
+```bash
+nextflow pull becavin-lab/nf-core-checkatlas
+```
+
+You need also to install a version of MultiQC with checkatlas capability (for the moment). This version of MultiQC is available at checkatlas branch of github.com:becavin-lab/MultiQC.
 
 ```bash
 git clone git@github.com:becavin-lab/MultiQC.git
@@ -81,23 +82,7 @@ git checkout checkatlas
 pip install .
 ```
 
-### Install it from PyPI
-
-```bash
-pip install checkatlas
-```
-
-### Install Seurat
-
-To be able to manage seurat file, rpy2 should have Seurat installed. The easiest way is to put all checkatlas requirements in a conda environment and add r-seurat.
-
-```bash
-conda create -n checkatlas python=3.9
-pip install checkatlas
-conda install -c bioconda r-seurat
-```
-
-Or, open R in checkatlas environment (the one where you ran 'pip install') and install Seurat.
+Finally, checkatlas comes with rpy2 to perform the interface between python and R. But, it does not automatically install Seurat. So if you want to screen Seurat atlases you need to perfrom this last installation
 
 ```bash
 % R
@@ -106,28 +91,14 @@ Or, open R in checkatlas environment (the one where you ran 'pip install') and i
 ```
 
 
-## Usage
-
-The one liner way to run checkatlas is the following: 
-
-```bash
-$ cd your_search_folder/
-$ python -m checkatlas .
-#or
-$ checkatlas .
-```
-
-Or run it inside your python workflow.
-
-```py
-from checkatlas import checkatlas
-checkatlas.run(path, atlas_list, multithread, n_cpus)
-```
 
 
 ## Development
 
+This project is in a very early development phase. All helps are welcome. Please contact us or submit an issue.
+
 Read the [CONTRIBUTING.md](docs/contributing.md) file.
+
 
 Project developed thanks to the project template : (https://github.com/rochacbruno/python-project-template/)
 
