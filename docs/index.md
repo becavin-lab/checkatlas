@@ -1,4 +1,4 @@
-# ![CheckAtlas](docs/images/checkatlas_logo.png) 
+# ![CheckAtlas](images/checkatlas_logo.png) 
 
 
 ![PyPI](https://img.shields.io/pypi/v/checkatlas)
@@ -19,8 +19,6 @@ CheckAtlas is a one liner tool to check the quality of your single-cell atlases.
 quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to check the quality of Scanpy, Seurat,
 and CellRanger files.
 
-More information on the [read the doc page](https://checkatlas.readthedocs.io/en/latest/)
-
 
 ## Summary
 
@@ -40,8 +38,8 @@ Then, it goes through all atlas files and produce summary information:
 - Reductions (pca, umap, tsne)
 - All metrics (clustering, annotation, dimreduction, specificity)
 
-All tables and figs are saved in the checkatlas_files folder in your search folder.
+All tables and figs are saved in the **checkatlas_files** folder in your search folder.
 
 A single html report is produced, using MultiQC, in **checkatlas_files/Checkatlas-MultiQC.html**.
 
-![Checkatlas workflow](docs/checkatlas_workflow.png)
+![Checkatlas workflow](images/checkatlas_workflow.png)

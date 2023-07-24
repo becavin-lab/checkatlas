@@ -40,7 +40,7 @@ Then, it goes through all atlas files and produce summary information:
 - Reductions (pca, umap, tsne)
 - All metrics (clustering, annotation, dimreduction, specificity)
 
-All tables and figs are saved in the checkatlas_files folder in your search folder.
+All tables and figs are saved in the **checkatlas_files** folder in your search folder.
 
 A single html report is produced, using MultiQC, in **checkatlas_files/Checkatlas-MultiQC.html**.
 
