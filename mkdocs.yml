@@ -7,6 +7,7 @@ nav:
   - Overview:
     - Summary: "index.md"
     - Installation: "installation.md"
+    - Usage: "usage.md"
     - Examples: "examples/examples.md"
     - Contributing: "contributing.md"
   - Metrics:

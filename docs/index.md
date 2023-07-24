@@ -1,4 +1,5 @@
-# ![CheckAtlas](images/checkatlas_logo.png) 
+# ![CheckAtlas](docs/images/checkatlas_logo.png) 
+
 
 ![PyPI](https://img.shields.io/pypi/v/checkatlas)
 ![PyPI - Downloads](https://img.shields.io/pypi/dw/checkatlas)
@@ -14,31 +15,33 @@
 ![Static Badge](https://img.shields.io/badge/Docs-Mkdocs-red)
 ![Static Badge](https://img.shields.io/badge/Linting-flake8%20black%20mypy-yellow)
 
-
 CheckAtlas is a one liner tool to check the quality of your single-cell atlases. For every atlas, it produces the
-quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to load Scanpy, Seurat,
+quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to check the quality of Scanpy, Seurat,
 and CellRanger files.
+
+More information on the [read the doc page](https://checkatlas.readthedocs.io/en/latest/)
 
 
 ## Summary
 
-### Parse Scanpy, Seurat and CellRanger objects
+Powered by nextflow, checkatlas can be ran in one command line:
 
-The checkatlas pipeline start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
+```bash
+nextflow run nf-core-checkatlas --path search_folder/
+```
 
-### Create checkatlas summary files
+The checkatlas workflow start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
 
-   Go through all atlas files and produce summary information:
+Then, it goes through all atlas files and produce summary information:
 
-   - All basic QC (nRNA, nFeature, ratio_mito)
-   - General information (nbcells, nbgenes, nblayers)
-   - All elements in atlas files (obs, obsm, uns, var, varm)
-   - Reductions (pca, umap, tsne)
-   - All metrics (clustering, annotation, dimreduction, specificity)
+- All basic QC (nRNA, nFeature, ratio_mito)
+- General information (nbcells, nbgenes, nblayers)
+- All elements in atlas files (obs, obsm, uns, var, varm)
+- Reductions (pca, umap, tsne)
+- All metrics (clustering, annotation, dimreduction, specificity)
 
-### Parse checkatlas files in MultiQC
+All tables and figs are saved in the checkatlas_files folder in your search folder.
 
-   Update MultiQC project to add checkatlas parsing. Dev project in: https://github.com/becavin-lab/MultiQC/tree/checkatlas
+A single html report is produced, using MultiQC, in **checkatlas_files/Checkatlas-MultiQC.html**.
 
-https://checkatlas.readthedocs.io/en/latest/
-
+![Checkatlas workflow](docs/checkatlas_workflow.png)
