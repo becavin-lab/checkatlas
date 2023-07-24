@@ -97,7 +97,7 @@ Finally, checkatlas comes with rpy2 to perform the interface between python and 
 
 ## Development
 
-This project is in a very early development phase. All helps are welcome. Please contact us or submit an issue.
+This project is in a very early development phase. All helpers are welcome. Please contact us or submit an issue.
 
 Read the [CONTRIBUTING.md](docs/contributing.md) file.
 
