@@ -44,7 +44,7 @@ All tables and figs are saved in the **checkatlas_files** folder in your search 
 
 A single html report is produced, using MultiQC, in **checkatlas_files/Checkatlas-MultiQC.html**.
 
-![Checkatlas workflow](docs/checkatlas_workflow.png)
+![Checkatlas workflow](docs/images/checkatlas_workflow.png)
 
 
 ## Examples
