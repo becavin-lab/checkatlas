@@ -101,6 +101,20 @@ This project is in a very early development phase. All helpers are welcome. Plea
 
 Read the [CONTRIBUTING.md](docs/contributing.md) file.
 
+Checkatlas has two repositories:
+- [The checkatlas module](https://github.com/becavin-lab/checkatlas)
+- [Thecheckatlas nextflow workflow](https://github.com/becavin-lab/nf-core-checkatlas)
+
+It has a module on MultiQC
+- [MultiQC checkatlas branch](https://github.com/becavin-lab/MultiQC)
+
+The checkatlas package is available on PyPI
+- [Checkatlas PyPI](https://pypi.org/project/checkatlas/)
+
+The bioconda recipe has been submitted
+- [Checkatlasbioconda recipe](https://github.com/drbecavin/bioconda-recipes)
+
+
 
 Project developed thanks to the project template : (https://github.com/rochacbruno/python-project-template/)
 
