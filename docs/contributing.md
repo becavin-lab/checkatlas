@@ -4,7 +4,25 @@ CheckAtlas welcomes contributions from the community.
 
 **You need PYTHON3!**
 
-This instructions are for linux base systems. (Linux, MacOS, BSD, etc.)
+This project is in a very early development phase. All helpers are welcome. Please contact us or submit an issue.
+
+Read the [CONTRIBUTING.md](docs/contributing.md) file.
+
+Checkatlas has two repositories:
+- [The checkatlas module](https://github.com/becavin-lab/checkatlas)
+- [The checkatlas nextflow workflow](https://github.com/becavin-lab/nf-core-checkatlas)
+
+It has a module on MultiQC
+- [MultiQC checkatlas branch](https://github.com/becavin-lab/MultiQC)
+
+The checkatlas package is available on PyPI
+- [Checkatlas PyPI](https://pypi.org/project/checkatlas/)
+
+The bioconda recipe has been submitted
+- [Checkatlas bioconda recipe](https://github.com/drbecavin/bioconda-recipes)
+
+
+These instructions are for linux base systems. (Linux, MacOS, BSD, etc.)
 ## Setting up your own fork of this repo.
 
 - On github interface click on `Fork` button.
