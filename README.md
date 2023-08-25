@@ -4,7 +4,7 @@
 ![PyPI](https://img.shields.io/pypi/v/checkatlas)
 ![PyPI - Downloads](https://img.shields.io/pypi/dw/checkatlas)
 ![PyPI - License](https://img.shields.io/pypi/l/checkatlas)
-![Conda](https://img.shields.io/conda/pn/bioconda/checkatlas)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/checkatlas/README.html)
 
 [![codecov](https://codecov.io/gh/becavin-lab/checkatlas/branch/main/graph/badge.svg?token=checkatlas_token_here)](https://codecov.io/gh/becavin-lab/checkatlas)
 [![CI](https://github.com/becavin-lab/checkatlas/actions/workflows/tests.yml/badge.svg)](https://github.com/becavin-lab/checkatlas/actions/workflows/tests.yml)
