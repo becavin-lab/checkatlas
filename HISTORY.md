@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.4.3 🚀 [Christophe Bécavin]
 - Add examples with celltypist data. [Christophe Bécavin]
 - Clean metrics docs and py files. Prepare for adding all metrics.
   [Christophe Bécavin]
