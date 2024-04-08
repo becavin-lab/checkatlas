@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.4.5 🚀 [Christophe Bécavin]
 - Release: version 0.4.4 🚀 [Christophe Bécavin]
 - Release: version 0.4.3 🚀 [Christophe Bécavin]
 - Add examples with celltypist data. [Christophe Bécavin]
