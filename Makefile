@@ -18,7 +18,7 @@ show:             ## Show the current environment.
 
 .PHONY: install
 install:          ## Install the project in dev mode.
-	@echo "Run checkatlas install - create poetrry virtual env"
+	@echo "Run checkatlas install - create poetry virtual env"
 	$(ENV_PREFIX)poetry install
 
 .PHONY: fmt
