@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.4.7 🚀 [Christophe Bécavin]
 - Release: version 0.4.6 🚀 [Christophe Bécavin]
 - Release: version 0.4.5 🚀 [Christophe Bécavin]
 - Release: version 0.4.4 🚀 [Christophe Bécavin]
