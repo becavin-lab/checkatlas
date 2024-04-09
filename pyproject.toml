@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.4.8"
+version = "0.4.9"
 description="One liner tool to check the quality of your single-cell atlases."
 authors = ["becavin-lab"]
 readme = "README.md"
@@ -15,9 +15,9 @@ documentation = "https://checkatlas.readthedocs.io/"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-scikit-learn = "^1.2.1"
-llvmlite = "^0.39.1"
-numba = "^0.56.4"
+scikit-learn = "^1.4.1"
+llvmlite = "^0.42.0"
+numba = "^0.59.0"
 types-pyyaml = "^6.0.12.6"
 scanpy = "^1.9.1"
 numpy = "^1.23.5"
