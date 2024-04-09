@@ -25,6 +25,7 @@ plugins:
   - mkdocstrings:
       enabled: !ENV [ ENABLE_MKDOCSTRINGS, true ]
       default_handler: python
+      custom_templates: templates
       handlers:
         python:
           import:
