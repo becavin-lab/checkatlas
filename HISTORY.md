@@ -4,6 +4,9 @@ Changelog
 
 (unreleased)
 ------------
+- Fix Docs make. [Christophe Bécavin]
+- Format, Lint, and fix tests. [Christophe Bécavin]
+- Release: version 0.4.16 🚀 [Christophe Bécavin]
 - Release: version 0.4.15 🚀 [Christophe Bécavin]
 - Fix docs make files. [Christophe Bécavin]
 - Release: version 0.4.14 🚀 [Christophe Bécavin]
