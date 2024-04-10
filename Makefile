@@ -25,7 +25,8 @@ install:          ## Install the project in dev mode.
 fmt:              ## Format code using black & isort.
 	@echo "Run project file formatting"
 	$(ENV_PREFIX)poetry run isort .
-	$(ENV_PREFIX)poetry run black -l 79 .
+	$(ENV_PREFIX)poetry run flake8 checkatlas/
+	$(ENV_PREFIX)poetry run black -l 79 .	
 
 .PHONY: lint
 lint:             ## Run pep8, black, mypy linters.
