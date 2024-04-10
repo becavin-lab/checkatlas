@@ -22,7 +22,7 @@ build:
     post_install:
       # Install dependencies with 'docs' dependency group
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
-      - poetry install --with dev
+      - pip install mkdocstrings
       - poetry install --with docs
       
 mkdocs:
