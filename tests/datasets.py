@@ -2,8 +2,7 @@ import os
 
 import scanpy as sc
 
-from checkatlas import checkatlas, atlas, cellranger, seurat
-
+from checkatlas import atlas, cellranger, checkatlas, seurat
 
 """
 Module in which we create the data for all tests
