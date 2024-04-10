@@ -14,9 +14,11 @@ given = pytest.mark.parametrize
 
 @given("atlas_info,expected", [(datasets.get_scanpy_atlas_info(), AnnData)])
 def test_read_scanpy_atlas(atlas_info, expected):
+    print("Run test")
     # atlas_seurat.check_seurat_install()
+    print(atlas_info)
     adata = atlas.read_atlas(atlas_info)
-    assert type(adata) == expected
+    assert isinstance(adata, expected)
 
 
 @given(
@@ -24,7 +26,7 @@ def test_read_scanpy_atlas(atlas_info, expected):
 )
 def test_read_cellranger_atlas(atlas_info, expected):
     adata = cellranger.read_cellranger_current(atlas_info)
-    assert type(adata) == expected
+    assert isinstance(adata, expected)
 
 
 @given("atlas_info", [(datasets.get_scanpy_atlas_info())])
