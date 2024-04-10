@@ -22,8 +22,7 @@ build:
     post_install:
       # Install dependencies with 'docs' dependency group
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
-      - pip install mkdocstrings
-      - poetry install --with docs
+      - pip install mkdocstrings-python
       
 mkdocs:
   configuration: mkdocs.yml

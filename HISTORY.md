@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.4.15 🚀 [Christophe Bécavin]
 - Fix docs make files. [Christophe Bécavin]
 - Release: version 0.4.14 🚀 [Christophe Bécavin]
 - Release: version 0.4.13 🚀 [Christophe Bécavin]
