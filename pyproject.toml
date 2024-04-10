@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.4.13"
+version = "0.4.14"
 description="One liner tool to check the quality of your single-cell atlases."
 authors = ["becavin-lab"]
 readme = "README.md"
@@ -23,6 +23,8 @@ scanpy = "^1.9.1"
 numpy = "^1.23.5"
 poetry = "^1.5.1"
 rpy2 = "^3.5.10"
+mkdocstrings-python = "^1.9.2"
+mkdocstrings = "^0.24.3"
 
 [tool.poetry.group.dev]
 optional = true
@@ -45,7 +47,6 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.3"
-mkdocstrings = "^0.24.3"
 mkdocstrings-python = "^1.9.2"
 
 [tool.mypy]
