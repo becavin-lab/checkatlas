@@ -251,7 +251,7 @@ def get_viable_obs_annot(adata: AnnData, args: argparse.Namespace) -> list:
     for obs_key in adata.obs_keys():
         for obs_key_celltype in args.obs_cluster:
             if obs_key_celltype in obs_key:
-                if type(adata.obs[obs_key].dtype) == pd.CategoricalDtype:
+                if isinstance(adata.obs[obs_key].dtype, pd.CategoricalDtype):
                     obs_keys.append(obs_key)
     # Remove keys with only one category and no NaN in the array
     obs_keys_final = list()
