@@ -2,6 +2,8 @@
 
 ## Description ##
 
+Métrique interne pour l’évalutation de méthodes de clustering à densité.
+
 *Version plus "sérieuse"*
 
 DBCV (Density-Based Clustering Validation) est une métrique conçue pour évaluer la qualité des solutions de clustering (notamment pour les algorithmes de clustering basés sur la densité). 
