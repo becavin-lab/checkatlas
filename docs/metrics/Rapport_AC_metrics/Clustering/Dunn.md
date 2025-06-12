@@ -2,6 +2,8 @@
 
 ## Description ##
 
+Métrique interne, évaluant un compromis entre une distances caractéristique inter et intra cluster
+
 L'indice de Dunn est une métrique pour évaluer les algorithmes de clustering. Il fait partie d'un groupe d'indices de validité incluant l'indice de Davies-Bouldin ou l'indice de Silhouette, en tant que schéma d'évaluation interne basé sur les données clusterisées elles-mêmes. 
 L'objectif est d'identifier des ensembles de clusters compacts (faible variance entre les membres du cluster) et bien séparés (moyennes des différents clusters suffisamment éloignées par rapport à la variance intra-cluster). Pour un assignment donné de clusters, un indice de Dunn plus élevé indique un meilleur clustering. L'indice de Dunn quantifie la corrélation entre la compacité et la séparation des clusters en calculant la distance la plus courte entre deux points de clusters différents divisée par la distance la plus longue entre points à l'intérieur d'un cluster.
 
