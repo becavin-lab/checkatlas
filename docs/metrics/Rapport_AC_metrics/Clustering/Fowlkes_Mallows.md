@@ -2,6 +2,8 @@
 
 ## Description ##
 
+Métrique externe comparant les taux d’accord et de désaccord de deux clustering
+
 L'indice de Fowlkes-Mallows est une méthode d'évaluation externe utilisée pour déterminer la similarité entre deux classifications (clusters). Cette mesure peut comparer soit deux classifications hiérarchiques, soit une classification avec une classification de référence. Cet indice est particulièrement utile pour évaluer la performance des algorithmes de clustering. Une valeur plus élevée de l'indice indique une plus grande similarité entre les clusters et les classifications de référence. L'indice varie entre 0 (pire classification possible) et 1 (classification parfaite). Il s'agit de la moyenne géométrique de la précision et du rappel, ce qui en fait une métrique robuste pour l'évaluation de clustering.
 
 ## Formule ##
