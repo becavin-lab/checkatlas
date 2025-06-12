@@ -1,5 +1,3 @@
-TO DO
-
 # Silhouette metrics
 
 ## Summary
@@ -7,9 +5,9 @@ TO DO
 
 ## Equation
 
-$\frac{gg}{ff} s(i) = (b(i) - a(i)) / max(a(i), b(i))$
+$$s(i) =\frac{b(i) - a(i))}{\max(a(i),b(i))}$$
 
-where a(i) is the average dissimilarity of point i to all other points in its cluster, and b(i) is the minimum average dissimilarity of point i to all points in any other cluster. The silhouette score for a clustering is the average of the silhouette scores for all data points.
+where $a(i)$ is the average dissimilarity of point $i$ to all other points in its cluster, and $b(i)$ is the minimum average dissimilarity of point $i$ to all points in any other cluster. The silhouette score for a clustering is the average of the silhouette scores for all data points.
 
 
 ## Description
@@ -22,11 +20,14 @@ Different variations of the silhouette metric exist, such as the weighted silhou
 
 
 
-
 ## Example
 
 
 ## Source
 
+Peter J. ROUSSEEUW. « Silhouettes : A graphical aid to the interpretation and validation of cluster analysis ». In : Journal of Computational and Applied Mathematics
+20 (nov. 1987).
+
+Applying Deep Learning algorithm to perform lung cells annotation, A. Collin
 
 ## Implementation
