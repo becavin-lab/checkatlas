@@ -30,6 +30,8 @@ Applying Deep Learning algorithm to perform lung cells annotation, A. Collin
 
 ## Description ##
 
+Métrique interne, évaluant un compromis entre distances moyennes inter et intra cluster.
+
 La Silhouette est une méthode d'interprétation et de validation de la cohérence au sein des clusters de données. Cette technique fournit une représentation graphique succincte de la qualité de classification de chaque objet. La valeur silhouette mesure la similarité d'un objet à son propre cluster (cohésion) comparée aux autres clusters (séparation). Les valeurs varient de -1 à +1, où une valeur élevée indique que l'objet est bien associé à son cluster et mal associé aux clusters voisins. Un clustering avec une largeur silhouette moyenne supérieure à 0.7 est considéré comme "fort", supérieure à 0.5 comme "raisonnable" et supérieure à 0.25 comme "faible". La métrique est spécialisée pour mesurer la qualité des clusters de forme convexe et peut ne pas bien fonctionner avec des clusters de formes irrégulières ou de tailles variables.
 
 ## Formule ##
