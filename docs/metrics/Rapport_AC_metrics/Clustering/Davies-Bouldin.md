@@ -20,3 +20,6 @@ $S_i=(\frac{1}{T_i}\displaystyle\sum_{j=1}^{T_i}\lVert X_j - A_i \rVert_p^q)^{\f
   - $M_{i,j}$ est la éparation inter-cluster (distance entre les centres des clusters i et j)
 
 **SOURCE**
+
+Applying Deep Learning algorithm to perform lung cells annotation, A. COLLIN
+https://en.wikipedia.org/wiki/Davies%E2%80%93Bouldin_index 
