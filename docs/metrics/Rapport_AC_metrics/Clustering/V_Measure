@@ -1,0 +1,10 @@
+## V-measure ##
+
+## Description ##
+
+La V-measure est une métrique externe fondée sur l’entropie conditionnelle qui évalue la qualité d’un clustering en comparant une partition prédite à une partition de référence.
+Elle combine deux propriétés complémentaires :
+L'homogénéité :  chaque cluster prédit contient uniquement des objets d’une même classe réelle.
+La complétude : ous les objets d’une même classe réelle sont affectés au même cluster prédictif. 
+Elle est utile notamment pour vérifier si un clustering de cellules restitue correctement les types cellulaires annotés.
+
