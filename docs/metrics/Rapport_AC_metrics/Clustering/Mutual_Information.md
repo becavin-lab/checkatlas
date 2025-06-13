@@ -17,3 +17,17 @@ $$p(i)=\frac{|U_i|}{n} \text{ et } p(j)\frac{|V_j|}{n}$$
 
 $$p(i,j)=\frac{|U_i \cup V_j|}{n}$$.
 
+L'entropie de U s'écrit $H(U)=-\displaystyle\sum_{i=1}^{R} p(i) \log{p(i)}$ et, analoguement, pour V $H(V)=-\displaystyle\sum_{j=1}^{C} p(j) \log{p(j)}$. 
+
+Ainsi, la mutual information (MI) s'exprime comme : 
+
+$$MI(U,V)=\displaystyle\sum_{i=1}^{R}\sum_{j=1}^{C} p(i,j) \log\frac{p(i,j)}{p(i)\cdot p(j)}$$
+
+## Sources ##
+
+“Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
+
+Nguyen Xuan VINH, Julien EPPS et James BAILEY. « Information theoretic measures for clusterings comparison : Is a correction for chance necessary ? » In : ACM International Conference Proceeding Series. T. 382. Association for Computing Machinery, 2009.
+
+https://en.wikipedia.org/wiki/Mutual_information 
+
