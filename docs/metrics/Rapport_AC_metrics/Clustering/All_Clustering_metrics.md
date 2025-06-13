@@ -16,7 +16,7 @@
 
 [Mutual Information](Mutual_Information.md)
 
-[V-measure](V_measure.md)
+[V-measure](V_Measure.md)
 
 
 

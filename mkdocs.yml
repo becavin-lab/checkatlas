@@ -15,6 +15,7 @@ nav:
     - Clustering: "metrics/clustering.md"
     - Classification: "metrics/cell_annotation.md"
     - Dimensionality reduction: "metrics/dim_red.md"
+    - ACollin master thesis: "Rapport_AC_metrics/Clustering/All_Clustering_metrics.md"
     - Add your own: "metrics/add_own.md"
   - API:
     - API: "API.md"

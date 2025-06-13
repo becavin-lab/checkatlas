@@ -6,14 +6,19 @@ Metrics are classifed in 4 categories ...
 
  - Clustering metrics:
 
-qd
+[List clustering metrics](clustering.md)
 
 - Cell Annotation metrics:
 
-qzd
+[List cell annotation metrics](cell_annotation.md)
 
 
 - Dimensionality reduction metrics:
 
-qzd
+[List dim red metrics](dim_red.md)
+
+- Antoine Collin's master thesis
+
+[List clustering metrics](Rapport_AC_metrics/Clustering/All_Clustering_metrics.md)
+[List dim red metrics](dim_red.md)
 
