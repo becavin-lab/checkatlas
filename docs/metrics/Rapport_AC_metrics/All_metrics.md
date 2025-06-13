@@ -13,6 +13,11 @@
 
 [Davies-Bouldin Index](Davies_Bouldin.md)
 
+[Fowlkes-Mallows score](Fowlkes_Mallows.md)
+
+
+
+
 ## Classification metrics:
 
 ## Dimensionality reduction metrics:
