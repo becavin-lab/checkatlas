@@ -15,7 +15,7 @@
 
 [Fowlkes-Mallows score](Fowlkes_Mallows.md)
 
-[Mutual Informatio](Mutual_Information.md)
+[Mutual Information](Mutual_Information.md)
 
 [V-measure](V_measure.md)
 
