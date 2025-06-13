@@ -1,6 +1,5 @@
-# Metrics
-
 ## Clustering metrics :
+
 **“Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020**
 
 [Silhouette](Silhouette.md)
@@ -21,6 +20,4 @@
 
 
 
-## Classification metrics:
 
-## Dimensionality reduction metrics:
