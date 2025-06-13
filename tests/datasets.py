@@ -2,7 +2,7 @@ import os
 
 import scanpy as sc
 
-from checkatlas import atlas, cellranger, seurat
+from checkatlas import atlas, cellranger, checkatlas, seurat
 
 """
 Module in which we create the data for all tests
@@ -22,8 +22,8 @@ SEURAT_TEST_PATH = os.path.join(DATA_PATH, "pbmc3k_seurat.rds")
 
 def get_scanpy_atlas_info():
     atlas_info = {
-        "Atlas_name": "pbmc3k_scanpy",
-        "Atlas_type": atlas.ANNDATA_TYPE,
+        checkatlas.ATLAS_NAME_KEY: "pbmc3k_scanpy",
+        checkatlas.ATLAS_TYPE_KEY: atlas.ANNDATA_TYPE,
         "Atlas_extension": atlas.ANNDATA_EXTENSION,
         "Atlas_path": ADATA_TEST_PATH,
     }

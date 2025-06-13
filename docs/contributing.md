@@ -6,7 +6,7 @@ CheckAtlas welcomes contributions from the community.
 
 This project is in a very early development phase. All helpers are welcome. Please contact us or submit an issue.
 
-Read the [CONTRIBUTING.md](docs/contributing.md) file.
+Read the [CONTRIBUTING.md](contributing.md) file.
 
 Checkatlas has two repositories:
 - [The checkatlas module](https://github.com/becavin-lab/checkatlas)

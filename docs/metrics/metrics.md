@@ -2,17 +2,18 @@
 
 all metrics
 
+Metrics are classifed in 4 categories ...
 
-### Clustering metrics:
+ - Clustering metrics:
 
-[Silhouette](silhouette.md)
+qd
+
+- Cell Annotation metrics:
+
+qzd
 
 
-### Classification metrics:
+- Dimensionality reduction metrics:
 
-[Rand index](rand_index.md) 
+qzd
 
-
-### Dimensionality reduction metrics:
-
-[Kruskal stress](kruskal_stress.md)

@@ -12,12 +12,10 @@ nav:
     - Contributing: "contributing.md"
   - Metrics:
     - Summary: "metrics/metrics.md"
-    - Clustering:
-      - Silhouette: "metrics/silhouette.md"
-    - Classification:
-      - 'Rand index': "metrics/rand_index.md"
-    - 'Dimensionality reduction':
-      - 'Kruskal stress': "metrics/kruskal_stress.md"
+    - Clustering: "metrics/clustering.md"
+    - Classification: "metrics/cell_annotation.md"
+    - Dimensionality reduction: "metrics/dim_red.md"
+    - Add your own: "metrics/add_own.md"
   - API:
     - API: "API.md"
 
@@ -26,7 +24,6 @@ plugins:
   - search
   - mkdocstrings:
       enabled: !ENV [ ENABLE_MKDOCSTRINGS, true ]
-      custom_templates: templates
       default_handler: python
       handlers:
         python:
