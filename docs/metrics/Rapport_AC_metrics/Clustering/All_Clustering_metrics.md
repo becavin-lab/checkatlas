@@ -2,21 +2,21 @@
 
 **“Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020**
 
-[Silhouette](Silhouette.md)
+[Silhouette](silhouette.md)
 
-[Rand index](Rand_Index.md) 
+[Rand index](rand_index.md) 
 
-[Dunn Index](Dunn.md)
+[Dunn Index](dunn.md)
 
-[Density-Based Clustering Validation](DBCV.md)
+[Density-Based Clustering Validation](dbcv.md)
 
-[Davies-Bouldin Index](Davies_Bouldin.md)
+[Davies-Bouldin Index](davies_bouldin.md)
 
-[Fowlkes-Mallows score](Fowlkes_Mallows.md)
+[Fowlkes-Mallows score](fowlkes_mallows.md)
 
-[Mutual Information](Mutual_Information.md)
+[Mutual Information](mutual_information.md)
 
-[V-measure](V_Measure.md)
+[V-measure](v_measure.md)
 
 
 

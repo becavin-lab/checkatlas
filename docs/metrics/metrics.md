@@ -19,6 +19,6 @@ Metrics are classifed in 4 categories ...
 
 - Antoine Collin's master thesis
 
-[List clustering metrics](Rapport_AC_metrics/Clustering/All_Clustering_metrics.md)
+[List clustering metrics](rapport_ac_metrics/clustering/all_clustering_metrics.md)
 [List dim red metrics](dim_red.md)
 

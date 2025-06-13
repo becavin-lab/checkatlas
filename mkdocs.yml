@@ -15,7 +15,7 @@ nav:
     - Clustering: "metrics/clustering.md"
     - Classification: "metrics/cell_annotation.md"
     - Dimensionality reduction: "metrics/dim_red.md"
-    - ACollin master thesis: "Rapport_AC_metrics/Clustering/All_Clustering_metrics.md"
+    - ACollin master thesis: "metrics/rapport_ac_metrics/clustering/all_clustering_metrics.md"
     - Add your own: "metrics/add_own.md"
   - API:
     - API: "API.md"
@@ -33,3 +33,8 @@ plugins:
           options:
             show_source: true
             heading_level: 4
+
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+markdown_extensions:
+  - mdx_math

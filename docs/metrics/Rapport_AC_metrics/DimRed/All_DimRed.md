@@ -1,8 +1,8 @@
 ## Dimensionality reduction metrics : 
 
-[Krsukal's stress](Kruskal.md)
+[Kruskal's stress](kruskal.md)
 
-[Spearmann's rho](Spearmann_rho.md)
+[Spearmann's rho](spearman_rho.md)
 
 
 
