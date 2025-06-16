@@ -1,3 +1,6 @@
+### NOT READY YET !! TO REVIEW AND CHANGE SOME THINGS 
+
+
 ### One‑vs‑All (OvA) & One‑vs‑One (OvO) Classification
 
 ## Description 
