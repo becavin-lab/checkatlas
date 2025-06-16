@@ -12,7 +12,7 @@
 
 [desnity_based_clustering_validation](dbcv.md)
 
-Rand Index 
+[rand_index](rand.md)
 
 FowlkesMallows score 
 
