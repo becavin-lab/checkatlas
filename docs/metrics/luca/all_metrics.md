@@ -16,7 +16,7 @@
 
 [fowlkes_mallows_score](folkes_mallows.md)
 
-Information Mutuelle 
+[mutual information](mutual_information.md)
 
 V-Measure 
 
