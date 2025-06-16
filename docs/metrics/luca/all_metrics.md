@@ -38,3 +38,5 @@
 
 [shannon's entropy](shannon.md)
 
+[gini_coefficient](gini.md)
+
