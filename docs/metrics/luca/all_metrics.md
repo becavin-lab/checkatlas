@@ -24,7 +24,7 @@
 
 [kruskal_stress](kruskal_stress.md)
 
-[spearman’s rho]
+[spearman’s rho](spearman_rho.md)
 
 [local_continuity_meta_criterion]
 
