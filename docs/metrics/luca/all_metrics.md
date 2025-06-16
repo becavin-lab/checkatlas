@@ -4,7 +4,7 @@
 
 ## Clustering 
 
-Coefficient de Silhouette 
+[silhouette coefficient](silhouette.md)
 
 Davies-Bouldin Index 
 
