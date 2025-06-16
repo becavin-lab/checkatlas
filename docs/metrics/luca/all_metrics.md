@@ -28,7 +28,7 @@
 
 [local_continuity_meta_criterion](lcmc.md)
 
-[trustworthiness_and_continuity]
+[trustworthiness_and_continuity](trust_continuity.md)
 
 ## Specificity 
 
