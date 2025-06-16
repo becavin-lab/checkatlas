@@ -8,7 +8,7 @@
 
 [davies_bouldin index](dbi.md)
 
-Dunn Index 
+[dunn index](dunn.md) 
 
 DBCV 
 
