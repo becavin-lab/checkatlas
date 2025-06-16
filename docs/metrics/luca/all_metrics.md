@@ -14,7 +14,7 @@
 
 [rand_index](rand.md)
 
-FowlkesMallows score 
+[fowlkes_mallows_score](folkes_mallows.md)
 
 Information Mutuelle 
 
