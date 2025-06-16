@@ -6,7 +6,7 @@
 
 [silhouette coefficient](silhouette.md)
 
-Davies-Bouldin Index 
+[davies_bouldin index](dbi.md)
 
 Dunn Index 
 
