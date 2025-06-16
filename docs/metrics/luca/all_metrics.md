@@ -22,7 +22,7 @@
 
 ## Dimensionality Reduction
 
-[kruskal_stress]
+[kruskal_stress](kruskal_stress.md)
 
 [spearman’s rho]
 
