@@ -26,7 +26,7 @@
 
 [spearman’s rho](spearman_rho.md)
 
-[local_continuity_meta_criterion]
+[local_continuity_meta_criterion](lcmc.md)
 
 [trustworthiness_and_continuity]
 
