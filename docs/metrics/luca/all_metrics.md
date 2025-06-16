@@ -40,3 +40,5 @@
 
 [gini_coefficient](gini.md)
 
+[kendall's tau](tau.md)
+
