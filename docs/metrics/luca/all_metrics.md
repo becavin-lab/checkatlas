@@ -18,8 +18,7 @@
 
 [mutual information](mutual_information.md)
 
-V-Measure 
-
+[v_measure](v_measure.md)
 
 ## Dimensionality Reduction
 
