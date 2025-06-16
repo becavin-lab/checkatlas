@@ -22,5 +22,13 @@
 
 ## Dimensionality Reduction
 
+[kruskal_stress]
+
+[spearman’s rho]
+
+[local_continuity_meta_criterion]
+
+[trustworthiness_and_continuity]
+
 ## Specificity 
 
