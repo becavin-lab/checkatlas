@@ -9,10 +9,10 @@ LCMC is particularly useful for identifying how well local geometry is maintaine
 ## Formulas 
 
 Let:
-- $N$ = number of data points
-- $K$ = neighborhood size
-- $\mathcal{N}^K(i)$ = set of the $K$ nearest neighbors of point $i$ in the original space
-- $\nu^K(i)$ = set of the $K$ nearest neighbors of point $i$ in the projected space
+- $N$ : number of data points
+- $K$ : neighborhood size
+- $\mathcal{N}^K(i)$ : set of the $K$ nearest neighbors of point $i$ in the original space
+- $\nu^K(i)$ : set of the $K$ nearest neighbors of point $i$ in the projected space
 
 Then the LCMC is defined as :
 
