@@ -32,9 +32,9 @@
 
 ## Specificity 
 
-[one-vs-all](ova_ovo.md)
+[one-vs-all](ova_ovm.md)
 
-[one-vs-one](ova_ovo.md)
+[one-vs-max](ova_ovm.md)
 
 [shannon's entropy](shannon.md)
 
