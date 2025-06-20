@@ -28,7 +28,7 @@ We define,
 > - $b$ is the number of pairs of elements in different clusters in $U$ and in $V$
 > - $\binom{2}{n}=\frac{n(n-1)}{2}$ is the total number of pairs
 
-> [For further information](rand_index.md)
+> [For further information](rand.md)
 
 Thus, the adjusted Rand index is given by :
 
