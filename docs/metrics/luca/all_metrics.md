@@ -42,3 +42,10 @@
 
 [kendall's tau](tau.md)
 
+# Open Problems 
+
+## Batch integration
+
+[adjusted_rand_index](adjusted_rand_index.md)
+
+[average_silhouetta_width](asw.md)
