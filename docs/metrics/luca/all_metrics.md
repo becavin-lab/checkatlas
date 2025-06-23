@@ -53,3 +53,5 @@
 [lisi](lisi.md)
 
 [cell_cycle_conservation](cc_conservation.md)
+
+[graph connectivity](graph_connectivity.md)
