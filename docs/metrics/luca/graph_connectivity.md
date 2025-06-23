@@ -21,6 +21,13 @@ Where:
 - $k$ = number of neighbors considered
 - $|N_i \cap S_i|$ = number of neighbors of i that belong to the same biological type
 
+*Value Range and Interpretation*
+- Range : 0 to 1
+- Values close to 1 indicate excellent biological connectivity, where cells of the same biological type remain well-connected in the kNN graph after integration, preserving local biological structure. 
+- Values near 0 suggest poor biological connectivity, with biologically similar cells being dispersed or disconnected in the integrated space. 
+- Intermediate values represent moderate connectivity with variable performance across different cell types. This metric is considered a bio-conservation measure that evaluates whether natural biological relationships are maintained after integration.
+
+  
 ## Sources 
 
 [Luecken, M.D., Büttner, M., Chaichoompu, K. et al. Benchmarking atlas-level data integration in single-cell genomics. Nat Methods 19, 41–50 (2022)](https://doi.org/10.1038/s41592-021-01336-8)
