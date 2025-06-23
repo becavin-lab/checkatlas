@@ -49,3 +49,7 @@
 [adjusted_rand_index](adjusted_rand_index.md)
 
 [average_silhouetta_width](asw.md)
+
+[lisi](lisi.md)
+
+[cell_cycle_conservation](cc_conservation.md)
