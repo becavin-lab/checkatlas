@@ -20,7 +20,8 @@ We define,
 - $a_i=\left | A_i \right |$ the size of cluster $i$ in $U$
 - $b_j=\left | V_j \right |$ the size of cluster $j$ in $V$
 
-> *Rand Index* 
+> *Rand Index*
+> 
 > We remind that the Rand index (RI) is define as follows : 
 > $$RI=\frac{a+b}{\binom{2}{n}}$$
 > where,
