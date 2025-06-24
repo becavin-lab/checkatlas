@@ -16,7 +16,7 @@ For each isolated label $l$:
 - Recall : $R_l=\frac{TP_l}{TP_l + FN_l}$
 - F1-score : $F1_l=\frac{2 \cdot P_l \cdot R_l}{P_l + R_l}$
 
-Then, the Isolated Label F1 score is the mean over all isolated labels:
+Then, the Isolated Label F1 score is the mean over all isolated labels :
 
 $$ \text{Isolated Label F1 score} = \frac{1}{\left | L_{iso} \right |} \sum_{l \in L_{iso}} F1_l $$
 
