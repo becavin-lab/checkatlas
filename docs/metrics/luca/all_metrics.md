@@ -55,3 +55,7 @@
 [cell_cycle_conservation](cc_conservation.md)
 
 [graph connectivity](graph_connectivity.md)
+
+[high_gene_variability](hvg.md)
+
+
