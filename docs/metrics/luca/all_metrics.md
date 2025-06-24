@@ -63,3 +63,6 @@
 
 [kbet](kbet.md)
 
+[normalized_mutual_information](nmi.md)
+
+[principal_component_regression](pcr.md)
