@@ -59,4 +59,7 @@
 
 [high_gene_variability](hvg.md)
 
+[isolated_label_f1_score](f1_score.md)
+
+[kbet](kbet.md)
 
