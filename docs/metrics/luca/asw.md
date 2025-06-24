@@ -1,21 +1,19 @@
-# Average Silhouette Width of Batch & Cell Identity Labels
+# Average Silhouette Width (ASW) Metrics 
 
 ## Description 
 
-The Average Silhouette Width (ASW) measures the quality of cluster separation and homogeneity by calculating the average silhouette width. In the context of single-cell batch integration, two variants are used :
-- Batch ASW: Evaluates whether cells from different batches mix properly after batch effect correction
-- Cell Identity ASW: Evaluates whether cells of the same cell type remain grouped together after integration
+The Average Silhouette Width (ASW) metrics evaluate how well cells are grouped or mixed after batch integration in single-cell RNA-seq data. There are three main variants:
+- Batch ASW: Measures how well cells from different batches are mixed within the same biological group (e.g., cell type).
+- Label ASW: Measures how well cells of the same biological identity (e.g., cell type) cluster together.
+- Isolated Label ASW: Focuses on rare or isolated cell types to assess whether they remain well-separated after integration.
 
-For Batch ASW, a silhouette width close to 0 represents perfect overlap of batches, so the absolute value is used to measure mixing quality.
-The silhouette width ranges between -1 and 1, with positive values indicating good cluster separation. 
-The scaled version (default) provides scores between 0 and 1, where 1 indicates optimal label representation and 0 indicates suboptimal representation.
-
+Each metric uses the silhouette score, which quantifies how similar a cell is to its own cluster compared to other clusters.
 
 ## Formulas 
 
 > Silhouette Clustering Metric Analysis
 > 
-> We remind that the general silhouette width is define as follows :
+> We remind that the general silhouette width is define, for a cell $i$, as follows :
 > 
 > $$S(i) = \frac{(b_i - a_i)}{max(a_i, b_i)}$$
 >
@@ -31,7 +29,7 @@ For all cells $i$ of cell type $C_j$,
 
 $$ batchASW_j=\frac{1}{\left| C_j \right|} \cdot\displaystyle\sum_{i \in C_j} \left| silhouette(i) \right|$$
 
-Final score averaged over all cell types M : 
+Final score across all cell types $M$ :
 
 $$batchASW=\frac{1}{\left| M \right|} \cdot\displaystyle\sum_{j \in M} \left| batchASW_j \right|$$
 
@@ -46,6 +44,10 @@ The scaled version inverts this interpretation, making higher scores indicate be
 *Cell identity batch* : 
 
 Same formula as classical ASW but calculated using cell type labels as reference clusters instead of batches.
+
+*Isolated Label ASW*
+
+Same formula as the general silhouette score, but clusters are defined by cell type labels instead of batches. High values indicate that cells of the same type are well-clustered.
 
 ## Sources 
 
