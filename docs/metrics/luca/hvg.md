@@ -16,7 +16,7 @@ Let :
 
 The HVG Overlap is defined as :
 
-$$ overlap(X,Y)=\frac{\left | X \cap Y \right |}{\min(X,Y)}$$
+$$ overlap(X,Y)=\frac{\left | X \cap Y \right |}{\min(\left |X \right |,\left |Y \right |)}$$
 
 This formulation emphasizes the preservation of informative genes, even when the integration process alters the number of HVGs. 
 The overall HVG score is computed as the mean of per-batch HVG overlap scores.
