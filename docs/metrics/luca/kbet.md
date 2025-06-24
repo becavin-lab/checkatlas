@@ -27,8 +27,10 @@ A score close to 1 indicates good integration (few rejections), while a score cl
 
 ## Sources 
 
+[OpenProblems.](https://openproblems.bio/results/batch_integration?version=v2.0.0)
 
+[Luecken, M.D. et al. *Benchmarking atlas-level data integration in single-cell genomics*. Nat Methods 19, 41–50 (2022).](https://doi.org/10.1038/s41592-021-01336-)
 
 ## Code
 
-
+[SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/kbet.py)
