@@ -42,7 +42,8 @@
 
 [kendall's tau](tau.md)
 
-# Open Problems 
+# Open Problems // Leucken et. al (2022) 
+[SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/metrics.py) 
 
 ## Batch integration
 
