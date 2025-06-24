@@ -38,6 +38,8 @@ NMI ranges from 0 to 1:
 
 [Luecken, M.D. et al. *Benchmarking atlas-level data integration in single-cell genomics*. Nat Methods 19, 41–50 (2022).](https://doi.org/10.1038/s41592-021-01336-)
 
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html)
+
 ## Code 
 
 [SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/nmi.py)
