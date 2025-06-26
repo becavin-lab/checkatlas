@@ -93,4 +93,4 @@
 
 [Density preservation](density_preservation.md)
 
-
+[Distance correlation](distance_correlation.md)
