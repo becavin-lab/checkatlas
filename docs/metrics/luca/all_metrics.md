@@ -91,5 +91,6 @@
 
 [co-KNN AUC & co-KNN size](co_knn.md)
 
+[Density preservation](density_preservation.md)
 
 
