@@ -89,5 +89,7 @@
 
 [local_continuity_meta_criterion](lcmc.md)
 
+[co-KNN AUC & co-KNN size](co_knn.md)
+
 
 
