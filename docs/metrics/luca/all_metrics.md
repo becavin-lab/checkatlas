@@ -42,10 +42,10 @@
 
 [kendall's tau](tau.md)
 
-# Open Problems // Leucken et. al (2022) 
+# Open Problems 
 [SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/metrics.py) 
 
-## Batch integration
+## Batch integration // Leucken et. al (2022) 
 
 [adjusted_rand_index](adjusted_rand_index.md)
 
@@ -66,3 +66,28 @@
 [normalized_mutual_information](nmi.md)
 
 [principal_component_regression](pcr.md)
+
+## Denoising // Batson et. al. (2019)
+
+[mean-squared error](mse.md)
+
+[poisson loss](poisson.md)
+
+## Spatial Decomposition // Miles et. al. (2005)
+
+[coefficient of determination](r2.md)
+
+## Spatially variable genes // Kendall (1938)
+
+[kendall correlation](tau.md)
+
+## Dimensionality reduction for visualisation
+
+[trustworthiness](trust_continuity.md)
+
+[continuity](trust_continuity.md)
+
+[local_continuity_meta_criterion](lcmc.md)
+
+
+
