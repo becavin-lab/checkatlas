@@ -94,3 +94,5 @@
 [Density preservation](density_preservation.md)
 
 [Distance correlation](distance_correlation.md)
+
+[global & local co-KNN](global_local_coknn.md)
