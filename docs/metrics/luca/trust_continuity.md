@@ -1,4 +1,4 @@
-### Trustworthiness and continuity
+# Trustworthiness and continuity
 
 ## Description 
 
@@ -20,6 +20,22 @@ Let:
 - $\hat{r}(i, j)$: the rank of point $j$ in terms of distance from point $i$ in the embedded space  
 - $N_i^k(X)$: the set of the $k$ nearest neighbors of point $i$ in $X$  
 - $N_i^k(Y)$: the set of the $k$ nearest neighbors of point $i$ in $Y$
+
+### *Trustworthiness* : 
+
+This metric penalizes neighbors in the low-dimensional space that were not true neighbors in the original space.
+
+$$T(k) = 1 - \frac{2}{n k (2n - 3k - 1)} \sum_{i=1}^{n} \sum_{j \in N_i^k(Y)} \max(0,\; r(i, j) - k)$$
+
+A high value means that most nearest neighbors in the embedded space were already close in the original space.
+
+### *Continuity* : 
+
+This metric penalizes neighbors in the original space that are lost in the low-dimensional space.
+
+$$C(k) = 1 - \frac{2}{n k (2n - 3k - 1)} \sum_{i=1}^{n} \sum_{j \in N_i^k(X)} \max(0,\; \hat{r}(i, j) - k)$$
+
+A high value indicates that original neighbors remain close after projection.
 
 ## Sources 
 
