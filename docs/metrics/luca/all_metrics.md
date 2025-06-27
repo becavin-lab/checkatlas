@@ -1,8 +1,8 @@
-### All metrics listed ###
+# All metrics listed
 
-# “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
+## “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-## Clustering 
+### Clustering 
 
 [silhouette coefficient](silhouette.md)
 
@@ -20,7 +20,7 @@
 
 [v_measure](v_measure.md)
 
-## Dimensionality Reduction
+### Dimensionality Reduction
 
 [kruskal_stress](kruskal_stress.md)
 
@@ -30,7 +30,7 @@
 
 [trustworthiness_and_continuity](trust_continuity.md)
 
-## Specificity 
+### Specificity 
 
 [one-vs-all](ova_ovm.md)
 
@@ -42,10 +42,10 @@
 
 [kendall's tau](tau.md)
 
-# Open Problems 
+## Open Problems 
 [SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/metrics.py) 
 
-## Batch integration // Leucken et. al (2022) 
+### Batch integration // Leucken et. al (2022) 
 
 [adjusted_rand_index](adjusted_rand_index.md)
 
@@ -67,21 +67,33 @@
 
 [principal_component_regression](pcr.md)
 
-## Denoising // Batson et. al. (2019)
+### Denoising // Batson et. al. (2019)
 
 [mean-squared error](mse.md)
 
 [poisson loss](poisson.md)
 
-## Spatial Decomposition // Miles et. al. (2005)
+### Spatial Decomposition // Miles et. al. (2005)
 
 [coefficient of determination](r2.md)
 
-## Spatially variable genes // Kendall (1938)
+### Spatially variable genes // Kendall (1938)
 
 [kendall correlation](tau.md)
 
-## Dimensionality reduction for visualisation
+### Dimensionality reduction for visualisation
+
+#### Global 
+
+[Distance correlation](distance_correlation.md)
+
+[Density preservation](density_preservation.md)
+
+[co-KNN AUC](co_knn.md)
+
+[global co-kNN](global_local_coknn.md)
+
+#### Local 
 
 [trustworthiness](trust_continuity.md)
 
@@ -89,10 +101,6 @@
 
 [local_continuity_meta_criterion](lcmc.md)
 
-[co-KNN AUC & co-KNN size](co_knn.md)
+[co-KNN size](co_knn.md)
 
-[Density preservation](density_preservation.md)
-
-[Distance correlation](distance_correlation.md)
-
-[global & local co-KNN](global_local_coknn.md)
+[local co-KNN](global_local_coknn.md)
