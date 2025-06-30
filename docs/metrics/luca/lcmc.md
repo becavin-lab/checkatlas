@@ -34,14 +34,14 @@ This adjustment means that:
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-Jarkko VENNA et Samuel KASKI. « Local multidimensional scaling ». In : Neural Networks (2006).
+[Jarkko VENNA et Samuel KASKI. « Local multidimensional scaling ». In : Neural Networks (2006).](https://doi.org/10.1016/j.neunet.2006.05.014)
 
-John A. Lee. « Quality assessment of nonlinear dimensionality reduction based on K-ary neighborhoods ».
+[John A. Lee. « Quality assessment of nonlinear dimensionality reduction based on K-ary neighborhoods ».](https://proceedings.mlr.press/v4/lee08a/lee08a.pdf)
 
-https://search.r-project.org/CRAN/refmans/coRanking/html/LCMC.html
+[R](https://search.r-project.org/CRAN/refmans/coRanking/html/LCMC.html)
 
 ## Code 
 
-https://search.r-project.org/CRAN/refmans/coRanking/html/LCMC.html
+[R](https://search.r-project.org/CRAN/refmans/coRanking/html/LCMC.html)
 
-https://github.com/hj-n/zadu
+[Github](https://github.com/hj-n/zadu)
