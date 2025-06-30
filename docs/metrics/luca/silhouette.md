@@ -37,13 +37,13 @@ $$s(i) =\frac{b(i) - a(i))}{\max(a(i),b(i))}$$
 
 ### Sources 
 
-https://en.wikipedia.org/wiki/Silhouette_(clustering)
+[Wikipedia](https://en.wikipedia.org/wiki/Silhouette_(clustering))
 
-Peter J. ROUSSEEUW. « Silhouettes : A graphical aid to the interpretation and validation of cluster analysis ». In : Journal of Computational and Applied Mathematics 20 (nov. 1987).
+[Peter J. ROUSSEEUW. « Silhouettes : A graphical aid to the interpretation and validation of cluster analysis ». In : Journal of Computational and Applied Mathematics 20 (nov. 1987).](https://doi.org/10.1016/0377-0427(87)90125-7)
 
 Applying Deep Learning algorithm to perform lung cells annotation, A. Collin
 
 ### Code 
 
-https://scikit-learn.org/stable/modules/generated/sklearn.metrics.silhouette_score.html 
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.silhouette_score.html) 
 
