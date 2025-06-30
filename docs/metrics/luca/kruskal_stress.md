@@ -12,9 +12,7 @@ It allows validation of the quality of high-dimensional data visualizations (i.e
 
 Stress : 
 
-```math
-KS = \sqrt{\frac{\displaystyle\sum_{i \lt j} (d_{ij} - \hat{d}_{ij})^2}{\displaystyle\sum_{i \lt j} d_{ij}^2}}
-```
+$$KS = \sqrt{\frac{\displaystyle\sum_{i \lt j} (d_{ij} - \hat{d}_{ij})^2}{\displaystyle\sum_{i \lt j} d_{ij}^2}}$$
 
 where : 
 - $d_{ij}$ is the Euclidean distance between points $i$ and $j$ in the reduced representation space
@@ -29,17 +27,16 @@ where :
 
 ## Sources 
 
-https://en.wikipedia.org/wiki/Multidimensional_scaling
+[Wikipedia](https://en.wikipedia.org/wiki/Multidimensional_scaling)
 
-https://www.normalesup.org/~carpenti/Notes/MDS/MDS-metrique.html
+[NormaleSup](https://www.normalesup.org/~carpenti/Notes/MDS/MDS-metrique.html)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-Antonio GRACIA et al. A methodology to compare Dimensionality Reduction algorithms in terms of loss of quality. Rapp. tech. 2014
+[Antonio GRACIA et al. A methodology to compare Dimensionality Reduction algorithms in terms of loss of quality. Rapp. tech. 2014](https://www.sciencedirect.com/science/article/pii/S0020025514001741)
   
 
 ## Code
 
-https://www.normalesup.org/~carpenti/Notes/MDS/MDS-metrique.html
+[R](https://www.normalesup.org/~carpenti/Notes/MDS/MDS-metrique.html)
 
-R 
