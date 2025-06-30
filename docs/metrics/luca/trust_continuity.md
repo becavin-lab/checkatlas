@@ -25,7 +25,7 @@ Let:
 
 This metric penalizes neighbors in the low-dimensional space that were not true neighbors in the original space.
 
-$$T(k) = 1 - \frac{2}{n k (2n - 3k - 1)} \sum_{i=1}^{n} \sum_{j \in N_i^k(Y)} \max(0,\; r(i, j) - k)$$
+$$T(k) = 1 - \frac{2}{n k (2n - 3k - 1)} \sum_{i=1}^{n} \sum_{j \in N_i^k(Y)} \max(0,r(i, j) - k)$$
 
 A high value means that most nearest neighbors in the embedded space were already close in the original space.
 
@@ -33,7 +33,7 @@ A high value means that most nearest neighbors in the embedded space were alread
 
 This metric penalizes neighbors in the original space that are lost in the low-dimensional space.
 
-$$C(k) = 1 - \frac{2}{n k (2n - 3k - 1)} \sum_{i=1}^{n} \sum_{j \in N_i^k(X)} \max(0,\; \hat{r}(i, j) - k)$$
+$$C(k) = 1 - \frac{2}{n k (2n - 3k - 1)} \sum_{i=1}^{n} \sum_{j \in N_i^k(X)} \max(0,\hat{r}(i, j) - k)$$
 
 A high value indicates that original neighbors remain close after projection.
 
@@ -41,12 +41,13 @@ A high value indicates that original neighbors remain close after projection.
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-Lisha Chen & Andreas Buja. Local Multidimensional Scaling for Nonlinear Dimension Reduction, Graph Drawing, and Proximity Analysis. JASA, 2009.
+[Lisha Chen & Andreas Buja. Local Multidimensional Scaling for Nonlinear Dimension Reduction, Graph Drawing, and Proximity Analysis. JASA, 2009.](https://doi.org/10.1198/jasa.2009.0111)
 
-Stasis et al. Semantically Controlled Adaptive Equalisation in Reduced Dimensionality Parameter Space. Applied Sciences, 2016.
+[Stasis, S.; Stables, R.; Hockman, J. Semantically Controlled Adaptive Equalisation in Reduced Dimensionality Parameter Space. Appl. Sci. 2016, 6, 116.](https://doi.org/10.3390/app6040116)
 
-https://scikit-learn.org/stable/modules/generated/sklearn.manifold.trustworthiness.html
+
+[Sckit](https://scikit-learn.org/stable/modules/generated/sklearn.manifold.trustworthiness.html)
 
 ## Code 
 
-https://scikit-learn.org/stable/modules/generated/sklearn.manifold.trustworthiness.html
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.manifold.trustworthiness.html)
