@@ -12,8 +12,9 @@ It allows validation of the quality of high-dimensional data visualizations (i.e
 
 Stress : 
 
-$$KS = \sqrt{\frac{\displaystyle\sum_{i \lt j} (d_{ij} - \hat{d}_{ij})^2}{\displaystyle\sum_{i \lt j} d_{ij}^2}}$$
-
+```math
+KS = \sqrt{\frac{\displaystyle\sum_{i \lt j} (d_{ij} - \hat{d}_{ij})^2}{\displaystyle\sum_{i \lt j} d_{ij}^2}}
+```
 where : 
 - $d_{ij}$ is the Euclidean distance between points $i$ and $j$ in the reduced representation space
 - $\hat{d}_{ij}$ represents the transformed dissimilarity (or proximity) between objects $i$ and $j$ in the original space
