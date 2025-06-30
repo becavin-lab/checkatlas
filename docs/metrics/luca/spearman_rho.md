@@ -13,19 +13,19 @@ Given two variables $X=(x_1,...,x_n)$ and $Y=(y_1,...,y_n)$, and their respectiv
 $$\rho=1-\frac{6 \displaystyle\sum_{i=1}^{n} d_{i}^{2}} {n(n^2 -1)}$$
 
 where, 
-- $d_i=R(x_i)-R(y_i) is the diference between the ranks of each pair
+- $d_i=R(x_i)-R(y_i)$ is the diference between the ranks of each pair
 - $n$ is the number of observations
 
 ## Sources 
 
-Gracia, A. et al. A methodology to compare Dimensionality Reduction algorithms in terms of loss of quality, Tech. Rep. 2014
+[Gracia, A. et al. A methodology to compare Dimensionality Reduction algorithms in terms of loss of quality, Tech. Rep. 2014](https://www.sciencedirect.com/science/article/pii/S0020025514001741)
 
-https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+[Wikipedia](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
 ## Code
 
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html
+[Scipy](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html)
 
-https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+[Wikipedia](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient)
