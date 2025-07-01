@@ -17,8 +17,7 @@ Metrics are classifed in 4 categories ...
 
 [List dim red metrics](dim_red.md)
 
-- Antoine Collin's master thesis
+- Luca metrics review
 
-[List clustering metrics](rapport_ac_metrics/clustering/all_clustering_metrics.md)
-[List dim red metrics](dim_red.md)
+[List all metrics](luca/all_metrics.md)
 
