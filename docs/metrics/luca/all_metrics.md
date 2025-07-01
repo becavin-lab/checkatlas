@@ -10,7 +10,7 @@
 
 [dunn index](dunn.md) 
 
-[desnity_based_clustering_validation](dbcv.md)
+[density_based_clustering_validation](dbcv.md)
 
 [rand_index](rand.md)
 
