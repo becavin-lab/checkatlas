@@ -10,11 +10,11 @@
 
 [dunn index](dunn.md) 
 
-[desnity_based_clustering_validation](dbcv.md)
+[density_based_clustering_validation](dbcv.md)
 
 [rand_index](rand.md)
 
-[fowlkes_mallows_score](folkes_mallows.md)
+[fowlkes_mallows_score](fowlkes_mallows.md)
 
 [mutual information](mutual_information.md)
 
