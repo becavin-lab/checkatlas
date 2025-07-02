@@ -1,4 +1,4 @@
-### Shannon's entropy
+# Shannon's entropy
 
 ## Description 
 
@@ -8,15 +8,18 @@ Shannon entropy is a measure of uncertainty or diversity in a probability distri
 
 ## Formulas
 
-*Basics* 
+### *Basics* 
 
 For a random variable $X$ taking values $i$ with probabilities $p_i$ :
 
-$$H(X) = -\displaystyle\sum_{i} p_i \log_b(p_i)$$
+$$
+H(X) = -\displaystyle\sum_{i} p_i \log_b(p_i)
+$$
 
 where $b$ is the logarithm base.
 
-*Properties* :
+### *Properties* :
+
 - $H(X) \geq 0$, with equality if one $p_i = 1$
 - Maximum entropy: $H(X) = \log_2(n)$ when the distribution is uniform over $n$ elements
 - Additivity: $H(X, Y) = H(X) + H(Y)$ if $X$ and $Y$ are independent
@@ -25,12 +28,12 @@ where $b$ is the logarithm base.
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-https://en.wikipedia.org/wiki/Entropy_(information_theory)
+[Wikipedia](https://en.wikipedia.org/wiki/Entropy_(information_theory))
 
-https://fr.wikipedia.org/wiki/Entropie_de_Shannon
+[Wikipedia](https://fr.wikipedia.org/wiki/Entropie_de_Shannon)
 
-Jonathan SCHUG et al. « Promoter features related to tissue specificity as measured by Shannon entropy. » In : Genome biology 6.4 (avr. 2005).
+[Jonathan SCHUG et al. « Promoter features related to tissue specificity as measured by Shannon entropy. » In : Genome biology 6.4 (avr. 2005).](https://doi.org/10.1186/gb-2005-6-4-r33)
 
 ## Code
 
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html
+[Scipy](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html)
