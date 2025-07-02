@@ -18,8 +18,11 @@ DI=\frac{\displaystyle\min_{1\leq i \leq j \leq m} \delta (C_i,C_j)}{\displaysty
 $$
 
 Where : 
+
 - $m$ is the number of clusters in the set
+
 - $\delta (C_i,C_j)$ is the inter-cluster distance between clusters $C_i$ and $C_j$
+
 - $\Delta_k$ is the intra-cluster distance (diameter) of cluster k
 
 ## Sources
