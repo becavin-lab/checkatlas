@@ -1,4 +1,4 @@
-### RAND INDEX
+# RAND INDEX
 
 ## Description 
 
@@ -11,7 +11,9 @@ The Rand index intuitively represents the ratio between total agreements and the
 
 ## Formula
 
-$$R=\frac{(a+b)}{(a+b+c+d)}=\frac{(a+b)}{\binom{2}{n}}$$
+$$
+R=\frac{(a+b)}{(a+b+c+d)}=\frac{(a+b)}{\binom{2}{n}}
+$$
 
 Where : 
 - $a$ is the number of pairs of elements that are in the same subset in $X$ and in the same subset in $Y$.
@@ -22,14 +24,14 @@ Where :
 
  ## Sources 
 
-https://en.wikipedia.org/wiki/Rand_index
+[Wikipedia](https://en.wikipedia.org/wiki/Rand_index)
 
-Lawrence HUBERT et Phipps ARABIE. « Comparing partitions ». In : Journal of Classification 2 (déc. 1985).
+[Lawrence HUBERT et Phipps ARABIE. « Comparing partitions ». In : Journal of Classification 2 (déc. 1985).](https://doi.org/10.1007/BF01908075)
 
 Applying Deep Learning algorithm to perform lung cells annotation, A. Collin
 
  ## Code
 
- https://scikit-learn.org/stable/modules/clustering.html#rand-index
+[Scikit](https://scikit-learn.org/stable/modules/clustering.html#rand-index)
 
  
