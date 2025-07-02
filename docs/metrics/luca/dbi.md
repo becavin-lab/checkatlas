@@ -26,10 +26,10 @@ Where :
 
 Applying Deep Learning algorithm to perform lung cells annotation, A. COLLIN
 
-https://en.wikipedia.org/wiki/Davies%E2%80%93Bouldin_index 
+[Wikipeda](https://en.wikipedia.org/wiki/Davies%E2%80%93Bouldin_index)
 
-Donald W. DAVIES, DAVID L. ; BOULDIN. « A Cluster Separation Measure ». In : IEEE Transactions on Pattern Analysis and Machine Intelligence (1979).
+[Donald W. DAVIES, DAVID L. ; BOULDIN. « A Cluster Separation Measure ». In : IEEE Transactions on Pattern Analysis and Machine Intelligence (1979).](https://doi.org/10.1109/TPAMI.1979.4766909)
 
 ## Code 
 
-https://scikit-learn.org/stable/modules/generated/sklearn.metrics.davies_bouldin_score.html#sklearn.metrics.davies_bouldin_score
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.davies_bouldin_score.html#sklearn.metrics.davies_bouldin_score)
