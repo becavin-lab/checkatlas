@@ -10,26 +10,37 @@ NMI is particularly useful in single-cell data integration to assess whether bio
 
 The NMI between two partitions $U$ and $V$ is defined as:
 
-$$ NMI(U,V)=\frac{2 \cdot MI(U;V)}{H(U) + H(V)}$$
+$$
+NMI(U,V)=\frac{2 \cdot MI(U;V)}{H(U) + H(V)}
+$$
 
 Where:
+
 - $U$: clustering result (predicted labels)
+
 - $V$: ground-truth labels
+
 - $MI(U;V)$: mutual information between $U$ and $V$
+
 - $H(U)$ and $H(V)$: entropies of $U$ and $V$
 
 > Reminder
 >
 > The mutual information is computed as:
-> $$ MI(U;V) = \displaystyle\sum_{u \in U} \displaystyle\sum_{v \in V} P(u, v) \log \left( \frac{P(u, v)}{P(u) P(v)} \right)$$
+>
+>  $$ MI(U;V) = \displaystyle\sum_{u \in U} \displaystyle\sum_{v \in V} P(u, v) \log \left( \frac{P(u, v)}{P(u) P(v)} \right)$$
 > 
 > Where:
+>
 > - $P(u, v)$ is the joint probability of an element being in cluster $u$ and class $v$
+>
 > - $P(u)$ and $P(v)$ are the marginal probabilities
 
 
 NMI ranges from 0 to 1:
+
 - 0 : no mutual information (random clustering)
+
 - 1 : perfect match between predicted and true labels
 
 ## Sources 

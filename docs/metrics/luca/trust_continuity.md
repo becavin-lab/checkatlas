@@ -3,7 +3,9 @@
 ## Description 
 
 These two metrics assess the quality of a dimensionality reduction by evaluating how well the data structure is preserved.
+
 - Trustworthiness measures local fidelity : if two points are close in the low-dimensional space, they should also be close in the original space.
+
 - Continuity does the reverse: it checks whether original neighbors remain close after projection. 
 
 Both metrics range from 0 to 1. A value close to 1 indicates that the local structure is well preserved.
@@ -13,12 +15,19 @@ They are often used together to get a full picture of neighborhood preservation 
 ## Formulas 
 
 Let:
+
 - $n$: the number of data points  
+
 - $X \subset \mathbb{R}^p$: the high-dimensional input space  
+
 - $Y \subset \mathbb{R}^q$: the low-dimensional embedded space  
+
 - $r(i, j)$: the rank of point $j$ in terms of distance from point $i$ in the original space  
+
 - $\hat{r}(i, j)$: the rank of point $j$ in terms of distance from point $i$ in the embedded space  
+
 - $N_i^k(X)$: the set of the $k$ nearest neighbors of point $i$ in $X$  
+
 - $N_i^k(Y)$: the set of the $k$ nearest neighbors of point $i$ in $Y$
 
 ### *Trustworthiness* : 

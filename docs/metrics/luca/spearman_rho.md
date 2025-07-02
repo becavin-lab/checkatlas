@@ -15,7 +15,9 @@ $$
 $$
 
 where, 
+
 - $d_i=R(x_i)-R(y_i)$ is the diference between the ranks of each pair
+
 - $n$ is the number of observations
 
 ## Sources 

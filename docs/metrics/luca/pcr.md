@@ -10,16 +10,25 @@ The method involves performing a linear regression between the principal compone
 ## Formulas 
 
 Principal Component Regression (PCR) combines Principal Component Analysis (PCA) with linear regression:
+
 - PCA step : Apply PCA to the integrated data matrix $X$ (cells × genes) to obtain a set of orthogonal principal components (PCs), denoted $Z = XW$, where $W$ is the matrix of eigenvectors.
+
 - Component selection: Select the top $k$ PCs that capture most of the variance.
+
 - Regression step : Fit a linear regression model using the selected PCs $Z_k$ as predictors for a continuous biological variable $y$ (e.g., cell cycle score).
+
 - Metric score : Compute the coefficient of determination $R^2$ from the regression:
 
-$$R^2 = 1 - \frac{\sum_{i=1}^n (y_i - \hat{y}_i)^2}{\sum_{i=1}^n (y_i - \bar{y})^2}$$
+$$
+R^2 = 1 - \frac{\sum_{i=1}^n (y_i - \hat{y}_i)^2}{\sum_{i=1}^n (y_i - \bar{y})^2}
+$$
 
 Where:
+
 - $y_i$ is the true value of the biological variable for cell $i$,
+
 - $\hat{y}_i$ is the predicted value from the regression,
+
 - $\bar{y}$ is the mean of all $y_i$ values.
 
 A score close to 1 indicates strong preservation of the biological signal in the integrated space.

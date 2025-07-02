@@ -9,21 +9,25 @@ It is especially relevant in single-cell RNA-seq data, where local cell density 
 
 ## Formulas 
 
-*Local Density Estimation*
+### *Local Density Estimation*
 
 For each point $i$, the local density $\rho_i$ is estimated as the inverse of the average distance to its $k$-nearest neighbors:
 
-$$\rho_i = \frac{1}{\frac{1}{k} \sum_{j \in \text{KNN}(i)} d(i, j)}$$
+$$
+\rho_i = \frac{1}{\frac{1}{k} \sum_{j \in \text{KNN}(i)} d(i, j)}
+$$
 
 where $d(i,j)$ is the distance between points $i$ and $j$, and $\text{KNN}(i)$ is the set of the $k$-nearest neighbors of $i$.
 
-*Spearman Correlation*
+### *Spearman Correlation*
 
 The final metric is the Spearman correlation between the local density vectors in the high-dimensional and low-dimensional spaces:
 
-$$\text{Density Preservation} = \text{SpearmanCorr}(\rho^{\text{high-dim}}, \rho^{\text{low-dim}})$$
+$$
+\text{Density Preservation} = \text{SpearmanCorr}(\rho^{\text{high-dim}}, \rho^{\text{low-dim}})
+$$
 
-*Value Range*
+### *Value Range*
 
 The metric ranges from -1 (complete inversion of density) to 1 (perfect preservation). A value near 0 indicates no correlation between densities.
 

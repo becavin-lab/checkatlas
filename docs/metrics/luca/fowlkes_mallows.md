@@ -23,7 +23,9 @@ $$
 where :
 
 - $TP$ is the number of True Positives
+
 - $FP$ is the number of False Positives
+
 - $FN$ is the number of False Negatives
 
   
