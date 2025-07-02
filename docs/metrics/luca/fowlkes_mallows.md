@@ -1,4 +1,4 @@
-### Fowlkes–Mallows index
+# Fowlkes–Mallows index
 
 
 ## Description 
@@ -14,9 +14,11 @@ It is the geometric mean of precision and recall, making it a robust metric for 
 
 The Fowlkes-Mallows index can be expressed in several ways depending on the context.
 
-*General Formulation* : 
+### *General Formulation* : 
 
-$$FM=TPTP+FP⋅TPTP+FNFM=\sqrt{\frac{TP}{TP+FP}\cdot\frac{TP}{TP+FN}}$$
+$$
+FM=TPTP+FP⋅TPTP+FNFM=\sqrt{\frac{TP}{TP+FP}\cdot\frac{TP}{TP+FN}}
+$$
 
 where :
 
@@ -27,13 +29,13 @@ where :
   
 ## Sources 
 
-https://en.wikipedia.org/wiki/Fowlkes%E2%80%93Mallows_index
+[Wikipedia](https://en.wikipedia.org/wiki/Fowlkes%E2%80%93Mallows_index)
 
-E. B. FOWLKES et C. L. MALLOWS. « A method for comparing two hierarchical clusterings ». In : Journal of the American Statistical Association 78 (1983).
+[E. B. FOWLKES et C. L. MALLOWS. « A method for comparing two hierarchical clusterings ». In : Journal of the American Statistical Association 78 (1983).](https://doi.org/10.2307/2288117)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
 ## Code 
 
-https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fowlkes_mallows_score.html#sklearn.metrics.fowlkes_mallows_score
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fowlkes_mallows_score.html#sklearn.metrics.fowlkes_mallows_score)
 
