@@ -1,4 +1,4 @@
-### Mutual Information
+# Mutual Information
 
 ## Description 
 
@@ -11,26 +11,32 @@ A high MI means that the two partitions share a lot of information (the clusters
 
 For two partitions $U$ and $V$ of $n$ objects (with $R$ clusters in $U$ and $C$ in $V$), we define the marginal probabilities
 
-$$p(i)=\frac{|U_i|}{n} \text{ and } p(j)\frac{|V_j|}{n}$$
+$$
+p(i)=\frac{|U_i|}{n} \text{ and } p(j)\frac{|V_j|}{n}
+$$
 
 ,as well as the joint probability 
 
-$$p(i,j)=\frac{|U_i \cup V_j|}{n}$$.
+$$
+p(i,j)=\frac{|U_i \cup V_j|}{n}
+$$.
 
 The entropy of $U$ is written as $H(U)=-\displaystyle\sum_{i=1}^{R} p(i) \log{p(i)}$ and, similarly, for V, $H(V)=-\displaystyle\sum_{j=1}^{C} p(j) \log{p(j)}$. 
 
 Thus, the mutual information (MI) is expressed as :
 
-$$MI(U,V)=\displaystyle\sum_{i=1}^{R}\sum_{j=1}^{C} p(i,j) \log\frac{p(i,j)}{p(i)\cdot p(j)}$$
+$$
+MI(U,V)=\displaystyle\sum_{i=1}^{R}\sum_{j=1}^{C} p(i,j) \log\frac{p(i,j)}{p(i)\cdot p(j)}
+$$
 
 ## Sources 
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-Nguyen Xuan VINH, Julien EPPS et James BAILEY. « Information theoretic measures for clusterings comparison : Is a correction for chance necessary ? » In : ACM International Conference Proceeding Series. T. 382. Association for Computing Machinery, 2009.
+[Nguyen Xuan VINH, Julien EPPS et James BAILEY. « Information theoretic measures for clusterings comparison : Is a correction for chance necessary ? » In : ACM International Conference Proceeding Series. T. 382. Association for Computing Machinery, 2009.](10.1145/1553374.1553511)
 
-https://en.wikipedia.org/wiki/Mutual_information 
+[Wikipedia](https://en.wikipedia.org/wiki/Mutual_information)
 
 ## Code 
 
-https://scikit-learn.org/stable/modules/clustering.html#mutual-information-based-scores
+[Scikit](https://scikit-learn.org/stable/modules/clustering.html#mutual-information-based-scores)
