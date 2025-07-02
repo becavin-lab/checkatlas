@@ -12,36 +12,45 @@ A lower MSE value indicates that the model's predictions are closer to the actua
 
 ## Formulas 
 
-*Basic formula* : 
+### *Basic formula* : 
 
-$$MSE = \frac{1}{n} \displaystyle\sum_{i=1}^{n} (y_i - \hat{y}_i)^2$$
+$$
+MSE = \frac{1}{n} \displaystyle\sum_{i=1}^{n} (y_i - \hat{y}_i)^2
+$$
 
 Where:
+
 - $n$ = number of data points
+
 - $y_i$ = observed values
+
 - $\hat{y}_i$ = predicted values
+
 - $i$ = index from 1 to n
 
-*Matrix Notation* : 
+### *Matrix Notation* : 
 
 $$MSE = \frac{1}{n} \left || y - \hat{y} \right || ^2$$
 
 
 Where $y$ is the vector of observed values and $\hat{y}$ is the vector of predicted values.
 
-*MSE for an Estimator (Theoretical Definition)* : 
+### *MSE for an Estimator (Theoretical Definition)* : 
 
 $$MSE(\hat{\theta}) = E[(\hat{\theta} - \theta)^2]$$
 
 Where $\hat{\theta}$ is the estimator and $\theta$ is the true parameter.
 
-**Bias-Variance Decomposition:**
+### **Bias-Variance Decomposition:**
 
 $$MSE = \text{Var}(\hat{\theta}) + [\text{Bias}(\hat{\theta})]^2 + \sigma^2$$
 
 Where:
+
 - $\text{Var}(\hat{\theta})$ = variance of the estimator
+
 - $\text{Bias}(\hat{\theta})$ = bias of the estimator
+
 - $\sigma^2$ = irreducible variance (noise)
 
 
