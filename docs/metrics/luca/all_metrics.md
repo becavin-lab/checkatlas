@@ -104,3 +104,5 @@
 [co-KNN size](co_knn.md)
 
 [local co-KNN](global_local_coknn.md)
+
+[Entourage](entourage.md)
