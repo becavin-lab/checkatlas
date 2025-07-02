@@ -92,7 +92,7 @@ def read_atlas(atlas_info: dict) -> RS4:
     """Read Seurat object in python using rpy2
 
     Args:
-        atlas_path (str): _description_
+        atlas_info (dict): info dict about the atlas
 
     Returns:
         RS4: _description_

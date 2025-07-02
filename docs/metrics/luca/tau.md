@@ -28,7 +28,7 @@ THis $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single 
 
 [Wikipedia](https://en.wikipedia.org/wiki/Kendall_tau_distance)
 
-[Itai YANAI et al. « Genome-wide midrange transcription profiles reveal expression level relationships in human tissue specification ». In : Bioinformatics 21 (mar. 2005)](10.1093/bioinformatics/bti042)
+[Itai YANAI et al. « Genome-wide midrange transcription profiles reveal expression level relationships in human tissue specification ». In : Bioinformatics 21 (mar. 2005)](https://academic.oup.com/bioinformatics/article/21/5/650/220059)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 

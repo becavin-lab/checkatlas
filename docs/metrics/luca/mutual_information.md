@@ -33,7 +33,7 @@ $$
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-[Nguyen Xuan VINH, Julien EPPS et James BAILEY. « Information theoretic measures for clusterings comparison : Is a correction for chance necessary ? » In : ACM International Conference Proceeding Series. T. 382. Association for Computing Machinery, 2009.](10.1145/1553374.1553511)
+[Nguyen Xuan VINH, Julien EPPS et James BAILEY. « Information theoretic measures for clusterings comparison : Is a correction for chance necessary ? » In : ACM International Conference Proceeding Series. T. 382. Association for Computing Machinery, 2009.](https://dlnext.acm.org/doi/10.1145/1553374.1553511)
 
 [Wikipedia](https://en.wikipedia.org/wiki/Mutual_information)
 

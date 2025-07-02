@@ -94,7 +94,7 @@ def read_atlas(atlas_info: dict) -> AnnData:
     Read Scanpy or Cellranger data : .h5ad or .h5
 
     Args:
-        atlas_path (dict): info about the atlas
+        atlas_info (dict): info dict about the atlas
 
     Returns:
         AnnData: scanpy object from .h5ad
@@ -302,7 +302,7 @@ def create_summary_table(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (str): info dict of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
@@ -341,7 +341,7 @@ def create_anndata_table(
     The html code will make all elements of the table visible in MultiQC
     Args:
         adata (AnnData): atlas to analyse
-        atlas_info (dict): info on the atlas
+        atlas_info (dict): info dict on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
@@ -630,7 +630,7 @@ def create_metric_annot(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (dict): path of the atlas
+        atlas_info (dict): info of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
