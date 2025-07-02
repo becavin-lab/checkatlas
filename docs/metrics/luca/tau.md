@@ -1,4 +1,4 @@
-### Kendall's tau coefficient
+# Kendall's tau coefficient
 
 ## Description 
 
@@ -12,7 +12,9 @@ The version defined by Yanai et al. (2005) is not a rank‑correlation measure b
 Let $x_{g,c}$ denote the expression of gene $g$ in tissue $c$, xith $k$ total tissues. 
 We define the normalized expression : 
 
-$$\hat{x}_{g,c}=\frac{x_{g,c}}{\displaystyle\max_{1\leq i \leq k}x_{g,i}}$$
+$$
+\hat{x}_{g,c}=\frac{x_{g,c}}{\displaystyle\max_{1\leq i \leq k}x_{g,i}}
+$$
 
 For each gene $g$, compute : 
 
@@ -22,11 +24,11 @@ THis $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single 
 
 ## Sources 
 
-https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient
+[Wikipedia](https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient)
 
-https://en.wikipedia.org/wiki/Kendall_tau_distance?utm_source=chatgpt.com
+[Wikipedia](https://en.wikipedia.org/wiki/Kendall_tau_distance)
 
-Itai YANAI et al. « Genome-wide midrange transcription profiles reveal expression level relationships in human tissue specification ». In : Bioinformatics 21 (mar. 2005)
+[Itai YANAI et al. « Genome-wide midrange transcription profiles reveal expression level relationships in human tissue specification ». In : Bioinformatics 21 (mar. 2005)](10.1093/bioinformatics/bti042)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
