@@ -93,6 +93,8 @@
 
 [global co-kNN](global_local_coknn.md)
 
+[Graph Edit Distance](ged.md)
+
 #### Local 
 
 [trustworthiness](trust_continuity.md)
