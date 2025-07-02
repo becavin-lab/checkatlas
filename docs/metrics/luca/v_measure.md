@@ -1,4 +1,4 @@
-### V-measure
+# V-measure
 
 
 ## Description 
@@ -21,17 +21,23 @@ Let:
 
 Homogeneity is defined by :
 
-$$h = 1 - \frac{H(C \mid K)}{H(C)}$$
+$$
+h = 1 - \frac{H(C \mid K)}{H(C)}
+$$
 
 Completeness is defined by : 
 
-$$c = 1 - \frac{H(K \mid C)}{H(K)}$$
+$$
+c = 1 - \frac{H(K \mid C)}{H(K)}
+$$
 
 The V-measure is the harmonic mean of homogeneity and completeness :
 
-$$V = \frac{2 \cdot h \cdot c}{h + c}$$
+$$
+V = \frac{2 \cdot h \cdot c}{h + c}
+$$
 
-*NB* : 
+### *NB* : 
 
 Let:
 - $n_{i,j}$ be the number of objects in class $i$ of $C$ AND in cluster $j$ of $K$
@@ -41,20 +47,26 @@ Let:
 
 Then, 
 
-$$H(C \mid K)=-\displaystyle\sum{j} \frac{nj}{n} \displaystyle\sum{i}\frac{n_{i,j}}{nj}\log{(\frac{n{i,j}}{nj})}$$
+$$
+H(C \mid K)=-\displaystyle\sum{j} \frac{nj}{n} \displaystyle\sum{i}\frac{n_{i,j}}{nj}\log{(\frac{n{i,j}}{nj})}
+$$
 
 The lower it is, the more complete the clustering is.
 
 And,
 
-$$H(K \mid C)=-\displaystyle\sum{i} \frac{n{i}}{n} \displaystyle\sum{j}\frac{n_{i,j}}{ni}\log{(\frac{n{i,j}}{ni})}$$
+$$
+H(K \mid C)=-\displaystyle\sum{i} \frac{n{i}}{n} \displaystyle\sum{j}\frac{n_{i,j}}{ni}\log{(\frac{n{i,j}}{ni})}
+$$
 
 
 The lower it is, the more complete the clustering is.
 
 We also define $V_\beta$ as the generalized V-measure. It allows different weighting of homogeneity and completeness according to application needs : 
 
-$$V_\beta=\frac{(1+ \beta)\cdot h \cdot c}{\beta \cdot h + c}$$
+$$
+V_\beta=\frac{(1+ \beta)\cdot h \cdot c}{\beta \cdot h + c}
+$$
 
 where:
 - $h$ is homogeneity
@@ -65,12 +77,12 @@ We recover the 'standard' V-measure formula by taking $\beta = 1$.
 
 ## Sources 
 
-Andrew Rosenberg & Julia Hirschberg (2007). V-Measure: A Conditional Entropy-Based External Cluster Evaluation Measure. Technical Report. Columbia University.
+[Andrew Rosenberg & Julia Hirschberg (2007). V-Measure: A Conditional Entropy-Based External Cluster Evaluation Measure. Technical Report. Columbia University.](https://aclanthology.org/D07-1043/)
 
-https://scikit-learn.org/stable/modules/generated/sklearn.metrics.v_measure_score.html
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.v_measure_score.html)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
 ## Code 
 
-https://scikit-learn.org/stable/modules/generated/sklearn.metrics.homogeneity_completeness_v_measure.html
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.homogeneity_completeness_v_measure.html)
