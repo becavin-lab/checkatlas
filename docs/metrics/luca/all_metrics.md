@@ -106,3 +106,5 @@
 [local co-KNN](global_local_coknn.md)
 
 [Entourage](entourage.md)
+
+[Average Jaccard Distance](ajd.md)
