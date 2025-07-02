@@ -12,6 +12,7 @@ A low AJD indicates that local neighborhoods are well preserved (low distortion)
 ## Formulas
 
 ### Jaccard Distance  
+
 Given two sets $A$ and $B$, the **Jaccard distance** is defined as :
 
 $$
@@ -19,10 +20,13 @@ d_J(A, B) = 1 - \frac{|A \cap B|}{|A \cup B|} = \frac{|A \cup B| - |A \cap B|}{|
 $$
 
 where $|A \cap B|$ is the number of elements in the intersection and $|A \cup B|$ is the number in the union.  
+
 - If $A = B$, then $d_J = 0$ (no distortion).
+
 - If $A \cap B = \emptyset$, then $d_J = 1$ (complete distortion).
 
 ### Average Jaccard Distance (AJD)  
+
 Let $N$ be the total number of cells in the dataset. For each cell $i$, let $A_i$ and $B_i$ be the sets of its $k$ nearest neighbors in the original and reduced space, respectively. The Average Jaccard Distance is given by :
 
 $$
@@ -30,8 +34,11 @@ $$
 $$
 
 ### Value Range and Interpretation  
+
 Since $0 \leq d_J(A, B) \leq 1$, it follows that $0 \leq \mathrm{AJD} \leq 1$.  
+
 - AJD $= 0$ indicates that local neighborhoods are perfectly preserved (ideal embedding).  
+
 - AJD $= 1$ indicates that all local neighborhoods have changed entirely (maximum distortion).
 
 Intermediate values represent partial preservation of neighborhood structures.
