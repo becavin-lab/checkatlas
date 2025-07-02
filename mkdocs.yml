@@ -26,23 +26,24 @@ nav:
   - API:
     - API: "API.md"
 
+
 plugins:
   - search
+  - autorefs
   - mkdocstrings:
-      enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
       default_handler: python
       handlers:
         python:
-          inventories:
-            - https://requests.readthedocs.io/en/latest/objects.inv
+          paths: ["../checkatlas"]
           options:
             show_source: true
             heading_level: 4
-            # New options for better documentation
             show_root_heading: true
             show_root_toc_entry: false
             show_signature_annotations: true
             merge_init_into_class: true
+
+
 
 # Updated MathJax configuration using newer version and better setup
 extra_javascript:
