@@ -1,4 +1,4 @@
-### Dunn Index Metric Analysis
+# Dunn Index Metric Analysis
 
 ## Description 
 
@@ -13,7 +13,9 @@ The Dunn index quantifies the correlation between cluster compactness and separa
 
 The Dunn index is defined as follows :
 
-$$DI=\frac{\displaystyle\min_{1\leq i \leq j \leq m} \delta (C_i,C_j)}{\displaystyle\max_{1 \leq k \leq m} \Delta_k}$$
+$$
+DI=\frac{\displaystyle\min_{1\leq i \leq j \leq m} \delta (C_i,C_j)}{\displaystyle\max_{1 \leq k \leq m} \Delta_k}
+$$
 
 Where : 
 - $m$ is the number of clusters in the set
@@ -22,13 +24,13 @@ Where :
 
 ## Sources
 
-J. C. DUNN. « A fuzzy relative of the ISODATA process and its use in detecting compact well-separated clusters ». In : Journal of Cybernetics 3 (jan. 1973).
+[J. C. DUNN. « A fuzzy relative of the ISODATA process and its use in detecting compact well-separated clusters ». In : Journal of Cybernetics 3 (jan. 1973).](http://dx.doi.org/10.1080/01969727308546046)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-https://en.wikipedia.org/wiki/Dunn_index 
+[Wikipedia](https://en.wikipedia.org/wiki/Dunn_index)
 
 ## Code 
 
-Julian Ramos (2025). Dunn's index (https://www.mathworks.com/matlabcentral/fileexchange/27859-dunn-s-index), MATLAB Central File Exchange. Extrait(e) le juin 16, 2025.
+[Matlab](https://www.mathworks.com/matlabcentral/fileexchange/27859-dunn-s-index)
 
