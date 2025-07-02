@@ -1,4 +1,4 @@
-### Spearman's rho 
+# Spearman's rho 
 
 ## Description 
 
@@ -10,7 +10,9 @@ In dimensionality reduction (DR) contexts, it is used to compare the relative or
 
 Given two variables $X=(x_1,...,x_n)$ and $Y=(y_1,...,y_n)$, and their respective ranks $R(x_i)$ and $R(y_i)$, Spearman's rho is computed as : 
 
-$$\rho=1-\frac{6 \displaystyle\sum_{i=1}^{n} d_{i}^{2}} {n(n^2 -1)}$$
+$$
+\rho=1-\frac{6 \displaystyle\sum_{i=1}^{n} d_{i}^{2}} {n(n^2 -1)}
+$$
 
 where, 
 - $d_i=R(x_i)-R(y_i)$ is the diference between the ranks of each pair
