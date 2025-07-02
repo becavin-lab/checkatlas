@@ -17,7 +17,9 @@ Let $U=(U_1,U_2,\dots,U_n)$ and $V=(V_1,V_2,\dots,V_n)$ be two paritions of a se
 
 We define, 
 - $n_{i,j}=\left | U_i \cap V_j \right |$ the number of elements in the intersection
+  
 - $a_i=\left | A_i \right |$ the size of cluster $i$ in $U$
+  
 - $b_j=\left | V_j \right |$ the size of cluster $j$ in $V$
 
 > *Rand Index*
