@@ -32,7 +32,8 @@ $$
 ### Value Range and Interpretation  
 Since $0 \leq d_J(A, B) \leq 1$, it follows that $0 \leq \mathrm{AJD} \leq 1$.  
 - AJD $= 0$ indicates that local neighborhoods are perfectly preserved (ideal embedding).  
-- AJD $= 1$ indicates that all local neighborhoods have changed entirely (maximum distortion).  
+- AJD $= 1$ indicates that all local neighborhoods have changed entirely (maximum distortion).
+
 Intermediate values represent partial preservation of neighborhood structures.
 
 ## Sources 
