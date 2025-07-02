@@ -1,4 +1,4 @@
-### Davies-Bouldin Index 
+# Davies-Bouldin Index 
 
 ## Description 
 
