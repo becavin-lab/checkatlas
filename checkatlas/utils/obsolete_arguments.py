@@ -1,6 +1,6 @@
 import argparse
 
-import yaml
+# import yaml
 
 from .. import atlas
 from ..metrics import annot, cluster, dimred
@@ -163,38 +163,38 @@ def create_parser():
     return parser
 
 
-def load_arguments(args, yaml_name):
-    """
-    Load all args from a yaml file.
+# def load_arguments(args, yaml_name):
+#     """
+#     Load all args from a yaml file.
 
-    :param args:
-    :param yaml_name:
-    :return: args
-    """
-    with open(yaml_name, "r") as config_file:
-        yaml_args = yaml.load(config_file, Loader=yaml.FullLoader)
-        arg_dict = args.__dict__
-        for key, value in yaml_args.items():
-            if isinstance(value, list):
-                arg_dict[key] = list()
-                for v in value:
-                    arg_dict[key].append(v)
-            else:
-                arg_dict[key] = value
-        return args
+#     :param args:
+#     :param yaml_name:
+#     :return: args
+#     """
+#     with open(yaml_name, "r") as config_file:
+#         yaml_args = yaml.load(config_file, Loader=yaml.FullLoader)
+#         arg_dict = args.__dict__
+#         for key, value in yaml_args.items():
+#             if isinstance(value, list):
+#                 arg_dict[key] = list()
+#                 for v in value:
+#                     arg_dict[key].append(v)
+#             else:
+#                 arg_dict[key] = value
+#         return args
 
 
-def save_arguments(args, yaml_name):
-    """
-    Save all args to a yaml file. Only use this
-    function to create example yaml config files.
+# def save_arguments(args, yaml_name):
+#     """
+#     Save all args to a yaml file. Only use this
+#     function to create example yaml config files.
 
-    :param args:
-    :param yaml_name:
-    :return:
-    """
-    with open(yaml_name, "w") as config_file:
-        yaml.dump(args.__dict__, config_file)
+#     :param args:
+#     :param yaml_name:
+#     :return:
+#     """
+#     with open(yaml_name, "w") as config_file:
+#         yaml.dump(args.__dict__, config_file)
 
 
 def get_version():

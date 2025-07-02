@@ -41,9 +41,9 @@ def get_table_seurat_path(checkatlas_path: str) -> str:
 def save_list_scanpy(clean_scanpy_list: list, checkatlas_path: str) -> None:
     df_summary = pd.DataFrame(columns=checkatlas.ATLAS_TABLE_HEADER)
     for table_info in clean_scanpy_list:
-        df_summary.loc[
-            table_info[checkatlas.ATLAS_NAME_KEY]
-        ] = table_info.values()
+        df_summary.loc[table_info[checkatlas.ATLAS_NAME_KEY]] = (
+            table_info.values()
+        )
     df_summary.to_csv(
         get_table_scanpy_path(checkatlas_path), index=False, sep=","
     )
@@ -54,9 +54,9 @@ def save_list_cellranger(
 ) -> None:
     df_summary = pd.DataFrame(columns=checkatlas.ATLAS_TABLE_HEADER)
     for table_info in clean_cellranger_list:
-        df_summary.loc[
-            table_info[checkatlas.ATLAS_NAME_KEY]
-        ] = table_info.values()
+        df_summary.loc[table_info[checkatlas.ATLAS_NAME_KEY]] = (
+            table_info.values()
+        )
     df_summary.to_csv(
         get_table_cellranger_path(checkatlas_path), index=False, sep=","
     )
@@ -65,9 +65,9 @@ def save_list_cellranger(
 def save_list_seurat(clean_seurat_list: list, checkatlas_path: str) -> None:
     df_summary = pd.DataFrame(columns=checkatlas.ATLAS_TABLE_HEADER)
     for table_info in clean_seurat_list:
-        df_summary.loc[
-            table_info[checkatlas.ATLAS_NAME_KEY]
-        ] = table_info.values()
+        df_summary.loc[table_info[checkatlas.ATLAS_NAME_KEY]] = (
+            table_info.values()
+        )
     df_summary.to_csv(
         get_table_seurat_path(checkatlas_path), index=False, sep=","
     )

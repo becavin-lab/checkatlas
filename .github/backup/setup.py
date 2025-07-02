@@ -1,4 +1,5 @@
 """Python setup.py for checkatlas package"""
+
 import io
 import os
 
