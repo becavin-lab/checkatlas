@@ -17,19 +17,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-python-version: ['3.12']
-poetry-version: ['1.7.1']
-        os: [ubuntu-latest]
+        python-version: ['3.12']
+        poetry-version: ['1.7.1']
+      os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-python-version: ['3.12']
+          python-version: ['3.12']
       - name: Python Poetry Action
         uses: abatilo/actions-poetry@v2.1.6
         with:
-poetry-version: ['1.7.1']
+          poetry-version: ['1.7.1']
       - name: Test token
         run: echo ${{ secrets.PYPI_API_TOKEN }}
       - name: Install project
@@ -42,46 +42,44 @@ poetry-version: ['1.7.1']
     strategy:
       fail-fast: false
       matrix:
-python-version: ['3.12']
-poetry-version: ['1.7.1']
+        python-version: ['3.12']
+        poetry-version: ['1.7.1']
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-python-version: ['3.12']
+          python-version: ['3.12']
       - name: Python Poetry Action
         uses: abatilo/actions-poetry@v2.1.6
         with:
-poetry-version: ['1.7.1']
+          poetry-version: ['1.7.1']
       - name: Install project
         run: poetry install --with dev
       - name: Run tests
         run: make test
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v1
-        # with:
-        #   fail_ci_if_error: true
 
   tests_mac:
     needs: linter
     strategy:
       fail-fast: false
       matrix:
-python-version: ['3.12']
-poetry-version: ['1.7.1']
+        python-version: ['3.12']
+        poetry-version: ['1.7.1']
         os: [macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-python-version: ['3.12']
+          python-version: ['3.12']
       - name: Python Poetry Action
         uses: abatilo/actions-poetry@v2.1.6
         with:
-poetry-version: ['1.7.1']
+          poetry-version: ['1.7.1']
       - name: Install project
         run: poetry install --with dev
       - name: Run tests
