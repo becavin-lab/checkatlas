@@ -15,20 +15,28 @@ This metric is part of the "label-free" metrics that evaluate biological conserv
 
 The Cell-Cycle Conservation formula is based on calculating cell cycle scores and measuring their preservation :
 
-*Cell cycle scores calculation* : 
+### *Cell cycle scores calculation* : 
+
 - S score : $Score_S = \text{mean}(\text{expression}{S_genes}) - \text{mean}(\text{expression}{control_genes})$
+
 - G2/M score : $Score_{G2M} = \text{mean}(\text{expression}{G2M_genes}) - \text{mean}(\text{expression}{control_genes})$
 
-*Variance contribution before integration* :
+### *Variance contribution before integration* :
+
 - $Var_{before_S} = \frac{\text{var}(Score_{S_before})}{\text{var}_{total_before}}$
+
 - $Var_{before_G2M} = \frac{\text{var}(Score_{G2M_before})}{\text{var}_{total_before}}$
 
-*Variance contribution after integration* :
+### *Variance contribution after integration* :
+
 - $Var_{after_S} = \frac{\text{var}(Score_{S_after})}{\text{var}_{total_after}}$
+
 - $Var_{after_G2M} = \frac{\text{var}(Score_{G2M_after})}{\text{var}_{total_after}}$
 
-*Final conservation score* :
+### *Final conservation score* :
+
 - $CC_{conservation} = 1 - \frac{|Var_{before} - Var_{after}|}{Var_{before}}$
+
 - Where $Var_{before}$ and $Var_{after}$ represent the combined variance contributions of S and G2/M phases
 
 A score close to 1 indicates excellent preservation of cell cycle signal, while a score close to 0 indicates significant loss of this biological signal.
