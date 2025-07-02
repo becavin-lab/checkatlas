@@ -15,16 +15,25 @@ Graph connectivity is typically calculated as follows :
 $$GC = \frac{1}{N} \cdot \sum_{i=1}^{N} \frac{|N_i \cap S_i|}{k}$$
 
 Where:
+
 - $N$ = total number of cells
+
 - $N_i$ = set of k nearest neighbors of cell i in the integrated space
+
 - $S_i$ = set of cells with the same biological type as cell i
+
 - $k$ = number of neighbors considered
+
 - $|N_i \cap S_i|$ = number of neighbors of i that belong to the same biological type
 
-*Value Range and Interpretation*
+### *Value Range and Interpretation*
+
 - Range : 0 to 1
+
 - Values close to 1 indicate excellent biological connectivity, where cells of the same biological type remain well-connected in the kNN graph after integration, preserving local biological structure. 
+
 - Values near 0 suggest poor biological connectivity, with biologically similar cells being dispersed or disconnected in the integrated space. 
+
 - Intermediate values represent moderate connectivity with variable performance across different cell types. This metric is considered a bio-conservation measure that evaluates whether natural biological relationships are maintained after integration.
 
   
