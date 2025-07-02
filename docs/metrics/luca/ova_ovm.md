@@ -1,4 +1,4 @@
-### One‑vs‑All (OvA) & One‑vs‑Max (OvM) 
+# One‑vs‑All (OvA) & One‑vs‑Max (OvM) 
 
 ## Description 
 
@@ -13,11 +13,13 @@ To sum up,
 
 ## Formulas 
 
-*One-vs-All (OvA)*
+### *One-vs-All (OvA)*
 
 Mean expression calculation :
 
-$$x_{g,c}=\frac{\displaystyle\sum_{i\in c} r_{g,i}}{N_c}$$
+$$
+x_{g,c}=\frac{\displaystyle\sum_{i\in c} r_{g,i}}{N_c}
+$$
 
 where, 
 - $x_{g,c}$ is the average expression of gene $g$ in cell type $c$
@@ -26,17 +28,21 @@ where,
 
 Specificity score :
 
-$$s_{g,c}=\frac{x_{g,c}}{\displaystyle\sum_{j=1}^{K} x_{g,j}}$$
+$$
+s_{g,c}=\frac{x_{g,c}}{\displaystyle\sum_{j=1}^{K} x_{g,j}}
+$$
 
 where, 
 - $s_{g,c}$ represents the specificity score normalizing average expression by the sum of average expressions across all $K$ cell types
 - Interval: $[0,1]$, where 1 indicates exclusive expression in cell type $c$
 
-*One-vs-Max (OvM)*
+### *One-vs-Max (OvM)*
 
 Ratio calculation :
 
-$$p_{g,c}=\frac{x_{g,c}}{x_{g,d}}$$
+$$
+p_{g,c}=\frac{x_{g,c}}{x_{g,d}}
+$$
 
 where, 
 - $p_{g,c}$ is the expression ratio between cell type $c$ and cell type $d$ where gene $g$ is most highly expressed (excluding $c$)
@@ -46,13 +52,13 @@ where,
 
 ## Sources 
 
-https://en.wikipedia.org/wiki/Multiclass_classification#One-vs.-rest
+[Wikipedia](https://en.wikipedia.org/wiki/Multiclass_classification#One-vs.-rest)
 
-Skene NG et al. (2018) Genetic identification of brain cell types underlying schizophrenia. Nature Genetics, 50(6):825–833.
+[Skene NG et al. (2018) Genetic identification of brain cell types underlying schizophrenia. Nature Genetics, 50(6):825–833.](https://doi.org/10.1038/s41588-018-0129-5)
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-https://en.wikipedia.org/wiki/Genome-wide_association_study
+[Wikipedia](https://en.wikipedia.org/wiki/Genome-wide_association_study)
 
 ## Code 
 
