@@ -1,4 +1,4 @@
-# ENTOURAGE 
+# Entourage
 
 ## Description 
 
@@ -10,10 +10,12 @@ It allows identification of whether dimensionality reduction maintains proximity
 
 ## Formulas 
 
-For each instance $$\bar{X}_i$$:
+For each instance $\bar{X}_i$:
 
 - $$N^{\text{ref}}_i$$ = $$k$$ nearest neighbors in reference space  
+
 - $$N^{\text{new}}_i$$ = $$k$$ nearest neighbors in reduced space  
+
 - $$G_i = \text{card}(N^{\text{ref}}_i \cap N^{\text{new}}_i)$$ = number of common neighbors
 
 The trustworthiness-like metric is defined as:
@@ -23,14 +25,18 @@ Ent_k=\frac{\displaystyle\sum_{i=1}^{n} G_i}{G}
 $$
 
 Where:
-- $$G = nk$$ (normalization constant)
+
+- $G = nk$ (normalization constant)
 
 So:
+
 - $$\text{Ent} \in (0, 1)$$
 
 Interpretation:
-- $$0$$: no common neighbors preserved  
-- $$1$$: all local neighbors perfectly preserved
+
+- $0$: no common neighbors preserved  
+
+- $1$: all local neighbors perfectly preserved
 
 ### *NB* : What is SVD ? 
 

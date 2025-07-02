@@ -15,8 +15,11 @@ G=\frac{K+1}{K} - \frac{2}{K \displaystyle\sum_{i=1}^{K} x_{g,i}} \cdot \display
 $$
 
 Where : 
+
 - $K$ is the number of samples
+
 - $x_{g,i}$ : expression value of gene $g$ in sample $i$
+
 - Values $x_{g,i}$ must be sorted in ascending order ($x_{g,1} \leq x_{g,2} \leq \dots \leq x_{g,K}$)
 
 The formula captures cumulative expression weighted by rank. 

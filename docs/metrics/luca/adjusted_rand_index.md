@@ -16,6 +16,7 @@ ARI ranges between $-1$ and $1$, where 0 represents chance-level agreement, 1 in
 Let $U=(U_1,U_2,\dots,U_n)$ and $V=(V_1,V_2,\dots,V_n)$ be two paritions of a set of $n$ elements. 
 
 We define, 
+
 - $n_{i,j}=\left | U_i \cap V_j \right |$ the number of elements in the intersection
   
 - $a_i=\left | A_i \right |$ the size of cluster $i$ in $U$
@@ -27,8 +28,11 @@ We define,
 > We remind that the Rand index (RI) is define as follows : 
 > $$RI=\frac{a+b}{\binom{2}{n}}$$
 > where,
+>
 > - $a$ is the number of pairs of elements in the same cluster in $U$ and in $V$
+>
 > - $b$ is the number of pairs of elements in different clusters in $U$ and in $V$
+>
 > - $\binom{2}{n}=\frac{n(n-1)}{2}$ is the total number of pairs
 
 > [For further information](rand.md)

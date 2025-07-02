@@ -8,10 +8,14 @@ LCMC is particularly useful for identifying how well local geometry is maintaine
 
 ## Formulas 
 
-Let:
+Let :
+
 - $N$ : number of data points
+
 - $K$ : neighborhood size
+
 - $\mathcal{N}^K(i)$ : set of the $K$ nearest neighbors of point $i$ in the original space
+
 - $\nu^K(i)$ : set of the $K$ nearest neighbors of point $i$ in the projected space
 
 Then the LCMC is defined as :
@@ -21,13 +25,18 @@ $$
 $$
 
 This means:
+
 - The first term is the average number of overlapping neighbors (shared between both spaces), normalized.
+
 - The second term $\frac{K}{N-1}$ is the expected overlap by chance.
 
 
 This adjustment means that:
+
 - LCMC = 1 implies perfect local continuity (all true neighbors preserved),
+
 - LCMC ≈ 0 implies performance similar to random neighbor selection,
+
 - LCMC < 0 suggests worse-than-random behavior.
 
 ## Sources 

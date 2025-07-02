@@ -3,7 +3,9 @@
 ## Description 
 
 Shannon entropy is a measure of uncertainty or diversity in a probability distribution. In bioinformatics, it is often used to evaluate tissue specificity: each gene has an expression profile across multiple tissues, and entropy quantifies how "focused" or "broad" this expression is.
+
 - Low entropy $\rightarrow$ expression restricted to few tissues (tissue-specific).
+
 - High entropy $\rightarrow$ more widespread expression (ubiquitous).
 
 ## Formulas
@@ -21,7 +23,9 @@ where $b$ is the logarithm base.
 ### *Properties* :
 
 - $H(X) \geq 0$, with equality if one $p_i = 1$
+
 - Maximum entropy: $H(X) = \log_2(n)$ when the distribution is uniform over $n$ elements
+
 - Additivity: $H(X, Y) = H(X) + H(Y)$ if $X$ and $Y$ are independent
 
 ## Sources

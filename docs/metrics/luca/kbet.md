@@ -11,17 +11,23 @@ A high rejection rate of this hypothesis indicates poor integration.
 ## Formulas 
 
 - Null hypothesis : The batch distribution among the $k$ nearest neighbors of a cell matches the global batch distribution.
+
 - For each cell:
-   - Identify its $k$ nearest neighbors.
-   - Count the frequency of batch labels in this neighborhood.
-   - Compare this local distribution to the global batch distribution using a chi-squared test.
+
+  - Identify its $k$ nearest neighbors.
+
+  - Count the frequency of batch labels in this neighborhood.
+
+  - Compare this local distribution to the global batch distribution using a chi-squared test.
 
 The rejection rate is the proportion of cells for which the null hypothesis is rejected (typically at $p < 0.05$).
 
 
 The final score is:
 
-$$\text{kBET score} = 1 - \text{rejection rate}$$
+$$
+\text{kBET score} = 1 - \text{rejection rate}
+$$
 
 A score close to 1 indicates good integration (few rejections), while a score close to 0 indicates poor integration.
 

@@ -1,4 +1,4 @@
-# RAND INDEX
+# Rand Index
 
 ## Description 
 
@@ -16,10 +16,15 @@ R=\frac{(a+b)}{(a+b+c+d)}=\frac{(a+b)}{\binom{2}{n}}
 $$
 
 Where : 
+
 - $a$ is the number of pairs of elements that are in the same subset in $X$ and in the same subset in $Y$.
+
 - $b$ is the number of pairs of elements that are in different subsets in $X$ and in different subsets in $Y$.
+
 - $c$ is the number of pairs of elements that are in the same subset in $X$ and in different subsets in $Y$.
+
 - $d$ is the number of pairs of elements that are in different subsets in $X$ and in the same subset in $Y$.
+
 - $\binom{2}{n}$  is the total number of possible pairs, defined by : $\binom{2}{n}=\frac{n(n-1)}{2}$
 
  ## Sources 

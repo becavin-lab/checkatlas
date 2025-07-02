@@ -11,30 +11,44 @@ This makes it especially useful in bioinformatics for evaluating how well dimens
 
 Let $(X_k, Y_k)$, for $k = 1, 2, \dots, n$, be a sample of paired observations.
 
-*Compute pairwise Euclidean distances* :
+### *Compute pairwise Euclidean distances* :
 
-$$a_{j,k} = \|X_j - X_k\|,\quad b_{j,k} = \|Y_j - Y_k\|$$
+$$
+a_{j,k} = \|X_j - X_k\|,\quad b_{j,k} = \|Y_j - Y_k\|
+$$
 
-*Double-center the distance matrices* :
+### *Double-center the distance matrices* :
 
-$$A_{j,k} = a_{j,k} - \bar{a}_{j.} - \bar{a}_{.k} + \bar{a}_{..}$$
+$$
+A_{j,k} = a_{j,k} - \bar{a}_{j.} - \bar{a}_{.k} + \bar{a}_{..}
+$$
 
-$$B_{j,k} = b_{j,k} - \bar{b}_{j.} - \bar{b}_{.k} + \bar{b}_{..}$$
+$$
+B_{j,k} = b_{j,k} - \bar{b}_{j.} - \bar{b}_{.k} + \bar{b}_{..}
+$$
 
-*Compute distance covariance* :
+### *Compute distance covariance* :
 
-$$\text{dCov}^2(X, Y) = \frac{1}{n^2} \sum_{j,k} A_{j,k} B_{j,k}$$
+$$
+\text{dCov}^2(X, Y) = \frac{1}{n^2} \sum_{j,k} A_{j,k} B_{j,k}
+$$
 
-*Compute distance variances*:
+### *Compute distance variances*:
 
-$$\text{dVar}^2(X) = \frac{1}{n^2} \sum_{j,k} A_{j,k}^2,\quad \text{dVar}^2(Y) = \frac{1}{n^2} \sum_{j,k} B_{j,k}^2$$
+$$
+\text{dVar}^2(X) = \frac{1}{n^2} \sum_{j,k} A_{j,k}^2,\quad \text{dVar}^2(Y) = \frac{1}{n^2} \sum_{j,k} B_{j,k}^2
+$$
 
-*Distance correlation*:
+### *Distance correlation*:
 
-$$\text{dCor}(X, Y) = \frac{\text{dCov}(X, Y)}{\sqrt{\text{dVar}(X) \cdot \text{dVar}(Y)}}$$
+$$
+\text{dCor}(X, Y) = \frac{\text{dCov}(X, Y)}{\sqrt{\text{dVar}(X) \cdot \text{dVar}(Y)}}
+$$
 
-*Value Range*
+### *Value Range*
+
 - The metric ranges from 0 (independence) to 1 (perfect dependence).
+
 - A value of 0 implies true independence, not just lack of linear correlation.
 
 

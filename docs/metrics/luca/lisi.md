@@ -4,7 +4,9 @@
 
 The Local Inverse Simpson's Index (LISI) measures local mixing by estimating the effective number of classes in local neighborhoods of cells and constitutes a fundamental metric for evaluating single-cell data integration quality.
 Two main variants exist :
+
 - iLISI (integration LISI) which denotes the effective number of datasets in a neighborhood to assess batch mixing. Higher iLISI values indicate better batch mixing.
+
 - cLISI (conservation LISI) which measures the preservation of cell types after integration. Higher cLISI values suggest better preservation of biological structure.
 
 The LISI of a cell is defined as the effective number of batches, properly scaled, among its k nearest neighbors.
@@ -14,9 +16,11 @@ This metric allows objective quantification of integration algorithm performance
 
 LISI is based on the inverse Simpson index applied locally. For a given cell :
 
-*Local Simpson Index Calculation* :
+### *Local Simpson Index Calculation* :
 
-$$Simspon_i=\displaystyle\sum_{j} p_{j}^{2}$$
+$$
+Simspon_i=\displaystyle\sum_{j} p_{j}^{2}
+$$
 
 where $p_j$ is the proportion of cells from category $j$ (batch for iLISI, cell type for cLISI) in the k-nearest neighbor neighborhood of cell $i$.
 
@@ -27,10 +31,15 @@ $$LISI_i=\frac{1}{Simpson_i}=\frac{1}{\displaystyle\sum_{j} p_{j}^{2}}$$
 *Interpretation* : 
 
 - iLISI: effective number of batches in the local neighborhood
+
   - Minimum value = 1 (homogeneous neighborhood, single batch)
+
   - Maximum value = total number of batches (perfect mixing)
+
 - cLISI: effective number of cell types in the local neighborhood
+
   - Low value = good conservation (homogeneous neighborhood for one cell type)
+
   - High value = potential over-mixing (loss of biological structure)
 
 *Normalized Version* :

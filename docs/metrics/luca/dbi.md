@@ -16,10 +16,15 @@ The Davies-Bouldin Index is calculated as follows :
 $$DB=\frac{1}{N}\displaystyle\sum_{i=1}^{N} D_i$$
 
 Where : 
+
 - $N$ is the number of clusters,
+
 - $D_i \equiv \displaystyle\max_{j\neq i} R_{i,j}$
+
 - $R_{i,j}=\frac{S_i+S_j}{M_{i,j}}$ where
+    
     -  $S_i$ is the intra-cluster dispersion (average distance of points to the center of cluster i), given by $S_i=(\frac{1}{T_i}\displaystyle\sum_{j=1}^{T_i}\lVert X_j - A_i \rVert_p^q)^{\frac{1}{q}}$
+    
     -  $M_{i,j}$ is the inter-cluster separation (distance between the centers of clusters i and j)
 
 ## Sources 

@@ -21,7 +21,9 @@ a(i)=\frac{1}{|Ci|-1}\displaystyle\sum{j \in C_i}^{j \neq i}d(i,j)
 $$
 
 where : 
+
 - $C_i$ is the number of points in the cluster
+
 - $d(i,j)$ is the distance between points $i$ and $j$
 
 ### *Inter-cluster distance (separation)*

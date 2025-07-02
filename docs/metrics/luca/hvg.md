@@ -9,14 +9,20 @@ A high overlap score indicates that the integration method retains key biologica
 ## Formulas 
 
 Let : 
+
 - $X$ be the set of HVGs before integration
+
 - $Y$ be the set of HVGs after integration
+
 - $\left | X \cap Y \right |$ the number of genes common to both sets
+
 - $\min(X,Y)$ the size of the smaller set
 
 The HVG Overlap is defined as :
 
-$$ overlap(X,Y)=\frac{\left | X \cap Y \right |}{\min(\left |X \right |,\left |Y \right |)}$$
+$$
+overlap(X,Y)=\frac{\left | X \cap Y \right |}{\min(\left |X \right |,\left |Y \right |)}
+$$
 
 This formulation emphasizes the preservation of informative genes, even when the integration process alters the number of HVGs. 
 The overall HVG score is computed as the mean of per-batch HVG overlap scores.
