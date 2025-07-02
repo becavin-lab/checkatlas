@@ -1,4 +1,4 @@
-### Density-Based Clustering Validation
+# Density-Based Clustering Validation
 
 ## Description 
 
@@ -10,19 +10,19 @@ Its values range between -1 and +1, with DBCV being a maximization index, where 
 
 ## Formulas 
 
-*Step 1* :
+### *Step 1* :
 
 For each group, calculate its "internal density" 
 
 $\Rightarrow$ We look at how tightly the points are packed within the group.
 
-*Step 2* :
+### *Step 2* :
 
 Calculate the "separation between groups"
 
 $\Rightarrow$ We measure the empty space between different groups
 
-*Step 3* :
+### *Step 3* :
 
 Final formula: DBCV = Mean of all group scores
 
@@ -34,9 +34,9 @@ $\Rightarrow$ The greater the separation AND the stronger the internal density $
 
 “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
 
-https://en.wikipedia.org/wiki/Density-based_clustering_validation
+[Wikipedia](https://en.wikipedia.org/wiki/Density-based_clustering_validation)
 
-Davoud MOU"Christopherjenness/DBCV"LAVI et al. Density-Based Clustering Validation. Rapp. tech.
+[Davoud MOU"Christopherjenness/DBCV"LAVI et al. Density-Based Clustering Validation. Rapp. tech.](https://doi.org/10.1137/1.9781611973440.96)
 
 ## Code
 
