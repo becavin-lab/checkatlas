@@ -1,4 +1,4 @@
-### Gini coefficient
+# Gini coefficient
 
 ## Description 
 
@@ -10,7 +10,9 @@ A low Gini value indicates stable expression across all samples, while a high Gi
 
 The Gini coefficient for a gene $g$, across $K$ samples, is defined as :
 
-$$G=\frac{K+1}{K} - \frac{2}{K \displaystyle\sum_{i=1}^{K} x_{g,i}} \cdot \displaystyle\sum_{i=1}^{K} (K+1-i)\cdot x_{g,i}$$
+$$
+G=\frac{K+1}{K} - \frac{2}{K \displaystyle\sum_{i=1}^{K} x_{g,i}} \cdot \displaystyle\sum_{i=1}^{K} (K+1-i)\cdot x_{g,i}
+$$
 
 Where : 
 - $K$ is the number of samples
@@ -23,9 +25,8 @@ The first term $\frac{K+1}{K}$ represents the theoretical maximum (perfect equal
 
 ## Sources 
 
-https://en.wikipedia.org/wiki/Gini_coefficient
+[Wikipedia](https://en.wikipedia.org/wiki/Gini_coefficient)
 
-Marina WRIGHT MUELAS et al. « The role and robustness of the Gini coefficient as an unbiased tool for the selection of Gini genes for normalising expression profiling data ». In : Scientific Reports 9 (déc. 2019).
-
+[Marina WRIGHT MUELAS et al. « The role and robustness of the Gini coefficient as an unbiased tool for the selection of Gini genes for normalising expression profiling data ». In : Scientific Reports 9 (déc. 2019).](https://doi.org/10.1038/s41598-019-54288-7)
 
 ## Code
