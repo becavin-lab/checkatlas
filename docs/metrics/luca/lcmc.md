@@ -1,4 +1,4 @@
-### Local Continuity Meta Criterion (LCMC)
+# Local Continuity Meta Criterion (LCMC)
 
 ## Description 
 
