@@ -5,7 +5,9 @@
 
 The V-measure is an external metric based on conditional entropy that evaluates clustering quality by comparing a predicted partition to a reference partition.
 It combines two complementary properties : 
+
 - Homogeneity: each predicted cluster contains only objects from the same true class.
+
 - Completeness: all objects from the same true class are assigned to the same predicted cluster.
 
 It is particularly useful for verifying whether cell clustering correctly reconstructs annotated cell types.
@@ -13,10 +15,15 @@ It is particularly useful for verifying whether cell clustering correctly recons
 ## Formulas 
 
 Let:
+
 - $C$ be the true partition (classes)
+
 - $K$ be the predicted partition (clusters)
+
 - $H(C)$ and $H(K)$ be the entropies of each partition
+
 - $H(C \mid K)$ be the conditional entropy of $C$ given $K$
+
 - $H(K \mid C)$ be the conditional entropy of $K$ given $C$
 
 Homogeneity is defined by :
@@ -40,9 +47,13 @@ $$
 ### *NB* : 
 
 Let:
+
 - $n_{i,j}$ be the number of objects in class $i$ of $C$ AND in cluster $j$ of $K$
+
 - $n_i$ be the total number of objects in class $i$ of $C$
+
 - $n_j$ be the total number of objects in cluster $j$ of $K$
+
 - $n$ be the total number of objects
 
 Then, 
@@ -69,8 +80,11 @@ V_\beta=\frac{(1+ \beta)\cdot h \cdot c}{\beta \cdot h + c}
 $$
 
 where:
+
 - $h$ is homogeneity
+
 - $c$ is completeness
+
 - $\beta > 0$ is the weighting parameter
 
 We recover the 'standard' V-measure formula by taking $\beta = 1$.
