@@ -4,6 +4,288 @@ Changelog
 
 (unreleased)
 ------------
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Add macos and windows R installed in tests. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Add R in github actions. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Continuous integration 🔄 tests-0.5.3. [Becavin]
+- Continuous integration 🔄 tests-0.5.2. [Becavin]
+- Continuous integration 🔄 tests-0.5.1. [Becavin]
+- Continuous integration 🔄 tests-0.5.0. [Becavin]
+- Continuous integration 🔄 tests-0.5.0. [Becavin]
+- Merge branch 'metrics' of github.com:becavin-lab/checkatlas into
+  metrics. [Becavin]
+- Update ajd.md. [LucaMariaMoccia]
+- Update entourage.md. [LucaMariaMoccia]
+- Update ged.md. [LucaMariaMoccia]
+- Update global_local_coknn.md. [LucaMariaMoccia]
+- Update co_knn.md. [LucaMariaMoccia]
+- Update density_preservation.md. [LucaMariaMoccia]
+- Update distance_correlation.md. [LucaMariaMoccia]
+- Update r2.md. [LucaMariaMoccia]
+- Update r2.md. [LucaMariaMoccia]
+- Update poisson.md. [LucaMariaMoccia]
+- Update mse.md. [LucaMariaMoccia]
+- Update pcr.md. [LucaMariaMoccia]
+- Update nmi.md. [LucaMariaMoccia]
+- Update kbet.md. [LucaMariaMoccia]
+- Update f1_score.md. [LucaMariaMoccia]
+- Update hvg.md. [LucaMariaMoccia]
+- Update graph_connectivity.md. [LucaMariaMoccia]
+- Update cc_conservation.md. [LucaMariaMoccia]
+- Update lisi.md. [LucaMariaMoccia]
+- Update asw.md. [LucaMariaMoccia]
+- Update adjusted_rand_index.md. [LucaMariaMoccia]
+- Update gini.md. [LucaMariaMoccia]
+- Update shannon.md. [LucaMariaMoccia]
+- Update ova_ovm.md. [LucaMariaMoccia]
+- Update trust_continuity.md. [LucaMariaMoccia]
+- Update lcmc.md. [LucaMariaMoccia]
+- Update spearman_rho.md. [LucaMariaMoccia]
+- Update kruskal_stress.md. [LucaMariaMoccia]
+- Update v_measure.md. [LucaMariaMoccia]
+- Update fowlkes_mallows.md. [LucaMariaMoccia]
+- Update rand.md. [LucaMariaMoccia]
+- Update dunn.md. [LucaMariaMoccia]
+- Update dbi.md. [LucaMariaMoccia]
+- Update silhouette.md. [LucaMariaMoccia]
+- Add dev dependencies. [Becavin]
+- Update packages dependecies, switching to python 3.12, and removing
+  unecessary dep. [Becavin]
+- Update adjusted_rand_index.md. [Christophe Becavin]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create ged.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update ajd.md. [LucaMariaMoccia]
+- Update ajd.md. [LucaMariaMoccia]
+- Update silhouette.md. [LucaMariaMoccia]
+- Update mkdocs. [Becavin]
+- Create ajd.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create entourage.md. [LucaMariaMoccia]
+- Update silhouette.md. [LucaMariaMoccia]
+- Update tau.md. [LucaMariaMoccia]
+- Update gini.md. [LucaMariaMoccia]
+- Update shannon.md. [LucaMariaMoccia]
+- Update ova_ovm.md. [LucaMariaMoccia]
+- Update trust_continuity.md. [LucaMariaMoccia]
+- Update lcmc.md. [LucaMariaMoccia]
+- Update spearman_rho.md. [LucaMariaMoccia]
+- Update kruskal_stress.md. [LucaMariaMoccia]
+- Update v_measure.md. [LucaMariaMoccia]
+- Update mutual_information.md. [LucaMariaMoccia]
+- Update fowlkes_mallows.md. [LucaMariaMoccia]
+- Update rand.md. [LucaMariaMoccia]
+- Update dbcv.md. [LucaMariaMoccia]
+- Update dbi.md. [LucaMariaMoccia]
+- Update dunn.md. [LucaMariaMoccia]
+- Update dbi.md. [LucaMariaMoccia]
+- Update silhouette.md. [LucaMariaMoccia]
+- Create test.png. [Christophe Becavin]
+- Merge branch 'metrics' of github.com:becavin-lab/checkatlas into
+  metrics. [Becavin]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Modify file names. [Christophe Bécavin]
+- Update kruskal_stress.md. [LucaMariaMoccia]
+- Update silhouette.md. [LucaMariaMoccia]
+- Update lcmc.md. [LucaMariaMoccia]
+- Update trust_continuity.md. [LucaMariaMoccia]
+- Update spearman_rho.md. [LucaMariaMoccia]
+- Update kruskal_stress.md. [LucaMariaMoccia]
+- Update trust_continuity.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create global_local_coknn.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create distance_correlation.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create desnity_preservation.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create co_knn.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create r2.md. [LucaMariaMoccia]
+- Create poisson.md. [LucaMariaMoccia]
+- Create mse.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create pcr.md. [LucaMariaMoccia]
+- Update nmi.md. [LucaMariaMoccia]
+- Create nmi.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update kbet.md. [LucaMariaMoccia]
+- Create kbet.md. [LucaMariaMoccia]
+- Update f1_score.md. [LucaMariaMoccia]
+- Create f1_score.md. [LucaMariaMoccia]
+- Update hvg.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update asw.md. [LucaMariaMoccia]
+- Create hvg.md. [LucaMariaMoccia]
+- Update graph_connectivity.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create graph_connectivity.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create cc_conservation.md. [LucaMariaMoccia]
+- Create lisi.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create asw.md. [LucaMariaMoccia]
+- Update adjusted_rand_index.md. [LucaMariaMoccia]
+- Update adjusted_rand_index.md. [LucaMariaMoccia]
+- Create adjusted_rand_index.md. [LucaMariaMoccia]
+- Remove Rapport_AC_metrics folder. [Christophe Bécavin]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update and rename notready_ova_ovo.md to ova_ovm.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create tau.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create gini.md. [LucaMariaMoccia]
+- Rename ova_ovo.md to notready_ova_ovo.md. [LucaMariaMoccia]
+- Update ova_ovo.md. [LucaMariaMoccia]
+- Create shannon.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create ova_ovo.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create trust_continuity.md. [LucaMariaMoccia]
+- Update lcmc.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  lcmc
+- Create lcmc.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  spearman
+- Create spearman_rho.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  kruskal
+- Create kruskal_stress.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create v_measure.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create mutual_information.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  fowlkes mallows
+- Create fowlkes_mallows.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  add rand
+- Create rand.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  dbcv
+- Create dbcv.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  add dunn
+- Create dunn.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+
+  dbi
+- Create dbi.md. [LucaMariaMoccia]
+- Update all_metrics.md. [LucaMariaMoccia]
+- Create silhouette.md. [LucaMariaMoccia]
+
+  silhouette translated + code source
+- Create all_metrics.md. [LucaMariaMoccia]
+- Modif folder/files names. [Christophe Bécavin]
+- Merge branch 'metrics' of github.com:becavin-lab/checkatlas into
+  metrics. [Christophe Bécavin]
+- Create LCMC.md. [LucaMariaMoccia]
+- Fix file name doc. [Christophe Bécavin]
+- Merge branch 'metrics' of github.com:becavin-lab/checkatlas into
+  metrics sss. [Christophe Bécavin]
+- Update All_DimRed.md. [LucaMariaMoccia]
+- Create Spearman_rho.md. [LucaMariaMoccia]
+- Update All_DimRed.md. [LucaMariaMoccia]
+- Update All_Clustering_metrics.md. [LucaMariaMoccia]
+- Create All_DimRed.md. [LucaMariaMoccia]
+- Update Kruskal.md. [LucaMariaMoccia]
+
+  Il faut écrire en LaTeX la formule, ça bugge
+- Rename All_metrics.md to All_Clustering_metrics.md. [LucaMariaMoccia]
+- Rename docs/metrics/Rapport_AC_metrics/All_metrics.md to
+  docs/metrics/Rapport_AC_metrics/Clustering/All_metrics.md.
+  [LucaMariaMoccia]
+- Update All_metrics.md. [LucaMariaMoccia]
+- Update All_metrics.md. [LucaMariaMoccia]
+- Rename Kruskal to Kruskal.md. [LucaMariaMoccia]
+- Update All_metrics.md. [LucaMariaMoccia]
+- Update All_metrics.md. [LucaMariaMoccia]
+- Update and rename V_Measure to V_Measure.md. [LucaMariaMoccia]
+
+  V-measure
+- Update V_Measure. [LucaMariaMoccia]
+- Create V_Measure. [LucaMariaMoccia]
+- Update Mutual_Information.md. [LucaMariaMoccia]
+
+  Mutual Information
+- Create Mutual_Information.md. [LucaMariaMoccia]
+- Update DBCV.md. [LucaMariaMoccia]
+- Update Davies_Bouldin.md. [LucaMariaMoccia]
+- Update Dunn.md. [LucaMariaMoccia]
+- Update Fowlkes_Mallows.md. [LucaMariaMoccia]
+- Update Rand_Index.md. [LucaMariaMoccia]
+- Update Silhouette.md. [LucaMariaMoccia]
+- Update Fowlkes_Mallows.md. [LucaMariaMoccia]
+- Delete docs/metrics/Luca/h. [LucaMariaMoccia]
+- Create h. [LucaMariaMoccia]
+- Create Fowlkes_Mallows.md. [LucaMariaMoccia]
+- Update and rename Index.md to All_metrics.md. [LucaMariaMoccia]
+
+  Metrics Antoine liens
+- Rename Davies-Bouldin.md to Davies_Bouldin.md. [LucaMariaMoccia]
+- Create DBCV.md. [LucaMariaMoccia]
+
+  DBCV à verifier
+- Create Dunn.md. [LucaMariaMoccia]
+
+  Dunn Index
+- Update Silhouette.md. [LucaMariaMoccia]
+
+  Sillhoeutte V2
+- Create Rand_Index.md. [LucaMariaMoccia]
+
+  rand index
+- Update Silhouette.md. [LucaMariaMoccia]
+
+  Silhouette avce LaTeX + sources
+- Create Silhouette.md. [LucaMariaMoccia]
+
+  Cmd+C Cmd+V de Silhouette à partr de main
+- Update and rename CLUSTERING.Index.md to Index.md. [LucaMariaMoccia]
+
+  exemple de comment écrire un recap avec lien qui renvoie au doc
+- Create CLUSTERING.Index.md. [LucaMariaMoccia]
+- Update Davies-Bouldin.md. [LucaMariaMoccia]
+- Update Davies-Bouldin.md. [LucaMariaMoccia]
+
+  almost done
+- Update and rename Davies-Bouldin to Davies-Bouldin.md.
+  [LucaMariaMoccia]
+- Update Davies-Bouldin. [LucaMariaMoccia]
+
+  test
+- Create Davies-Bouldin. [LucaMariaMoccia]
+
+  metrics n°2 for section clustering (the first one beeing Silhouette, already created)
+- Create Kruskal. [LucaMariaMoccia]
+
+  add dir for metrics in report A. Collin
+- Delete docs/metrics/fhgfhgfhg directory. [LucaMariaMoccia]
+- Create Rapport_AC. [LucaMariaMoccia]
+
+  add dir for metrics in Antoine Collin report
+- Modify mkdocs. [Christophe Bécavin]
+- Add clustering table. [christophe Becavin]
+- Release: version 0.4.17 🚀 [Christophe Bécavin]
 - Fix Docs make. [Christophe Bécavin]
 - Format, Lint, and fix tests. [Christophe Bécavin]
 - Release: version 0.4.16 🚀 [Christophe Bécavin]
@@ -25,6 +307,12 @@ Changelog
 - Clean metrics docs and py files. Prepare for adding all metrics.
   [Christophe Bécavin]
 - Premier push metrics branch. [Christophe Bécavin]
+- Update silhouette.md. [Christophe Becavin]
+
+  add sections
+- Update silhouette.md. [Christophe Becavin]
+
+  add silhouette modif
 - Update README.md. [Christophe Becavin]
 - Update README. [Christophe Bécavin]
 - Update README. [Christophe Bécavin]
