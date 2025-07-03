@@ -29,6 +29,7 @@ jobs:
       - name: Install R
         run: |
           sudo apt-get update
+          sudo apt-get install -y libtirpc-dev libcurl4-openssl-dev libssl-dev libxml2-dev libbz2-dev liblzma-dev
           sudo apt-get install -y r-base
       - name: Python Poetry Action
         uses: abatilo/actions-poetry@v2.1.6
