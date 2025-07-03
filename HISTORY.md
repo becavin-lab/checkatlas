@@ -5,6 +5,8 @@ Changelog
 (unreleased)
 ------------
 - Modif relase workflow. [Becavin]
+- Release: version 0.5.5 🚀 [Becavin]
+- Modif relase workflow. [Becavin]
 - Release: version 0.5.4 🚀 [Becavin]
 - Continuous integration 🔄 tests-0.5.3. [Becavin]
 - Continuous integration 🔄 tests-0.5.3. [Becavin]
