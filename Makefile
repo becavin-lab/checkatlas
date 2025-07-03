@@ -67,7 +67,7 @@ ci:          ## Run a continuous integration : Add every change to git and creat
 
 .PHONY: release
 release:          ## Create a new tag for release.
-	@echo "WARNING: This operation will create a version tag and push to github"
+	@echo "WARNING: This operation will create a version tag and push to github and PyPI"
 	@echo "Reading version $(VERSION) from: pyproject.toml"
 	@echo "Saving version to: checkatlas/utils/VERSION"
 	@echo "${VERSION}" > "checkatlas/utils/VERSION"
