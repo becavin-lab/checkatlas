@@ -30,23 +30,25 @@
         }
         /* Styles pour l'en-tête de la table */
         th {
-            background-color: #4CAF50; /* Couleur de fond verte */
-            color: white; /* Texte blanc */
-            padding: 12px 15px; /* Espacement interne */
-            text-align: left; /* Alignement du texte à gauche */
-            border: 1px solid #ddd; /* Bordure légère */
-            white-space: nowrap; /* Empêche le texte de se renvoyer à la ligne */
-        }
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+    white-space: normal;        /* <- important ici */
+    word-wrap: break-word;
+    word-break: break-word;
+}
         /* Styles pour les cellules de données */
         td {
-            padding: 10px 15px; /* Espacement interne */
-            border: 1px solid #ddd; /* Bordure légère */
-            vertical-align: top; /* Alignement vertical en haut */
-            line-height: 1.5; /* Hauteur de ligne pour une meilleure lisibilité */
-            white-space: nowrap; /* Empêche le texte de se renvoyer à la ligne */
-            overflow: hidden; /* Cache le contenu qui dépasse */
-            text-overflow: ellipsis; /* Ajoute des points de suspension si le texte est tronqué */
-        }
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+    line-height: 1.5;
+    white-space: normal;         /* Permet le retour à la ligne */
+    word-wrap: break-word;       /* Coupe les mots longs */
+    word-break: break-word;      /* Coupe même au milieu du mot si nécessaire */
+}
         /* Styles pour les lignes paires (alternance de couleurs) */
         tr:nth-child(even) {
             background-color: #f2f2f2;
