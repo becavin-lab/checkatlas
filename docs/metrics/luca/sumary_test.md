@@ -1,702 +1,2126 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tableau Récapitulatif</title>
-    <style>
-        /* Styles généraux pour le corps de la page */
-        body {
-            font-family: "Inter", sans-serif;
-            margin: 20px;
-            background-color: #f4f7f6;
-            color: #333;
-        }
-        /* Styles pour le titre principal */
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        /* Styles pour la table */
-        table {
-            width: 100%; /* La table prend 100% de la largeur disponible */
-            border-collapse: collapse; /* Fusionne les bordures des cellules */
-            margin: 0 auto; /* Centre la table */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Ombre légère */
-            border-radius: 8px; /* Coins arrondis */
-            overflow: hidden; /* Assure que les coins arrondis sont visibles */
-            table-layout: fixed; /* Important : force les largeurs de colonnes à être respectées */
-        }
-        /* Styles pour l'en-tête de la table */
-        th {
-    background-color: #4CAF50;
-    color: white;
-    padding: 12px 15px;
-    text-align: left;
-    border: 1px solid #ddd;
-    white-space: normal;        /* <- important ici */
-    word-wrap: break-word;
-    word-break: break-word;
-}
-        /* Styles pour les cellules de données */
-        td {
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    vertical-align: top;
-    line-height: 1.5;
-    white-space: normal;         /* Permet le retour à la ligne */
-    word-wrap: break-word;       /* Coupe les mots longs */
-    word-break: break-word;      /* Coupe même au milieu du mot si nécessaire */
-}
-        /* Styles pour les lignes paires (alternance de couleurs) */
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        /* Effet de survol sur les lignes */
-        tr:hover {
-            background-color: #e0e0e0;
-        }
-        /* Styles spécifiques pour les liens dans la table */
-        td a {
-            color: #007bff; /* Couleur de lien bleue */
-            text-decoration: none; /* Pas de soulignement par défaut */
-        }
-        td a:hover {
-            text-decoration: underline; /* Soulignement au survol */
-        }
-        /* Styles pour les spans avec couleur de fond (catégories) */
-        td span {
-            display: inline-block; /* Permet d'appliquer padding et width */
-            padding: 3px 8px;
-            border-radius: 5px; /* Coins arrondis pour les catégories */
-            font-size: 0.9em;
-            font-weight: bold;
-            text-align: center;
-        }
-        /* Couleurs spécifiques pour les catégories */
-        .batch-integration {
-            background-color: #b10202;
-            color: #ffcfc9;
-        }
-        .clustering {
-            background-color: #e6cff2;
-            color: #5a3286;
-        }
-        .denoising {
-            background-color: #d4edbc;
-            color: #11734b;
-        }
-        .dimension-reduction {
-            background-color: #bfe1f6;
-            color: #0a53a8;
-        }
-        .spatial-decomposition {
-            background-color: #e8eaed;
-            color: #434343;
-        }
-        .spatially-variable-genes {
-            background-color: #c6dbe1;
-            color: #215a6c;
-        }
-        .specificity {
-            background-color: #ffe5a0;
-            color: #473821;
-        }
-    </style>
-</head>
-<body>
-    <h1>SUMMARY</h1>
-    <table cellspacing="0" cellpadding="0" border="1">
+# SUMMARY
+
+<table class="waffle" cellspacing="0" cellpadding="0">
+    <thead>
+        <tr>
+            <th class="row-header freezebar-vertical-handle"></th>
+            <th id="0C0" style="width:188px;" class="column-headers-background">A</th>
+            <th id="0C1" style="width:135px;" class="column-headers-background">B</th>
+            <th id="0C2" style="width:77px;" class="column-headers-background">C</th>
+            <th id="0C3" style="width:75px;" class="column-headers-background">D</th>
+            <th id="0C4" style="width:145px;" class="column-headers-background">E</th>
+            <th id="0C5" style="width:100px;" class="column-headers-background">F</th>
+            <th id="0C6" style="width:78px;" class="column-headers-background">G</th>
+            <th id="0C7" style="width:250px;" class="column-headers-background">H</th> <!-- Increased width for Type -->
+            <th id="0C8" style="width:500px;" class="column-headers-background">I</th> <!-- Increased width for Summary -->
+            <th id="0C9" style="width:200px;" class="column-headers-background">J</th> <!-- Increased width for Interval -->
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="height: 30px">
+            <th id="0R0" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">1</div>
+            </th>
+            <td class="s0" dir="ltr">Name</td>
+            <td class="s0" dir="ltr">Source</td>
+            <td class="s0" dir="ltr">Upload</td>
+            <td class="s0" dir="ltr">
+                <div style="display:flex; vertical-align:middle">
+                    <svg width="1.25em" viewBox="0 0 20 20" style="display: inline; padding-right: max(6px, 0.25em)">
+                        <g id="date-table-header-icon">
+                            <path d="M4.16667 18.3333C3.70833 18.3333 3.31597 18.1701 2.98958 17.8437C2.66319 17.5174 2.5 17.125 2.5 16.6667V5C2.5 4.54166 2.66319 4.1493 2.98958 3.82291C3.31597 3.49653 3.70833 3.33333 4.16667 3.33333H5V1.66666H6.66667V3.33333H13.3333V1.66666H15V3.33333H15.8333C16.2917 3.33333 16.684 3.49653 17.0104 3.82291C17.3368 4.1493 17.5 4.54166 17.5 5V16.6667C17.5 17.125 17.3368 17.5174 17.0104 17.8437C16.684 18.1701 16.2917 18.3333 15.8333 18.3333H4.16667ZM4.16667 16.6667H15.8333V8.33333H4.16667V16.6667ZM4.16667 6.66666H15.8333V5H4.16667V6.66666ZM10 11.6667C9.76389 11.6667 9.56597 11.5868 9.40625 11.4271C9.24653 11.2674 9.16667 11.0694 9.16667 10.8333C9.16667 10.5972 9.24653 10.3993 9.40625 10.2396C9.56597 10.0799 9.76389 10 10 10C10.2361 10 10.434 10.0799 10.5938 10.2396C10.7535 10.3993 10.8333 10.5972 10.8333 10.8333C10.8333 11.0694 10.7535 11.2674 10.5938 11.4271C10.434 11.5868 10.2361 11.6667 10 11.6667ZM6.66667 11.6667C6.43056 11.6667 6.23264 11.5868 6.07292 11.4271C5.91319 11.2674 5.83333 11.0694 5.83333 10.8333C5.83333 10.5972 5.91319 10.3993 6.07292 10.2396C6.23264 10.0799 6.43056 10 6.66667 10C6.90278 10 7.10069 10.0799 7.26042 10.2396C7.42014 10.3993 7.5 10.5972 7.5 10.8333C7.5 11.0694 7.42014 11.2674 7.26042 11.4271C7.10069 11.5868 6.90278 11.6667 6.66667 11.6667ZM13.3333 11.6667C13.0972 11.6667 12.8993 11.5868 12.7396 11.4271C12.5799 11.2674 12.5 11.0694 12.5 10.8333C12.5 10.5972 12.5799 10.3993 12.7396 10.2396C12.8993 10.0799 13.0972 10 13.3333 10C13.5694 10 13.7674 10.0799 13.9271 10.2396C14.0868 10.3993 14.1667 10.5972 14.1667 10.8333C14.1667 11.0694 14.0868 11.2674 13.9271 11.4271C13.7674 11.5868 13.5694 11.6667 13.3333 11.6667ZM10 15C9.76389 15 9.56597 14.9201 9.40625 14.7604C9.24653 14.6007 9.16667 14.4028 9.16667 14.1667C9.16667 13.9306 9.24653 13.7326 9.40625 13.5729C9.56597 13.4132 9.76389 13.3333 10 13.3333C10.2361 13.3333 10.434 13.4132 10.5938 13.5729C10.7535 13.7326 10.8333 13.9306 10.8333 14.1667C10.8333 14.4028 10.7535 14.6007 10.5938 14.7604C10.434 14.9201 10.2361 15 10 15ZM6.66667 15C6.43056 15 6.23264 14.9201 6.07292 14.7604C5.91319 14.6007 5.83333 14.4028 5.83333 14.1667C5.83333 13.9306 5.91319 13.7326 6.07292 13.5729C6.23264 13.4132 6.43056 13.3333 6.66667 13.3333C6.90278 13.3333 7.10069 13.4132 7.26042 13.5729C7.42014 13.7326 7.5 13.9306 7.5 14.1667C7.5 14.4028 7.42014 14.6007 7.26042 14.7604C7.10069 14.9201 6.90278 15 6.66667 15ZM13.3333 15C13.0972 15 12.8993 14.9201 12.7396 14.7604C12.5799 14.6007 12.5 14.4028 12.5 14.1667C12.5 13.9306 12.5799 13.7326 12.7396 13.5729C12.8993 13.4132 13.0972 13.3333 13.3333 13.3333C13.5694 13.3333 13.7674 13.4132 13.9271 13.5729C14.0868 13.7326 14.1667 13.9306 14.1667 14.1667C14.1667 14.4028 14.0868 14.6007 13.9271 14.7604C13.7674 14.9201 13.5694 15 13.3333 15Z" fill="#ffffff"></path>
+                        </g>
+                    </svg>
+                    <div>Date</div>
+                </div>
+            </td>
+            <td class="s0" dir="ltr">Name on github</td>
+            <td class="s0" dir="ltr">Verification</td>
+            <td class="s0" dir="ltr">Date </td>
+            <td class="s0" dir="ltr">
+                <div style="display:flex; vertical-align:middle">
+                    <svg width="1.25em" viewBox="0 0 20 20" style="display: inline; padding-right: max(6px, 0.25em)">
+                        <g id="dropdown-table-header-icon">
+                            <path d="M15 9L12 12L9 9H15Z" fill="#ffffff"></path>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M7 4H13C16.31 4 19 6.69 19 10C19 13.31 16.31 16 13 16H7C3.69 16 1 13.31 1 10C1 6.69 3.69 4 7 4ZM7 14.5H13C15.48 14.5 17.5 12.48 17.5 10C17.5 7.52 15.48 5.5 13 5.5H7C4.52 5.5 2.5 7.52 2.5 10C2.5 12.48 4.52 14.5 7 14.5Z" fill="#ffffff"></path>
+                        </g>
+                    </svg>
+                    <div>Type </div>
+                </div>
+            </td>
+            <td class="s0" dir="ltr">Summary</td>
+            <td class="s1" dir="ltr">Interval</td>
+        </tr>
+        <tr>
+            <th style="height:3px;" class="freezebar-cell freezebar-horizontal-handle"></th>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+            <td class="freezebar-cell"></td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R1" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">2</div>
+            </th>
+            <td class="s2" dir="ltr">Adjusted Rand Index (ARI)</td>
+            <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">20/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://adjusted_rand_index.md/">adjusted_rand_index.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s8" dir="ltr">Adjusted Rand Index compares clustering overlap, correcting for random labels and considering correct overlaps and disagreements.</td>
+            <td class="s9" dir="ltr">[-1,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R2" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">3</div>
+            </th>
+            <td class="s10" dir="ltr">Average Silhoeutte Width (ASW)</td>
+            <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">23/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://asw.md/">asw.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s14" dir="ltr">ASW Batch : Evaluates batch mixing quality after integration. // ASW Label : Evaluates cell type clustering preservation.</td>
+            <td class="s15" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R3" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">4</div>
+            </th>
+            <td class="s2" dir="ltr">iLISI &amp; cLISI</td>
+            <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">23/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://lisi.md/">lisi.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s8" dir="ltr">iLISI &amp; cLISI measure batch mixing and cell-type preservation quality in single-cell integration.</td>
+            <td class="s9" dir="ltr">The higher the better </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R4" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">5</div>
+            </th>
+            <td class="s10" dir="ltr">Cell Cycle Conservation</td>
+            <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">23/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://cc_conservation.md/">cc_conservation.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s14" dir="ltr">Measures preservation of cell-cycle biological signals after batch effect correction in integration</td>
+            <td class="s15" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R5" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">6</div>
+            </th>
+            <td class="s2" dir="ltr">Graph Connectivity</td>
+            <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">23/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://graph_connectivity.md">graph_connectivity.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s8" dir="ltr">Measures preservation of biological cell-type neighborhoods in integrated kNN graphs.</td>
+            <td class="s9" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R6" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">7</div>
+            </th>
+            <td class="s10" dir="ltr">HVG overlap </td>
+            <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">24/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://hvg.md/">hvg.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s14" dir="ltr">Measures how well biological gene variability is preserved after batch integration.</td>
+            <td class="s15" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R7" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">8</div>
+            </th>
+            <td class="s2" dir="ltr">Isolated Label F1 score</td>
+            <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">24/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://f1_score.md/">f1_score.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s8" dir="ltr">Measures how well rare or isolated cell types are preserved after batch integration.</td>
+            <td class="s9" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R8" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">9</div>
+            </th>
+            <td class="s10" dir="ltr">kBET</td>
+            <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">24/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://kbet.md/">kbet.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s14" dir="ltr">Quantifies batch mixing by testing local neighborhood batch label distributions against global proportions.</td>
+            <td class="s15" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R9" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">10</div>
+            </th>
+            <td class="s2" dir="ltr">NMI</td>
+            <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">24/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://nmi.md/">nmi.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s8" dir="ltr">NMI quantifies clustering accuracy by comparing predicted and true labels in integrated datasets.</td>
+            <td class="s9" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R10" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">11</div>
+            </th>
+            <td class="s10" dir="ltr">PCR</td>
+            <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">24/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://pcr.md/">pcr.md</a></td>
+            <td class="s16"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+            <td class="s14" dir="ltr">Quantifies how well continuous biological variation is preserved after data integration.</td>
+            <td class="s15" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R11" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">12</div>
+            </th>
+            <td class="s2" dir="ltr">Silhouette </td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s17" dir="ltr"><a target="_blank" href="http://silhouette.md/">silhouette.md</a></td>
+            <td class="s18"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s8" dir="ltr">Internal metric evaluating a trade-off between average inter and intra-cluster distances.</td>
+            <td class="s9" dir="ltr">[-1;1] </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R12" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">13</div>
+            </th>
+            <td class="s10" dir="ltr">Davies_Bouldin</td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">16/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://dbi.md/">dbi.md</a></td>
+            <td class="s19"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s14" dir="ltr">Internal Metric Based on a Similarity Notion</td>
+            <td class="s15" dir="ltr">The lower the better </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R13" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">14</div>
+            </th>
+            <td class="s2" dir="ltr">Dunn Index</td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://dunn.md/">dunn.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s8" dir="ltr">Internal metric evaluating a trade-off between characteristic inter-and intra-cluster distances.</td>
+            <td class="s9" dir="ltr">The higher the better </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R14" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">15</div>
+            </th>
+            <td class="s10" dir="ltr">DBCV</td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">16/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://dbcv.md/">dbcv.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s14" dir="ltr">Internal metric for evaluating density-based clustering methods.</td>
+            <td class="s15" dir="ltr">[-1;1] The higher the better </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R15" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">16</div>
+            </th>
+            <td class="s2" dir="ltr">Rand_index</td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://rand.md/">rand.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s8" dir="ltr">External metric based on consistency between two clusterings</td>
+            <td class="s9" dir="ltr">[0,1] The higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R16" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">17</div>
+            </th>
+            <td class="s10" dir="ltr">Fowlkes_Mallows </td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">16/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://fowlkes_mallows.md/">fowlkes_mallows.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s14" dir="ltr">External metric comparing agreement and disagreement rates between two clusterings</td>
+            <td class="s15" dir="ltr">[0,1] The higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R17" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">18</div>
+            </th>
+            <td class="s2" dir="ltr">Mutual_Information</td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://mutual_information.md/">mutual_information.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s8" dir="ltr">External metric based on joint entropy</td>
+            <td class="s9" dir="ltr">The higher the better </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R18" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">19</div>
+            </th>
+            <td class="s10" dir="ltr">V-Measure</td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">16/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://v_measure.md/">v_measure.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s14" dir="ltr">External metric based on the concepts of completeness and homogeneity</td>
+            <td class="s15"></td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R19" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">20</div>
+            </th>
+            <td class="s2" dir="ltr">Mean Sqaured Error</td>
+            <td class="s3" dir="ltr">Batson et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">26/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://mse.md/">mse.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #d4edbc; color: #11734b; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Denoising</span></td>
+            <td class="s8" dir="ltr">« The mean squared error between the denoised counts of the training dataset and the true counts of the test dataset after reweighting by the train/test ratio. »</td>
+            <td class="s9" dir="ltr">The lower the better </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R20" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">21</div>
+            </th>
+            <td class="s10" dir="ltr">Poisson Loss</td>
+            <td class="s11" dir="ltr">Batson et. al // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">26/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://poisson.md/">poisson.md</a></td>
+            <td class="s20"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #d4edbc; color: #11734b; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Denoising</span></td>
+            <td class="s14" dir="ltr"></td>
+            <td class="s15" dir="ltr"></td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R21" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">22</div>
+            </th>
+            <td class="s2" dir="ltr">Kruskal&#39;s stress </td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s21" dir="ltr"><a target="_blank" href="http://kruskal_stress.md/">kruskal_stress.md</a></td>
+            <td class="s22"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s8" dir="ltr">Metric based on the difference between distances in high and low dimensions.</td>
+            <td class="s9" dir="ltr">[0,1] The lower the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R22" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">23</div>
+            </th>
+            <td class="s10" dir="ltr">Spearman&#39;s rho</td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">16/06/25</td>
+            <td class="s23" dir="ltr"><a target="_blank" href="http://spearman_rho.md/">spearman_rho.md</a></td>
+            <td class="s24"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr">Metric based on the difference between the orders of distances in high and low dimensions</td>
+            <td class="s15" dir="ltr">The lower the better [0, inf]</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R23" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">24</div>
+            </th>
+            <td class="s2" dir="ltr">LCMC</td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s21" dir="ltr"><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
+            <td class="s22"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s8" dir="ltr">Metric evaluating changes in the nearest neighbours matrix after dimension reduction</td>
+            <td class="s9" dir="ltr">The higher the better </td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R24" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">25</div>
+            </th>
+            <td class="s10" dir="ltr">Trustworthiness and continuity</td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">16/06/25</td>
+            <td class="s25" dir="ltr"><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+            <td class="s22"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr">Metric based on notions of reliability and continuity linked to nearest neighbours</td>
+            <td class="s15" dir="ltr">[0,1] The higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R25" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">26</div>
+            </th>
+            <td class="s2" dir="ltr">Average Jaccard Distance (AJD)</td>
+            <td class="s3" dir="ltr">Cooley et. al </td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">02/07/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://ajd.md/">ajd.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s8" dir="ltr">AJD quantifies how much local neighborhood structure is preserved after dimensionality reduction in scRNA-seq.</td>
+            <td class="s9" dir="ltr">[0,1] The lower the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R26" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">27</div>
+            </th>
+            <td class="s10" dir="ltr">Graph Edit Distance</td>
+            <td class="s11" dir="ltr">Cooley et. al </td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">02/07/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://ged.md/">ged.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr">GED quantifies graph dissimilarity by counting minimum edits needed to transform one graph into another.</td>
+            <td class="s15" dir="ltr"></td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R27" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">28</div>
+            </th>
+            <td class="s2" dir="ltr">Kolmogorov–Smirnov</td>
+            <td class="s3" dir="ltr">Pachter et al.</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">03/07/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://kolmogorov_smirnov.md">kolmogorov_smirnov.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+            <td class="s8" dir="ltr">The KS statistic is the maximum difference between two empirical CDFs; values near 1 signal highly dissimilar distributions.</td>
+            <td class="s9" dir="ltr">[0,1] The higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R28" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">29</div>
+            </th>
+            <td class="s12" dir="ltr"><a target="_blank" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288">https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288</a></td>
+            <td class="s10" dir="ltr">Pachter et al.</td>
+            <td class="s26"></td>
+            <td class="s10" dir="ltr"></td>
+            <td class="s10" dir="ltr"></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr"></td>
+            <td class="s15" dir="ltr"></td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R29" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">30</div>
+            </th>
+            <td class="s2" dir="ltr">Entourage</td>
+            <td class="s3" dir="ltr">Becavin et al.</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">02/07/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://entourage.md/">entourage.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s8" dir="ltr">Local conservation of entourage // Quantifies local neighborhood preservation quality during dimensionality reduction for structural fidelity assessment.</td>
+            <td class="s9" dir="ltr">[0,1] The higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R30" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">31</div>
+            </th>
+            <td class="s10" dir="ltr">Trustworthiness</td>
+            <td class="s11" dir="ltr">Venna &amp; Kasi // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">26/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr"></td>
+            <td class="s15" dir="ltr"></td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R31" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">32</div>
+            </th>
+            <td class="s2" dir="ltr">Continuity</td>
+            <td class="s3" dir="ltr">Zhang et. al. // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">26/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s8" dir="ltr"></td>
+            <td class="s9" dir="ltr"></td>
+        </tr>
+        <tr style="height: 28px">
+            <th id="0R32" style="height: 28px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 28px">33</div>
+            </th>
+            <td class="s10" dir="ltr">LCMC</td>
+            <td class="s11" dir="ltr">Zhang et. al. // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">26/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr"></td>
+            <td class="s15"></td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R33" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">34</div>
+            </th>
+            <td class="s2" dir="ltr">co-KNN (AUC &amp; size)</td>
+            <td class="s3" dir="ltr">Zhang et. al. // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">26/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://co_knn.md">co_knn.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s8" dir="ltr">These metrics evaluate how well local neighborhood structures are preserved after dimensionality reduction</td>
+            <td class="s9" dir="ltr">The higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R34" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">35</div>
+            </th>
+            <td class="s10" dir="ltr">Density Preservation</td>
+            <td class="s11" dir="ltr">Narayan et al. // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">26/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://density_preservation.md/">density_preservation.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr">Density Preservation measures how well local point densities are maintained after dimensionality reduction for accurate visualization.</td>
+            <td class="s15" dir="ltr">[-1,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R35" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">36</div>
+            </th>
+            <td class="s2" dir="ltr">Distance correlation</td>
+            <td class="s3" dir="ltr">Schober et. al. // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">26/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://distance_correlation.md/">distance_correlation.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s8" dir="ltr">Distance Correlation detects both linear and nonlinear dependencies, equaling zero only when variables are truly independent.</td>
+            <td class="s9" dir="ltr">[0;1]</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R36" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">37</div>
+            </th>
+            <td class="s10" dir="ltr">Local &amp; Global co-KNN</td>
+            <td class="s11" dir="ltr">Zhang et. al. // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">27/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://local_global_coknn.md/">local_global_coknn.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+            <td class="s14" dir="ltr">Global &amp; Local co-KNN measures how well both local and global neighborhood structures are preserved after dimensionality reduction.</td>
+            <td class="s15" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R37" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">38</div>
+            </th>
+            <td class="s2" dir="ltr">Coefficient of determination</td>
+            <td class="s3" dir="ltr">Miles et al. // OP</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">26/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://r2.md">r2.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #e8eaed; color: #434343; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Spatial decomposition</span></td>
+            <td class="s8" dir="ltr">Evaluates how well gene expression variability is explained by models in single-cell data.</td>
+            <td class="s9" dir="ltr">[0,1] the higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R38" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">39</div>
+            </th>
+            <td class="s10" dir="ltr">Kendall&#39;s correlation</td>
+            <td class="s11" dir="ltr">Kendall et. al. // OP</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">26/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://tau.md/">tau.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #c6dbe1; color: #215a6c; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Spatially variable genes</span></td>
+            <td class="s14" dir="ltr"></td>
+            <td class="s15" dir="ltr">[0;1] or [-1;1]</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R39" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">40</div>
+            </th>
+            <td class="s2" dir="ltr">One-vs-All</td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">17/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+            <td class="s8" dir="ltr">Gene expression in one cell type versus the rest.</td>
+            <td class="s9" dir="ltr">[0,1] The higher the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R40" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">41</div>
+            </th>
+            <td class="s10" dir="ltr">One-vs-Max</td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">17/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+            <td class="s14" dir="ltr">Gene expression in one cell type vs the second more highly expressed cell type.</td>
+            <td class="s15" dir="ltr">[0,+&#8734;[</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R41" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">42</div>
+            </th>
+            <td class="s2" dir="ltr">Shannon Entropy</td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://shannon.md/">shannon.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+            <td class="s8" dir="ltr">Entropy of gene distribution across cell types.</td>
+            <td class="s9" dir="ltr">[0;1]</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R42" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">43</div>
+            </th>
+            <td class="s10" dir="ltr">Gini coefficient</td>
+            <td class="s11" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s10" dir="ltr">16/06/25</td>
+            <td class="s12" dir="ltr"><a target="_blank" href="http://gini.md/">gini.md</a></td>
+            <td class="s10"></td>
+            <td class="s10"></td>
+            <td class="s13" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+            <td class="s14" dir="ltr">Evaluates the inequality of the gene&#39;s distribution.</td>
+            <td class="s15" dir="ltr">The lower the better</td>
+        </tr>
+        <tr style="height: 30px">
+            <th id="0R43" style="height: 30px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 30px">44</div>
+            </th>
+            <td class="s2" dir="ltr">Kendall&#39;s tau</td>
+            <td class="s3" dir="ltr">Report AC</td>
+            <td class="s4"></td>
+            <td class="s2" dir="ltr">16/06/25</td>
+            <td class="s5" dir="ltr"><a target="_blank" href="http://tau.md/">tau.md</a></td>
+            <td class="s2"></td>
+            <td class="s2"></td>
+            <td class="s6" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; margin-left: 6.0px; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+            <td class="s8" dir="ltr">Similar to Gini and Shannon, but less restrictive.</td>
+            <td class="s9" dir="ltr">[0;1] or [-1;1]</td>
+        </tr>
+        <tr style="height: 20px">
+            <th id="0R44" style="height: 20px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 20px">45</div>
+            </th>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+        </tr>
+        <tr style="height: 20px">
+            <th id="0R45" style="height: 20px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 20px">46</div>
+            </th>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+        </tr>
+        <tr style="height: 20px">
+            <th id="0R46" style="height: 20px;" class="row-headers-background">
+                <div class="row-header-wrapper" style="line-height: 20px">47</div>
+            </th>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+            <td class="s34"></td>
+        </tr>
+    </tbody>
+</table>
+<style type="text/css">
+    .ritz .waffle a {
+        color: inherit;
+    }
+    .ritz .waffle .s32 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: left;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s3 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #00ff00;
+        background-color: #ffffff;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s21 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ff9900;
+        background-color: #ffffff;
+        text-align: center;
+        text-decoration: underline;
+        text-decoration-skip-ink: none;
+        -webkit-text-decoration-skip: none;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s13 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+        text-align: left;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 3px 2px 3px;
+    }
+    .ritz .waffle .s7 {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        vertical-align: top;
+        display: inline-block;
+        height: fit-content;
+        border-radius: 8px;
+    }
+    .ritz .waffle .s5 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: center;
+        text-decoration: underline;
+        text-decoration-skip-ink: none;
+        -webkit-text-decoration-skip: none;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s10 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s8 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: left;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s25 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ff9900;
+        background-color: #f6f8f9;
+        text-align: center;
+        text-decoration: underline;
+        text-decoration-skip-ink: none;
+        -webkit-text-decoration-skip: none;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s33 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #284e3f;
+        background-color: #ffffff;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s24 {
+        border-bottom: 1px SOLID #ff9900;
+        border-right: 1px SOLID #ffff00;
+        background-color: #ffff00;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s22 {
+        border-bottom: 1px SOLID #ff9900;
+        border-right: 1px SOLID #ff9900;
+        background-color: #ff9900;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s6 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: left;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 3px 2px 3px;
+    }
+    .ritz .waffle .s16 {
+        border-bottom: 1px SOLID #ffff00;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s35 {
+        background-color: #0d1117;
+        text-align: center;
+        color: #f0f6fc;
+        font-family: docs--apple-system,Arial;
+        font-size: 10pt;
+        vertical-align: bottom;
+        white-space: nowrap;
+        direction: ltr;
+        padding: 2px 3px 2px 3px;
+    }
+    .ritz .waffle .s15 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #284e3f;
+        background-color: #f6f8f9;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s31 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: left;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 3px 2px 3px;
+    }
+    .ritz .waffle .s4 {
+        border-bottom: 1px SOLID #00ff00;
+        border-right: 1px SOLID #00ff00;
+        background-color: #00ff00;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s26 {
+        border-bottom: 1px SOLID #00ff00;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s17 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: center;
+        text-decoration: underline;
+        text-decoration-skip-ink: none;
+        -webkit-text-decoration-skip: none;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s19 {
+        border-bottom: 1px SOLID #ffffff;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+    }
+    .ritz .waffle .s0 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #356854;
+        background-color: #356854;
+        text-align: center;
+        font-weight: bold;
+        color: #ffffff;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s12 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+        text-align: center;
+        text-decoration: underline;
+        text-decoration-skip-ink: none;
+        -webkit-text-decoration-skip: none;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s1 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #284e3f;
+        background-color: #356854;
+        text-align: center;
+        font-weight: bold;
+        color: #ffffff;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s29 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #00ff00;
+        background-color: #00ff00;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s23 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ffff00;
+        background-color: #f6f8f9;
+        text-align: center;
+        text-decoration: underline;
+        text-decoration-skip-ink: none;
+        -webkit-text-decoration-skip: none;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s18 {
+        border-bottom: 1px SOLID #ffff00;
+        border-right: 1px SOLID #ffff00;
+        background-color: #ffff00;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s2 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s9 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #284e3f;
+        background-color: #ffffff;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s28 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #00ff00;
+        background-color: #ffffff;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s30 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: center;
+        text-decoration: underline;
+        text-decoration-skip-ink: none;
+        -webkit-text-decoration-skip: none;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s27 {
+        border-bottom: 1px SOLID #284e3f;
+        border-right: 1px SOLID #ffffff;
+        background-color: #ffffff;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s20 {
+        border-bottom: 1px SOLID #ff9900;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+        text-align: center;
+        color: #434343;
+        font-family:"Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s34 {
+        background-color: #ffffff;
+        text-align: left;
+        color: #000000;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: bottom;
+        white-space: nowrap;
+        direction: ltr;
+        padding: 2px 3px 2px 3px;
+    }
+    .ritz .waffle .s11 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #00ff00;
+        background-color: #f6f8f9;
+        text-align: center;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+    .ritz .waffle .s14 {
+        border-bottom: 1px SOLID #f6f8f9;
+        border-right: 1px SOLID #f6f8f9;
+        background-color: #f6f8f9;
+        text-align: left;
+        color: #434343;
+        font-family: "Times New Roman";
+        font-size: 10pt;
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        direction: ltr;
+        padding: 2px 8px 2px 8px;
+    }
+</style>
+<div class="ritz grid-container" dir="ltr">
+    <table class="waffle" cellspacing="0" cellpadding="0">
         <thead>
             <tr>
-                <th></th> <!-- Empty header for the row numbers if needed -->
-                <th style="width:4cm;">Name</th>
-                <th style="width:4cm;">Source</th>
-                <th style="width:2cm;">Upload</th>
-                <th style="width:2cm;">Date</th>
-                <th style="width:2cm;">Name on github</th>
-                <th style="width:2cm;">Verification</th>
-                <th style="width:2cm;">Date</th>
-                <th style="width:10cm;">Type</th> <!-- Largeur augmentée -->
-                <th style="width:30cm;">Summary</th> <!-- Largeur augmentée -->
-                <th style="width:10cm;">Interval</th> <!-- Largeur augmentée -->
+                <th class="row-header freezebar-vertical-handle"></th>
+                <th id="0C0" style="width:188px;" class="column-headers-background">A</th>
+                <th id="0C1" style="width:135px;" class="column-headers-background">B</th>
+                <th id="0C2" style="width:77px;" class="column-headers-background">C</th>
+                <th id="0C3" style="width:75px;" class="column-headers-background">D</th>
+                <th id="0C4" style="width:145px;" class="column-headers-background">E</th>
+                <th id="0C5" style="width:100px;" class="column-headers-background">F</th>
+                <th id="0C6" style="width:78px;" class="column-headers-background">G</th>
+                <th id="0C7" style="width:250px;" class="column-headers-background">H</th> <!-- Increased width for Type -->
+                <th id="0C8" style="width:500px;" class="column-headers-background">I</th> <!-- Increased width for Summary -->
+                <th id="0C9" style="width:200px;" class="column-headers-background">J</th> <!-- Increased width for Interval -->
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>1</td>
-                <td>Adjusted Rand Index (ARI)</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>20/06/25</td>
-                <td><a target="_blank" href="http://adjusted_rand_index.md/">adjusted_rand_index.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>Adjusted Rand Index compares clustering overlap, correcting for random labels and considering correct overlaps and disagreements.</td>
-                <td>[-1,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R0" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">1</div>
+                </th>
+                <td class="s0" dir="ltr">Name</td>
+                <td class="s0" dir="ltr">Source</td>
+                <td class="s0" dir="ltr">Upload</td>
+                <td class="s0" dir="ltr">
+                    <div style="display:flex; vertical-align:middle">
+                        <svg width="1.25em" viewBox="0 0 20 20" style="display: inline; padding-right: max(6px, 0.25em)">
+                            <g id="date-table-header-icon">
+                                <path d="M4.16667 18.3333C3.70833 18.3333 3.31597 18.1701 2.98958 17.8437C2.66319 17.5174 2.5 17.125 2.5 16.6667V5C2.5 4.54166 2.66319 4.1493 2.98958 3.82291C3.31597 3.49653 3.70833 3.33333 4.16667 3.33333H5V1.66666H6.66667V3.33333H13.3333V1.66666H15V3.33333H15.8333C16.2917 3.33333 16.684 3.49653 17.0104 3.82291C17.3368 4.1493 17.5 4.54166 17.5 5V16.6667C17.5 17.125 17.3368 17.5174 17.0104 17.8437C16.684 18.1701 16.2917 18.3333 15.8333 18.3333H4.16667ZM4.16667 16.6667H15.8333V8.33333H4.16667V16.6667ZM4.16667 6.66666H15.8333V5H4.16667V6.66666ZM10 11.6667C9.76389 11.6667 9.56597 11.5868 9.40625 11.4271C9.24653 11.2674 9.16667 11.0694 9.16667 10.8333C9.16667 10.5972 9.24653 10.3993 9.40625 10.2396C9.56597 10.0799 9.76389 10 10 10C10.2361 10 10.434 10.0799 10.5938 10.2396C10.7535 10.3993 10.8333 10.5972 10.8333 10.8333C10.8333 11.0694 10.7535 11.2674 10.5938 11.4271C10.434 11.5868 10.2361 11.6667 10 11.6667ZM6.66667 11.6667C6.43056 11.6667 6.23264 11.5868 6.07292 11.4271C5.91319 11.2674 5.83333 11.0694 5.83333 10.8333C5.83333 10.5972 5.91319 10.3993 6.07292 10.2396C6.23264 10.0799 6.43056 10 6.66667 10C6.90278 10 7.10069 10.0799 7.26042 10.2396C7.42014 10.3993 7.5 10.5972 7.5 10.8333C7.5 11.0694 7.42014 11.2674 7.26042 11.4271C7.10069 11.5868 6.90278 11.6667 6.66667 11.6667ZM13.3333 11.6667C13.0972 11.6667 12.8993 11.5868 12.7396 11.4271C12.5799 11.2674 12.5 11.0694 12.5 10.8333C12.5 10.5972 12.5799 10.3993 12.7396 10.2396C12.8993 10.0799 13.0972 10 13.3333 10C13.5694 10 13.7674 10.0799 13.9271 10.2396C14.0868 10.3993 14.1667 10.5972 14.1667 10.8333C14.1667 11.0694 14.0868 11.2674 13.9271 11.4271C13.7674 11.5868 13.5694 11.6667 13.3333 11.6667ZM10 15C9.76389 15 9.56597 14.9201 9.40625 14.7604C9.24653 14.6007 9.16667 14.4028 9.16667 14.1667C9.16667 13.9306 9.24653 13.7326 9.40625 13.5729C9.56597 13.4132 9.76389 13.3333 10 13.3333C10.2361 13.3333 10.434 13.4132 10.5938 13.5729C10.7535 13.7326 10.8333 13.9306 10.8333 14.1667C10.8333 14.4028 10.7535 14.6007 10.5938 14.7604C10.434 14.9201 10.2361 15 10 15ZM6.66667 15C6.43056 15 6.23264 14.9201 6.07292 14.7604C5.91319 14.6007 5.83333 14.4028 5.83333 14.1667C5.83333 13.9306 5.91319 13.7326 6.07292 13.5729C6.23264 13.4132 6.43056 13.3333 6.66667 13.3333C6.90278 13.3333 7.10069 13.4132 7.26042 13.5729C7.42014 13.7326 7.5 13.9306 7.5 14.1667C7.5 14.4028 7.42014 14.6007 7.26042 14.7604C7.10069 14.9201 6.90278 15 6.66667 15ZM13.3333 15C13.0972 15 12.8993 14.9201 12.7396 14.7604C12.5799 14.6007 12.5 14.4028 12.5 14.1667C12.5 13.9306 12.5799 13.7326 12.7396 13.5729C12.8993 13.4132 13.0972 13.3333 13.3333 13.3333C13.5694 13.3333 13.7674 13.4132 13.9271 13.5729C14.0868 13.7326 14.1667 13.9306 14.1667 14.1667C14.1667 14.4028 14.0868 14.6007 13.9271 14.7604C13.7674 14.9201 13.5694 15 13.3333 15Z" fill="#ffffff"></path>
+                            </g>
+                        </svg>
+                        <div>Date</div>
+                    </div>
+                </td>
+                <td class="s0" dir="ltr">Name on github</td>
+                <td class="s0" dir="ltr">Verification</td>
+                <td class="s0" dir="ltr">Date </td>
+                <td class="s0" dir="ltr">
+                    <div style="display:flex; vertical-align:middle">
+                        <svg width="1.25em" viewBox="0 0 20 20" style="display: inline; padding-right: max(6px, 0.25em)">
+                            <g id="dropdown-table-header-icon">
+                                <path d="M15 9L12 12L9 9H15Z" fill="#ffffff"></path>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M7 4H13C16.31 4 19 6.69 19 10C19 13.31 16.31 16 13 16H7C3.69 16 1 13.31 1 10C1 6.69 3.69 4 7 4ZM7 14.5H13C15.48 14.5 17.5 12.48 17.5 10C17.5 7.52 15.48 5.5 13 5.5H7C4.52 5.5 2.5 7.52 2.5 10C2.5 12.48 4.52 14.5 7 14.5Z" fill="#ffffff"></path>
+                            </g>
+                        </svg>
+                        <div>Type </div>
+                    </div>
+                </td>
+                <td class="s0" dir="ltr">Summary</td>
+                <td class="s1" dir="ltr">Interval</td>
             </tr>
             <tr>
-                <td>2</td>
-                <td>Average Silhoeutte Width (ASW)</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>23/06/25</td>
-                <td><a target="_blank" href="http://asw.md/">asw.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>ASW Batch : Evaluates batch mixing quality after integration. // ASW Label : Evaluates cell type clustering preservation.</td>
-                <td>[0,1] the higher the better</td>
+                <th style="height:3px;" class="freezebar-cell freezebar-horizontal-handle"></th>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
+                <td class="freezebar-cell"></td>
             </tr>
-            <tr>
-                <td>3</td>
-                <td>iLISI &amp; cLISI</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>23/06/25</td>
-                <td><a target="_blank" href="http://lisi.md/">lisi.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>iLISI &amp; cLISI measure batch mixing and cell-type preservation quality in single-cell integration.</td>
-                <td>The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R1" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">2</div>
+                </th>
+                <td class="s2" dir="ltr">Adjusted Rand Index (ARI)</td>
+                <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">20/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://adjusted_rand_index.md/">adjusted_rand_index.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s8" dir="ltr">Adjusted Rand Index compares clustering overlap, correcting for random labels and considering correct overlaps and disagreements.</td>
+                <td class="s9" dir="ltr">[-1,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>4</td>
-                <td>Cell Cycle Conservation</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>23/06/25</td>
-                <td><a target="_blank" href="http://cc_conservation.md/">cc_conservation.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>Measures preservation of cell-cycle biological signals after batch effect correction in integration</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R2" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">3</div>
+                </th>
+                <td class="s10" dir="ltr">Average Silhoeutte Width (ASW)</td>
+                <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">23/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://asw.md/">asw.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s14" dir="ltr">ASW Batch : Evaluates batch mixing quality after integration. // ASW Label : Evaluates cell type clustering preservation.</td>
+                <td class="s15" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>5</td>
-                <td>Graph Connectivity</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>23/06/25</td>
-                <td><a target="_blank" href="http://graph_connectivity.md">graph_connectivity.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>Measures preservation of biological cell-type neighborhoods in integrated kNN graphs.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R3" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">4</div>
+                </th>
+                <td class="s2" dir="ltr">iLISI &amp; cLISI</td>
+                <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">23/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://lisi.md/">lisi.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s8" dir="ltr">iLISI &amp; cLISI measure batch mixing and cell-type preservation quality in single-cell integration.</td>
+                <td class="s9" dir="ltr">The higher the better </td>
             </tr>
-            <tr>
-                <td>6</td>
-                <td>HVG overlap</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>24/06/25</td>
-                <td><a target="_blank" href="http://hvg.md/">hvg.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>Measures how well biological gene variability is preserved after batch integration.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R4" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">5</div>
+                </th>
+                <td class="s10" dir="ltr">Cell Cycle Conservation</td>
+                <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">23/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://cc_conservation.md/">cc_conservation.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s14" dir="ltr">Measures preservation of cell-cycle biological signals after batch effect correction in integration</td>
+                <td class="s15" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>7</td>
-                <td>Isolated Label F1 score</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>24/06/25</td>
-                <td><a target="_blank" href="http://f1_score.md/">f1_score.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>Measures how well rare or isolated cell types are preserved after batch integration.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R5" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">6</div>
+                </th>
+                <td class="s2" dir="ltr">Graph Connectivity</td>
+                <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">23/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://graph_connectivity.md">graph_connectivity.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s8" dir="ltr">Measures preservation of biological cell-type neighborhoods in integrated kNN graphs.</td>
+                <td class="s9" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>8</td>
-                <td>kBET</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>24/06/25</td>
-                <td><a target="_blank" href="http://kbet.md/">kbet.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>Quantifies batch mixing by testing local neighborhood batch label distributions against global proportions.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R6" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">7</div>
+                </th>
+                <td class="s10" dir="ltr">HVG overlap </td>
+                <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">24/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://hvg.md/">hvg.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s14" dir="ltr">Measures how well biological gene variability is preserved after batch integration.</td>
+                <td class="s15" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>9</td>
-                <td>NMI</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>24/06/25</td>
-                <td><a target="_blank" href="http://nmi.md/">nmi.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>NMI quantifies clustering accuracy by comparing predicted and true labels in integrated datasets.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R7" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">8</div>
+                </th>
+                <td class="s2" dir="ltr">Isolated Label F1 score</td>
+                <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">24/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://f1_score.md/">f1_score.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s8" dir="ltr">Measures how well rare or isolated cell types are preserved after batch integration.</td>
+                <td class="s9" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>10</td>
-                <td>PCR</td>
-                <td>Luecken et. al // OP</td>
-                <td></td>
-                <td>24/06/25</td>
-                <td><a target="_blank" href="http://pcr.md/">pcr.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="batch-integration">Batch integration</span></td>
-                <td>Quantifies how well continuous biological variation is preserved after data integration.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R8" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">9</div>
+                </th>
+                <td class="s10" dir="ltr">kBET</td>
+                <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">24/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://kbet.md/">kbet.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s14" dir="ltr">Quantifies batch mixing by testing local neighborhood batch label distributions against global proportions.</td>
+                <td class="s15" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>11</td>
-                <td>Silhouette</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://silhouette.md/">silhouette.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>Internal metric evaluating a trade-off between average inter and intra-cluster distances.</td>
-                <td>[-1;1]</td>
+            <tr style="height: 30px">
+                <th id="0R9" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">10</div>
+                </th>
+                <td class="s2" dir="ltr">NMI</td>
+                <td class="s3" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">24/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://nmi.md/">nmi.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s8" dir="ltr">NMI quantifies clustering accuracy by comparing predicted and true labels in integrated datasets.</td>
+                <td class="s9" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>12</td>
-                <td>Davies_Bouldin</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://dbi.md/">dbi.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>Internal Metric Based on a Similarity Notion</td>
-                <td>The lower the better</td>
+            <tr style="height: 30px">
+                <th id="0R10" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">11</div>
+                </th>
+                <td class="s10" dir="ltr">PCR</td>
+                <td class="s11" dir="ltr">Luecken&#8202; et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">24/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://pcr.md/">pcr.md</a></td>
+                <td class="s16"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #b10202; color: #ffcfc9; padding: 1.0px 5.0px 1.0px 5.0px ; ">Batch integration</span></td>
+                <td class="s14" dir="ltr">Quantifies how well continuous biological variation is preserved after data integration.</td>
+                <td class="s15" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>13</td>
-                <td>Dunn Index</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://dunn.md/">dunn.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>Internal metric evaluating a trade-off between characteristic inter-and intra-cluster distances.</td>
-                <td>The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R11" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">12</div>
+                </th>
+                <td class="s2" dir="ltr">Silhouette </td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s17" dir="ltr"><a target="_blank" href="http://silhouette.md/">silhouette.md</a></td>
+                <td class="s18"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s8" dir="ltr">Internal metric evaluating a trade-off between average inter and intra-cluster distances.</td>
+                <td class="s9" dir="ltr">[-1;1] </td>
             </tr>
-            <tr>
-                <td>14</td>
-                <td>DBCV</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://dbcv.md/">dbcv.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>Internal metric for evaluating density-based clustering methods.</td>
-                <td>[-1;1] The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R12" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">13</div>
+                </th>
+                <td class="s10" dir="ltr">Davies_Bouldin</td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">16/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://dbi.md/">dbi.md</a></td>
+                <td class="s19"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s14" dir="ltr">Internal Metric Based on a Similarity Notion</td>
+                <td class="s15" dir="ltr">The lower the better </td>
             </tr>
-            <tr>
-                <td>15</td>
-                <td>Rand_index</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://rand.md/">rand.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>External metric based on consistency between two clusterings</td>
-                <td>[0,1] The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R13" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">14</div>
+                </th>
+                <td class="s2" dir="ltr">Dunn Index</td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://dunn.md/">dunn.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s8" dir="ltr">Internal metric evaluating a trade-off between characteristic inter-and intra-cluster distances.</td>
+                <td class="s9" dir="ltr">The higher the better </td>
             </tr>
-            <tr>
-                <td>16</td>
-                <td>Fowlkes_Mallows</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://fowlkes_mallows.md/">fowlkes_mallows.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>External metric comparing agreement and disagreement rates between two clusterings</td>
-                <td>[0,1] The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R14" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">15</div>
+                </th>
+                <td class="s10" dir="ltr">DBCV</td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">16/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://dbcv.md/">dbcv.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s14" dir="ltr">Internal metric for evaluating density-based clustering methods.</td>
+                <td class="s15" dir="ltr">[-1;1] The higher the better </td>
             </tr>
-            <tr>
-                <td>17</td>
-                <td>Mutual_Information</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://mutual_information.md/">mutual_information.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>External metric based on joint entropy</td>
-                <td>The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R15" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">16</div>
+                </th>
+                <td class="s2" dir="ltr">Rand_index</td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://rand.md/">rand.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s8" dir="ltr">External metric based on consistency between two clusterings</td>
+                <td class="s9" dir="ltr">[0,1] The higher the better</td>
             </tr>
-            <tr>
-                <td>18</td>
-                <td>V-Measure</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://v_measure.md/">v_measure.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>External metric based on the concepts of completeness and homogeneity</td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R16" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">17</div>
+                </th>
+                <td class="s10" dir="ltr">Fowlkes_Mallows </td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">16/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://fowlkes_mallows.md/">fowlkes_mallows.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s14" dir="ltr">External metric comparing agreement and disagreement rates between two clusterings</td>
+                <td class="s15" dir="ltr">[0,1] The higher the better</td>
             </tr>
-            <tr>
-                <td>19</td>
-                <td>Mean Sqaured Error</td>
-                <td>Batson et. al // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://mse.md/">mse.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="denoising">Denoising</span></td>
-                <td>« The mean squared error between the denoised counts of the training dataset and the true counts of the test dataset after reweighting by the train/test ratio. »</td>
-                <td>The lower the better</td>
+            <tr style="height: 30px">
+                <th id="0R17" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">18</div>
+                </th>
+                <td class="s2" dir="ltr">Mutual_Information</td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://mutual_information.md/">mutual_information.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s8" dir="ltr">External metric based on joint entropy</td>
+                <td class="s9" dir="ltr">The higher the better </td>
             </tr>
-            <tr>
-                <td>20</td>
-                <td>Poisson Loss</td>
-                <td>Batson et. al // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://poisson.md/">poisson.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="denoising">Denoising</span></td>
-                <td></td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R18" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">19</div>
+                </th>
+                <td class="s10" dir="ltr">V-Measure</td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">16/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://v_measure.md/">v_measure.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s14" dir="ltr">External metric based on the concepts of completeness and homogeneity</td>
+                <td class="s15"></td>
             </tr>
-            <tr>
-                <td>21</td>
-                <td>Kruskal's stress</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://kruskal_stress.md/">kruskal_stress.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Metric based on the difference between distances in high and low dimensions.</td>
-                <td>[0,1] The lower the better</td>
+            <tr style="height: 30px">
+                <th id="0R19" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">20</div>
+                </th>
+                <td class="s2" dir="ltr">Mean Sqaured Error</td>
+                <td class="s3" dir="ltr">Batson et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">26/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://mse.md/">mse.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #d4edbc; color: #11734b; padding: 1.0px 5.0px 1.0px 5.0px ; ">Denoising</span></td>
+                <td class="s8" dir="ltr">« The mean squared error between the denoised counts of the training dataset and the true counts of the test dataset after reweighting by the train/test ratio. »</td>
+                <td class="s9" dir="ltr">The lower the better </td>
             </tr>
-            <tr>
-                <td>22</td>
-                <td>Spearman's rho</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://spearman_rho.md/">spearman_rho.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Metric based on the difference between the orders of distances in high and low dimensions</td>
-                <td>The lower the better [0, inf]</td>
+            <tr style="height: 30px">
+                <th id="0R20" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">21</div>
+                </th>
+                <td class="s10" dir="ltr">Poisson Loss</td>
+                <td class="s11" dir="ltr">Batson et. al // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">26/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://poisson.md/">poisson.md</a></td>
+                <td class="s20"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #d4edbc; color: #11734b; padding: 1.0px 5.0px 1.0px 5.0px ; ">Denoising</span></td>
+                <td class="s14" dir="ltr"></td>
+                <td class="s15" dir="ltr"></td>
             </tr>
-            <tr>
-                <td>23</td>
-                <td>LCMC</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Metric evaluating changes in the nearest neighbours matrix after dimension reduction</td>
-                <td>The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R21" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">22</div>
+                </th>
+                <td class="s2" dir="ltr">Kruskal&#39;s stress </td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s21" dir="ltr"><a target="_blank" href="http://kruskal_stress.md/">kruskal_stress.md</a></td>
+                <td class="s22"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s8" dir="ltr">Metric based on the difference between distances in high and low dimensions.</td>
+                <td class="s9" dir="ltr">[0,1] The lower the better</td>
             </tr>
-            <tr>
-                <td>24</td>
-                <td>Trustworthiness and continuity</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Metric based on notions of reliability and continuity linked to nearest neighbours</td>
-                <td>[0,1] The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R22" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">23</div>
+                </th>
+                <td class="s10" dir="ltr">Spearman&#39;s rho</td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">16/06/25</td>
+                <td class="s23" dir="ltr"><a target="_blank" href="http://spearman_rho.md/">spearman_rho.md</a></td>
+                <td class="s24"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr">Metric based on the difference between the orders of distances in high and low dimensions</td>
+                <td class="s15" dir="ltr">The lower the better [0, inf]</td>
             </tr>
-            <tr>
-                <td>25</td>
-                <td>Average Jaccard Distance (AJD)</td>
-                <td>Cooley et. al</td>
-                <td></td>
-                <td>02/07/25</td>
-                <td><a target="_blank" href="http://ajd.md/">ajd.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>AJD quantifies how much local neighborhood structure is preserved after dimensionality reduction in scRNA-seq.</td>
-                <td>[0,1] The lower the better</td>
+            <tr style="height: 30px">
+                <th id="0R23" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">24</div>
+                </th>
+                <td class="s2" dir="ltr">LCMC</td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s21" dir="ltr"><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
+                <td class="s22"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s8" dir="ltr">Metric evaluating changes in the nearest neighbours matrix after dimension reduction</td>
+                <td class="s9" dir="ltr">The higher the better </td>
             </tr>
-            <tr>
-                <td>26</td>
-                <td>Graph Edit Distance</td>
-                <td>Cooley et. al</td>
-                <td></td>
-                <td>02/07/25</td>
-                <td><a target="_blank" href="http://ged.md/">ged.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>GED quantifies graph dissimilarity by counting minimum edits needed to transform one graph into another.</td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R24" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">25</div>
+                </th>
+                <td class="s10" dir="ltr">Trustworthiness and continuity</td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">16/06/25</td>
+                <td class="s25" dir="ltr"><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+                <td class="s22"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr">Metric based on notions of reliability and continuity linked to nearest neighbours</td>
+                <td class="s15" dir="ltr">[0,1] The higher the better</td>
             </tr>
-            <tr>
-                <td>27</td>
-                <td>Kolmogorov–Smirnov</td>
-                <td>Pachter et al.</td>
-                <td></td>
-                <td>03/07/25</td>
-                <td><a target="_blank" href="http://kolmogorov_smirnov.md">kolmogorov_smirnov.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="clustering">Clustering</span></td>
-                <td>The KS statistic is the maximum difference between two empirical CDFs; values near 1 signal highly dissimilar distributions.</td>
-                <td>[0,1] The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R25" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">26</div>
+                </th>
+                <td class="s2" dir="ltr">Average Jaccard Distance (AJD)</td>
+                <td class="s3" dir="ltr">Cooley et. al </td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">02/07/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://ajd.md/">ajd.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s8" dir="ltr">AJD quantifies how much local neighborhood structure is preserved after dimensionality reduction in scRNA-seq.</td>
+                <td class="s9" dir="ltr">[0,1] The lower the better</td>
             </tr>
-            <tr>
-                <td>28</td>
-                <td><a target="_blank" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288">https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288</a></td>
-                <td>Pachter et al.</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td></td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R26" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">27</div>
+                </th>
+                <td class="s10" dir="ltr">Graph Edit Distance</td>
+                <td class="s11" dir="ltr">Cooley et. al </td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">02/07/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://ged.md/">ged.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr">GED quantifies graph dissimilarity by counting minimum edits needed to transform one graph into another.</td>
+                <td class="s15" dir="ltr"></td>
             </tr>
-            <tr>
-                <td>29</td>
-                <td>Entourage</td>
-                <td>Becavin et al.</td>
-                <td></td>
-                <td>02/07/25</td>
-                <td><a target="_blank" href="http://entourage.md/">entourage.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Local conservation of entourage // Quantifies local neighborhood preservation quality during dimensionality reduction for structural fidelity assessment.</td>
-                <td>[0,1] The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R27" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">28</div>
+                </th>
+                <td class="s2" dir="ltr">Kolmogorov–Smirnov</td>
+                <td class="s3" dir="ltr">Pachter et al.</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">03/07/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://kolmogorov_smirnov.md">kolmogorov_smirnov.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #e6cff2; color: #5a3286; padding: 1.0px 5.0px 1.0px 5.0px ; ">Clustering </span></td>
+                <td class="s8" dir="ltr">The KS statistic is the maximum difference between two empirical CDFs; values near 1 signal highly dissimilar distributions.</td>
+                <td class="s9" dir="ltr">[0,1] The higher the better</td>
             </tr>
-            <tr>
-                <td>30</td>
-                <td>Trustworthiness</td>
-                <td>Venna &amp; Kasi // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td></td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R28" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">29</div>
+                </th>
+                <td class="s12" dir="ltr"><a target="_blank" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288">https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288</a></td>
+                <td class="s10" dir="ltr">Pachter et al.</td>
+                <td class="s26"></td>
+                <td class="s10" dir="ltr"></td>
+                <td class="s10" dir="ltr"></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr"></td>
+                <td class="s15" dir="ltr"></td>
             </tr>
-            <tr>
-                <td>31</td>
-                <td>Continuity</td>
-                <td>Zhang et. al. // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td></td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R29" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">30</div>
+                </th>
+                <td class="s2" dir="ltr">Entourage</td>
+                <td class="s3" dir="ltr">Becavin et al.</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">02/07/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://entourage.md/">entourage.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s8" dir="ltr">Local conservation of entourage // Quantifies local neighborhood preservation quality during dimensionality reduction for structural fidelity assessment.</td>
+                <td class="s9" dir="ltr">[0,1] The higher the better</td>
             </tr>
-            <tr>
-                <td>32</td>
-                <td>LCMC</td>
-                <td>Zhang et. al. // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td></td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R30" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">31</div>
+                </th>
+                <td class="s10" dir="ltr">Trustworthiness</td>
+                <td class="s11" dir="ltr">Venna &amp; Kasi // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">26/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr"></td>
+                <td class="s15" dir="ltr"></td>
             </tr>
-            <tr>
-                <td>33</td>
-                <td>co-KNN (AUC &amp; size)</td>
-                <td>Zhang et. al. // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://co_knn.md">co_knn.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>These metrics evaluate how well local neighborhood structures are preserved after dimensionality reduction</td>
-                <td>The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R31" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">32</div>
+                </th>
+                <td class="s2" dir="ltr">Continuity</td>
+                <td class="s3" dir="ltr">Zhang et. al. // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">26/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s8" dir="ltr"></td>
+                <td class="s9" dir="ltr"></td>
             </tr>
-            <tr>
-                <td>34</td>
-                <td>Density Preservation</td>
-                <td>Narayan et al. // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://density_preservation.md/">density_preservation.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Density Preservation measures how well local point densities are maintained after dimensionality reduction for accurate visualization.</td>
-                <td>[-1,1] the higher the better</td>
+            <tr style="height: 28px">
+                <th id="0R32" style="height: 28px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 28px">33</div>
+                </th>
+                <td class="s10" dir="ltr">LCMC</td>
+                <td class="s11" dir="ltr">Zhang et. al. // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">26/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr"></td>
+                <td class="s15"></td>
             </tr>
-            <tr>
-                <td>35</td>
-                <td>Distance correlation</td>
-                <td>Schober et. al. // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://distance_correlation.md/">distance_correlation.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Distance Correlation detects both linear and nonlinear dependencies, equaling zero only when variables are truly independent.</td>
-                <td>[0;1]</td>
+            <tr style="height: 30px">
+                <th id="0R33" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">34</div>
+                </th>
+                <td class="s2" dir="ltr">co-KNN (AUC &amp; size)</td>
+                <td class="s3" dir="ltr">Zhang et. al. // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">26/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://co_knn.md">co_knn.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s8" dir="ltr">These metrics evaluate how well local neighborhood structures are preserved after dimensionality reduction</td>
+                <td class="s9" dir="ltr">The higher the better</td>
             </tr>
-            <tr>
-                <td>36</td>
-                <td>Local &amp; Global co-KNN</td>
-                <td>Zhang et. al. // OP</td>
-                <td></td>
-                <td>27/06/25</td>
-                <td><a target="_blank" href="http://local_global_coknn.md/">local_global_coknn.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="dimension-reduction">Dimension reduction</span></td>
-                <td>Global &amp; Local co-KNN measures how well both local and global neighborhood structures are preserved after dimensionality reduction.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R34" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">35</div>
+                </th>
+                <td class="s10" dir="ltr">Density Preservation</td>
+                <td class="s11" dir="ltr">Narayan et. al. // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">26/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://density_preservation.md/">density_preservation.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr">Density Preservation measures how well local point densities are maintained after dimensionality reduction for accurate visualization.</td>
+                <td class="s15" dir="ltr">[-1,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>37</td>
-                <td>Coefficient of determination</td>
-                <td>Miles et al. // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://r2.md">r2.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="spatial-decomposition">Spatial decomposition</span></td>
-                <td>Evaluates how well gene expression variability is explained by models in single-cell data.</td>
-                <td>[0,1] the higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R35" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">36</div>
+                </th>
+                <td class="s2" dir="ltr">Distance correlation</td>
+                <td class="s3" dir="ltr">Schober et. al. // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">26/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://distance_correlation.md/">distance_correlation.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s8" dir="ltr">Distance Correlation detects both linear and nonlinear dependencies, equaling zero only when variables are truly independent.</td>
+                <td class="s9" dir="ltr">[0;1]</td>
             </tr>
-            <tr>
-                <td>38</td>
-                <td>Kendall's correlation</td>
-                <td>Kendall et. al. // OP</td>
-                <td></td>
-                <td>26/06/25</td>
-                <td><a target="_blank" href="http://tau.md/">tau.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="spatially-variable-genes">Spatially variable genes</span></td>
-                <td></td>
-                <td>[0;1] or [-1;1]</td>
+            <tr style="height: 30px">
+                <th id="0R36" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">37</div>
+                </th>
+                <td class="s10" dir="ltr">Local &amp; Global co-KNN</td>
+                <td class="s11" dir="ltr">Zhang et. al. // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">27/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://local_global_coknn.md/">local_global_coknn.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #bfe1f6; color: #0a53a8; padding: 1.0px 5.0px 1.0px 5.0px ; ">Dimension reduction</span></td>
+                <td class="s14" dir="ltr">Global &amp; Local co-KNN measures how well both local and global neighborhood structures are preserved after dimensionality reduction.</td>
+                <td class="s15" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>39</td>
-                <td>One-vs-All</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>17/06/25</td>
-                <td><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="specificity">Specificity</span></td>
-                <td>Gene expression in one cell type versus the rest.</td>
-                <td>[0,1] The higher the better</td>
+            <tr style="height: 30px">
+                <th id="0R37" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">38</div>
+                </th>
+                <td class="s2" dir="ltr">Coefficient of determination</td>
+                <td class="s3" dir="ltr">Miles et al. // OP</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">26/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://r2.md">r2.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #e8eaed; color: #434343; padding: 1.0px 5.0px 1.0px 5.0px ; ">Spatial decomposition</span></td>
+                <td class="s8" dir="ltr">Evaluates how well gene expression variability is explained by models in single-cell data.</td>
+                <td class="s9" dir="ltr">[0,1] the higher the better</td>
             </tr>
-            <tr>
-                <td>40</td>
-                <td>One-vs-Max</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>17/06/25</td>
-                <td><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="specificity">Specificity</span></td>
-                <td>Gene expression in one cell type vs the second more highly expressed cell type.</td>
-                <td>[0,+∞[</td>
+            <tr style="height: 30px">
+                <th id="0R38" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">39</div>
+                </th>
+                <td class="s10" dir="ltr">Kendall&#39;s correlation</td>
+                <td class="s11" dir="ltr">Kendall et. al. // OP</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">26/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://tau.md/">tau.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #c6dbe1; color: #215a6c; padding: 1.0px 5.0px 1.0px 5.0px ; ">Spatially variable genes</span></td>
+                <td class="s14" dir="ltr"></td>
+                <td class="s15" dir="ltr">[0;1] or [-1;1]</td>
             </tr>
-            <tr>
-                <td>41</td>
-                <td>Shannon Entropy</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://shannon.md/">shannon.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="specificity">Specificity</span></td>
-                <td>Entropy of gene distribution across cell types.</td>
-                <td>[0;1]</td>
+            <tr style="height: 30px">
+                <th id="0R39" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">40</div>
+                </th>
+                <td class="s2" dir="ltr">One-vs-All</td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">17/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+                <td class="s8" dir="ltr">Gene expression in one cell type versus the rest.</td>
+                <td class="s9" dir="ltr">[0,1] The higher the better</td>
             </tr>
-            <tr>
-                <td>42</td>
-                <td>Gini coefficient</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://gini.md/">gini.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="specificity">Specificity</span></td>
-                <td>Evaluates the inequality of the gene's distribution.</td>
-                <td>The lower the better</td>
+            <tr style="height: 30px">
+                <th id="0R40" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">41</div>
+                </th>
+                <td class="s10" dir="ltr">One-vs-Max</td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">17/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+                <td class="s14" dir="ltr">Gene expression in one cell type vs the second more highly expressed cell type.</td>
+                <td class="s15" dir="ltr">[0,+&#8734;[</td>
             </tr>
-            <tr>
-                <td>43</td>
-                <td>Kendall's tau</td>
-                <td>Report AC</td>
-                <td></td>
-                <td>16/06/25</td>
-                <td><a target="_blank" href="http://tau.md/">tau.md</a></td>
-                <td></td>
-                <td></td>
-                <td><span class="specificity">Specificity</span></td>
-                <td>Similar to Gini and Shannon, but less restrictive.</td>
-                <td>[0;1] or [-1;1]</td>
+            <tr style="height: 30px">
+                <th id="0R41" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">42</div>
+                </th>
+                <td class="s2" dir="ltr">Shannon Entropy</td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://shannon.md/">shannon.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+                <td class="s8" dir="ltr">Entropy of gene distribution across cell types.</td>
+                <td class="s9" dir="ltr">[0;1]</td>
             </tr>
-            <tr>
-                <td>44</td>
-                <td>ZADU</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
+            <tr style="height: 30px">
+                <th id="0R42" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">43</div>
+                </th>
+                <td class="s10" dir="ltr">Gini coefficient</td>
+                <td class="s11" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s10" dir="ltr">16/06/25</td>
+                <td class="s12" dir="ltr"><a target="_blank" href="http://gini.md/">gini.md</a></td>
+                <td class="s10"></td>
+                <td class="s10"></td>
+                <td class="s13" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+                <td class="s14" dir="ltr">Evaluates the inequality of the gene&#39;s distribution.</td>
+                <td class="s15" dir="ltr">The lower the better</td>
+            </tr>
+            <tr style="height: 30px">
+                <th id="0R43" style="height: 30px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 30px">44</div>
+                </th>
+                <td class="s2" dir="ltr">Kendall&#39;s tau</td>
+                <td class="s3" dir="ltr">Report AC</td>
+                <td class="s4"></td>
+                <td class="s2" dir="ltr">16/06/25</td>
+                <td class="s5" dir="ltr"><a target="_blank" href="http://tau.md/">tau.md</a></td>
+                <td class="s2"></td>
+                <td class="s2"></td>
+                <td class="s6" dir="ltr"><span class="s7" style="background-color: #ffe5a0; color: #473821; padding: 1.0px 5.0px 1.0px 5.0px ; ">Specificity</span></td>
+                <td class="s8" dir="ltr">Similar to Gini and Shannon, but less restrictive.</td>
+                <td class="s9" dir="ltr">[0;1] or [-1;1]</td>
+            </tr>
+            <tr style="height: 20px">
+                <th id="0R44" style="height: 20px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 20px">45</div>
+                </th>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+            </tr>
+            <tr style="height: 20px">
+                <th id="0R45" style="height: 20px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 20px">46</div>
+                </th>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+            </tr>
+            <tr style="height: 20px">
+                <th id="0R46" style="height: 20px;" class="row-headers-background">
+                    <div class="row-header-wrapper" style="line-height: 20px">47</div>
+                </th>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
+                <td class="s34"></td>
             </tr>
         </tbody>
     </table>
-</body>
-</html>
+</div>
+<link type="text/css" rel="stylesheet" href="resources/sheet.css" >
+<style type="text/css">
+    /* Styles généraux pour le corps de la page */
+    body {
+        font-family: "Inter", sans-serif;
+        margin: 20px;
+        background-color: #f4f7f6;
+        color: #333;
+    }
+    /* Styles pour le titre principal */
+    h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    /* Styles pour la table */
+    table {
+        width: 100%; /* La table prend 100% de la largeur disponible */
+        border-collapse: collapse; /* Fusionne les bordures des cellules */
+        margin: 0 auto; /* Centre la table */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Ombre légère */
+        border-radius: 8px; /* Coins arrondis */
+        overflow: hidden; /* Assure que les coins arrondis sont visibles */
+        table-layout: fixed; /* Important : force les largeurs de colonnes à être respectées */
+    }
+    /* Styles pour l'en-tête de la table */
+    th {
+        background-color: #4CAF50; /* Couleur de fond verte */
+        color: white; /* Texte blanc */
+        padding: 12px 15px; /* Espacement interne */
+        text-align: left; /* Alignement du texte à gauche */
+        border: 1px solid #ddd; /* Bordure légère */
+        white-space: nowrap; /* Empêche le texte de se renvoyer à la ligne */
+    }
+    /* Styles pour les cellules de données */
+    td {
+        padding: 10px 15px; /* Espacement interne */
+        border: 1px solid #ddd; /* Bordure légère */
+        vertical-align: top; /* Alignement vertical en haut */
+        line-height: 1.5; /* Hauteur de ligne pour une meilleure lisibilité */
+        white-space: nowrap; /* Empêche le texte de se renvoyer à la ligne */
+        overflow: hidden; /* Cache le contenu qui dépasse */
+        text-overflow: ellipsis; /* Ajoute des points de suspension si le texte est tronqué */
+    }
+    /* Styles pour les lignes paires (alternance de couleurs) */
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    /* Effet de survol sur les lignes */
+    tr:hover {
+        background-color: #e0e0e0;
+    }
+    /* Styles spécifiques pour les liens dans la table */
+    td a {
+        color: #007bff; /* Couleur de lien bleue */
+        text-decoration: none; /* Pas de soulignement par défaut */
+    }
+    td a:hover {
+        text-decoration: underline; /* Soulignement au survol */
+    }
+    /* Styles pour les spans avec couleur de fond (catégories) */
+    td span {
+        display: inline-block; /* Permet d'appliquer padding et width */
+        padding: 3px 8px;
+        border-radius: 5px; /* Coins arrondis pour les catégories */
+        font-size: 0.9em;
+        font-weight: bold;
+        text-align: center;
+    }
+    /* Couleurs spécifiques pour les catégories */
+    .batch-integration {
+        background-color: #b10202;
+        color: #ffcfc9;
+    }
+    .clustering {
+        background-color: #e6cff2;
+        color: #5a3286;
+    }
+    .denoising {
+        background-color: #d4edbc;
+        color: #11734b;
+    }
+    .dimension-reduction {
+        background-color: #bfe1f6;
+        color: #0a53a8;
+    }
+    .spatial-decomposition {
+        background-color: #e8eaed;
+        color: #434343;
+    }
+    .spatially-variable-genes {
+        background-color: #c6dbe1;
+        color: #215a6c;
+    }
+    .specificity {
+        background-color: #ffe5a0;
+        color: #473821;
+    }
+</style>
