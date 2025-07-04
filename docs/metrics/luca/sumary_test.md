@@ -1,0 +1,699 @@
+# SUMMARY
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Récapitulatif</title>
+    <style>
+        /* Styles généraux pour le corps de la page */
+        body {
+            font-family: "Inter", sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+/* Styles pour le titre principal */
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        /* Styles pour la table */
+        table {
+            width: 100%;
+            border-collapse: collapse; /* Fusionne les bordures des cellules */
+            margin: 0 auto; /* Centre la table */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Ombre légère */
+            border-radius: 8px; /* Coins arrondis */
+            overflow: hidden; /* Assure que les coins arrondis sont visibles */
+        }
+        /* Styles pour l'en-tête de la table */
+        th {
+            background-color: #4CAF50; /* Couleur de fond verte */
+            color: white; /* Texte blanc */
+            padding: 12px 15px; /* Espacement interne */
+            text-align: left; /* Alignement du texte à gauche */
+            border: 1px solid #ddd; /* Bordure légère */
+            white-space: nowrap; /* Empêche le texte de se casser sur plusieurs lignes */
+        }
+        /* Styles pour les cellules de données */
+        td {
+            padding: 10px 15px; /* Espacement interne */
+            border: 1px solid #ddd; /* Bordure légère */
+            vertical-align: top; /* Alignement vertical en haut */
+            line-height: 1.5; /* Hauteur de ligne pour une meilleure lisibilité */
+        }
+        /* Styles pour les lignes paires (alternance de couleurs) */
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        /* Effet de survol sur les lignes */
+        tr:hover {
+            background-color: #e0e0e0;
+        }
+        /* Styles spécifiques pour les liens dans la table */
+        td a {
+            color: #007bff; /* Couleur de lien bleue */
+            text-decoration: none; /* Pas de soulignement par défaut */
+        }
+        td a:hover {
+            text-decoration: underline; /* Soulignement au survol */
+        }
+        /* Styles pour les spans avec couleur de fond (catégories) */
+        td span {
+            display: inline-block; /* Permet d'appliquer padding et width */
+            padding: 3px 8px;
+            border-radius: 5px; /* Coins arrondis pour les catégories */
+            font-size: 0.9em;
+            font-weight: bold;
+            text-align: center;
+        }
+        /* Couleurs spécifiques pour les catégories */
+        .batch-integration {
+            background-color: #b10202;
+            color: #ffcfc9;
+        }
+        .clustering {
+            background-color: #e6cff2;
+            color: #5a3286;
+        }
+        .denoising {
+            background-color: #d4edbc;
+            color: #11734b;
+        }
+        .dimension-reduction {
+            background-color: #bfe1f6;
+            color: #0a53a8;
+        }
+        .spatial-decomposition {
+            background-color: #e8eaed;
+            color: #434343;
+        }
+        .spatially-variable-genes {
+            background-color: #c6dbe1;
+            color: #215a6c;
+        }
+        .specificity {
+            background-color: #ffe5a0;
+            color: #473821;
+        }
+    </style>
+</head>
+<body>
+    <h1>SUMMARY</h1>
+
+  <table cellspacing="0" cellpadding="0" border="1">
+        <thead>
+            <tr>
+                <th></th> <!-- Empty header for the row numbers if needed -->
+                <th style="width:4cm;">Name</th>
+                <th style="width:4cm;">Source</th>
+                <th style="width:2cm;">Upload</th>
+                <th style="width:2cm;">Date</th>
+                <th style="width:2cm;">Name on github</th>
+                <th style="width:2cm;">Verification</th>
+                <th style="width:2cm;">Date</th>
+                <th style="width:4cm;">Type</th>
+                <th style="width:8cm;">Summary</th>
+                <th style="width:4cm;">Interval</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Adjusted Rand Index (ARI)</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>20/06/25</td>
+                <td><a target="_blank" href="http://adjusted_rand_index.md/">adjusted_rand_index.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>Adjusted Rand Index compares clustering overlap, correcting for random labels and considering correct overlaps and disagreements.</td>
+                <td>[-1,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Average Silhoeutte Width (ASW)</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>23/06/25</td>
+                <td><a target="_blank" href="http://asw.md/">asw.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>ASW Batch : Evaluates batch mixing quality after integration. // ASW Label : Evaluates cell type clustering preservation.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>iLISI &amp; cLISI</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>23/06/25</td>
+                <td><a target="_blank" href="http://lisi.md/">lisi.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>iLISI &amp; cLISI measure batch mixing and cell-type preservation quality in single-cell integration.</td>
+                <td>The higher the better</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>Cell Cycle Conservation</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>23/06/25</td>
+                <td><a target="_blank" href="http://cc_conservation.md/">cc_conservation.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>Measures preservation of cell-cycle biological signals after batch effect correction in integration</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>Graph Connectivity</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>23/06/25</td>
+                <td><a target="_blank" href="http://graph_connectivity.md">graph_connectivity.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>Measures preservation of biological cell-type neighborhoods in integrated kNN graphs.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>HVG overlap</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>24/06/25</td>
+                <td><a target="_blank" href="http://hvg.md/">hvg.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>Measures how well biological gene variability is preserved after batch integration.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>Isolated Label F1 score</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>24/06/25</td>
+                <td><a target="_blank" href="http://f1_score.md/">f1_score.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>Measures how well rare or isolated cell types are preserved after batch integration.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>kBET</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>24/06/25</td>
+                <td><a target="_blank" href="http://kbet.md/">kbet.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>Quantifies batch mixing by testing local neighborhood batch label distributions against global proportions.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>NMI</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>24/06/25</td>
+                <td><a target="_blank" href="http://nmi.md/">nmi.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>NMI quantifies clustering accuracy by comparing predicted and true labels in integrated datasets.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>PCR</td>
+                <td>Luecken et. al // OP</td>
+                <td></td>
+                <td>24/06/25</td>
+                <td><a target="_blank" href="http://pcr.md/">pcr.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="batch-integration">Batch integration</span></td>
+                <td>Quantifies how well continuous biological variation is preserved after data integration.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>Silhouette</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://silhouette.md/">silhouette.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>Internal metric evaluating a trade-off between average inter and intra-cluster distances.</td>
+                <td>[-1;1]</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>Davies_Bouldin</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://dbi.md/">dbi.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>Internal Metric Based on a Similarity Notion</td>
+                <td>The lower the better</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>Dunn Index</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://dunn.md/">dunn.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>Internal metric evaluating a trade-off between characteristic inter-and intra-cluster distances.</td>
+                <td>The higher the better</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>DBCV</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://dbcv.md/">dbcv.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>Internal metric for evaluating density-based clustering methods.</td>
+                <td>[-1;1] The higher the better</td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td>Rand_index</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://rand.md/">rand.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>External metric based on consistency between two clusterings</td>
+                <td>[0,1] The higher the better</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>Fowlkes_Mallows</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://fowlkes_mallows.md/">fowlkes_mallows.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>External metric comparing agreement and disagreement rates between two clusterings</td>
+                <td>[0,1] The higher the better</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td>Mutual_Information</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://mutual_information.md/">mutual_information.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>External metric based on joint entropy</td>
+                <td>The higher the better</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td>V-Measure</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://v_measure.md/">v_measure.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>External metric based on the concepts of completeness and homogeneity</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td>Mean Sqaured Error</td>
+                <td>Batson et. al // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://mse.md/">mse.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="denoising">Denoising</span></td>
+                <td>« The mean squared error between the denoised counts of the training dataset and the true counts of the test dataset after reweighting by the train/test ratio. »</td>
+                <td>The lower the better</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>Poisson Loss</td>
+                <td>Batson et. al // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://poisson.md/">poisson.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="denoising">Denoising</span></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>Kruskal's stress</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://kruskal_stress.md/">kruskal_stress.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Metric based on the difference between distances in high and low dimensions.</td>
+                <td>[0,1] The lower the better</td>
+            </tr>
+            <tr>
+                <td>22</td>
+                <td>Spearman's rho</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://spearman_rho.md/">spearman_rho.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Metric based on the difference between the orders of distances in high and low dimensions</td>
+                <td>The lower the better [0, inf]</td>
+            </tr>
+            <tr>
+                <td>23</td>
+                <td>LCMC</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Metric evaluating changes in the nearest neighbours matrix after dimension reduction</td>
+                <td>The higher the better</td>
+            </tr>
+            <tr>
+                <td>24</td>
+                <td>Trustworthiness and continuity</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Metric based on notions of reliability and continuity linked to nearest neighbours</td>
+                <td>[0,1] The higher the better</td>
+            </tr>
+            <tr>
+                <td>25</td>
+                <td>Average Jaccard Distance (AJD)</td>
+                <td>Cooley et. al</td>
+                <td></td>
+                <td>02/07/25</td>
+                <td><a target="_blank" href="http://ajd.md/">ajd.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>AJD quantifies how much local neighborhood structure is preserved after dimensionality reduction in scRNA-seq.</td>
+                <td>[0,1] The lower the better</td>
+            </tr>
+            <tr>
+                <td>26</td>
+                <td>Graph Edit Distance</td>
+                <td>Cooley et. al</td>
+                <td></td>
+                <td>02/07/25</td>
+                <td><a target="_blank" href="http://ged.md/">ged.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>GED quantifies graph dissimilarity by counting minimum edits needed to transform one graph into another.</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>27</td>
+                <td>Kolmogorov–Smirnov</td>
+                <td>Pachter et al.</td>
+                <td></td>
+                <td>03/07/25</td>
+                <td><a target="_blank" href="http://kolmogorov_smirnov.md">kolmogorov_smirnov.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="clustering">Clustering</span></td>
+                <td>The KS statistic is the maximum difference between two empirical CDFs; values near 1 signal highly dissimilar distributions.</td>
+                <td>[0,1] The higher the better</td>
+            </tr>
+            <tr>
+                <td>28</td>
+                <td><a target="_blank" href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288">https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1011288</a></td>
+                <td>Pachter et al.</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>29</td>
+                <td>Entourage</td>
+                <td>Becavin et al.</td>
+                <td></td>
+                <td>02/07/25</td>
+                <td><a target="_blank" href="http://entourage.md/">entourage.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Local conservation of entourage // Quantifies local neighborhood preservation quality during dimensionality reduction for structural fidelity assessment.</td>
+                <td>[0,1] The higher the better</td>
+            </tr>
+            <tr>
+                <td>30</td>
+                <td>Trustworthiness</td>
+                <td>Venna &amp; Kasi // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>31</td>
+                <td>Continuity</td>
+                <td>Zhang et. al. // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://trus_continuity.md/">trust_continuity.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>32</td>
+                <td>LCMC</td>
+                <td>Zhang et. al. // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://lcmc.md/">lcmc.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>33</td>
+                <td>co-KNN (AUC &amp; size)</td>
+                <td>Zhang et. al. // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://co_knn.md">co_knn.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>These metrics evaluate how well local neighborhood structures are preserved after dimensionality reduction</td>
+                <td>The higher the better</td>
+            </tr>
+            <tr>
+                <td>34</td>
+                <td>Density Preservation</td>
+                <td>Narayan et al. // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://density_preservation.md/">density_preservation.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Density Preservation measures how well local point densities are maintained after dimensionality reduction for accurate visualization.</td>
+                <td>[-1,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>35</td>
+                <td>Distance correlation</td>
+                <td>Schober et. al. // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://distance_correlation.md/">distance_correlation.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Distance Correlation detects both linear and nonlinear dependencies, equaling zero only when variables are truly independent.</td>
+                <td>[0;1]</td>
+            </tr>
+            <tr>
+                <td>36</td>
+                <td>Local &amp; Global co-KNN</td>
+                <td>Zhang et. al. // OP</td>
+                <td></td>
+                <td>27/06/25</td>
+                <td><a target="_blank" href="http://local_global_coknn.md/">local_global_coknn.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="dimension-reduction">Dimension reduction</span></td>
+                <td>Global &amp; Local co-KNN measures how well both local and global neighborhood structures are preserved after dimensionality reduction.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>37</td>
+                <td>Coefficient of determination</td>
+                <td>Miles et al. // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://r2.md">r2.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="spatial-decomposition">Spatial decomposition</span></td>
+                <td>Evaluates how well gene expression variability is explained by models in single-cell data.</td>
+                <td>[0,1] the higher the better</td>
+            </tr>
+            <tr>
+                <td>38</td>
+                <td>Kendall's correlation</td>
+                <td>Kendall et. al. // OP</td>
+                <td></td>
+                <td>26/06/25</td>
+                <td><a target="_blank" href="http://tau.md/">tau.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="spatially-variable-genes">Spatially variable genes</span></td>
+                <td></td>
+                <td>[0;1] or [-1;1]</td>
+            </tr>
+            <tr>
+                <td>39</td>
+                <td>One-vs-All</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>17/06/25</td>
+                <td><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="specificity">Specificity</span></td>
+                <td>Gene expression in one cell type versus the rest.</td>
+                <td>[0,1] The higher the better</td>
+            </tr>
+            <tr>
+                <td>40</td>
+                <td>One-vs-Max</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>17/06/25</td>
+                <td><a target="_blank" href="http://ova_ovm.md/">ova_ovm.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="specificity">Specificity</span></td>
+                <td>Gene expression in one cell type vs the second more highly expressed cell type.</td>
+                <td>[0,+∞[</td>
+            </tr>
+            <tr>
+                <td>41</td>
+                <td>Shannon Entropy</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://shannon.md/">shannon.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="specificity">Specificity</span></td>
+                <td>Entropy of gene distribution across cell types.</td>
+                <td>[0;1]</td>
+            </tr>
+            <tr>
+                <td>42</td>
+                <td>Gini coefficient</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://gini.md/">gini.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="specificity">Specificity</span></td>
+                <td>Evaluates the inequality of the gene's distribution.</td>
+                <td>The lower the better</td>
+            </tr>
+            <tr>
+                <td>43</td>
+                <td>Kendall's tau</td>
+                <td>Report AC</td>
+                <td></td>
+                <td>16/06/25</td>
+                <td><a target="_blank" href="http://tau.md/">tau.md</a></td>
+                <td></td>
+                <td></td>
+                <td><span class="specificity">Specificity</span></td>
+                <td>Similar to Gini and Shannon, but less restrictive.</td>
+                <td>[0;1] or [-1;1]</td>
+            </tr>
+            <tr>
+                <td>44</td>
+                <td>ZADU</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
