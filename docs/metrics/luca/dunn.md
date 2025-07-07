@@ -1,5 +1,11 @@
 # Dunn Index Metric Analysis
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/MatLab-cyan)
+
 ## Description 
 
 The Dunn index is a metric for evaluating clustering algorithms. 
@@ -9,6 +15,8 @@ The Dunn index quantifies the correlation between cluster compactness and separa
 
 *It is part of a group of validity indices including the Davies-Bouldin index or the Silhouette index, as an internal evaluation scheme based on the clustered data itself.*
 
+![Dunn Index illustration](../../images/metrics/dunn.png)
+> © [Medium.com](https://medium.com/@mastmustu/dunn-index-reveals-the-holy-grail-of-optimal-clustering-a48c5bc960e)
 ## Formulas 
 
 The Dunn index is defined as follows :
