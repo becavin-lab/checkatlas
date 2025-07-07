@@ -1,5 +1,11 @@
 # Spearman's rho 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimension_Reduction-blue)
+
+![Static Badge](https://img.shields.io/badge/Scipy-Python-yellow)
+
 ## Description 
 
 Spearman's rank correlation coefficient (Spearman's rho) is a non-parametric measure of the strength and direction of a monotonic relationship between two variables. 
