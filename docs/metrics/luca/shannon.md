@@ -1,5 +1,11 @@
 # Shannon's entropy
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Specificity-pink)
+
+![Static Badge](https://img.shields.io/badge/Scipy-Python-yellow)
+
 ## Description 
 
 Shannon entropy is a measure of uncertainty or diversity in a probability distribution. In bioinformatics, it is often used to evaluate tissue specificity: each gene has an expression profile across multiple tissues, and entropy quantifies how "focused" or "broad" this expression is.
@@ -7,6 +13,11 @@ Shannon entropy is a measure of uncertainty or diversity in a probability distri
 - Low entropy $\rightarrow$ expression restricted to few tissues (tissue-specific).
 
 - High entropy $\rightarrow$ more widespread expression (ubiquitous).
+
+![Shannon's entropy illustration](../../images/metrics/shannon.png)
+> « Entropy $Η(X)$ (i.e. the expected surprisal) of a coin flip, measured in bits, graphed versus the bias of the coin $Pr(X = 1)$, where $X = 1$ represents a result of heads. » [Wikipedia](https://en.wikipedia.org/wiki/Entropy_(information_theory))
+>
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Binary_entropy_plot.svg/400px-Binary_entropy_plot.svg.png)
 
 ## Formulas
 
