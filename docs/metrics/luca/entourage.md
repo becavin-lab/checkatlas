@@ -52,3 +52,7 @@ Interpretation:
 
 Singular Value Decomposition (SVD) is a matrix factorization technique that decomposes any rectangular matrix into three matrices. 
 
+## Source 
+
+[Bécavin et al., Improving the efficiency of multidimensional scaling in the analysis of high-dimensional data using singular value decomposition, 2011](doi:10.1093/bioinformatics/btr143)
+
