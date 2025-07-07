@@ -1,5 +1,9 @@
 # Kendall's tau coefficient
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Specificity-pink)
+
 ## Description 
 
 Kendall’s tau is a non‑parametric rank correlation coefficient introduced in 1938. 
@@ -34,4 +38,4 @@ THis $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single 
 
 ## Code 
 
-
+[Computing the Kendall tau distance](https://en.wikipedia.org/wiki/Kendall_tau_distance)
