@@ -1,11 +1,20 @@
 # Density-Based Clustering Validation
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 DBCV (Density-Based Clustering Validation) is a metric designed to evaluate the quality of clustering solutions (particularly for density-based clustering algorithms).
 This metric evaluates clustering quality based on the relative density connection between pairs of objects. DBCV is particularly suited for identifying concave and nested clusters.
 The DBCV index evaluates clustering quality by assessing density-based separation between clusters and cohesion within clusters.
 Its values range between -1 and +1, with DBCV being a maximization index, where higher values correspond to better partitions.
+
+![Denisity-Based Clusterinf Validation illustration](../../images/metrics/dbvc.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/DBCV_clustering_evaluation.png/1000px-DBCV_clustering_evaluation.png)
 
 
 ## Formulas 
