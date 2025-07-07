@@ -1,5 +1,11 @@
 # Kolmogorov–Smirnov Statistic
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Scipy-Python-yellow)
+
 ## Description 
 
 The Kolmogorov–Smirnov (KS) statistic measures the maximal difference between two empirical cumulative distribution functions (CDFs). 
@@ -7,6 +13,10 @@ In single-cell analysis, it is often used as a two-sample test to quantify separ
 Intuitively, $D$ lies between 0 and 1 : a value near 0 implies the distributions largely overlap, while larger values indicate greater divergence. 
 Pachter et al. use the two-sample KS statistic to quantify how well clusters or cell types separate in embedded vs ambient spaces (high $D$ means less overlap of the two distance distributions).
 
+![Kolmogorov–Smirnov test illustration](../../images/metrics/kolmogorov_smirnov.png)
+> « Illustration of the Kolmogorov–Smirnov statistic. The red line is a model CDF, the blue line is an empirical CDF, and the black arrow is the KS statistic. » [Wikipedia](https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test)
+> 
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/c/cf/KS_Example.png)
 
 ## Formulas 
 
