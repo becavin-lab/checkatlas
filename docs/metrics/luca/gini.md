@@ -1,10 +1,19 @@
 # Gini coefficient
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Specificity-pink)
+
 ## Description 
 
 The Gini coefficient is a statistical metric used to measure inequality within a distribution. 
 Originally used in economics to measure income inequality, , it has been adapted in bioinformatics to assess how uniformly a gene is expressed across multiple samples.
 A low Gini value indicates stable expression across all samples, while a high Gini indicates variability, making the gene less suitable for normalization.
+
+![Gini coefficient illustration](../../images/metrics/gini.png)
+> « The Gini coefficient is equal to the area marked A divided by the total area of A and B, i.e. ${\displaystyle {\text{Gini}}={\tfrac {A}{A+B}}}.$ » [Wikipedia](https://en.wikipedia.org/wiki/Gini_coefficient)
+>
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Economics_Gini_coefficient2.svg/700px-Economics_Gini_coefficient2.svg.png)
 
 ## Formulas 
 
