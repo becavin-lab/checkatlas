@@ -1,5 +1,10 @@
 # Fowlkes–Mallows index
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
 
 ## Description 
 
@@ -9,6 +14,9 @@ This index is particularly useful for evaluating the performance of clustering a
 A higher index value indicates greater similarity between the clusters and the reference classifications
 The index ranges from 0 (worst possible classification) to 1 (perfect classification). 
 It is the geometric mean of precision and recall, making it a robust metric for clustering evaluation. 
+
+![Fowlkes-Mallows Index illustration](../../images/metrics/fowlkes_mallows.png)
+> © [datasciencewithchris.com](https://datasciencewithchris.com/wp-content/uploads/2023/04/Clustering_FowlkesMallowsScore_Example.png)
 
 ## Formulas 
 
