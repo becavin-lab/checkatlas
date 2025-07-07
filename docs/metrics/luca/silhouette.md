@@ -16,7 +16,7 @@ The metric is specialized for measuring cluster quality when clusters are convex
 A clustering with an average silhouette width greater than $0.7$ is considered "strong", greater than $0.5$ "reasonable" and greater than $0.25$ "weak". 
 
 ![Silhouette illustration](../../images/metrics/silhouette.png)
-[factoextra](https://rpkgs.datanovia.com/factoextra/reference/fviz_silhouette.html)
+> © [factoextra](https://rpkgs.datanovia.com/factoextra/reference/fviz_silhouette.html)
 
 ## Formulas
 
