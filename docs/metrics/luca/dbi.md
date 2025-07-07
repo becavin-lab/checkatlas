@@ -1,5 +1,12 @@
 # Davies-Bouldin Index 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
+
 ## Description 
 
 The Davies-Bouldin Index (DBI) is a metric introduced by David L. Davies and Donald W. Bouldin in 1979 to evaluate clustering algorithms.
