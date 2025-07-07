@@ -13,10 +13,7 @@ It evaluates how well the relationship between two sets of rankings can be descr
 In dimensionality reduction (DR) contexts, it is used to compare the relative order of distances or similarities before and after projection, helping quantify quality loss due to projection.
 
 ![Spearman's rho illustration](../../images/metrics/spearman.png)
-> « A positive Spearman correlation coefficient corresponds to an increasing monotonic trend between X and Y. »
-> 
-> « A negative Spearman correlation coefficient corresponds to a decreasing monotonic trend between X and Y. »
-> 
+> « A positive (resp. negative) Spearman correlation coefficient corresponds to an increasing (resp. decreasing) monotonic trend between X and Y. »
 >[Wikipedia](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient)
 > 
 > © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Spearman_fig4.svg/600px-Spearman_fig4.svg.png)
