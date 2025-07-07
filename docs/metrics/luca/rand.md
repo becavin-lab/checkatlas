@@ -1,5 +1,11 @@
 # Rand Index
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 The Rand index is a statistical metric used to measure the similarity between two partitions of the same dataset, particularly for evaluating the quality of clustering algorithms.
@@ -8,6 +14,9 @@ This metric can be interpreted as the percentage of correct decisions made by th
 The index ranges between 0 and 1, where 0 indicates that the two clusterings do not agree on any pair of points, and 1 indicates that the clusterings are exactly identical.
 The metric works by counting four types of pairs : positive agreements ($a$), negative agreements ($b$), type 1 disagreements ($c$), and type 2 disagreements ($d$).
 The Rand index intuitively represents the ratio between total agreements and the total number of possible pairs in the dataset.
+
+![Rand Index illustration](../../images/metrics/rand_index.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Example_for_Adjusted_Rand_index.svg/500px-Example_for_Adjusted_Rand_index.svg.png)
 
 ## Formula
 
