@@ -1,5 +1,13 @@
 # Entourage
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Enable-green)
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
+
+
 ## Description 
 
 The Entourage metric is a measure developed to evaluate the local quality of dimensionality reduction, unlike Kruskal stress which evaluates global deformation. 
