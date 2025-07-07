@@ -1,5 +1,12 @@
 # Silhouette Clustering Metric Analysis
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
+
 ## Description
 
 The Silhouette is a method for interpretation and validation of consistency within data clusters. This technique provides a succinct graphical representation of how well each object has been classified.
