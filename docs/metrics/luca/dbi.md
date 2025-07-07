@@ -9,6 +9,8 @@ The lower the index value, the better the cluster separation and the greater the
 
 The score is defined as the average of the similarities of each cluster with its most similar cluster, where similarity is the ratio between intra-cluster and inter-cluster distances.
 
+![Davies-Bouldin Index illustration](../../images/metrics/davies_bouldin.png)
+> [TowardsDataScience](https://towardsdatascience.com/davies-bouldin-index-for-k-means-clustering-evaluation-in-python-57f66da15cd/)
 ## Formulas
 
 The Davies-Bouldin Index is calculated as follows :
