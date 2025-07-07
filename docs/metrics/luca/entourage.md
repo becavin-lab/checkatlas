@@ -8,6 +8,8 @@ This metric quantifies the preservation of the local structure of the point clou
 The higher the Entourage value, the better the original local structure is preserved. 
 It allows identification of whether dimensionality reduction maintains proximity relationships between points, which is crucial for interpreting complex biological data.
 
+![Entourage illustration](../../images/metrics/Entourage.png)
+
 ## Formulas 
 
 For each instance $\bar{X}_i$:
