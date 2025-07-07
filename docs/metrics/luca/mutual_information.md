@@ -1,11 +1,20 @@
 # Mutual Information
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 Mutual Information (MI) is an external measure based on information theory that quantifies the dependence between two partitions or random variables.
 It measures the amount of mutually shared information : in practice, how much knowledge of partition $U$ reduces uncertainty about partition $V$, and vice versa.
 MI evaluates the similarity between a reference label set (for example, annotated cell types) and a partition computed by a clustering algorithm. This measure is symmetric, non-negative, and relies on the marginal and joint entropies of the partitions.
 A high MI means that the two partitions share a lot of information (the clusters align well with the true cell types), while a null MI indicates that they are completely independent.
+
+![Mutaul Information illustration](../../images/metrics/mutual_information.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Entropy-mutual-information-relative-entropy-relation-diagram.svg/512px-Entropy-mutual-information-relative-entropy-relation-diagram.svg.png)
 
 ## Formulas 
 
