@@ -1,5 +1,11 @@
 # Desnity Preservation 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 
@@ -7,7 +13,7 @@ The Density Preservation metric evaluates how well a dimensionality reduction me
 This is crucial for avoiding misleading visual artifacts where dense regions in the original data appear artificially sparse or overly compact after projection. 
 It is especially relevant in single-cell RNA-seq data, where local cell density often reflects biologically meaningful states.
 
-## Formulas 
+## Formulas Den
 
 ### *Local Density Estimation*
 
