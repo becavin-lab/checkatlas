@@ -1,11 +1,19 @@
 # PCR (Principal Component Regression)
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 The PCR metric evaluates how well continuous biological variation is preserved after data integration in single-cell genomics.
 It is particularly useful for assessing whether continuous structures—such as cell cycle progression or developmental trajectories—remain intact after batch effect correction.
 The method involves performing a linear regression between the principal components of the integrated data and a known continuous biological variable (i.e. cell cycle score).
 
+![Principal Component Regression illustration](../../images/metrics/pcr.png)
+> © [learnche.org](https://learnche.org/pid/_images/PCR-data-structure-compared-to-MLR.png)
 
 ## Formulas 
 
