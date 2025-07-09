@@ -42,7 +42,7 @@
 
 [gini_coefficient](gini.md)
 
-[kendall's tau](tau.md)
+[kendall's tau](../spatial/tau.md)
 
 ## Open Problems 
 [SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/metrics.py) 

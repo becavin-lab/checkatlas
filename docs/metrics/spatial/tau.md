@@ -24,7 +24,7 @@ For each gene $g$, compute :
 
 $$\tau_g=\frac{\displaystyle\sum_{i=1}^{k} (1 - \hat{x}_{g,i})}{k-1}$$
 
-THis $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single tissue).
+This $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single tissue).
 
 ## Sources 
 
