@@ -1,11 +1,8 @@
 # Entourage
 
-![Static Badge](https://img.shields.io/badge/Checkatlas-Enable-green)
 ![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
 
-
 ![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
-![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
 
 
 ## Description 
@@ -17,6 +14,7 @@ The higher the Entourage value, the better the original local structure is prese
 It allows identification of whether dimensionality reduction maintains proximity relationships between points, which is crucial for interpreting complex biological data.
 
 ![Entourage illustration](../../images/metrics/Entourage.png)
+> © [Bécavin et al., Improving the efficiency of multidimensional scaling in the analysis of high-dimensional data using singular value decomposition, 2011](10.1093/bioinformatics/btr143)
 
 ## Formulas 
 
@@ -55,4 +53,8 @@ Singular Value Decomposition (SVD) is a matrix factorization technique that deco
 ## Source 
 
 [Bécavin et al., Improving the efficiency of multidimensional scaling in the analysis of high-dimensional data using singular value decomposition, 2011](10.1093/bioinformatics/btr143)
+
+## Code 
+
+TO DO 
 
