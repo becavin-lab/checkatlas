@@ -90,6 +90,8 @@ clean:            ## Clean unused files.
 	@rm -rf .pytest_cache
 	@rm -rf .mypy_cache
 	@rm -rf build
+	@rm -rf work
+	@rm -rf null
 	@rm -rf dist
 	@rm -rf *.egg-info
 	@rm -rf htmlcov
