@@ -1,5 +1,11 @@
 # Mean-squared Error 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Denoising-pink)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 The Mean Squared Error (MSE) is a fundamental metric used in regression analysis and machine learning to evaluate the performance of predictive models. 
@@ -9,6 +15,8 @@ By squaring the differences, MSE gives higher weight to larger errors, making it
 MSE incorporates both the variance of the estimator (how widely spread the estimates are) and its bias (how far off the average estimated value is from the true value). 
 A lower MSE value indicates that the model's predictions are closer to the actual values, reflecting better overall performance.
 
+![MSE illustration](../../images/metrics/mse.png)
+> © [encord.com](https://images.prismic.io/encord/08ced892-f045-41f7-9007-d1ab3b426159_image7.png?auto=compress,format)
 
 ## Formulas 
 
