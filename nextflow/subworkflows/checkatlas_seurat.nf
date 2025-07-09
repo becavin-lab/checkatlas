@@ -4,23 +4,21 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SUMMARY } from '../../modules/local/checkatlas_process'
-include { QC } from '../../modules/local/checkatlas_process'
-include { METRIC_CLUST } from '../../modules/local/checkatlas_process'
-include { METRIC_ANNOT } from '../../modules/local/checkatlas_process'
-include { METRIC_DIMRED } from '../../modules/local/checkatlas_process'
-
+include { SUMMARY } from '../modules/local/checkatlas_process'
+include { QC } from '../modules/local/checkatlas_process'
+include { METRIC_CLUST } from '../modules/local/checkatlas_process'
+include { METRIC_ANNOT } from '../modules/local/checkatlas_process'
+include { METRIC_DIMRED } from '../modules/local/checkatlas_process'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    RUN Checkatlas scanpy WORKFLOW
+    RUN Checkatlas seurat WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-
-workflow CHECKATLAS_SCANPY{
+workflow CHECKATLAS_SEURAT{
     take:
-    atlas_info // dict: atlas_info
+    atlas_info // atlas_info : dict
     ch_search_path
     
     main:
@@ -30,13 +28,12 @@ workflow CHECKATLAS_SCANPY{
     METRIC_CLUST(atlas_info, ch_search_path)
     METRIC_ANNOT(atlas_info, ch_search_path)
     METRIC_DIMRED(atlas_info, ch_search_path)
-    
+
     // Mix all out channels
-    scanpy_out = SUMMARY.out.out_info
-    scanpy_out = scanpy_out.mix(QC.out.out_info, METRIC_CLUST.out.out_info)
-    scanpy_out = scanpy_out.mix(METRIC_CLUST.out.out_info)
-    scanpy_out = scanpy_out.mix(METRIC_ANNOT.out.out_info, METRIC_DIMRED.out.out_info)
+    seurat_out = SUMMARY.out.out_info
+    seurat_out = seurat_out.mix(QC.out.out_info, METRIC_CLUST.out.out_info)
+    seurat_out = seurat_out.mix(METRIC_ANNOT.out.out_info, METRIC_DIMRED.out.out_info)
     
     emit:
-    scanpy_out
+    seurat_out
 }

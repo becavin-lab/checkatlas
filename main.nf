@@ -45,7 +45,7 @@ if (params.help) {
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { CHECKATLAS } from './nextflow/workflows/checkatlas.nf'
+include { CHECKATLAS } from './nextflow/workflows/checkatlas'
 
 //
 // WORKFLOW: Run main nf-core/checkatlas analysis pipeline
