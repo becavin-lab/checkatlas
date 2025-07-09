@@ -49,7 +49,7 @@ The KS statistic ranges from 0 (identical distributions) up to 1 (completely non
 
 [Wikipedia](https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test#:~:text=The%20Kolmogorov%E2%80%93Smirnov%20statistic%20quantifies,distribution%20functions%20of%20two%20samples.)
 
-[Chari & Pachter (2023), PLOS Comp. Biol. – Methods (KS statistic used to measure separation of distance distributions).](10.1371/journal.pcbi.1011288)
+[Chari & Pachter (2023), PLOS Comp. Biol. – Methods (KS statistic used to measure separation of distance distributions).](https://doi.org/10.1371/journal.pcbi.1011288)
 
 
 ## Code 
