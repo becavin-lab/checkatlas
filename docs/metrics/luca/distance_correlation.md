@@ -1,13 +1,24 @@
 # Distance Correlation 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
+
+![Static Badge](https://img.shields.io/badge/Scipy-Python-yellow)
+
 ## Description 
 
 Distance Correlation is a statistical metric that quantifies both linear and nonlinear dependence between two random vectors. 
 Unlike Pearson correlation, which only captures linear relationships, distance correlation equals zero if and only if the variables are truly independent. 
 This makes it especially useful in bioinformatics for evaluating how well dimensionality reduction methods preserve complex relationships between features or samples.
 
-## Formulas 
+![Distance Correlation illustration](../../images/metrics/distance_correlation.png)
+> « Several sets of (x, y) points, with the distance correlation coefficient of x and y for each set. » [Wikipedia](https://en.wikipedia.org/wiki/Distance_correlation)
+>
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Distance_Correlation_Examples.svg/900px-Distance_Correlation_Examples.svg.png)
 
+
+## Formulas 
 
 Let $(X_k, Y_k)$, for $k = 1, 2, \dots, n$, be a sample of paired observations.
 
