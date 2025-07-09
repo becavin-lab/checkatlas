@@ -1,11 +1,20 @@
 # Poisson Loss 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Denoising-pink)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 The Poisson Loss is a cost function used to model count data, typically when observations follow a Poisson distribution. 
 Unlike Mean Squared Error (MSE), it accounts for the intrinsic variance of count data. 
 It is used in models like **Poisson regression** and in denoising benchmarks for scRNA-seq data. 
 This loss evaluates the quality of reconstruction by comparing observed and predicted values while respecting the discrete and heteroscedastic nature of the data.
+
+![Poisson loss illustration](../../images/metrics/poisson.png)
+> © [haibal.com](https://haibal.com/wp-content/uploads/2023/06/poisson.png)
 
 ## Formulas 
 
