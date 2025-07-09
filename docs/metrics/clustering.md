@@ -9,5 +9,5 @@
 | 	DBCV 	| 	Métrique interne pour l’évalutation de méthodes de clustering à densité. 	| 	[32] 
 | 	Rand Index 	| 	Métrique externe basée sur la consistance entre deux clustering 	| 	[33] 
 | 	Fowlkes- Mallows score 	| 	Métrique externe comparant les taux d’accord et de désaccord de deux clustering 	| 	[34] 
-| 	Information Mu- tuelle 	| 	Métrique externe basée sur l’entropie conjointe 	| 	[35] 
+| 	Information Mutuelle 	| 	Métrique externe basée sur l’entropie conjointe 	| 	[35] 
 | 	V-Measure 	| 	Métrique externe construite à partir des notions de complétude et d’homogénéité 	| 	[36] 
