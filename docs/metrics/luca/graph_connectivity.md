@@ -1,5 +1,11 @@
 # Graph Connectivity
 
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 The "Graph connectivity" metric evaluates data integration quality by measuring whether biologically similar cells remain connected in a k-nearest neighbors (kNN) graph after integration. 
