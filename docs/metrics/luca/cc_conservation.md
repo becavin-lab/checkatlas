@@ -1,5 +1,11 @@
 # Cell-Cycle Conservation Metric Analysis
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Scanpy-Python-yellow)
+
 ## Description 
 
 The Cell-Cycle Conservation metric evaluates the ability of an integration method to preserve cell cycle effects after batch effect correction.
@@ -10,6 +16,8 @@ It calculates scores for S and G2/M cell cycle phases using [Scanpy's score_cell
 A good integration method should eliminate batch effects while preserving authentic biological signals related to the cell cycle. 
 This metric is part of the "label-free" metrics that evaluate biological conservation beyond cell type annotations.
 
+![Cell Cycle illustration](../../images/metrics/Cell_Cycle.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Cell_Cycle_2-2.svg/600px-Cell_Cycle_2-2.svg.png)
 
 ## Formulas 
 
@@ -51,5 +59,5 @@ A score close to 1 indicates excellent preservation of cell cycle signal, while 
 
 ## Code 
 
-[Sacnpy](https://scanpy.readthedocs.io/en/stable/generated/scanpy.tl.score_genes_cell_cycle.html)
+[Scanpy](https://scanpy.readthedocs.io/en/stable/generated/scanpy.tl.score_genes_cell_cycle.html)
 
