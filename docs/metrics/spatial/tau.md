@@ -28,9 +28,9 @@ THis $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single 
 
 ## Sources 
 
-[Wikipedia](https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient)
+[Wikipedia - Kendall rank correlation coefficient](https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient)
 
-[Wikipedia](https://en.wikipedia.org/wiki/Kendall_tau_distance)
+[Wikipedia - Kendall tau distance](https://en.wikipedia.org/wiki/Kendall_tau_distance)
 
 [Itai YANAI et al. « Genome-wide midrange transcription profiles reveal expression level relationships in human tissue specification ». In : Bioinformatics 21 (mar. 2005)](https://academic.oup.com/bioinformatics/article/21/5/650/220059)
 
