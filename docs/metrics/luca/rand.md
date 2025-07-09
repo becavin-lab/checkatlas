@@ -15,8 +15,6 @@ The index ranges between 0 and 1, where 0 indicates that the two clusterings do 
 The metric works by counting four types of pairs : positive agreements ($a$), negative agreements ($b$), type 1 disagreements ($c$), and type 2 disagreements ($d$).
 The Rand index intuitively represents the ratio between total agreements and the total number of possible pairs in the dataset.
 
-![Rand Index illustration](../../images/metrics/rand_index.png)
-> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Example_for_Adjusted_Rand_index.svg/500px-Example_for_Adjusted_Rand_index.svg.png)
 
 ## Formula
 
