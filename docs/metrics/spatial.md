@@ -1,11 +1,5 @@
-Spatial Decomposition // Miles et. al. (2005)
 
-[coefficient of determination](spatial/r2.md)
-
-Spatially variable genes // Kendall (1938)
-
-[kendall correlation](spatial/tau.md)
-
-| 	Nom	| 	Boundary |   Optimum   |   Description |
-| 	:---------------	  | 	:----  | 	:---- | :--------------------------------- |
-| 	[Coefficient of determination](spatial/r2.md) 	| 	[0,1] | 1 | Evaluates how well gene expression variability is explained by models in single-cell data. |
+| 	Nom	| 	Type   | Boundary  |   Optimum   |   Description |
+| 	:---------------	  | 	:----   |	:----  | 	:---- | :--------------------------------- |
+| 	[Coefficient of determination](spatial/r2.md) 	|![Static Badge](https://img.shields.io/badge/Spatial_decomposition-grey) | 	[0,1] | 1 | Evaluates how well gene expression variability is explained by models in single-cell data. |
+| [Kendall's tau correlation](spatial/tau.md)  |![Static Badge](https://img.shields.io/badge/Spatially_variable_genes-grey)![Static Badge](https://img.shields.io/badge/Specificity-pink)  | [0;1] or [-1;1] | 1 | Kendall's tau correlation ... |
