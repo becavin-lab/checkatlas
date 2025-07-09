@@ -1,5 +1,11 @@
 # Average Jaccard Distance
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 The Average Jaccard Distance (AJD) is a metric introduce to quantify the distortion introduced by dimensionality reduction in single-cell RNA-seq (scRNA-seq) data. 
@@ -8,6 +14,8 @@ For each cell, the set of its $k$ nearest neighbors is computed both in the orig
 The Jaccard distance is then calculated between these two sets, and the AJD is defined as the mean of these distances over all cells. 
 A low AJD indicates that local neighborhoods are well preserved (low distortion), while a high AJD implies substantial structural changes caused by the dimensionality reduction.
 
+![AJD illustration](../../images/metrics/jaccard.png)
+> © [Medium.com](https://medium.com/data-science-bootcamp/understand-jaccard-index-jaccard-similarity-in-minutes-25a703fbf9d7)
 
 ## Formulas
 

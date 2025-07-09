@@ -1,11 +1,19 @@
 # Isolated Label F1 Score
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description
 
 The Isolated Label F1 score is a metric used to evaluate how well a data integration method preserves rare or isolated cell types after batch correction in single-cell RNA-seq data. 
 These isolated labels typically represent biologically meaningful but underrepresented populations that are often lost or merged during integration. 
 This metric focuses on classification performance (precision and recall) specifically for these rare cell types, ensuring that integration does not compromise their identity.
 
+![F1 score illustration](../../images/metrics/f1.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Precisionrecall.svg/800px-Precisionrecall.svg.png)
 ## Formulas
 
 The Isolated Label F1 score is computed as the average F1-score over a subset of isolated cell type labels. 
@@ -34,3 +42,7 @@ Where $L_{iso}$ is the set of isolated labels.
 [Luecken, M.D. et al. *Benchmarking atlas-level data integration in single-cell genomics*. Nat Methods 19, 41–50 (2022).](https://doi.org/10.1038/s41592-021-01336-)
 
 [Christensen E. et al. *Evaluation of single-cell RNAseq labelling algorithms using cancer datasets*. Brief Bioinform. 2023.](https://doi.org/10.1093/bib/bbac561)
+
+## Code 
+
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html)

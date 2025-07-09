@@ -1,5 +1,10 @@
 # V-measure
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Clustering-purple)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
 
 ## Description 
 
@@ -11,6 +16,9 @@ It combines two complementary properties :
 - Completeness: all objects from the same true class are assigned to the same predicted cluster.
 
 It is particularly useful for verifying whether cell clustering correctly reconstructs annotated cell types.
+
+![V-measure illustration](../../images/metrics/v_measure.png)
+> © [geeksforgeeks.com](https://media.geeksforgeeks.org/wp-content/uploads/20190715113440/compNothomo.png)
 
 ## Formulas 
 

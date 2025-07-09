@@ -1,5 +1,11 @@
 # kBET (k-nearest neighbor Batch Effect Test)
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 kBET is a statistical metric used to evaluate the effectiveness of batch effect correction in single-cell transcriptomics data. 

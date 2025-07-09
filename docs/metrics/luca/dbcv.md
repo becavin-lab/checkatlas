@@ -13,7 +13,7 @@ This metric evaluates clustering quality based on the relative density connectio
 The DBCV index evaluates clustering quality by assessing density-based separation between clusters and cohesion within clusters.
 Its values range between -1 and +1, with DBCV being a maximization index, where higher values correspond to better partitions.
 
-![Denisity-Based Clustering Validation illustration](../../images/metrics/dbvc.png)
+![Denisity-Based Clustering Validation illustration](../../images/metrics/dbcv.png)
 > © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/DBCV_clustering_evaluation.png/1000px-DBCV_clustering_evaluation.png)
 
 

@@ -1,5 +1,11 @@
 # Trustworthiness and continuity
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 These two metrics assess the quality of a dimensionality reduction by evaluating how well the data structure is preserved.

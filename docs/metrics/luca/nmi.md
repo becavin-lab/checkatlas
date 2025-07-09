@@ -1,5 +1,11 @@
 # Normalized Mutual Information (NMI)
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 Normalized Mutual Information (NMI) is a clustering evaluation metric used to compare predicted labels (i.e. after data integration) with ground-truth labels (i.e. known cell types). 
