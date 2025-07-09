@@ -1,5 +1,11 @@
 # Average Silhouette Width (ASW) Metrics 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 The Average Silhouette Width (ASW) metrics evaluate how well cells are grouped or mixed after batch integration in single-cell RNA-seq data. There are three main variants:
