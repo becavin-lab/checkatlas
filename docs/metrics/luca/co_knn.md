@@ -1,5 +1,9 @@
 # co-KNN AUC & co-KNN size
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 The co-KNN AUC and co-KNN size metrics assess how well local neighborhood structures are preserved after dimensionality reduction. 
@@ -14,6 +18,8 @@ These metrics are particularly useful for benchmarking dimensionality reduction 
 ## Formulas 
 
 ### *co-KNN size* : 
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
 
 $$
 \text{co-KNN size} = \frac{1}{N} \displaystyle\sum_{i=1}^{N} \left| N_k^{\text{orig}}(i) \cap N_k^{\text{embed}}(i) \right|
@@ -30,6 +36,8 @@ Where :
 - Range: $[0, k]$, where a higher values indicate better local structure preservation.
 
 ### *co-KNN AUC* :
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
 
 Construct a [ROC](https://en.wikipedia.org/wiki/Receiver_operating_characteristic) curve by treating each pair of points as a positive example if they are co-KNN, and negative otherwise.
 

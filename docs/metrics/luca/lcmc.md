@@ -1,5 +1,11 @@
 # Local Continuity Meta Criterion (LCMC)
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
+
+![Static Badge](https://img.shields.io/badge/R-lightblue)
+
 ## Description 
 
 The Local Continuity Meta Criterion (LCMC) evaluates the quality of dimensionality reduction methods by measuring how well local neighborhood structures are preserved between the original high-dimensional space and the low-dimensional embedding.

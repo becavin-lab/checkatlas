@@ -1,5 +1,11 @@
 # Kruskal's stress 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
+
+![Static Badge](https://img.shields.io/badge/R-lightblue)
+
 ## Description 
 
 Kruskal Stress is a fundamental metric for evaluating the quality of representation in Multidimensional Scaling (MDS). 
@@ -7,6 +13,11 @@ It measures the discrepancy between distances in the reduced representation spac
 This metric quantifies the information loss during dimensionality reduction, allowing to assess whether the projection in reduced dimensions faithfully preserves proximity relationships between points.
 Stress ranges from 0 (perfect representation) to 1 (highly distorted representation).
 It allows validation of the quality of high-dimensional data visualizations (i.e. datasets with a large number of variables that pose problems).
+
+![Kruskal's stress illustration](../../images/metrics/kruskal.png)
+> « On the x-axis, we have the dissimilarity values present in the distance matrix. On the y-axis, the graph represents the ordination distances, i.e. the distances between pairs of points on the map. » [sciviews.org](https://wp.sciviews.org/sdd-umons2-2022/positionnement-multidimensionnel-mds.html)
+> 
+> © [sciviews.org](https://wp.sciviews.org/sdd-umons2-2022/09-db-mds_files/figure-html/unnamed-chunk-54-1.png)
 
 ## Formulas 
 

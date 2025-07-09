@@ -1,5 +1,13 @@
 # Global and Local KNN
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
+
 ## Description 
 
 
@@ -12,9 +20,14 @@ It combines two perspectives :
 
 The co-KNN metric merges these two aspects to provide a balanced view of both local and global structure preservation after dimensionality reduction.
 
+![KNN illustration](../../images/metrics/knn.png)
+> « Example of k-NN classification. The test sample (green dot) should be classified either to blue squares or to red triangles. » [Wikipedia](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)
+>
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/KnnClassification.svg/500px-KnnClassification.svg.png)
+
 ## Formulas 
 
-Let:
+Let
 
 - $N_k^{\text{high}}(i)$ be the set of the $k$ nearest neighbors of sample $i$ in the original space.
 
@@ -53,3 +66,5 @@ Where $\alpha \in [0, 1]$ is a weighting parameter
 [Ultralytics](https://www.ultralytics.com/glossary/k-nearest-neighbors-knn#:~:text=K%2DNearest%20Neighbors%20(KNN)%20is%20a%20fundamental%20algorithm%20in,for%20understanding%20instance%2Dbased%20learning.)
 
 ## Code
+
+[Scikit](https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html)

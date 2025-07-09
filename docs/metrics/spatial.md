@@ -1,5 +1,3 @@
-### Cell Annotation metrics:
-
 
 | 	Nom	| 	Type   |  OpensProblems | Boundary  |   Optimum   |   Description |
 | 	:---------------	  | 	:----   |	:----  |	:----  | 	:---- | :--------------------------------- |

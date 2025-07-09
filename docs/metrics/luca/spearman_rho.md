@@ -1,10 +1,23 @@
 # Spearman's rho 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-global-green)
+
+![Static Badge](https://img.shields.io/badge/Scipy-Python-yellow)
+
 ## Description 
 
 Spearman's rank correlation coefficient (Spearman's rho) is a non-parametric measure of the strength and direction of a monotonic relationship between two variables. 
 It evaluates how well the relationship between two sets of rankings can be described using a monotonic function.
 In dimensionality reduction (DR) contexts, it is used to compare the relative order of distances or similarities before and after projection, helping quantify quality loss due to projection.
+
+![Spearman's rho illustration](../../images/metrics/spearman.png)
+> « A positive (resp. negative) Spearman correlation coefficient corresponds to an increasing (resp. decreasing) monotonic trend between X and Y. »
+>[Wikipedia](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient)
+> 
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Spearman_fig4.svg/600px-Spearman_fig4.svg.png)
+
 
 ## Formulas 
 

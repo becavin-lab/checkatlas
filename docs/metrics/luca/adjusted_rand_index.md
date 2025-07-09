@@ -1,5 +1,11 @@
 # Adjusted Rand Index (ARI)
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
+
 ## Description 
 
 > « Adjusted Rand Index compares clustering overlap, correcting for random labels and considering correct overlaps and disagreements. »
@@ -10,6 +16,10 @@ Unlike the classical Rand Index, ARI normalizes the score to eliminate the effec
 It allows comparison of clusters obtained by different integration methods with reference annotations (cell types, biological conditions).
 ARI ranges between $-1$ and $1$, where 0 represents chance-level agreement, 1 indicates perfect correspondence, and negative values signal disagreement worse than chance.
 
+![Rand Index illustration](../../images/metrics/rand_index.png)
+> « Example clusterings for a dataset with the kMeans (left) and Mean shift (right) algorithms. The calculated Adjusted Rand index for these two clusterings is $\displaystyle ARI\approx 0.94$ » [Wikipedia](https://en.wikipedia.org/wiki/Rand_index)
+> 
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Example_for_Adjusted_Rand_index.svg/500px-Example_for_Adjusted_Rand_index.svg.png)
 
 ## Formulas 
 

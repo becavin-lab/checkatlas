@@ -1,5 +1,9 @@
 # One‑vs‑All (OvA) & One‑vs‑Max (OvM) 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Specificity-pink)
+
 ## Description 
 
 One vs All and One vs Max specificity metrics are fundamental statistical tools in single-cell analysis for quantifying cell type-specific differential expression. 

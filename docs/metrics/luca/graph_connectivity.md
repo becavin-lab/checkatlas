@@ -1,5 +1,11 @@
 # Graph Connectivity
 
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 The "Graph connectivity" metric evaluates data integration quality by measuring whether biologically similar cells remain connected in a k-nearest neighbors (kNN) graph after integration. 
@@ -7,6 +13,10 @@ This metric is particularly important for preserving local data structure during
 It quantifies how well cells of the same biological type maintain their connectivity in the integrated space, regardless of their batch of origin. 
 Good integration should maintain connections between biologically similar cells while removing batch-related artifacts. 
 The metric typically uses a kNN graph constructed on the integrated space and compares observed connectivity with expected connectivity based on known biological labels.
+
+![Graph connectivity illustration](../../images/metrics/graph_connectivity.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Network_Community_Structure.svg/1920px-Network_Community_Structure.svg.png)
+
 
 ## Formulas 
 

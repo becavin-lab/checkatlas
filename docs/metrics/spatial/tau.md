@@ -1,5 +1,9 @@
 # Kendall's tau coefficient
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Specificity-pink)
+
 ## Description 
 
 Kendall’s tau is a non‑parametric rank correlation coefficient introduced in 1938. 
@@ -20,13 +24,13 @@ For each gene $g$, compute :
 
 $$\tau_g=\frac{\displaystyle\sum_{i=1}^{k} (1 - \hat{x}_{g,i})}{k-1}$$
 
-THis $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single tissue).
+This $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single tissue).
 
 ## Sources 
 
-[Wikipedia](https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient)
+[Wikipedia - Kendall rank correlation coefficient](https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient)
 
-[Wikipedia](https://en.wikipedia.org/wiki/Kendall_tau_distance)
+[Wikipedia - Kendall tau distance](https://en.wikipedia.org/wiki/Kendall_tau_distance)
 
 [Itai YANAI et al. « Genome-wide midrange transcription profiles reveal expression level relationships in human tissue specification ». In : Bioinformatics 21 (mar. 2005)](https://academic.oup.com/bioinformatics/article/21/5/650/220059)
 
@@ -34,4 +38,4 @@ THis $\tau_g$ varies from 0 (ubiquitously expressed) to 1 (specific to a single 
 
 ## Code 
 
-
+[Computing the Kendall tau distance](https://en.wikipedia.org/wiki/Kendall_tau_distance)

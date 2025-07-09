@@ -42,7 +42,7 @@
 
 [gini_coefficient](gini.md)
 
-[kendall's tau](tau.md)
+[kendall's tau](../spatial/tau.md)
 
 ## Open Problems 
 [SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/metrics.py) 
@@ -75,13 +75,7 @@
 
 [poisson loss](poisson.md)
 
-### Spatial Decomposition // Miles et. al. (2005)
 
-[coefficient of determination](r2.md)
-
-### Spatially variable genes // Kendall (1938)
-
-[kendall correlation](tau.md)
 
 ### Dimensionality reduction for visualisation
 
