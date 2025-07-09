@@ -2,7 +2,7 @@
 
 ![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
 
-![Static Badge](https://img.shields.io/badge/Dimension_Reduction-blue)
+![Static Badge](https://img.shields.io/badge/Dimensionality_reduction-local-blue)
 
 ![Static Badge](https://img.shields.io/badge/Scikit-Python-yellow)
 
