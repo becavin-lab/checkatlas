@@ -1,5 +1,11 @@
 # Local Inverse Simpson's Index (iLISI & cLISI)
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 The Local Inverse Simpson's Index (LISI) measures local mixing by estimating the effective number of classes in local neighborhoods of cells and constitutes a fundamental metric for evaluating single-cell data integration quality.
@@ -65,4 +71,5 @@ where $N_{categories}$ is the total number of categories (batches or cell types)
 
 ## Code 
 
+[Github](https://github.com/slowkow/harmonypy/blob/master/harmonypy/lisi.py)
 
