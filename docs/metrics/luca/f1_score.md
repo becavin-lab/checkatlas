@@ -13,7 +13,7 @@ These isolated labels typically represent biologically meaningful but underrepre
 This metric focuses on classification performance (precision and recall) specifically for these rare cell types, ensuring that integration does not compromise their identity.
 
 ![F1 score illustration](../../images/metrics/f1.png)
-> © [Wikimeda](https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Precisionrecall.svg/800px-Precisionrecall.svg.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Precisionrecall.svg/800px-Precisionrecall.svg.png)
 ## Formulas
 
 The Isolated Label F1 score is computed as the average F1-score over a subset of isolated cell type labels. 
