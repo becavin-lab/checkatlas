@@ -322,12 +322,15 @@ class NfcoreTemplate {
         String workflow_version = NfcoreTemplate.version(workflow)
         String.format(
             """\n
-            ${dashedLine(monochrome_logs)}
-                                                    ${colors.green},--.${colors.black}/${colors.green},-.${colors.reset}
-            ${colors.blue}        ___     __   __   __   ___     ${colors.green}/,-._.--~\'${colors.reset}
-            ${colors.blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${colors.yellow}}  {${colors.reset}
-            ${colors.blue}  | \\| |       \\__, \\__/ |  \\ |___     ${colors.green}\\`-._,-`-,${colors.reset}
-                                                    ${colors.green}`._,._,\'${colors.reset}
+            o.     O .oOo            .oOOOo.   o                o                   o              
+            Oo     o O              .O     o  O                 O                  O               
+            O O    O o              o         o                 o              O   o               
+            O  o   o OoO            o         O                 o             oOo  O               
+            O   o  O o    ooooooooo o         OoOo. .oOo. .oOo  O  o  .oOoO'   o   o  .oOoO' .oOo  
+            o    O O O              O         o   o OooO' O     OoO   O   o    O   O  O   o  `Ooo. 
+            o     Oo o              `o     .o o   O O     o     o  O  o   O    o   o  o   O      O 
+            O     `o O'              `OoooO'  O   o `OoO' `OoO' O   o `OoO'o   `oO Oo `OoO'o `OoO' 
+                                                                                                
             ${colors.purple}  ${workflow.manifest.name} ${workflow_version}${colors.reset}
             ${dashedLine(monochrome_logs)}
             """.stripIndent()
