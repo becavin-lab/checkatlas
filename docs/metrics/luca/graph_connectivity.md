@@ -14,6 +14,10 @@ It quantifies how well cells of the same biological type maintain their connecti
 Good integration should maintain connections between biologically similar cells while removing batch-related artifacts. 
 The metric typically uses a kNN graph constructed on the integrated space and compares observed connectivity with expected connectivity based on known biological labels.
 
+![Graph connectivity illustration](../../images/metrics/graph_connectivity.png)
+> © [Wikimedia](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Network_Community_Structure.svg/1920px-Network_Community_Structure.svg.png)
+
+
 ## Formulas 
 
 Graph connectivity is typically calculated as follows :
