@@ -1,5 +1,11 @@
 # High Variable Genes (HVG) overlap 
 
+![Static Badge](https://img.shields.io/badge/Checkatlas-Disable-red)
+
+![Static Badge](https://img.shields.io/badge/Batch_integration-darkgreen)
+
+![Static Badge](https://img.shields.io/badge/Github-Python-yellow)
+
 ## Description 
 
 The High Variable Gene (HVG) Overlap metric evaluates how well batch integration preserves biologically informative gene variability in single-cell RNA-seq data.
