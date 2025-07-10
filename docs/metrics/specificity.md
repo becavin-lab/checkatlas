@@ -1,5 +1,9 @@
+### Specificity metrics 
 
-| 	Nom	| 	Type   |  OpensProblems | Boundary  |   Optimum   |   Description |
-| 	:---------------	  | 	:----   |	:----  |	:----  | 	:---- | :--------------------------------- |
-| 	[Coefficient of determination](spatial/r2.md) 	|  |  ![Static Badge](https://img.shields.io/badge/Spatial_decomposition-grey) |	[0,1] | 1 | Evaluates how well gene expression variability is explained by models in single-cell data. |
-| [Kendall's tau correlation](spatial/tau.md)  |![Static Badge](https://img.shields.io/badge/Specificity-pink)  | ![Static Badge](https://img.shields.io/badge/Spatially_variable_genes-grey)  | [0;1] or [-1;1] | 1 | Kendall's tau correlation ... |
+| Metric                                                                 | Description                                                                 | Boundary             | Optimum              |
+|------------------------------------------------------------------------|-----------------------------------------------------------------------------|----------------------|----------------------|
+| [Gini coefficient](gini.md)                                           | Evaluates the inequality of the gene's distribution.                        | –                    | The lower the better |
+| [Kendall's tau](tau.md)                                               | Similar to Gini and Shannon, but less restrictive.                          | [0;1] or [-1;1]      | –                    |
+| [One-v-All](ova_ovm.md)                                              | Gene expression in one cell type versus the rest.                           | [0,1]                | 1                    |
+| [Onevs-Max](ova_ovm.md)                                              | Gene expression in one cell type vs the second more highly expressed cell. | [0,+∞[               | –                    |
+| [Shannon Entropy](shannon.md)                                         | Entropy of gene distribution across cell types.                             | [0;1]                | –                    |
