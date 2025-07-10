@@ -1,10 +1,13 @@
 ## Dimensionality reduction metrics:
 
-
-| 	Nom	| 	Type   |  OpensProblems | Boundary  |   Optimum   |   Description |
-| 	:---------------	  | 	:----   |	:----  |	:----  | 	:---- | :--------------------------------- |
-| 	[Coefficient of determination](spatial/r2.md) 	|  |  ![Static Badge](https://img.shields.io/badge/Spatial_decomposition-grey) |	[0,1] | 1 | Evaluates how well gene expression variability is explained by models in single-cell data. |
-| [Kendall's tau correlation](spatial/tau.md)  |![Static Badge](https://img.shields.io/badge/Specificity-pink)  | ![Static Badge](https://img.shields.io/badge/Spatially_variable_genes-grey)  | [0;1] or [-1;1] | 1 | Kendall's tau correlation ... |
-
-
-
+| Metric                                                    | Type                                                                                          | Description                                                                                                                    | Boundary     | Optimum               |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|--------------|------------------------|
+| [Kruskal's stress](kruskal_stress.md)                     | ![Badge](https://img.shields.io/badge/DimRed%20Global-darkgreen)                              | Based on the difference between distances in high and low dimensions.                                                         | [0, 1]       | 0                      |
+| [LCMC](lcmc.md)                                           | ![Badge](https://img.shields.io/badge/DimRed%20Local-yellowgreen)                             | Evaluates changes in the nearest neighbours matrix after dimension reduction.                                                 | –            | The higher the better  |
+| [Spearman's rho](spearman_rho.md)                         | ![Badge](https://img.shields.io/badge/DimRed%20Global-darkgreen)                              | Based on the difference between the orders of distances in high and low dimensions.                                           | [0, ∞)       | 0                      |
+| [Trustworthiness and continuity](trust_continuity.md)     | ![Badge](https://img.shields.io/badge/DimRed%20Local-yellowgreen)                             | Based on notions of reliability and continuity linked to nearest neighbours.                                                  | [0, 1]       | 1                      |
+| [Distance correlation](distance_correlation.md)           | ![Badge](https://img.shields.io/badge/DimRed%20Global-darkgreen)                              | Detects both linear and nonlinear dependencies; equals 0 only when variables are independent.                                 | [0, 1]       | 1                      |
+| [Trustworthiness](trust_continuity.md)                    | ![Badge](https://img.shields.io/badge/DimRed%20Local-yellowgreen)                             | Measures how well local neighborhood relations are preserved in the low-dimensional space.                                    | [0, 1]       | 1                      |
+| [Continuity](trust_continuity.md)                         | ![Badge](https://img.shields.io/badge/DimRed%20Local-yellowgreen)                             | Measures the proportion of true neighbors in high-dimensional space that are preserved in the low-dimensional one.           | [0, 1]       | 1                      |
+| [co-KNN (AUC & size)](co_knn.md)                          | ![Badge](https://img.shields.io/badge/DimRed%20Local-yellowgreen)                             | Evaluates how well local neighborhood structures are preserved after dimensionality reduction.                                | –            | The higher the better  |
+| [Local & Global co-KNN](local_global_coknn.md)            | ![Badge](https://img.shields.io/badge/DimRed%20Local%20%2B%20Global-green)                    | Measures how well both local and global neighborhood structures are preserved post-reduction.                                | [0, 1]       | 1                      |
