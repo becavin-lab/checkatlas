@@ -202,24 +202,24 @@ workflow CHECKATLAS {
     ch_versions = ch_versions.mix(LIST_SCANPY_ATLASES.out.versions)
     
     // Manage Cellranger atlases
-    LIST_CELLRANGER_ATLASES(ch_search_path)
+    /* LIST_CELLRANGER_ATLASES(ch_search_path)
     LIST_CELLRANGER_ATLASES.out.list_cellranger.splitCsv( header:true, sep:',' )
         .map { create_atlas_info(it) }
         .set { atlas_info_cellranger }
     CHECKATLAS_CELLRANGER(atlas_info_cellranger, ch_search_path)
-    ch_versions = ch_versions.mix(LIST_CELLRANGER_ATLASES.out.versions)
+    ch_versions = ch_versions.mix(LIST_CELLRANGER_ATLASES.out.versions) */
 
     // Manage Seurat atlases
-    LIST_SEURAT_ATLASES(ch_search_path)
+    /* LIST_SEURAT_ATLASES(ch_search_path)
     LIST_SEURAT_ATLASES.out.list_seurat.splitCsv( header:true, sep:',' )
         .map { create_atlas_info(it) }
         .set { atlas_info_seurat }
     CHECKATLAS_SEURAT(atlas_info_seurat, ch_search_path)
-    ch_versions = ch_versions.mix(LIST_SEURAT_ATLASES.out.versions)
+    ch_versions = ch_versions.mix(LIST_SEURAT_ATLASES.out.versions) */
     
     // Collect all output value of checkatlas processes
     atlases_out = CHECKATLAS_SCANPY.out.scanpy_out
-    atlases_out = atlases_out.mix(CHECKATLAS_CELLRANGER.out.cellranger_out, CHECKATLAS_SEURAT.out.seurat_out)
+    //atlases_out = atlases_out.mix(CHECKATLAS_CELLRANGER.out.cellranger_out, CHECKATLAS_SEURAT.out.seurat_out)
     atlases_out = atlases_out.collect()
 
     // Run HTML report creation for QC plots, UMAP and tSNE
