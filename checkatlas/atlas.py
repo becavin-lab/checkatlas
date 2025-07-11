@@ -609,10 +609,11 @@ def create_metric_cluster(
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} and obsm {obsm_key_representation}"
                 )
-                metric_value = metrics.calc_metric_cluster_scanpy(
+                metric_value, running_time = metrics.calc_metric_cluster_scanpy(
                     metric, adata, obs_key, obsm_key_representation
                 )
                 dict_line[metric] = metric_value
+                dict_line[f"{metric}_running_time"] = running_time
             df_line = pd.DataFrame(dict_line)
             df_cluster = pd.concat(
                 [df_cluster, df_line], ignore_index=True, axis=0
@@ -658,10 +659,11 @@ def create_metric_annot(
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} vs ref_obs {ref_obs}"
                 )
-                metric_value = metrics.calc_metric_annot_scanpy(
+                metric_value, running_time = metrics.calc_metric_annot_scanpy(
                     metric, adata, obs_key, ref_obs
                 )
                 dict_line[metric] = metric_value
+                dict_line[f"{metric}_running_time"] = running_time
             df_line = pd.DataFrame(dict_line)
             df_annot = pd.concat(
                 [df_annot, df_line], ignore_index=True, axis=0
@@ -703,10 +705,11 @@ def create_metric_dimred(
                 logger.debug(
                     f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
                 )
-                metric_value = metrics.calc_metric_dimred(
+                metric_value, running_time = metrics.calc_metric_dimred(
                     metric, adata, obsm_key
                 )
                 dict_line[metric] = metric_value
+                dict_line[f"{metric}_running_time"] = running_time
             df_line = pd.DataFrame(dict_line)
             df_dimred = pd.concat(
                 [df_dimred, df_line], ignore_index=True, axis=0
