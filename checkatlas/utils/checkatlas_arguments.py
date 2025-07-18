@@ -1,8 +1,13 @@
 import argparse
 from importlib.resources import files
 
-from checkatlas import atlas, checkatlas
-from checkatlas.metrics import annot, cluster, dimred
+
+try:
+    from . import atlas, check
+    from ..metrics import annot, cluster, dimred
+except ImportError:
+    from checkatlas import atlas, check
+    from checkatlas.metrics import annot, cluster, dimred
 
 
 def create_parser():
@@ -25,7 +30,7 @@ def create_parser():
         "process",
         type=str,
         help="Required argument: Type of process to run"
-        f" among {checkatlas.PROCESS_TYPE}",
+        f" among {check.PROCESS_TYPE}",
         default="",
     )
 

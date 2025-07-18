@@ -1,3 +1,3 @@
-from . import atlas, cellranger, checkatlas, seurat
+from . import atlas, cellranger, check, seurat
 
-__all__ = ["atlas", "seurat", "checkatlas", "cellranger"]
+__all__ = ["atlas", "seurat", "check", "cellranger"]

@@ -1,10 +1,13 @@
 import logging
 import os
 
-from checkatlas.utils import files
+try:
+    from . import check
+    from .utils import checkatlas_workflow_arguments, folders, files
+except ImportError:
+    from checkatlas import check
+    from checkatlas.utils import checkatlas_workflow_arguments, folders, files
 
-from . import checkatlas
-from .utils import checkatlas_workflow_arguments, folders
 
 PROCESS_TYPE = ["list_scanpy", "list_cellranger", "list_seurat", "html_report"]
 
@@ -49,7 +52,7 @@ def main() -> None:  # pragma: no cover
         logger.debug(f"Check checkatlas folders in:{args.path}")
         folders.checkatlas_folders(args.path)
         logger.info("Searching Seurat, Cellranger and Scanpy files")
-        checkatlas.list_scanpy_atlases(args.path)
+        check.list_scanpy_atlases(args.path)
     elif process == "list_cellranger":
         logger.debug(f"Search path {args.path} with checkatlas_workflow")
         logger.debug(f"Transform path to absolute:{args.path}")
@@ -57,7 +60,7 @@ def main() -> None:  # pragma: no cover
         logger.debug(f"Check checkatlas folders in:{args.path}")
         folders.checkatlas_folders(args.path)
         logger.info("Searching Seurat, Cellranger and Scanpy files")
-        checkatlas.list_cellranger_atlases(args.path)
+        check.list_cellranger_atlases(args.path)
     elif process == "list_seurat":
         logger.debug(f"Search path {args.path} with checkatlas_workflow")
         logger.debug(f"Transform path to absolute:{args.path}")
@@ -65,17 +68,17 @@ def main() -> None:  # pragma: no cover
         logger.debug(f"Check checkatlas folders in:{args.path}")
         folders.checkatlas_folders(args.path)
         logger.info("Searching Seurat, Cellranger and Scanpy files")
-        checkatlas.list_seurat_atlases(args.path)
+        check.list_seurat_atlases(args.path)
     elif process == "html_report":
         logger.info(
             "Generate QC plots html report in "
             f"{files.get_html_qc_report_path(args.path)}"
         )
-        checkatlas.generate_fig_html(args.path, "qc")
+        check.generate_fig_html(args.path, "qc")
         logger.info(
             "Generate UMAP plots html report in "
             f"{files.get_html_umap_report_path(args.path)}"
         )
-        checkatlas.generate_fig_html(args.path, "reductions")
+        check.generate_fig_html(args.path, "reductions")
     else:
         logger.debug("TO DO : Spatial Transcriptomics not yet managed.")
