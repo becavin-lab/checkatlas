@@ -4,7 +4,7 @@ import os
 import pytest
 from anndata import AnnData
 
-from checkatlas import atlas, cellranger, checkatlas
+from checkatlas import atlas, cellranger, check
 from checkatlas.utils import files, folders
 
 from . import datasets
@@ -89,9 +89,9 @@ def test_summary_table(atlas_info):
     args = parser.parse_args(["--path", checkatlas_path])
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_summary_table(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.SUMMARY, checkatlas.TSV_EXTENSION, args.path
+        atlas_name, folders.SUMMARY, check.TSV_EXTENSION, args.path
     )
     assert os.path.exists(csv_path)
 
@@ -105,9 +105,9 @@ def test_adata_table(atlas_info):
     args = parser.parse_args(["--path", checkatlas_path])
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_anndata_table(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.ANNDATA, checkatlas.TSV_EXTENSION, args.path
+        atlas_name, folders.ANNDATA, check.TSV_EXTENSION, args.path
     )
     print(csv_path)
     assert os.path.exists(csv_path)
@@ -138,9 +138,9 @@ def test_qc_table(atlas_info):
     )
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_qc_tables(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.QC, checkatlas.TSV_EXTENSION, args.path
+        atlas_name, folders.QC, check.TSV_EXTENSION, args.path
     )
     assert os.path.exists(csv_path)
 
@@ -154,9 +154,9 @@ def test_qc_plots(atlas_info):
     args = parser.parse_args(["--path", checkatlas_path])
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_qc_plots(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.QC_FIG, checkatlas.QC_FIG_EXTENSION, args.path
+        atlas_name, folders.QC_FIG, check.QC_FIG_EXTENSION, args.path
     )
     assert os.path.exists(csv_path)
 
@@ -174,9 +174,9 @@ def test_umap_plots(atlas_info):
 
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_umap_fig(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.UMAP, checkatlas.UMAP_EXTENSION, args.path
+        atlas_name, folders.UMAP, check.UMAP_EXTENSION, args.path
     )
     assert os.path.exists(csv_path)
 
@@ -194,9 +194,9 @@ def test_tsne_plots(atlas_info):
 
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_tsne_fig(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
-        atlas_name, folders.TSNE, checkatlas.TSNE_EXTENSION, args.path
+        atlas_name, folders.TSNE, check.TSNE_EXTENSION, args.path
     )
     assert os.path.exists(csv_path)
 
@@ -221,11 +221,11 @@ def test_cluster_metric(atlas_info):
     )
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_metric_cluster(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.CLUSTER,
-        checkatlas.TSV_EXTENSION,
+        check.TSV_EXTENSION,
         args.path,
     )
     assert os.path.exists(csv_path)
@@ -251,11 +251,11 @@ def test_annot_metric(atlas_info):
     )
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_metric_annot(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.ANNOTATION,
-        checkatlas.TSV_EXTENSION,
+        check.TSV_EXTENSION,
         args.path,
     )
     assert os.path.exists(csv_path)
@@ -281,11 +281,11 @@ def test_dimred_metric(atlas_info):
     )
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_metric_dimred(adata, atlas_info, args)
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.DIMRED,
-        checkatlas.TSV_EXTENSION,
+        check.TSV_EXTENSION,
         args.path,
     )
     assert os.path.exists(csv_path)
