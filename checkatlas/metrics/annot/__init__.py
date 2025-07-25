@@ -2,7 +2,7 @@ from . import (
     adj_mutual_info,
     adj_rand_index,
     dunn_index,
-    fowlkes_mallow,
+    fowlkes_mallows,
     isolated_f1_score,
     mutual_info,
     normalized_mutual_info,

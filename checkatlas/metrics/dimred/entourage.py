@@ -6,11 +6,19 @@ logger = logging.getLogger("checkatlas")
 
 
 def run(high_dim_counts, low_dim_counts):
+    """
+    `Entourage readthedocs
+    <https://checkatlas.readthedocs.io/en/latest/metrics/dimred/entourage/>`__
+
+    :param high_dim_counts:
+    :param low_dim_counts:
+    :return:
+    """
     # for i in range(4):
     k_neighbors = 4
 
     # high_dim_counts = high_dim_counts[0:100,]
-    # low_dim_conts = low_dim_counts[0:100,]
+    # low_dim_counts = low_dim_counts[0:100,]
 
     X = high_dim_counts
     neigh = NearestNeighbors(n_neighbors=k_neighbors)
