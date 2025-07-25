@@ -1,6 +1,5 @@
 # ![CheckAtlas](docs/images/checkatlas_logo.png) 
 
-
 ![PyPI](https://img.shields.io/pypi/v/checkatlas)
 ![PyPI - Downloads](https://img.shields.io/pypi/dw/checkatlas)
 ![PyPI - License](https://img.shields.io/pypi/l/checkatlas)
