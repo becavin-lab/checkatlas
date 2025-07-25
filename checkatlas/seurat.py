@@ -14,9 +14,14 @@ from rpy2.robjects.methods import RS4
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import FactorVector, StrVector
 
-from checkatlas import atlas, checkatlas
-from checkatlas.metrics import metrics
-from checkatlas.utils import folders
+try:
+    from . import atlas, check
+    from .metrics import metrics
+    from .utils import folders
+except ImportError:
+    from checkatlas import atlas, check
+    from checkatlas.metrics import metrics
+    from checkatlas.utils import folders
 
 """
 Module for management of Atlas n Seurat format
@@ -55,12 +60,12 @@ SEURAT_TO_SCANPY_OBS = {
 def detect_seurat(atlas_path: str) -> dict:
     if atlas_path.endswith(SEURAT_EXTENSION):
         atlas_info = dict()
-        atlas_info[checkatlas.ATLAS_NAME_KEY] = os.path.splitext(
+        atlas_info[check.ATLAS_NAME_KEY] = os.path.splitext(
             os.path.basename(atlas_path)
         )[0]
-        atlas_info[checkatlas.ATLAS_TYPE_KEY] = SEURAT_TYPE
-        atlas_info[checkatlas.ATLAS_EXTENSION_KEY] = SEURAT_EXTENSION
-        atlas_info[checkatlas.ATLAS_PATH_KEY] = atlas_path
+        atlas_info[check.ATLAS_TYPE_KEY] = SEURAT_TYPE
+        atlas_info[check.ATLAS_EXTENSION_KEY] = SEURAT_EXTENSION
+        atlas_info[check.ATLAS_PATH_KEY] = atlas_path
         return atlas_info
     else:
         return dict()
@@ -92,13 +97,13 @@ def read_atlas(atlas_info: dict) -> RS4:
     """Read Seurat object in python using rpy2
 
     Args:
-        atlas_path (str): _description_
+        atlas_info (dict): info dict about the atlas
 
     Returns:
         RS4: _description_
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
-    atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+    atlas_path = atlas_info[check.ATLAS_PATH_KEY]
     logger.info(f"Load {atlas_name} in " f"{atlas_path}")
     rcode = f'readRDS("{atlas_path}")'
     seurat = robjects.r(rcode)
@@ -208,11 +213,11 @@ def create_summary_table(
     :param csv_path:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     logger.debug(f"Create Summary table for {atlas_name}")
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.SUMMARY),
-        atlas_name + checkatlas.TSV_EXTENSION,
+        atlas_name + check.TSV_EXTENSION,
     )
     # Create summary table
     header = [
@@ -232,16 +237,16 @@ def create_summary_table(
     x_norm = True
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
     df_summary["AtlasFileType"][atlas_name] = atlas_info[
-        checkatlas.ATLAS_TYPE_KEY
+        check.ATLAS_TYPE_KEY
     ]
     df_summary["NbCells"][atlas_name] = ncells
     df_summary["NbGenes"][atlas_name] = ngenes
     df_summary["AnnData.raw"][atlas_name] = x_raw
     df_summary["AnnData.X"][atlas_name] = x_norm
     df_summary["File_extension"][atlas_name] = atlas_info[
-        checkatlas.ATLAS_EXTENSION_KEY
+        check.ATLAS_EXTENSION_KEY
     ]
-    df_summary["File_path"][atlas_name] = atlas_info[checkatlas.ATLAS_PATH_KEY]
+    df_summary["File_path"][atlas_name] = atlas_info[check.ATLAS_PATH_KEY]
     df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
@@ -255,11 +260,11 @@ def create_anndata_table(
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     logger.debug(f"Create Adata table for {atlas_name}")
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.ANNDATA),
-        atlas_name + checkatlas.TSV_EXTENSION,
+        atlas_name + check.TSV_EXTENSION,
     )
     # Create AnnData table
     header = ["atlas_obs", "obsm", "var", "varm", "uns"]
@@ -315,10 +320,10 @@ def create_qc_tables(
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     qc_path = os.path.join(
         folders.get_folder(args.path, folders.QC),
-        atlas_name + checkatlas.TSV_EXTENSION,
+        atlas_name + check.TSV_EXTENSION,
     )
     logger.debug(f"Create QC tables for {atlas_name}")
     obs_keys = get_viable_obs_qc(seurat, args)
@@ -359,10 +364,10 @@ def create_qc_plots(
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     qc_path = os.path.join(
         folders.get_folder(args.path, folders.QC_FIG),
-        atlas_name + checkatlas.QC_FIG_EXTENSION,
+        atlas_name + check.QC_FIG_EXTENSION,
     )
     logger.debug(f"Create QC violin plot for {atlas_name}")
     importr("ggplot2")
@@ -390,7 +395,7 @@ def create_umap_fig(
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     # Search if tsne reduction exists
     r = re.compile(".*umap*.")
     r_names = robjects.r["names"]
@@ -401,7 +406,7 @@ def create_umap_fig(
         # Setting up figures directory
         umap_path = os.path.join(
             folders.get_folder(args.path, folders.UMAP),
-            atlas_name + checkatlas.UMAP_EXTENSION,
+            atlas_name + check.UMAP_EXTENSION,
         )
         # Exporting umap
         obs_keys = get_viable_obs_annot(seurat, args)
@@ -428,7 +433,7 @@ def create_tsne_fig(
     :param atlas_path:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     # Search if tsne reduction exists
     r = re.compile(".*tsne*.")
     r_names = robjects.r["names"]
@@ -439,7 +444,7 @@ def create_tsne_fig(
         # Setting up figures directory
         tsne_path = os.path.join(
             folders.get_folder(args.path, folders.TSNE),
-            atlas_name + checkatlas.TSNE_EXTENSION,
+            atlas_name + check.TSNE_EXTENSION,
         )
         # Exporting tsne
         obs_keys = get_viable_obs_annot(seurat, args)
@@ -465,10 +470,10 @@ def create_metric_cluster(
     :param args:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.CLUSTER),
-        atlas_name + checkatlas.TSV_EXTENSION,
+        atlas_name + check.TSV_EXTENSION,
     )
     header = ["Clust_Sample", "obs"] + args.metric_cluster
     df_cluster = pd.DataFrame(columns=header)
@@ -510,10 +515,10 @@ def create_metric_annot(
     :param args:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.ANNOTATION),
-        atlas_name + checkatlas.TSV_EXTENSION,
+        atlas_name + check.TSV_EXTENSION,
     )
     header = ["Annot_Sample", "Reference", "obs"] + args.metric_annot
     df_annot = pd.DataFrame(columns=header)
@@ -558,10 +563,10 @@ def create_metric_dimred(
     :param args:
     :return:
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = os.path.join(
         folders.get_folder(args.path, folders.DIMRED),
-        atlas_name + checkatlas.TSV_EXTENSION,
+        atlas_name + check.TSV_EXTENSION,
     )
     header = ["Dimred_Sample", "obsm"] + args.metric_dimred
     df_dimred = pd.DataFrame(columns=header)

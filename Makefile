@@ -18,14 +18,15 @@ show:             ## Show the current environment.
 
 .PHONY: install
 install:          ## Install the project in dev mode.
-	@echo "Run checkatlas install - create poetrry virtual env"
+	@echo "Run checkatlas install - create poetry virtual env"
 	$(ENV_PREFIX)poetry install
 
 .PHONY: fmt
 fmt:              ## Format code using black & isort.
 	@echo "Run project file formatting"
 	$(ENV_PREFIX)poetry run isort .
-	$(ENV_PREFIX)poetry run black -l 79 .
+	$(ENV_PREFIX)poetry run flake8 checkatlas/
+	$(ENV_PREFIX)poetry run black -l 79 .	
 
 .PHONY: lint
 lint:             ## Run pep8, black, mypy linters.
@@ -60,13 +61,13 @@ ci:          ## Run a continuous integration : Add every change to git and creat
 	@git add --all
 	@git commit -m "Continuous integration 🔄 tests-$(VERSION)"
 	@echo "creating git tag : tests-$(VERSION)"
-	@git tag tests-$(VERSION)-1
+	@git tag tests-$(VERSION)-9
 	@git push -u origin HEAD --tags
 	@echo "Github Actions will detect the new tag and run the continuous integration process."
 
 .PHONY: release
 release:          ## Create a new tag for release.
-	@echo "WARNING: This operation will create a version tag and push to github"
+	@echo "WARNING: This operation will create a version tag and push to github and PyPI"
 	@echo "Reading version $(VERSION) from: pyproject.toml"
 	@echo "Saving version to: checkatlas/utils/VERSION"
 	@echo "${VERSION}" > "checkatlas/utils/VERSION"
@@ -89,6 +90,8 @@ clean:            ## Clean unused files.
 	@rm -rf .pytest_cache
 	@rm -rf .mypy_cache
 	@rm -rf build
+	@rm -rf work
+	@rm -rf null
 	@rm -rf dist
 	@rm -rf *.egg-info
 	@rm -rf htmlcov

@@ -60,9 +60,9 @@ def mean_celltype(
         adata.varm[f"ave_celltype_counts_{partition_key}"] = np.array(
             average_by_celltype.transpose()
         )
-        adata.uns[
-            f"ave_celltype_index_{partition_key}"
-        ] = average_by_celltype.index
+        adata.uns[f"ave_celltype_index_{partition_key}"] = (
+            average_by_celltype.index
+        )
     return average_by_celltype
 
 

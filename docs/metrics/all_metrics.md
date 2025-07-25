@@ -1,0 +1,108 @@
+# All metrics listed
+
+## “Applying Deep Learning algorithm to perform lung cells annotation”, A. Collin, 2020
+
+### Clustering 
+
+[silhouette coefficient](silhouette.md)
+
+[davies_bouldin index](dbi.md)
+
+[dunn index](dunn.md) 
+
+[density_based_clustering_validation](dbcv.md)
+
+[rand_index](rand.md)
+
+[fowlkes_mallows_score](fowlkes_mallows.md)
+
+[mutual information](mutual_information.md)
+
+[v_measure](v_measure.md)
+
+[Kolmogorov–Smirnov Statistic](kolmogorov_smirnov.md) - Chari T, Pachter L. The specious art of single-cell genomics. PLoS Comput Biol. 2023 Aug 17;19(8):e1011288. doi: 10.1371/journal.pcbi.1011288. PMID: 37590228; PMCID: PMC10434946.
+
+### Dimensionality Reduction
+
+[kruskal_stress](kruskal_stress.md)
+
+[spearman’s rho](spearman_rho.md)
+
+[local_continuity_meta_criterion](lcmc.md)
+
+[trustworthiness_and_continuity](trust_continuity.md)
+
+### Specificity 
+
+[one-vs-all](ova_ovm.md)
+
+[one-vs-max](ova_ovm.md)
+
+[shannon's entropy](shannon.md)
+
+[gini_coefficient](gini.md)
+
+[kendall's tau](../spatial/tau.md)
+
+## Open Problems 
+[SCIB](https://github.com/theislab/scib/blob/main/scib/metrics/metrics.py) 
+
+### Batch integration // Leucken et. al (2022) 
+
+[adjusted_rand_index](adjusted_rand_index.md)
+
+[average_silhouetta_width](asw.md)
+
+[lisi](lisi.md)
+
+[cell_cycle_conservation](cc_conservation.md)
+
+[graph connectivity](graph_connectivity.md)
+
+[high_gene_variability](hvg.md)
+
+[isolated_label_f1_score](f1_score.md)
+
+[kbet](kbet.md)
+
+[normalized_mutual_information](nmi.md)
+
+[principal_component_regression](pcr.md)
+
+### Denoising // Batson et. al. (2019)
+
+[mean-squared error](mse.md)
+
+[poisson loss](poisson.md)
+
+
+
+### Dimensionality reduction for visualisation
+
+#### Global 
+
+[Distance correlation](distance_correlation.md)
+
+[Density preservation](density_preservation.md)
+
+[co-KNN AUC](co_knn.md)
+
+[global co-kNN](global_local_coknn.md)
+
+[Graph Edit Distance](ged.md)
+
+#### Local 
+
+[trustworthiness](trust_continuity.md)
+
+[continuity](trust_continuity.md)
+
+[local_continuity_meta_criterion](lcmc.md)
+
+[co-KNN size](co_knn.md)
+
+[local co-KNN](global_local_coknn.md)
+
+[Entourage](entourage.md)
+
+[Average Jaccard Distance](ajd.md)

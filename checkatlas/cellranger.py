@@ -6,7 +6,10 @@ import pandas as pd
 import scanpy as sc
 from anndata import AnnData
 
-from . import checkatlas
+try:
+    from . import check
+except ImportError:
+    from checkatlas import check
 
 EXTENSIONS_CELLRANGER = [".h5", ".mtx"]
 CELLRANGER_FILE = "filtered_feature_bc_matrix.h5"
@@ -23,17 +26,17 @@ sc.settings.verbosity = 0
 def detect_cellranger(atlas_path: str) -> dict:
     if atlas_path.endswith(CELLRANGER_FILE):
         atlas_info = dict()
-        atlas_info[checkatlas.ATLAS_NAME_KEY] = atlas_path.split(os.sep)[-3]
-        atlas_info[checkatlas.ATLAS_TYPE_KEY] = CELLRANGER_TYPE_CURRENT
-        atlas_info[checkatlas.ATLAS_EXTENSION_KEY] = EXTENSIONS_CELLRANGER[0]
-        atlas_info[checkatlas.ATLAS_PATH_KEY] = atlas_path
+        atlas_info[check.ATLAS_NAME_KEY] = atlas_path.split(os.sep)[-3]
+        atlas_info[check.ATLAS_TYPE_KEY] = CELLRANGER_TYPE_CURRENT
+        atlas_info[check.ATLAS_EXTENSION_KEY] = EXTENSIONS_CELLRANGER[0]
+        atlas_info[check.ATLAS_PATH_KEY] = atlas_path
         return atlas_info
     elif atlas_path.endswith(CELLRANGER_MATRIX_FILE):
         atlas_info = dict()
-        atlas_info[checkatlas.ATLAS_NAME_KEY] = atlas_path.split(os.sep)[-5]
-        atlas_info[checkatlas.ATLAS_TYPE_KEY] = CELLRANGER_TYPE_OBSOLETE
-        atlas_info[checkatlas.ATLAS_EXTENSION_KEY] = EXTENSIONS_CELLRANGER[1]
-        atlas_info[checkatlas.ATLAS_PATH_KEY] = atlas_path
+        atlas_info[check.ATLAS_NAME_KEY] = atlas_path.split(os.sep)[-5]
+        atlas_info[check.ATLAS_TYPE_KEY] = CELLRANGER_TYPE_OBSOLETE
+        atlas_info[check.ATLAS_EXTENSION_KEY] = EXTENSIONS_CELLRANGER[1]
+        atlas_info[check.ATLAS_PATH_KEY] = atlas_path
         return atlas_info
     else:
         return dict()
@@ -56,7 +59,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
         AnnData: scanpy object from cellranger
     """
     cellranger_out_path = os.path.dirname(
-        atlas_info[checkatlas.ATLAS_PATH_KEY]
+        atlas_info[check.ATLAS_PATH_KEY]
     )
     cellranger_analysis_path = os.path.join(cellranger_out_path, "analysis")
     cellranger_clust_path = os.path.join(
@@ -135,7 +138,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
             rna_pca = os.path.join(gex_path, "pca_projection.csv")
 
     # Read 10x h5 file
-    adata = sc.read_10x_h5(atlas_info[checkatlas.ATLAS_PATH_KEY])
+    adata = sc.read_10x_h5(atlas_info[check.ATLAS_PATH_KEY])
     adata.var_names_make_unique()
 
     # Add cluster
@@ -176,7 +179,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     Returns:
         AnnData: scanpy object from cellranger
     """
-    cellranger_path = atlas_info[checkatlas.ATLAS_PATH_KEY].replace(
+    cellranger_path = atlas_info[check.ATLAS_PATH_KEY].replace(
         CELLRANGER_MATRIX_FILE, ""
     )
     cellranger_out_path = os.path.join(cellranger_path, os.pardir, os.pardir)
@@ -221,7 +224,7 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     rna_pca = os.path.join(cellranger_pca_path, "projection.csv")
 
     # get matrix folder
-    matrix_folder = os.path.dirname(atlas_info[checkatlas.ATLAS_PATH_KEY])
+    matrix_folder = os.path.dirname(atlas_info[check.ATLAS_PATH_KEY])
     adata = sc.read_10x_mtx(matrix_folder)
     adata.var_names_make_unique()
 
