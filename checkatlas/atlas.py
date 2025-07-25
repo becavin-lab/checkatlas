@@ -11,9 +11,14 @@ from anndata import AnnData
 from anndata import _io as _io
 from sklearn.utils.fixes import _object_dtype_isnan
 
-from . import cellranger, checkatlas
-from .metrics import metrics
-from .utils import files, folders
+try:
+    from . import cellranger, check
+    from .metrics import metrics
+    from .utils import files, folders
+except ImportError:
+    from checkatlas import cellranger, check
+    from checkatlas.metrics import metrics
+    from checkatlas.utils import files, folders
 
 """
 Atlas module for AnnData (Scanpy)
@@ -78,12 +83,12 @@ sc.settings.verbosity = 0
 def detect_scanpy(atlas_path: str) -> dict:
     if atlas_path.endswith(ANNDATA_EXTENSION):
         atlas_info = dict()
-        atlas_info[checkatlas.ATLAS_NAME_KEY] = os.path.splitext(
+        atlas_info[check.ATLAS_NAME_KEY] = os.path.splitext(
             os.path.basename(atlas_path)
         )[0]
-        atlas_info[checkatlas.ATLAS_TYPE_KEY] = ANNDATA_TYPE
-        atlas_info[checkatlas.ATLAS_EXTENSION_KEY] = ANNDATA_EXTENSION
-        atlas_info[checkatlas.ATLAS_PATH_KEY] = atlas_path
+        atlas_info[check.ATLAS_TYPE_KEY] = ANNDATA_TYPE
+        atlas_info[check.ATLAS_EXTENSION_KEY] = ANNDATA_EXTENSION
+        atlas_info[check.ATLAS_PATH_KEY] = atlas_path
         return atlas_info
     else:
         return dict()
@@ -94,44 +99,44 @@ def read_atlas(atlas_info: dict) -> AnnData:
     Read Scanpy or Cellranger data : .h5ad or .h5
 
     Args:
-        atlas_path (dict): info about the atlas
+        atlas_info (dict): info dict about the atlas
 
     Returns:
         AnnData: scanpy object from .h5ad
     """
     logger.info(
-        f"Load {atlas_info[checkatlas.ATLAS_NAME_KEY]} "
-        f"in {atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+        f"Load {atlas_info[check.ATLAS_NAME_KEY]} "
+        f"in {atlas_info[check.ATLAS_PATH_KEY]}"
     )
     try:
         if (
-            atlas_info[checkatlas.ATLAS_TYPE_KEY]
+            atlas_info[check.ATLAS_TYPE_KEY]
             == cellranger.CELLRANGER_TYPE_CURRENT
         ):
             logger.debug(
                 "Read Cellranger >= v3 results "
-                f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+                f"{atlas_info[check.ATLAS_PATH_KEY]}"
             )
             adata = cellranger.read_cellranger_current(atlas_info)
         elif (
-            atlas_info[checkatlas.ATLAS_TYPE_KEY]
+            atlas_info[check.ATLAS_TYPE_KEY]
             == cellranger.CELLRANGER_TYPE_OBSOLETE
         ):
             logger.debug(
                 "Read Cellranger < v3 results "
-                f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+                f"{atlas_info[check.ATLAS_PATH_KEY]}"
             )
             adata = cellranger.read_cellranger_obsolete(atlas_info)
         else:
             logger.debug(
-                f"Read Scanpy file {atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+                f"Read Scanpy file {atlas_info[check.ATLAS_PATH_KEY]}"
             )
-            adata = sc.read_h5ad(atlas_info[checkatlas.ATLAS_PATH_KEY])
+            adata = sc.read_h5ad(atlas_info[check.ATLAS_PATH_KEY])
         return adata
     except _io.utils.AnnDataReadError:
         logger.warning(
             "AnnDataReadError, cannot read: "
-            f"{atlas_info[checkatlas.ATLAS_PATH_KEY]}"
+            f"{atlas_info[check.ATLAS_PATH_KEY]}"
         )
         return dict()
 
@@ -152,7 +157,7 @@ def clean_scanpy_atlas(adata: AnnData, atlas_info: dict) -> AnnData:
     Returns:
         AnnData: cleaned atlas
     """
-    logger.debug(f"Clean scanpy: {atlas_info[checkatlas.ATLAS_NAME_KEY]}")
+    logger.debug(f"Clean scanpy: {atlas_info[check.ATLAS_NAME_KEY]}")
     # Make var names unique
     list_var = adata.var_names
     if len(set(list_var)) == len(list_var):
@@ -251,7 +256,7 @@ def get_viable_obs_annot(adata: AnnData, args: argparse.Namespace) -> list:
     for obs_key in adata.obs_keys():
         for obs_key_celltype in args.obs_cluster:
             if obs_key_celltype in obs_key:
-                if type(adata.obs[obs_key].dtype) == pd.CategoricalDtype:
+                if isinstance(adata.obs[obs_key].dtype, pd.CategoricalDtype):
                     obs_keys.append(obs_key)
     # Remove keys with only one category and no NaN in the array
     obs_keys_final = list()
@@ -302,15 +307,15 @@ def create_summary_table(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (str): path of the atlas
+        atlas_info (str): info dict of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
-    atlas_type = atlas_info[checkatlas.ATLAS_TYPE_KEY]
-    atlas_path = atlas_info[checkatlas.ATLAS_PATH_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+    atlas_type = atlas_info[check.ATLAS_TYPE_KEY]
+    atlas_path = atlas_info[check.ATLAS_PATH_KEY]
     logger.debug(f"Create Summary table for {atlas_name}")
     csv_path = files.get_file_path(
-        atlas_name, folders.SUMMARY, checkatlas.TSV_EXTENSION, args.path
+        atlas_name, folders.SUMMARY, check.TSV_EXTENSION, args.path
     )
     # Create summary table
     header = [
@@ -341,14 +346,14 @@ def create_anndata_table(
     The html code will make all elements of the table visible in MultiQC
     Args:
         adata (AnnData): atlas to analyse
-        atlas_info (dict): info on the atlas
+        atlas_info (dict): info dict on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
 
     logger.debug(f"Create Adata table for {atlas_name}")
     csv_path = files.get_file_path(
-        atlas_name, folders.ANNDATA, checkatlas.TSV_EXTENSION, args.path
+        atlas_name, folders.ANNDATA, check.TSV_EXTENSION, args.path
     )
     # Create AnnData table
     header = ["atlas_obs", "obsm", "var", "varm", "uns"]
@@ -395,9 +400,9 @@ def create_qc_tables(
         atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     qc_path = files.get_file_path(
-        atlas_name, folders.QC, checkatlas.TSV_EXTENSION, args.path
+        atlas_name, folders.QC, check.TSV_EXTENSION, args.path
     )
     logger.debug(f"Create QC tables for {atlas_name}")
     qc_genes = []
@@ -450,10 +455,10 @@ def create_qc_plots(
         atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     sc.settings.figdir = folders.get_workingdir(args.path)
     sc.set_figure_params(dpi_save=80)
-    qc_path = os.sep + atlas_name + checkatlas.QC_FIG_EXTENSION
+    qc_path = os.sep + atlas_name + check.QC_FIG_EXTENSION
     logger.debug(f"Create QC violin plot for {atlas_name}")
     # mitochondrial genes
     adata.var["mt"] = adata.var_names.str.startswith("MT-")
@@ -493,7 +498,7 @@ def create_umap_fig(
         atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     sc.set_figure_params(dpi_save=150)
     # Search if umap reduction exists
     obsm_keys = get_viable_obsm(adata, args)
@@ -512,7 +517,7 @@ def create_umap_fig(
             adata.obsm["X_umap"] = adata.obsm[obsm_umap]
         # Setting up figures directory
         sc.settings.figdir = folders.get_workingdir(args.path)
-        umap_path = os.sep + atlas_name + checkatlas.UMAP_EXTENSION
+        umap_path = os.sep + atlas_name + check.UMAP_EXTENSION
         # Exporting umap
         obs_keys = get_viable_obs_annot(adata, args)
         if len(obs_keys) != 0:
@@ -533,7 +538,7 @@ def create_tsne_fig(
         atlas_info (dict): info on the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     sc.set_figure_params(dpi_save=150)
     # Search if tsne reduction exists
     obsm_keys = get_viable_obsm(adata, args)
@@ -554,7 +559,7 @@ def create_tsne_fig(
         sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(
             args.path
         )
-        tsne_path = os.sep + atlas_name + checkatlas.TSNE_EXTENSION
+        tsne_path = os.sep + atlas_name + check.TSNE_EXTENSION
         # Exporting tsne
         obs_keys = get_viable_obs_annot(adata, args)
         if len(obs_keys) != 0:
@@ -574,11 +579,11 @@ def create_metric_cluster(
         atlas_info (dict): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.CLUSTER,
-        checkatlas.TSV_EXTENSION,
+        check.TSV_EXTENSION,
         args.path,
     )
     header = ["Clust_Sample", "obs"] + args.metric_cluster
@@ -609,10 +614,11 @@ def create_metric_cluster(
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} and obsm {obsm_key_representation}"
                 )
-                metric_value = metrics.calc_metric_cluster_scanpy(
+                metric_value, running_time = metrics.calc_metric_cluster_scanpy(
                     metric, adata, obs_key, obsm_key_representation
                 )
                 dict_line[metric] = metric_value
+                dict_line[f"{metric}_running_time"] = running_time
             df_line = pd.DataFrame(dict_line)
             df_cluster = pd.concat(
                 [df_cluster, df_line], ignore_index=True, axis=0
@@ -630,14 +636,14 @@ def create_metric_annot(
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_path (dict): path of the atlas
+        atlas_info (dict): info of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.ANNOTATION,
-        checkatlas.TSV_EXTENSION,
+        check.TSV_EXTENSION,
         args.path,
     )
     header = ["Annot_Sample", "Reference", "obs"] + args.metric_annot
@@ -658,10 +664,11 @@ def create_metric_annot(
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} vs ref_obs {ref_obs}"
                 )
-                metric_value = metrics.calc_metric_annot_scanpy(
+                metric_value, running_time = metrics.calc_metric_annot_scanpy(
                     metric, adata, obs_key, ref_obs
                 )
                 dict_line[metric] = metric_value
+                dict_line[f"{metric}_running_time"] = running_time
             df_line = pd.DataFrame(dict_line)
             df_annot = pd.concat(
                 [df_annot, df_line], ignore_index=True, axis=0
@@ -682,11 +689,11 @@ def create_metric_dimred(
         atlas_info (dict): path of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
-    atlas_name = atlas_info[checkatlas.ATLAS_NAME_KEY]
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     csv_path = files.get_file_path(
         atlas_name,
         folders.DIMRED,
-        checkatlas.TSV_EXTENSION,
+        check.TSV_EXTENSION,
         args.path,
     )
     header = ["Dimred_Sample", "obsm"] + args.metric_dimred
@@ -703,10 +710,11 @@ def create_metric_dimred(
                 logger.debug(
                     f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
                 )
-                metric_value = metrics.calc_metric_dimred(
+                metric_value, running_time = metrics.calc_metric_dimred(
                     metric, adata, obsm_key
                 )
                 dict_line[metric] = metric_value
+                dict_line[f"{metric}_running_time"] = running_time
             df_line = pd.DataFrame(dict_line)
             df_dimred = pd.concat(
                 [df_dimred, df_line], ignore_index=True, axis=0

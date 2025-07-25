@@ -1,7 +1,13 @@
 site_name: checkatlas
-theme: readthedocs
+theme: 
+  name: readthedocs
+  # Optional: customize theme features
+  # features:
+  #   - navigation.top
+  #   - search.highlight
 repo_url: https://github.com/becavin-lab/checkatlas
 site_url: https://checkatlas.readthedocs.io/
+edit_uri: edit/main/docs/
 
 nav:
   - Overview:
@@ -12,26 +18,67 @@ nav:
     - Contributing: "contributing.md"
   - Metrics:
     - Summary: "metrics/metrics.md"
-    - Clustering:
-      - Silhouette: "metrics/silhouette.md"
-    - Classification:
-      - 'Rand index': "metrics/rand_index.md"
-    - 'Dimensionality reduction':
-      - 'Kruskal stress': "metrics/kruskal_stress.md"
+    - Clustering: "metrics/clustering.md"
+    - Classification: "metrics/cell_annotation.md"
+    - Dimensionality reduction: "metrics/dim_red.md"
+    - Gene Specificity: "metrics/specificity.md"
+    - Spatial transcriptomics: "metrics/spatial.md"
+    - Luca: "metrics/luca/all_metrics.md"
+    - Add your own: "metrics/add_own.md"
   - API:
     - API: "API.md"
 
 
 plugins:
   - search
+  - autorefs
   - mkdocstrings:
-      enabled: !ENV [ ENABLE_MKDOCSTRINGS, true ]
-      custom_templates: templates
       default_handler: python
       handlers:
         python:
-          import:
-            - https://docs.python-requests.org/en/master/objects.inv
+          paths: ["../checkatlas"]
           options:
             show_source: true
             heading_level: 4
+            show_root_heading: true
+            show_root_toc_entry: false
+            show_signature_annotations: true
+            merge_init_into_class: true
+
+
+
+# Updated MathJax configuration using newer version and better setup
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+markdown_extensions:
+  # Replace deprecated mdx_math with pymdownx.arithmatex
+  - pymdownx.arithmatex:
+      generic: true
+  # Additional useful extensions
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+# Optional: Add validation
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  # Suppress warnings for files not in nav
+  nav:
+    omitted_files: ignore

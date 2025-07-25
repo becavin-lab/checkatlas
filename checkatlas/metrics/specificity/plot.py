@@ -87,8 +87,8 @@ def gene_expr_distribution(
         )
         out = plt.annotate(
             celltype,
-            xy=[average_by_celltype.loc[celltype, gene], 0.06],
-            xycoords=("data", "axes fraction"),
+            xy=(average_by_celltype.loc[celltype, gene], 0.06),
+            xycoords=("data axes fraction"),
             annotation_clip=False,
         )
     ax.set(xlabel=None, ylabel="Number of celltypes")

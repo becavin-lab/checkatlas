@@ -3,9 +3,14 @@ import os
 
 import pandas as pd
 
-from . import atlas, cellranger, seurat
-from .utils import files as chk_files
-from .utils import folders
+try:
+    from . import atlas, cellranger, seurat
+    from .utils import files as chk_files
+    from .utils import folders
+except ImportError:
+    from checkatlas import atlas, cellranger, seurat
+    from checkatlas.utils import files as chk_files
+    from checkatlas.utils import folders
 
 """
 checkatlas base module.
@@ -332,5 +337,5 @@ if __name__ == "__main__":
                        'pbmc_3k_multiome/outs/'
                        'pbmc_unsorted_3k_filtered_feature_bc_matrix.h5'} """
 
-    adata = atlas.read_atlas(atlas_info)
+    # adata = atlas.read_atlas(atlas_info)
     # atlas_list = list_atlases(path)
