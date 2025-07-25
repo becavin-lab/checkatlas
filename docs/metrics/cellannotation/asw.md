@@ -32,7 +32,7 @@ Each metric uses the silhouette score, which quantifies how similar a cell is to
 >
 > - $b_i$ is the minimum average distance between cell $i$ and all cells in other clusters
 >
-> [For further infomations](silhouette.md)
+> [For further infomations](../clustering/silhouette.md)
 
 ### *Batch ASW (non-scaled version)* : 
 

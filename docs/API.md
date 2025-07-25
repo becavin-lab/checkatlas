@@ -1,8 +1,8 @@
 ## checkatlas
 
-### checkatlas.checkatlas
+### checkatlas.check
 
-::: checkatlas.checkatlas
+::: checkatlas.check
 
 
 ### checkatlas.atlas

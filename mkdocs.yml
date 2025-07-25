@@ -23,7 +23,6 @@ nav:
     - Dimensionality reduction: "metrics/dim_red.md"
     - Gene Specificity: "metrics/specificity.md"
     - Spatial transcriptomics: "metrics/spatial.md"
-    - Luca: "metrics/luca/all_metrics.md"
     - Add your own: "metrics/add_own.md"
   - API:
     - API: "API.md"

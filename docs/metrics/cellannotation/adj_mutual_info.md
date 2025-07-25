@@ -8,7 +8,7 @@ It is especially useful when comparing clustering algorithms or evaluating clust
 AMI is bounded : its maximum is 1 (perfect match), and its expected value is close to 0 when clusterings are randomly assigned, even if the number of clusters varies.
 
 ### *Reminder* : 
-[Mutual Information](cellannotation/mutual_information.md)
+[Mutual Information](mutual_information.md)
 
 ## Formulas : 
 The Adjusted Mutual Information is then defined as :

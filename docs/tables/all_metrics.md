@@ -4,7 +4,7 @@
 
 ### Clustering 
 
-[silhouette coefficient](silhouette.md)
+<!-- [silhouette coefficient](silhouette.md)
 
 [davies_bouldin index](dbi.md)
 
@@ -105,4 +105,4 @@
 
 [Entourage](entourage.md)
 
-[Average Jaccard Distance](ajd.md)
+[Average Jaccard Distance](ajd.md) -->
