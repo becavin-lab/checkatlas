@@ -1,14 +1,14 @@
 import logging
-import sys
 import os
+import sys
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 try:
-    from . import atlas, cellranger, seurat, check
+    from . import atlas, cellranger, check, seurat
     from .utils import checkatlas_arguments
 except ImportError:
-    from checkatlas import atlas, cellranger, seurat, check
+    from checkatlas import atlas, cellranger, check, seurat
     from checkatlas.utils import checkatlas_arguments
 
 

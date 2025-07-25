@@ -58,9 +58,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     Returns:
         AnnData: scanpy object from cellranger
     """
-    cellranger_out_path = os.path.dirname(
-        atlas_info[check.ATLAS_PATH_KEY]
-    )
+    cellranger_out_path = os.path.dirname(atlas_info[check.ATLAS_PATH_KEY])
     cellranger_analysis_path = os.path.join(cellranger_out_path, "analysis")
     cellranger_clust_path = os.path.join(
         cellranger_analysis_path, "clustering"

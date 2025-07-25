@@ -1,10 +1,12 @@
 from sklearn.metrics import mean_squared_error
 
+
 def run(annotation, ref_annotation):
     """
     DENOISING
-    
-    `Mean Squared Error score readthedocs <https://checkatlas.readthedocs.io/en/latest/metrics/denoising/mse/>`__
+
+    `Mean Squared Error score readthedocs
+    <https://checkatlas.readthedocs.io/en/latest/metrics/denoising/mse/>`__
 
 
     :param annotation:

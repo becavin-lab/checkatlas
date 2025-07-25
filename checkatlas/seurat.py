@@ -236,9 +236,7 @@ def create_summary_table(
     x_raw = False
     x_norm = True
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
-    df_summary["AtlasFileType"][atlas_name] = atlas_info[
-        check.ATLAS_TYPE_KEY
-    ]
+    df_summary["AtlasFileType"][atlas_name] = atlas_info[check.ATLAS_TYPE_KEY]
     df_summary["NbCells"][atlas_name] = ncells
     df_summary["NbGenes"][atlas_name] = ngenes
     df_summary["AnnData.raw"][atlas_name] = x_raw

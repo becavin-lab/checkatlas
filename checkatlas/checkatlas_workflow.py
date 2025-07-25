@@ -3,10 +3,10 @@ import os
 
 try:
     from . import check
-    from .utils import checkatlas_workflow_arguments, folders, files
+    from .utils import checkatlas_workflow_arguments, files, folders
 except ImportError:
     from checkatlas import check
-    from checkatlas.utils import checkatlas_workflow_arguments, folders, files
+    from checkatlas.utils import checkatlas_workflow_arguments, files, folders
 
 
 PROCESS_TYPE = ["list_scanpy", "list_cellranger", "list_seurat", "html_report"]

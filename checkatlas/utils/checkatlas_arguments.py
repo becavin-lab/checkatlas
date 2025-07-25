@@ -1,10 +1,9 @@
 import argparse
 from importlib.resources import files
 
-
 try:
-    from . import atlas, check
     from ..metrics import annot, cluster, dimred
+    from .. import atlas, check
 except ImportError:
     from checkatlas import atlas, check
     from checkatlas.metrics import annot, cluster, dimred
