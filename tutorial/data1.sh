@@ -122,3 +122,6 @@ python /home/moccia/checkatlas/checkatlas/__main__.py metric_annot Tabula_Sapien
 
 python /home/moccia/checkatlas/checkatlas/__main__.py metric_annot Tabula_Sapiens_Endothelial /data/analysis/data_moccia/checkatlas/tuto/data1 \
     --debug --metric_annot=isolated_f1_score  # on teste le données tabula avec f1
+
+
+# entourage_score 0.375
