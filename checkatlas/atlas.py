@@ -614,8 +614,10 @@ def create_metric_cluster(
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} and obsm {obsm_key_representation}"
                 )
-                metric_value, running_time = metrics.calc_metric_cluster_scanpy(
-                    metric, adata, obs_key, obsm_key_representation
+                metric_value, running_time = (
+                    metrics.calc_metric_cluster_scanpy(
+                        metric, adata, obs_key, obsm_key_representation
+                    )
                 )
                 dict_line[metric] = metric_value
                 dict_line[f"{metric}_running_time"] = running_time

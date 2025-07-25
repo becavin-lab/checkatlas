@@ -4,7 +4,8 @@ from sklearn.metrics.cluster import adjusted_rand_score
 def run(annotation, ref_annotation):
     """
 
-    `ARI readthedocs <https://checkatlas.readthedocs.io/en/latest/metrics/cellannotation/adjusted_rand_index/>`__
+    `ARI readthedocs
+    <https://checkatlas.readthedocs.io/en/latest/metrics/cellannotation/adjusted_rand_index/>`__
 
 
     :param annotation:

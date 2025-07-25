@@ -1,9 +1,10 @@
 import logging
+import time
 
 import rpy2.robjects as ro
 import rpy2.robjects as robjects
 from sklearn.preprocessing import LabelEncoder
-import time
+
 from . import annot, cluster, dimred
 
 METRICS_CLUST = cluster.__all__
@@ -131,7 +132,7 @@ def calc_metric_dimred(metric, adata, obsm_key):
         metric_value = metric_module.run(high_dim_counts, low_dim_counts)
         running_time = time.time() - start_time
         logger.debug(f"{metric} calc finished, duration {running_time}")
-        return metric_value, running_time 
+        return metric_value, running_time
     else:
         logger.warning(
             f"{metric} is not a recognized "

@@ -3,7 +3,7 @@ import os
 import scanpy as sc
 
 try:
-    from . import atlas, cellranger, check, seurat
+    from ..checkatlas import atlas, cellranger, check, seurat
 except ImportError:
     from checkatlas import atlas, cellranger, check, seurat
 
