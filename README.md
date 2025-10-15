@@ -73,9 +73,6 @@ CheckAtlas is in two parts. The checkatlas pythn module which can be downloaded 
 pip install checkatlas
 ```
 
-```bash
-nextflow pull becavin-lab/nf-core-checkatlas
-```
 
 You need also to install a version of MultiQC with checkatlas capability (for the moment). This version of MultiQC is available at checkatlas branch of github.com:becavin-lab/MultiQC.
 
