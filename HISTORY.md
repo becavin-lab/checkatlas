@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.6.0 🚀 [Christophe Bécavin]
 - Update docs. [Christophe Bécavin]
 - Format and linting. [Christophe Bécavin]
 - Add tutoria data1. [Moccia]
