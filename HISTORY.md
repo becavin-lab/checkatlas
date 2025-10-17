@@ -4,6 +4,11 @@ Changelog
 
 (unreleased)
 ------------
+- Merge branch 'main' of github.com:becavin-lab/checkatlas. [Christophe
+  Bécavin]
+- Update README.md. [Christophe Becavin]
+- Add link to readthedocs. [Moccia]
+- Release: version 0.6.1 🚀 [Christophe Bécavin]
 - Release: version 0.6.0 🚀 [Christophe Bécavin]
 - Update docs. [Christophe Bécavin]
 - Format and linting. [Christophe Bécavin]
