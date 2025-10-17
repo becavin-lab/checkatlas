@@ -1,0 +1,587 @@
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "LD_LIBRARY_PATH" redefined by R and overriding existing variable. Current: "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server", R: "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server:/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_LIBS_SITE" redefined by R and overriding existing variable. Current: "/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library", R: "/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/usr/lib/R/library:/usr/lib/R/library"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_PAPERSIZE_USER" redefined by R and overriding existing variable. Current: "a4", R: "letter"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_SESSION_TMPDIR" redefined by R and overriding existing variable. Current: "/tmp/RtmpyOw26i", R: "/tmp/RtmpOTP76L"
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/__main__.py", line 8, in <module>
+    from . import atlas, cellranger, check, seurat
+ImportError: attempted relative import with no known parent package
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 10, in <module>
+    from . import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/atlas.py", line 15, in <module>
+    from . import cellranger, check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 12, in <module>
+    from checkatlas import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 10, in <module>
+    from . import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/__main__.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, check, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/__init__.py", line 1, in <module>
+    from . import atlas, cellranger, check, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/atlas.py", line 19, in <module>
+    from checkatlas import cellranger, check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 12, in <module>
+    from checkatlas import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "LD_LIBRARY_PATH" redefined by R and overriding existing variable. Current: "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server", R: "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server:/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_LIBS_SITE" redefined by R and overriding existing variable. Current: "/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library", R: "/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/usr/lib/R/library:/usr/lib/R/library"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_PAPERSIZE_USER" redefined by R and overriding existing variable. Current: "a4", R: "letter"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_SESSION_TMPDIR" redefined by R and overriding existing variable. Current: "/tmp/RtmpljGkIy", R: "/tmp/RtmpGdOTF5"
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/__main__.py", line 8, in <module>
+    from . import atlas, cellranger, check, seurat
+ImportError: attempted relative import with no known parent package
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 10, in <module>
+    from . import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/atlas.py", line 15, in <module>
+    from . import cellranger, check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 12, in <module>
+    from checkatlas import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 10, in <module>
+    from . import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 7, in <module>
+    from . import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 19, in <module>
+    from .metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/moccia/checkatlas/checkatlas/__main__.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, check, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/__init__.py", line 1, in <module>
+    from . import atlas, cellranger, check, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/atlas.py", line 19, in <module>
+    from checkatlas import cellranger, check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/cellranger.py", line 12, in <module>
+    from checkatlas import check
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/check.py", line 11, in <module>
+    from checkatlas import atlas, cellranger, seurat
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/seurat.py", line 23, in <module>
+    from checkatlas.metrics import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/__init__.py", line 1, in <module>
+    from . import metrics
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/metrics.py", line 8, in <module>
+    from . import annot, cluster, dimred
+  File "/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py", line 1, in <module>
+    from . import (
+    ...<9 lines>...
+    )
+ImportError: cannot import name 'fowlkes_mallow' from partially initialized module 'checkatlas.metrics.annot' (most likely due to a circular import) (/home/moccia/checkatlas/checkatlas/../checkatlas/metrics/annot/__init__.py)
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "LD_LIBRARY_PATH" redefined by R and overriding existing variable. Current: "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server", R: "/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server:/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_LIBS_SITE" redefined by R and overriding existing variable. Current: "/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library", R: "/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library/:/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/usr/lib/R/library:/usr/lib/R/library"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_PAPERSIZE_USER" redefined by R and overriding existing variable. Current: "a4", R: "letter"
+  warnings.warn(
+/data/analysis/ML_models/conda_env/cb-checkatlas/lib/python3.13/site-packages/rpy2/rinterface/__init__.py:1211: UserWarning: Environment variable "R_SESSION_TMPDIR" redefined by R and overriding existing variable. Current: "/tmp/RtmpmJGbgp", R: "/tmp/Rtmp5D4YuY"
+  warnings.warn(
+|--- DEBUG    Program arguments: Namespace(process='metric_dimred', atlas_name='Fetal', path='/data/analysis/data_moccia/checkatlas/tuto/data1', debug=True, qc_display=['violin_plot', 'total_counts', 'n_genes_by_counts', 'pct_counts_mt'], plot_celllimit=0, obs_cluster=['cell_type', 'CellType', 'celltype', 'ann_finest_level', 'cellranger_graphclust', 'cellranger_kmeans', 'seurat_clusters', 'RNA_snn_res.0.5', 'louvain', 'leiden', 'orig.ident'], metric_cluster=['davies_bouldin'], metric_annot=['rand_index'], metric_dimred=['entourage'])
+|--- DEBUG    Found atlas: {'Atlas_name': 'Fetal', 'Atlas_type': 'AnnData', 'Atlas_extension': '.h5ad', 'Atlas_path': '/data/analysis/data_moccia/checkatlas/tuto/data1/Fetal.h5ad'}
+|--- INFO     Load Fetal in /data/analysis/data_moccia/checkatlas/tuto/data1/Fetal.h5ad
+|--- DEBUG    Read Scanpy file /data/analysis/data_moccia/checkatlas/tuto/data1/Fetal.h5ad
+|--- DEBUG    Clean scanpy: Fetal
+|--- DEBUG    Var names unique
+|--- DEBUG    Var names for Raw unique, transform 
+|--- DEBUG    Add obsm ['X_pca', 'X_umap']
+|--- DEBUG    Calc dim red metrics for Fetal
+|--- DEBUG    Calc entourage for Fetal with obsm X_pca
+|--- DEBUG    Start entourage calc
