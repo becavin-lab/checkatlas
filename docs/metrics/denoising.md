@@ -1,6 +1,6 @@
 ### Denoising metrics:
 
-| Name                                | Type                                                    | OpenProblems                                             | Boundary   | Optimum              | Description                                                                                          |
+| Name                                | Caracteristics of the metrics                                                   | OpenProblems                                             | Boundary   | Optimum              | Description                                                                                          |
 |-------------------------------------|---------------------------------------------------------|----------------------------------------------------------|------------|-----------------------|------------------------------------------------------------------------------------------------------|
 | [Mean Squared Error](denoising/mse.md)      | ![Badge](https://img.shields.io/badge/Internal-blue)     | ![Badge](https://img.shields.io/badge/Denoising-cyan)    | [0, ∞)     | The lower the better  | The mean squared error between denoised and true counts, reweighted by train/test ratio.             |
 | [Poisson Loss](denoising/poisson.md)        | ![Badge](https://img.shields.io/badge/Internal-blue)     | ![Badge](https://img.shields.io/badge/Denoising-cyan)    | [0, ∞)     | The lower the better  | Quantifies how closely denoised counts match original data under a Poisson noise assumption.         |

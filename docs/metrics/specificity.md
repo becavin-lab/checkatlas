@@ -1,7 +1,7 @@
 ### Specificity metrics 
 
 
-| Name                                                         | Type                                                   | Boundary         | Optimum              | Description                                                                                           |
+| Name                                                         | Caracteristics of the metrics                                                  | Boundary         | Optimum              | Description                                                                                           |
 |--------------------------------------------------------------|--------------------------------------------------------|------------------|----------------------|--------------------------------------------------------------------------------------------------------|
 | [Gini coefficient](specificity/gini.md)                                  | ![Badge](https://img.shields.io/badge/Specificity%20to%3A%20gene%20expression-blue)         | –                | The lower the better | Evaluates the inequality of the gene's distribution.                                                  |
 | [Kendall's tau](specificity/kendall.md)                                      | ![Badge](https://img.shields.io/badge/Specificity%20to%3A%20gene%20expression-blue)         | [0, 1] or [-1, 1] | –                    | Similar to Gini and Shannon, but less restrictive.                                                    |
