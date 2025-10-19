@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Updates doc tables. [Christophe Bécavin]
+- Release: version 0.7.0 🚀 [Christophe Bécavin]
 - Release: version  🚀 [Christophe Bécavin]
 - Release: version  🚀 [Christophe Bécavin]
 - Update doc. [Christophe Bécavin]
