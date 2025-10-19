@@ -1,6 +1,6 @@
 ### Clustering metrics:
 
-| Name                                                    | Type                                                                 | Boundary   | Optimum               | Description                                                                                           |
+| Name                                                    | Caracteristics of the metrics                                                                 | Boundary   | Optimum               | Description                                                                                           |
 |---------------------------------------------------------|----------------------------------------------------------------------|------------|------------------------|--------------------------------------------------------------------------------------------------------|
 | [Davies-Bouldin](clustering/dbi.md)                     | ![Static Badge](https://img.shields.io/badge/Internal-blue)          | –          | The lower the better   | Internal metric based on a similarity notion between clusters.                                         |
 | [DBCV](clustering/dbcv.md)                              | ![Static Badge](https://img.shields.io/badge/Internal-blue)          | [-1, 1]    | 1                      | Internal metric for evaluating density-based clustering methods.                                       |
