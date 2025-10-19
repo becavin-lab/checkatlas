@@ -1,8 +1,6 @@
 ## Metrics
 
-all metrics
-
-Metrics are classifed in 4 categories ...
+Metrics are classifed in 5 categories ...
 
  - Clustering metrics:
 
