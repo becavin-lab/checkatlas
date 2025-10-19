@@ -26,7 +26,7 @@ More information on the [read the doc page](https://checkatlas.readthedocs.io/en
 Powered by nextflow, checkatlas can be ran in one command line:
 
 ```bash
-nextflow run nf-core-checkatlas -r dev --path search_folder/
+nextflow run main.nf --path search_folder/
 ```
 
 The checkatlas workflow start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
@@ -72,9 +72,6 @@ CheckAtlas is in two parts. The checkatlas pythn module which can be downloaded 
 pip install checkatlas
 ```
 
-```bash
-nextflow pull becavin-lab/nf-core-checkatlas
-```
 
 You need also to install a version of MultiQC with checkatlas capability (for the moment). This version of MultiQC is available at checkatlas branch of github.com:becavin-lab/MultiQC.
 
