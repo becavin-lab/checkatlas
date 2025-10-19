@@ -1,11 +1,11 @@
 cd /data/analysis/data_becavin/checkatlas_test/tuto/
 
 # Run checkatlas for all data folder
-nextflow run nf-core-checkatlas -r dev --path data1/ -queue-size 20
-nextflow run nf-core-checkatlas -r dev --path data2/ -queue-size 20
-nextflow run nf-core-checkatlas -r dev --path data3/ -queue-size 20
-nextflow run nf-core-checkatlas -r dev --path data4/ -queue-size 20
-nextflow run nf-core-checkatlas -r dev --path data5/ -queue-size 20
+nextflow run main.nf --path data1/ -queue-size 20
+nextflow run main.nf --path data2/ -queue-size 20
+nextflow run main.nf --path data3/ -queue-size 20
+nextflow run main.nf --path data4/ -queue-size 20
+nextflow run main.nf --path data5/ -queue-size 20
 
 # Copy Multiqc reports
 chk_path="/home/becavin/checkatlas/"
