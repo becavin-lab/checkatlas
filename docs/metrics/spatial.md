@@ -1,4 +1,6 @@
 
+## Spatial transcriptomics metrics
+
 | 	Nom	| 	Caracteristics of the metrics   |  OpensProblems | Boundary  |   Optimum   |   Description |
 | 	:---------------	  | 	:----   |	:----  |	:----  | 	:---- | :--------------------------------- |
 | 	[Coefficient of determination](spatial/r2.md) 	|  |  ![Static Badge](https://img.shields.io/badge/Spatial_decomposition-grey) |	[0,1] | 1 | Evaluates how well gene expression variability is explained by models in single-cell data. |
