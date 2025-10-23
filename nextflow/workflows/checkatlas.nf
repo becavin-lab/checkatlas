@@ -195,9 +195,12 @@ workflow CHECKATLAS {
     
     // Manage Scanpy atlases
     LIST_SCANPY_ATLASES(ch_search_path)
+    
     LIST_SCANPY_ATLASES.out.list_scanpy.splitCsv( header:true, sep:',' )
         .map { create_atlas_info(it) }
         .set { atlas_info_scanpy }
+    
+    
     CHECKATLAS_SCANPY(atlas_info_scanpy, ch_search_path)
     ch_versions = ch_versions.mix(LIST_SCANPY_ATLASES.out.versions)
     

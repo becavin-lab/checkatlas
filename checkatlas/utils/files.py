@@ -4,8 +4,11 @@ import pandas as pd
 
 try:
     from . import folders
+    from .. import check
 except ImportError:
+    from checkatlas.utils import folders
     from checkatlas import check
+
 
 
 def get_file_path(
