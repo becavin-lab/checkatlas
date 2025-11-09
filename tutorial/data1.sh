@@ -25,7 +25,7 @@ checkatlas metric_dimred Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 
     --debug --metric_dimred=kruskal_stress # on teste les données fetal avec kruskal \
 
 
-### Cluster 
+### Cluster (need to run)
 checkatlas metric_cluster Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=silhouette # on teste les données fetal avec sillhouette
 
 checkatlas metric_cluster Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=davies_bouldin  # on teste les données fetal avec davies-bouldin

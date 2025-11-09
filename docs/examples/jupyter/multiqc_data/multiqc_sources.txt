@@ -1,0 +1,2 @@
+Module	Section	Sample Name	Source
+CheckAtlas	all_sections	Lung	/home/bernadettem/bernadettenotebook/Ritwik/checkatlas_project/atlas_data/checkatlas_files/dimred/Lung.tsv
