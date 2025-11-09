@@ -1,0 +1,42 @@
+{
+    "report_data_sources": {
+        "CheckAtlas": {
+            "all_sections": {
+                "Lung": "/home/bernadettem/bernadettenotebook/Ritwik/checkatlas_project/atlas_data/checkatlas_files/dimred/Lung.tsv"
+            }
+        }
+    },
+    "report_general_stats_data": [],
+    "report_general_stats_headers": [],
+    "report_multiqc_command": "/home/bernadettem/anaconda3/envs/ritwik_base/bin/multiqc /home/bernadettem/bernadettenotebook/Ritwik/checkatlas_project/atlas_data",
+    "report_plot_data": {},
+    "report_saved_raw_data": {
+        "multiqc_checkatlas_summary": {
+            "Lung": {
+                "AtlasFileType": "AnnData",
+                "NbCells": "318426",
+                "NbGenes": "55311",
+                "AnnData.raw": "True",
+                "AnnData.X": "True",
+                "File_extension": "Lung",
+                "File_path": "/home/bernadettem/bernadettenotebook/Ritwik/checkatlas/atlas_data/Lung.h5ad"
+            }
+        }
+    },
+    "config_analysis_dir_abs": [
+        "/home/bernadettem/bernadettenotebook/Ritwik/checkatlas_project/atlas_data"
+    ],
+    "config_analysis_dir": [
+        "/home/bernadettem/bernadettenotebook/Ritwik/checkatlas_project/atlas_data"
+    ],
+    "config_creation_date": "2025-10-17, 18:46",
+    "config_git_hash": null,
+    "config_intro_text": null,
+    "config_report_comment": null,
+    "config_report_header_info": null,
+    "config_script_path": "/home/bernadettem/anaconda3/envs/ritwik_base/lib/python3.12/site-packages/multiqc/utils",
+    "config_short_version": "1.15.dev0",
+    "config_subtitle": null,
+    "config_title": null,
+    "config_version": "1.15.dev0"
+}

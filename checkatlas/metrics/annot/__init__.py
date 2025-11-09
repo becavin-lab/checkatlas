@@ -1,18 +1,25 @@
 from . import (
     adj_mutual_info,
     adj_rand_index,
+    average_silhouette_width,
+    cell_cycle_conservation,
     dunn_index,
     fowlkes_mallows,
+    graph_connectivity,
+    highly_variable_genes,
     isolated_f1_score,
+    kbet,
+    lisi,
     mutual_info,
     normalized_mutual_info,
+    pcr,
     rand_index,
     vmeasure,
 )
 
 __all__ = [
     "rand_index",
-    "fowlkes_mallow",
+    "fowlkes_mallows",
     "adj_mutual_info",
     "vmeasure",
     "dunn_index",
@@ -20,4 +27,11 @@ __all__ = [
     "normalized_mutual_info",
     "mutual_info",
     "isolated_f1_score",
+    "average_silhouette_width",
+    "cell_cycle_conservation",
+    "graph_connectivity",
+    "highly_variable_genes",
+    "kbet",
+    "lisi",
+    "pcr",
 ]

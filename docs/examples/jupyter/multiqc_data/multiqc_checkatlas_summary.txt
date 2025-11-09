@@ -1,0 +1,2 @@
+Sample	AtlasFileType	NbCells	NbGenes	AnnData.raw	AnnData.X	File_extension	File_path
+Lung	AnnData	318426	55311	True	True	Lung	/home/bernadettem/bernadettenotebook/Ritwik/checkatlas/atlas_data/Lung.h5ad
