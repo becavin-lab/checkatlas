@@ -109,7 +109,7 @@ def create_parser():
         nargs="+",
         type=str,
         default=["davies_bouldin"],
-        # default=["silhouette", "davies_bouldin"],
+        #default=["silhouette", "davies_bouldin"],
         # default=[""],
         help="Specify the list of clustering metrics to calculate.\n"
         "   Example: --metric_cluster silhouette davies_bouldin\n"
