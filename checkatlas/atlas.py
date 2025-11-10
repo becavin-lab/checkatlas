@@ -46,6 +46,7 @@ OBSM_DIMRED = [
     "X_umap",
     "X_pca",
     "X-tsne",
+    "X_tsne"
 ]
 
 OBS_QC = [

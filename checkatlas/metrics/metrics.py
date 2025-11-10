@@ -30,10 +30,12 @@ def calc_metric_cluster_scanpy(
     if metric in METRICS_CLUST:
         start_time = time.time()
         logger.debug(f"Start {metric} calc")
+        # Get the right module for the metric
         metric_module = getattr(cluster, metric)
         annotations = adata.obs[obs_key]
         if obsm_key_representation != "":
             count_repr = adata.obsm[obsm_key_representation]
+            # execute the run function from metric_module
             metric_value = metric_module.run(count_repr, annotations)
             running_time = time.time() - start_time
             logger.debug(f"{metric} calc finished, duration {running_time}")
@@ -41,6 +43,7 @@ def calc_metric_cluster_scanpy(
 
         else:
             original_count = adata.X.toarray()
+            # execute the run function from metric_module
             metric_value = metric_module.run(original_count, annotations)
             running_time = time.time() - start_time
             logger.debug(f"{metric} calc finished, duration {running_time}")
@@ -82,12 +85,14 @@ def calc_metric_annot_scanpy(metric, adata, obs_key, ref_obs):
     if metric in METRICS_ANNOT:
         start_time = time.time()
         logger.debug(f"Start {metric} calc")
+        # Get the right module for the metric
         metric_module = getattr(annot, metric)
         annotation = adata.obs[obs_key]
         ref_annotation = adata.obs[ref_obs]
         annotation, ref_annotation = annotation_to_num(
             annotation, ref_annotation
         )
+        # execute the run function from metric_module
         metric_value = metric_module.run(annotation, ref_annotation)
         running_time = time.time() - start_time
         logger.debug(f"{metric} calc finished, duration {running_time}")
@@ -125,10 +130,13 @@ def calc_metric_annot_seurat(metric, seurat, obs_key, ref_obs):
 def calc_metric_dimred(metric, adata, obsm_key):
     if metric in METRICS_DIMRED:
         start_time = time.time()
+        # Get the right module for the metric
         logger.debug(f"Start {metric} calc")
         metric_module = getattr(dimred, metric)
+        print(metric_module)
         high_dim_counts = adata.X
         low_dim_counts = adata.obsm[obsm_key]
+        # execute the run function from metric_module
         metric_value = metric_module.run(high_dim_counts, low_dim_counts)
         running_time = time.time() - start_time
         logger.debug(f"{metric} calc finished, duration {running_time}")
