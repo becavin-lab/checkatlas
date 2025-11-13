@@ -1,11 +1,12 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from scipy.stats import chi2
+from scipy.sparse import issparse
 
 
 def run(X, batch_labels, k=25, alpha=0.05):
     """
-    Calculate k-nearest neighbor Batch Effect Test (kBET) rejection rate.
+    Calculate  rejection rate.
     
     kBET is a statistical test that determines whether the batch composition
     in local neighborhoods matches the global batch composition. Lower rejection
@@ -16,6 +17,7 @@ def run(X, batch_labels, k=25, alpha=0.05):
 
     :param X: array-like of shape (n_samples, n_features)
         Feature matrix (e.g., PCA embedding, integrated space)
+        Can be sparse or dense matrix
     :param batch_labels: array-like of shape (n_samples,)
         Batch labels for each sample
     :param k: int, default=25
@@ -26,7 +28,12 @@ def run(X, batch_labels, k=25, alpha=0.05):
         kBET rejection rate. Range: [0, 1], where lower values indicate better mixing.
         
     """
-    X = np.asarray(X)
+    # Handle sparse matrices
+    if issparse(X):
+        X = X.toarray()
+    else:
+        X = np.asarray(X)
+    
     batch_labels = np.asarray(batch_labels)
     
     n_samples = X.shape[0]

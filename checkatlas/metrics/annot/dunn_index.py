@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.metrics import pairwise_distances
+from scipy.sparse import issparse
 
 
 def run(X, labels):
@@ -15,6 +16,7 @@ def run(X, labels):
 
     :param X: array-like of shape (n_samples, n_features)
         Feature matrix containing the data points
+        Can be sparse or dense matrix
     :param labels: array-like of shape (n_samples,)
         Cluster labels for each sample
     :return: float
@@ -33,8 +35,12 @@ def run(X, labels):
     - Δ(C_k) is the intra-cluster distance (maximum diameter of a cluster)
     
     """
-    # Convert to numpy arrays
-    X = np.asarray(X)
+    # Convert to numpy arrays, handle sparse matrices
+    if issparse(X):
+        X = X.toarray()
+    else:
+        X = np.asarray(X)
+    
     labels = np.asarray(labels)
     
     # Get unique cluster labels

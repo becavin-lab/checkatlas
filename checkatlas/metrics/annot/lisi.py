@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+from scipy.sparse import issparse
 
 
 def run(X, labels, perplexity=30):
@@ -14,6 +15,7 @@ def run(X, labels, perplexity=30):
 
     :param X: array-like of shape (n_samples, n_features)
         Feature matrix (e.g., PCA embedding, integrated space)
+        Can be sparse or dense matrix
     :param labels: array-like of shape (n_samples,)
         Batch labels or categorical labels to evaluate mixing
     :param perplexity: int, default=30
@@ -23,7 +25,12 @@ def run(X, labels, perplexity=30):
         Range: [1, n_batches], where higher values indicate better mixing.
         
     """
-    X = np.asarray(X)
+    # Handle sparse matrices
+    if issparse(X):
+        X = X.toarray()
+    else:
+        X = np.asarray(X)
+    
     labels = np.asarray(labels)
     
     n_samples = X.shape[0]
