@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
+from scipy.sparse import issparse
 
 
 def run(X, batch_labels, n_components=50, cv=5):
@@ -16,6 +17,7 @@ def run(X, batch_labels, n_components=50, cv=5):
 
     :param X: array-like of shape (n_samples, n_features)
         Feature matrix (raw or integrated data)
+        Can be sparse or dense matrix
     :param batch_labels: array-like of shape (n_samples,)
         Batch labels for each sample
     :param n_components: int, default=50
@@ -26,7 +28,12 @@ def run(X, batch_labels, n_components=50, cv=5):
         PCR score (mean cross-validated accuracy).
         Range: [0, 1], where lower values indicate better batch correction.
     """
-    X = np.asarray(X)
+    # Handle sparse matrices
+    if issparse(X):
+        X = X.toarray()
+    else:
+        X = np.asarray(X)
+    
     batch_labels = np.asarray(batch_labels)
     
     n_samples = X.shape[0]
