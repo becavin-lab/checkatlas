@@ -15,6 +15,8 @@ SPECI = "specificity"
 TEMP = "temp"
 NEXTFLOW = "temp/nextflow"
 
+
+
 MULTIQC_FOLDER = "CheckAtlas_MultiQC"
 
 DICT_FOLDER = {
