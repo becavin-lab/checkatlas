@@ -29,49 +29,6 @@ All the function to screen the atlases
 ANNDATA_TYPE = "AnnData"
 ANNDATA_EXTENSION = ".h5ad"
 
-OBS_CLUSTERS = [
-    "cell_type",
-    "CellType",
-    "celltype",
-    "ann_finest_level",
-    "cellranger_graphclust",
-    "cellranger_kmeans",
-    "seurat_clusters",
-    "RNA_snn_res.0.5",
-    "louvain",
-    "leiden",
-    "orig.ident",
-]
-
-OBSM_DIMRED = [
-    "X_umap",
-    "X_pca",
-    "X-tsne",
-]
-
-OBS_QC = [
-    "n_genes_by_counts",
-    "total_counts",
-    "pct_counts_mt",
-    "pct_counts_ribo",
-    "percent.mito",
-    "percent.ribo",
-    "dropouts",
-    "nCount_SCT",
-    "nFeature_SCT",
-    "nCount_RNA",
-    "nFeature_RNA",
-    "nCount_HTO",
-    "nFeature_HTO",
-    "n_genes",
-    "n_genes_by_counts",
-    "total_counts",
-    "total_counts_mt",
-    "pct_counts_mt",
-    "total_counts_ribo",
-    "pct_counts_ribo",
-]
-
 CELLINDEX_HEADER = "cell_index"
 
 logger = logging.getLogger("checkatlas")
@@ -110,16 +67,17 @@ class CheckAtlasColumnDetector:
         self.analysis_results = {}
         
     def analyze_column_semantics(self, col_name: str) -> Dict[str, float]:
-        """
-        Score column name based on semantic indicators using regex patterns.
-        Returns confidence scores for different column types.
         
-        Args:
-            col_name (str): Column name to analyze
+        # Score column name based on semantic indicators using regex patterns.
+        # Returns confidence scores for different column types.
+        
+        # Args:
+        #     col_name (str): Column name to analyze
             
-        Returns:
-            Dict[str, float]: Confidence scores for reference, predicted, and metadata types
-        """
+        # Returns:
+        #     Dict[str, float]: Confidence scores for reference, predicted, and metadata types
+        
+        
         col_lower = col_name.lower()
         
         # Define semantic patterns with confidence weights
@@ -201,7 +159,7 @@ class CheckAtlasColumnDetector:
             List[str]: List of matched embedding keys
         """
         embedding_patterns = [
-            r'^(X_pca|X_umap|X_tsne|X_scvi)$',
+            r'^(X_pca|X_umap|X_tsne|X_scvi|X_emb)$',
             r'^X_diffmap$',
             r'^X_draw_graph',
             r'^X_.*pca',
@@ -221,15 +179,14 @@ class CheckAtlasColumnDetector:
         return matched_keys
     
     def analyze_column_statistics(self, col_name: str) -> Dict[str, float]:
-        """
-        Analyze statistical properties of the column data.
+        # Analyze statistical properties of the column data.
         
-        Args:
-            col_name (str): Column name to analyze
+        # Args:
+        #     col_name (str): Column name to analyze
             
-        Returns:
-            Dict[str, float]: Statistical profile of the column
-        """
+        # Returns:
+        #     Dict[str, float]: Statistical profile of the column
+
         data = self.adata.obs[col_name]
         
         stats_profile = {
@@ -272,16 +229,16 @@ class CheckAtlasColumnDetector:
         return stats_profile
     
     def score_reference_annotation(self, col_name: str) -> float:
-        """
-        Calculate confidence score for reference/ground truth annotation.
-        Scoring: Semantic 40% + Statistical 60%
+    
+        # Calculate confidence score for reference/ground truth annotation.
+        # Scoring: Semantic 40% + Statistical 60%
         
-        Args:
-            col_name (str): Column name to score
+        # Args:
+        #     col_name (str): Column name to score
             
-        Returns:
-            float: Confidence score (0-1)
-        """
+        # Returns:
+        #     float: Confidence score (0-1)
+
         semantic = self.analyze_column_semantics(col_name)
         stats = self.analyze_column_statistics(col_name)
         
@@ -323,6 +280,7 @@ class CheckAtlasColumnDetector:
         Returns:
             float: Confidence score (0-1)
         """
+        
         semantic = self.analyze_column_semantics(col_name)
         stats = self.analyze_column_statistics(col_name)
         
@@ -352,8 +310,8 @@ class CheckAtlasColumnDetector:
         
         return np.clip(score, 0, 1)
     
-    def detect_all_parameters(self, min_reference_score: float = 0.5,
-                             min_predicted_score: float = 0.5) -> Dict:
+    def detect_all_parameters(self, min_reference_score: float = 0.95,
+                             min_predicted_score: float = 0.6) -> Dict:
         """
         Detect all column parameters with confidence scores.
         
@@ -1115,6 +1073,7 @@ def col_annotation_ref(adata: AnnData,
         >>> for col, score in all_refs:
         ...     print(f"{col}: {score:.3f}")
     """
+    
     detector = CheckAtlasColumnDetector(adata)
     results = detector.detect_all_parameters(
         min_reference_score=min_score,

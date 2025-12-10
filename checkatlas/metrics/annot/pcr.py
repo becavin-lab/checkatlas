@@ -5,7 +5,7 @@ from sklearn.model_selection import cross_val_score
 from scipy.sparse import issparse
 
 
-def run(X, batch_labels, n_components=50, cv=5):
+def run(adata, batch_label = "batch", n_components=50, cv=5):
     """
     Calculate Principal Component Regression (PCR) batch effect score.
     
@@ -15,11 +15,11 @@ def run(X, batch_labels, n_components=50, cv=5):
     `PCR readthedocs
     <https://checkatlas.readthedocs.io/en/latest/metrics/integration/pcr/>`__
 
-    :param X: array-like of shape (n_samples, n_features)
-        Feature matrix (raw or integrated data)
+    :param adata: AnnData object
+        AnnData object containing the feature matrix (raw or integrated data)
         Can be sparse or dense matrix
-    :param batch_labels: array-like of shape (n_samples,)
-        Batch labels for each sample
+    :param label: batch column name in ``adata.obs`` or array-like
+        Batch labels to evaluate mixing
     :param n_components: int, default=50
         Number of principal components to use
     :param cv: int, default=5
@@ -29,12 +29,17 @@ def run(X, batch_labels, n_components=50, cv=5):
         Range: [0, 1], where lower values indicate better batch correction.
     """
     # Handle sparse matrices
-    if issparse(X):
-        X = X.toarray()
+    if issparse(adata.X):
+        X = adata.X.toarray()
     else:
-        X = np.asarray(X)
+        X = np.asarray(adata.X)
     
-    batch_labels = np.asarray(batch_labels)
+    ## 'batch' col check in adata.obs
+    if batch_label not in adata.obs:
+        print(f"Batch label '{batch_label}' not found in adata.obs")
+        return None
+    
+    batch_labels = np.asarray(adata.obs[batch_label])
     
     n_samples = X.shape[0]
     
