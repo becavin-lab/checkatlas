@@ -1,11 +1,17 @@
 import logging
 import time
+import pandas as pd
+import numpy as np
+from tqdm import tqdm
+import os
 
 import rpy2.robjects as ro
 import rpy2.robjects as robjects
 from sklearn.preprocessing import LabelEncoder
 
 from . import annot, cluster, dimred
+# Import CheckAtlasColumnDetector inside function or at top if no circular dependency
+# from ..atlas import CheckAtlasColumnDetector # This might cause circular import if atlas imports metrics
 
 METRICS_CLUST = cluster.__all__
 METRICS_ANNOT = annot.__all__
@@ -22,6 +28,318 @@ R_REDUCTION = robjects.r(
     " return(Embeddings(object = seurat, "
     "reduction = obsm_key))}"
 )
+
+def cal_annot(adata, atlas_name=None, all=False, file_dir=None):
+    """
+    Comprehensive annotation pipeline for all annotation metrics.
+    
+    Args:
+        adata (AnnData): Annotated data matrix.
+        all (bool): If True, calculate all available annotation metrics. 
+                    If False, calculate a default subset.
+        file_dir (str): Directory path where the results CSV will be saved.
+                       If None, saves to current working directory.
+                    
+    Returns:
+        pd.DataFrame: Results dataframe with columns:
+                      [Atlas Name, Metric Name, Reference/Input 1, Prediction/Input 2, Value]
+    """
+    # Import here to avoid circular dependency
+    from ..atlas import CheckAtlasColumnDetector
+    
+    # Set file directory
+    if file_dir is None:
+        file_dir = os.getcwd()
+    else:
+        # Create directory if it doesn't exist
+        os.makedirs(file_dir, exist_ok=True)
+    
+    # Detect columns
+    detector = CheckAtlasColumnDetector(adata)
+    params = detector.detect_all_parameters()
+    
+    ref_keys = [x[0] for x in params['annotation']['reference']]
+    pred_keys = [x[0] for x in params['annotation']['predicted']]
+    embedding_keys = [x[0] for x in params['clustering']['embeddings']]
+    
+    # Detect batch keys (heuristic: look for 'batch' in metadata or column name)
+    # CheckAtlasColumnDetector identifies metadata, but doesn't explicitly label 'batch'.
+    # We'll look for columns containing 'batch' or use a default list if provided in adata.uns
+    batch_keys = [col for col in adata.obs.columns if 'batch' in col.lower()]
+    
+    # Define metrics to run
+    if all:
+        metrics_list = METRICS_ANNOT
+    else:
+        # Default subset of metrics
+        ## default is only ARI
+        metrics_list = [
+            'adj_rand_index', 
+            'normalized_mutual_info', 
+            'adj_mutual_info',
+            # 'lisi',
+            # 'kbet'
+        ]
+        # Filter to ensure they exist in METRICS_ANNOT
+        metrics_list = [m for m in metrics_list if m in METRICS_ANNOT]
+
+    results = []
+    atlas_name = atlas_name
+
+    # Categorize metrics based on their input requirements
+    # Ref vs Pred
+    ref_pred_metrics = [
+        'adj_mutual_info', 'adj_rand_index', 'fowlkes_mallows', 
+        'isolated_f1_score', 'mutual_info', 'normalized_mutual_info', 
+        'rand_index', 'vmeasure'
+    ]
+    
+    # Embedding + Labels
+    emb_label_metrics = ['average_silhouette_width', 'dunn_index']
+    
+    # Batch / Integration (adata + batch/label)
+    batch_metrics = ['kbet', 'pcr'] # lisi is special (iLISI vs cLISI)
+    
+    # Graph Connectivity (adata + neighbors)
+    graph_metrics = ['graph_connectivity']
+    
+    # Bio Conservation (adata_before, adata_after) - Skipping for single adata pipeline
+    # unless we define strategy. 
+    bio_metrics = ['cell_cycle_conservation', 'highly_variable_genes']
+
+
+    # Create progress bar with custom format
+    pbar = tqdm(metrics_list, desc="Calculating Annotation Metrics", 
+                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]')
+    
+    for metric in pbar:
+        # Start timing for this metric
+        metric_start_time = time.time()
+        
+        # Update progress bar with current metric name
+        pbar.set_description(f"Processing: {metric}")
+        
+        metric_module = getattr(annot, metric)
+        
+        try:
+            # 1. Ref vs Pred Metrics
+            if metric in ref_pred_metrics:
+                if not ref_keys or not pred_keys:
+                    continue
+                for ref in ref_keys:
+                    for pred in pred_keys:
+                        # Skip if ref == pred
+                        if ref == pred:
+                            continue
+                        try:
+                            # Preprocess labels
+                            labels_true = adata.obs[ref]
+                            labels_pred = adata.obs[pred]
+                            # Convert to numeric if needed (some metrics handle it, some don't)
+                            # Most sklearn metrics handle strings, but let's be safe or rely on metric impl
+                            # checkatlas metrics usually take raw inputs or handle conversion
+                            # But calc_metric_annot_scanpy uses annotation_to_num.
+                            # We should probably use that helper or do it here.
+                            l_pred, l_true = annotation_to_num(labels_pred, labels_true)
+                            
+                            val = metric_module.run(l_pred, l_true)
+                            results.append({
+                                'Atlas Name': atlas_name,
+                                'Metric Name': metric,
+                                'Reference/Input 1': ref,
+                                'Prediction/Input 2': pred,
+                                'Value': val
+                            })
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate {metric} for {ref} vs {pred}: {e}")
+
+            # 2. Embedding + Labels (ASW, Dunn)
+            elif metric in emb_label_metrics:
+                if not embedding_keys:
+                    continue
+                # Run for both ref and pred labels? Usually for predicted clusters.
+                # But ASW can be run on ground truth too.
+                targets = list(set(ref_keys + pred_keys))
+                for emb in embedding_keys:
+                    if emb not in adata.obsm:
+                        continue
+                    X_emb = adata.obsm[emb]
+                    for label in targets:
+                        try:
+                            labels = adata.obs[label]
+                            # Convert to numeric for ASW/Dunn?
+                            # ASW handles labels.
+                            val = metric_module.run(X_emb, labels)
+                            results.append({
+                                'Atlas Name': atlas_name,
+                                'Metric Name': metric,
+                                'Reference/Input 1': emb,
+                                'Prediction/Input 2': label,
+                                'Value': val
+                            })
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate {metric} for {emb} vs {label}: {e}")
+
+            # 3. LISI (Special Case: iLISI and cLISI)
+            elif metric == 'lisi':
+                # iLISI: needs batch
+                if batch_keys:
+                    for batch in batch_keys:
+                        try:
+                            # LISI run takes X and label.
+                            # For iLISI, label is batch.
+                            # We should run it on embeddings usually.
+                            if embedding_keys:
+                                for emb in embedding_keys:
+                                    X_emb = adata.obsm[emb]
+                                    val = metric_module.run(X_emb, adata.obs[batch])
+                                    results.append({
+                                        'Atlas Name': atlas_name,
+                                        'Metric Name': 'iLISI',
+                                        'Reference/Input 1': emb,
+                                        'Prediction/Input 2': batch,
+                                        'Value': val
+                                    })
+                            else:
+                                # Run on X
+                                val = metric_module.run(adata.X, adata.obs[batch])
+                                results.append({
+                                    'Atlas Name': atlas_name,
+                                    'Metric Name': 'iLISI',
+                                    'Reference/Input 1': 'X',
+                                    'Prediction/Input 2': batch,
+                                    'Value': val
+                                })
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate iLISI for {batch}: {e}")
+                
+                # cLISI: needs cell type (ref or pred)
+                targets = list(set(ref_keys + pred_keys))
+                for label in targets:
+                    try:
+                        if embedding_keys:
+                            for emb in embedding_keys:
+                                X_emb = adata.obsm[emb]
+                                val = metric_module.run(X_emb, adata.obs[label])
+                                results.append({
+                                    'Atlas Name': atlas_name,
+                                    'Metric Name': 'cLISI',
+                                    'Reference/Input 1': emb,
+                                    'Prediction/Input 2': label,
+                                    'Value': val
+                                })
+                        else:
+                            val = metric_module.run(adata.X, adata.obs[label])
+                            results.append({
+                                'Atlas Name': atlas_name,
+                                'Metric Name': 'cLISI',
+                                'Reference/Input 1': 'X',
+                                'Prediction/Input 2': label,
+                                'Value': val
+                            })
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate cLISI for {label}: {e}")
+
+            # 4. Batch Metrics (kBET, PCR)
+            elif metric in batch_metrics:
+                if not batch_keys:
+                    continue
+                for batch in batch_keys:
+                    try:
+                        # kBET and PCR take adata and batch_label
+                        # They might use X or embedding internally.
+                        # kBET usually uses X or embedding.
+                        # My updated kBET uses adata.X.
+                        # PCR uses adata.X.
+                        # If they support embeddings, we should loop embeddings?
+                        # The signatures I saw: run(adata, batch_label, ...)
+                        # They use adata.X by default.
+                        # If we want to test embeddings, we might need to swap adata.X or pass embedding?
+                        # For now, run on default adata.X (or whatever run uses).
+                        val = metric_module.run(adata, batch_label=batch)
+                        results.append({
+                            'Atlas Name': atlas_name,
+                            'Metric Name': metric,
+                            'Reference/Input 1': 'adata',
+                            'Prediction/Input 2': batch,
+                            'Value': val
+                        })
+                    except Exception as e:
+                        logger.warning(f"Failed to calculate {metric} for {batch}: {e}")
+
+            # 5. Graph Connectivity
+            elif metric in graph_metrics:
+                # We need embeddings AND labels
+                targets = list(set(ref_keys + pred_keys))
+                
+                if embedding_keys:
+                    for emb in embedding_keys:
+                        # Calculate neighbors for this embedding
+                        key_added = f'neighbors_{emb}'
+                        try:
+                            # Ensure neighbors are calculated
+                            import scanpy as sc
+                            sc.pp.neighbors(adata, use_rep=emb, key_added=key_added)
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate neighbors for {emb}: {e}")
+                            continue
+
+                        for label in targets:
+                            try:
+                                val = metric_module.run(adata, neighbors_key=key_added, label_key=label)
+                                results.append({
+                                    'Atlas Name': atlas_name,
+                                    'Metric Name': metric,
+                                    'Reference/Input 1': emb,
+                                    'Prediction/Input 2': label,
+                                    'Value': val
+                                })
+                            except Exception as e:
+                                logger.warning(f"Failed to calculate {metric} for {emb} vs {label}: {e}")
+                else:
+                    # No embeddings found, use default neighbors (X or PCA)
+                    # We still need labels
+                    for label in targets:
+                        try:
+                            # metric_module.run will calculate neighbors if 'neighbors' key missing
+                            val = metric_module.run(adata, label_key=label) 
+                            results.append({
+                                'Atlas Name': atlas_name,
+                                'Metric Name': metric,
+                                'Reference/Input 1': 'Default',
+                                'Prediction/Input 2': label,
+                                'Value': val
+                            })
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate {metric} for Default vs {label}: {e}")
+
+            # 6. Bio Conservation
+            elif metric in bio_metrics:
+                # Requires adata_before. 
+                # If we don't have it, we can't run it properly.
+                # We'll skip for now or log warning.
+                logger.info(f"Skipping {metric} as it requires 'adata_before'.")
+
+            else:
+                logger.warning(f"Metric {metric} not categorized in pipeline.")
+
+        except Exception as e:
+            logger.error(f"Error running metric {metric}: {e}")
+        
+        # Calculate and display metric execution time
+        metric_elapsed = time.time() - metric_start_time
+        pbar.set_postfix_str(f"Time: {metric_elapsed:.2f}s", refresh=True)
+
+    df = pd.DataFrame(results)
+    
+    # Save to CSV if results exist
+    if not df.empty:
+        # Define a filename with full path
+        filename = os.path.join(file_dir, f"checkatlas_annotation_metrics_{atlas_name}.csv")
+        df.to_csv(filename, index=False)
+        logger.info(f"Saved annotation metrics to {filename}")
+        
+    return df
 
 
 def calc_metric_cluster_scanpy(

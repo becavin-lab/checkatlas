@@ -4,7 +4,7 @@ from scipy.stats import chi2
 from scipy.sparse import issparse
 
 
-def run(X, batch_labels, k=25, alpha=0.05):
+def run(adata, batch_label = "batch", k=25, alpha=0.05):
     """
     Calculate  rejection rate.
     
@@ -18,7 +18,7 @@ def run(X, batch_labels, k=25, alpha=0.05):
     :param X: array-like of shape (n_samples, n_features)
         Feature matrix (e.g., PCA embedding, integrated space)
         Can be sparse or dense matrix
-    :param batch_labels: array-like of shape (n_samples,)
+    :param batch_label: batch_label key in the `adata.obs`
         Batch labels for each sample
     :param k: int, default=25
         Number of nearest neighbors to consider
@@ -29,12 +29,17 @@ def run(X, batch_labels, k=25, alpha=0.05):
         
     """
     # Handle sparse matrices
-    if issparse(X):
-        X = X.toarray()
+    if issparse(adata.X):
+        X = adata.X.toarray()
     else:
-        X = np.asarray(X)
+        X = np.asarray(adata.X)
     
-    batch_labels = np.asarray(batch_labels)
+    ## 'batch' col check in adata.obs
+    if batch_label not in adata.obs:
+        print(f"Batch label '{batch_label}' not found in adata.obs")
+        return None
+    
+    batch_labels = np.asarray(adata.obs[batch_label])
     
     n_samples = X.shape[0]
     
