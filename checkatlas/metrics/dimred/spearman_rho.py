@@ -3,6 +3,7 @@ import scipy.stats
 from sklearn.metrics import pairwise_distances
 import scanpy as sc
 from tqdm import tqdm
+from joblib import Parallel, delayed
 
 def run(adata, low_dim_key='X_umap', high_dim_key='X_pca', n_samples=5000, seed=42,
         n_jobs=-1, verbose=True, batch_size=2000):
@@ -61,9 +62,8 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X_pca', n_samples=5000, seed=
         high_dim_data = adata.obsm[high_dim_key]
         low_dim_data = adata.obsm[low_dim_key]
     
-    # 3. Compute Pairwise Distances
-    # We reuse the helper function for parallel processing
-    high_dim_dists = _compute_distances_with_progress(
+    # 3. Compute Pairwise Distances with parallelism
+    high_dim_dists = _compute_distances_parallel(
         high_dim_data, 
         n_jobs=n_jobs, 
         batch_size=batch_size,
@@ -71,7 +71,7 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X_pca', n_samples=5000, seed=
         verbose=verbose
     )
     
-    low_dim_dists = _compute_distances_with_progress(
+    low_dim_dists = _compute_distances_parallel(
         low_dim_data, 
         n_jobs=n_jobs, 
         batch_size=batch_size,
@@ -83,50 +83,55 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X_pca', n_samples=5000, seed=
     if verbose:
         print("Extracting pairwise distance vectors...")
     
-    # We only need the upper triangle (k=1 removes diagonal)
     triu_indices = np.triu_indices_from(high_dim_dists, k=1)
-    
-    # Flatten into 1D arrays
-    # Note: For 5000 cells, this results in vectors of length ~12.5 million.
-    # This fits easily in RAM (approx 100MB).
     H_vec = high_dim_dists[triu_indices]
     L_vec = low_dim_dists[triu_indices]
 
     # 5. Compute Spearman's Rho
-    # scipy.stats.spearmanr calculates correlation on ranks
     if verbose:
         print("Computing Spearman correlation (Ranking)...")
     
-    # We use scipy.stats.spearmanr. 
-    # It returns a generic object with 'statistic' and 'pvalue'. We need 'statistic'.
     rho_result = scipy.stats.spearmanr(H_vec, L_vec)
     
     return rho_result.statistic
 
 
-def _compute_distances_with_progress(data, n_jobs=-1, batch_size=2000, desc="Computing distances", verbose=True):
+def _compute_batch_distances(data, start_idx, end_idx, n_jobs):
+    """Compute distances for a single batch."""
+    return pairwise_distances(data[start_idx:end_idx], data, n_jobs=n_jobs)
+
+
+def _compute_distances_parallel(data, n_jobs=-1, batch_size=2000, desc="Computing distances", verbose=True):
     """
-    Helper function: Compute pairwise distances with batch-wise progress tracking.
+    Compute pairwise distances with parallel batch processing.
+    Uses joblib for batch-level parallelism and sklearn for row-level parallelism.
     """
     n_samples = data.shape[0]
     
-    if n_samples <= batch_size or not verbose:
+    # For small datasets, compute directly
+    if n_samples <= batch_size:
         return pairwise_distances(data, n_jobs=n_jobs)
     
+    # Calculate batch indices
+    batch_indices = [(i, min(i + batch_size, n_samples)) 
+                     for i in range(0, n_samples, batch_size)]
+    n_batches = len(batch_indices)
+    
+    if verbose:
+        print(f"{desc}: {n_batches} batches...")
+    
+    # Parallel batch computation
+    # Note: We use n_jobs=1 inside pairwise_distances when using joblib outer parallelism
+    # to avoid nested parallelism issues
+    batch_results = Parallel(n_jobs=n_jobs, prefer="threads")(
+        delayed(_compute_batch_distances)(data, start, end, 1)
+        for start, end in tqdm(batch_indices, desc=desc, disable=not verbose)
+    )
+    
+    # Assemble results
     distances = np.zeros((n_samples, n_samples), dtype=np.float32)
-    
-    # Calculate total batches
-    n_batches = int(np.ceil(n_samples / batch_size))
-    
-    with tqdm(total=n_batches, desc=desc, disable=not verbose) as pbar:
-        for i in range(0, n_samples, batch_size):
-            end_i = min(i + batch_size, n_samples)
-            distances[i:end_i, :] = pairwise_distances(
-                data[i:end_i], 
-                data, 
-                n_jobs=n_jobs
-            )
-            pbar.update(1)
+    for idx, (start, end) in enumerate(batch_indices):
+        distances[start:end, :] = batch_results[idx]
     
     np.fill_diagonal(distances, 0)
     return distances

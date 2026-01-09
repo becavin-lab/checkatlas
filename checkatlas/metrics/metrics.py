@@ -440,7 +440,165 @@ def calc_metric_annot_seurat(metric, seurat, obs_key, ref_obs):
         return -1
 
 
+def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X_pca',
+               k_neighbors=30, n_samples=5000, seed=42, n_jobs=-1, 
+               all_metrics=True, file_dir=None, verbose=True):
+    """
+    Comprehensive dimensionality reduction assessment pipeline.
+    
+    Calculates all dimred metrics to assess the quality of embeddings (UMAP, t-SNE, etc.)
+    compared to the high-dimensional reference (PCA).
+    
+    Args:
+        adata (AnnData): Annotated data matrix.
+        atlas_name (str): Name of the atlas for labeling results.
+        low_dim_key (str): Key in adata.obsm for embedding (default: 'X_umap').
+        high_dim_key (str): Key in adata.obsm for reference (default: 'X_pca').
+        k_neighbors (int): Number of neighbors for neighborhood-based metrics.
+        n_samples (int or None): Number of cells to subsample. None = use all.
+        seed (int): Random seed for reproducibility.
+        n_jobs (int): Number of parallel jobs (-1 = all cores).
+        all_metrics (bool): If True, calculate all metrics. If False, use a default subset.
+        file_dir (str): Directory to save results CSV. If None, saves to cwd.
+        verbose (bool): Show progress bars and status messages.
+                     
+    Returns:
+        pd.DataFrame: Results dataframe with columns:
+                      [Atlas Name, Metric Name, Low Dim Key, High Dim Key, Value, Time (s)]
+    """
+    # Import here to avoid circular dependency
+    from ..atlas import CheckAtlasColumnDetector
+    import scanpy as sc
+    
+    # Set file directory
+    if file_dir is None:
+        file_dir = os.getcwd()
+    else:
+        os.makedirs(file_dir, exist_ok=True)
+    
+    # Check if keys exist, compute if missing
+    if low_dim_key not in adata.obsm.keys():
+        if verbose: 
+            print(f"Key '{low_dim_key}' not found. Calculating UMAP...")
+        sc.tl.umap(adata, n_components=2, random_state=seed)
+
+    if high_dim_key not in adata.obsm.keys():
+        if verbose: 
+            print(f"Key '{high_dim_key}' not found. Calculating PCA...")
+        sc.tl.pca(adata, random_state=seed)
+    
+    # Define metrics to run
+    if all_metrics:
+        metrics_list = METRICS_DIMRED
+    else:
+        # Default subset of key metrics
+        metrics_list = [
+            'kruskal_stress',
+            'trustworthiness',
+            'continuity',
+            'coknn',
+            'spearman_rho'
+        ]
+        # Filter to ensure they exist
+        metrics_list = [m for m in metrics_list if m in METRICS_DIMRED]
+
+    results = []
+    
+    # Create progress bar
+    pbar = tqdm(metrics_list, desc="Calculating Dimred Metrics", 
+                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]',
+                disable=not verbose)
+    
+    for metric in pbar:
+        # Update progress bar with current metric name
+        pbar.set_description(f"Processing: {metric}")
+        
+        # Start timing
+        metric_start_time = time.time()
+        
+        try:
+            metric_module = getattr(dimred, metric)
+            
+            # Call the metric's run function with appropriate parameters
+            # All dimred metrics now have a consistent signature:
+            # run(adata, low_dim_key, high_dim_key, k_neighbors, n_samples, seed, n_jobs, verbose)
+            
+            # Check if metric accepts these parameters (some like trustworthiness don't use n_jobs)
+            import inspect
+            sig = inspect.signature(metric_module.run)
+            params = sig.parameters
+            
+            # Build kwargs based on what the metric accepts
+            kwargs = {
+                'low_dim_key': low_dim_key,
+                'high_dim_key': high_dim_key,
+                'seed': seed,
+            }
+            
+            if 'k_neighbors' in params:
+                kwargs['k_neighbors'] = k_neighbors
+            if 'n_samples' in params:
+                kwargs['n_samples'] = n_samples
+            if 'n_jobs' in params:
+                kwargs['n_jobs'] = n_jobs
+            if 'verbose' in params:
+                kwargs['verbose'] = verbose  # Pass global verbose to see per-metric progress
+            
+            # Run the metric
+            value = metric_module.run(adata, **kwargs)
+            
+            # Calculate elapsed time
+            elapsed_time = time.time() - metric_start_time
+            
+            results.append({
+                'Atlas Name': atlas_name,
+                'Metric Name': metric,
+                'Low Dim Key': low_dim_key,
+                'High Dim Key': high_dim_key,
+                'Value': value,
+                'Time (s)': round(elapsed_time, 3)
+            })
+            
+            # Update progress bar with time
+            pbar.set_postfix_str(f"Time: {elapsed_time:.2f}s", refresh=True)
+            
+        except Exception as e:
+            elapsed_time = time.time() - metric_start_time
+            logger.warning(f"Failed to calculate {metric}: {e}")
+            results.append({
+                'Atlas Name': atlas_name,
+                'Metric Name': metric,
+                'Low Dim Key': low_dim_key,
+                'High Dim Key': high_dim_key,
+                'Value': np.nan,
+                'Time (s)': round(elapsed_time, 3)
+            })
+    
+    # Create DataFrame
+    df = pd.DataFrame(results)
+    
+    # Calculate total time
+    total_time = df['Time (s)'].sum()
+    if verbose:
+        print(f"\nTotal computation time: {total_time:.2f}s")
+    
+    # Save to CSV if results exist
+    if not df.empty:
+        filename = os.path.join(file_dir, f"checkatlas_dimred_metrics_{atlas_name}.csv")
+        df.to_csv(filename, index=False)
+        if verbose:
+            print(f"Saved dimred metrics to {filename}")
+        logger.info(f"Saved dimred metrics to {filename}")
+        
+    return df
+
+
 def calc_metric_dimred(metric, adata, obsm_key):
+    """
+    Calculate a single dimensionality reduction metric (legacy function).
+    
+    For comprehensive assessment, use cal_dimred() instead.
+    """
     if metric in METRICS_DIMRED:
         start_time = time.time()
         logger.debug(f"Start {metric} calc")
