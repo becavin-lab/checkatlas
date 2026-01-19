@@ -440,20 +440,24 @@ def calc_metric_annot_seurat(metric, seurat, obs_key, ref_obs):
         return -1
 
 
-def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X_pca',
+def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
                k_neighbors=30, n_samples=5000, seed=42, n_jobs=-1, 
                all_metrics=True, file_dir=None, verbose=True):
     """
     Comprehensive dimensionality reduction assessment pipeline.
     
     Calculates all dimred metrics to assess the quality of embeddings (UMAP, t-SNE, etc.)
-    compared to the high-dimensional reference (PCA).
+    compared to the high-dimensional reference (adata.X).
+    
+    Optimizations:
+    1. Precomputes pairwise distances and kNN graphs for both high and low dim spaces.
+    2. Caches results in adata.uns['_dimred_cache'] to avoid redundant calculation.
     
     Args:
         adata (AnnData): Annotated data matrix.
         atlas_name (str): Name of the atlas for labeling results.
         low_dim_key (str): Key in adata.obsm for embedding (default: 'X_umap').
-        high_dim_key (str): Key in adata.obsm for reference (default: 'X_pca').
+        high_dim_key (str): Key for reference data. 'X' means adata.X. (default: 'X').
         k_neighbors (int): Number of neighbors for neighborhood-based metrics.
         n_samples (int or None): Number of cells to subsample. None = use all.
         seed (int): Random seed for reproducibility.
@@ -469,6 +473,9 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X_pca
     # Import here to avoid circular dependency
     from ..atlas import CheckAtlasColumnDetector
     import scanpy as sc
+    from sklearn.metrics import pairwise_distances
+    from sklearn.neighbors import NearestNeighbors
+    from joblib import Parallel, delayed
     
     # Set file directory
     if file_dir is None:
@@ -476,31 +483,104 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X_pca
     else:
         os.makedirs(file_dir, exist_ok=True)
     
-    # Check if keys exist, compute if missing
+    # Check if low dim key exists, compute if missing
     if low_dim_key not in adata.obsm.keys():
         if verbose: 
             print(f"Key '{low_dim_key}' not found. Calculating UMAP...")
         sc.tl.umap(adata, n_components=2, random_state=seed)
 
-    if high_dim_key not in adata.obsm.keys():
-        if verbose: 
-            print(f"Key '{high_dim_key}' not found. Calculating PCA...")
-        sc.tl.pca(adata, random_state=seed)
-    
-    # Define metrics to run
-    if all_metrics:
-        metrics_list = METRICS_DIMRED
+    # Prepare data for high dimension
+    if high_dim_key == 'X':
+        if verbose: print("Using adata.X as high-dimensional reference.")
+        # Check if X is sparse, convert to dense if needed for distance calc
+        # Note: pairwise_distances handles sparse, but dense might be faster for smaller subsamples
+        pass 
+    elif high_dim_key in adata.obsm.keys():
+        pass # Use as is
     else:
-        # Default subset of key metrics
-        metrics_list = [
-            'kruskal_stress',
-            'trustworthiness',
-            'continuity',
-            'coknn',
-            'spearman_rho'
-        ]
-        # Filter to ensure they exist
-        metrics_list = [m for m in metrics_list if m in METRICS_DIMRED]
+        # Fallback or error? User requested adata.X mostly.
+        if verbose: print(f"Key '{high_dim_key}' not found. Using adata.X.")
+        high_dim_key = 'X'
+
+    # --- Precomputation Step ---
+    if verbose: print("Precomputing distances and neighbors to optimize metric calculation...")
+    
+    # 1. Subsampling
+    n_obs = adata.n_obs
+    if n_samples is not None and n_samples < n_obs:
+        if verbose: print(f"Subsampling {n_samples} cells out of {n_obs}...")
+        np.random.seed(seed)
+        sample_indices = np.random.choice(n_obs, n_samples, replace=False)
+    else:
+        sample_indices = np.arange(n_obs)
+
+    # Get data subsets
+    if high_dim_key == 'X':
+        high_dim_data = adata.X[sample_indices]
+        # Convert sparse to dense if needed for some metrics, but pairwise_distances handles sparse
+        if hasattr(high_dim_data, "toarray"):
+            high_dim_data = high_dim_data.toarray()
+    else:
+        high_dim_data = adata.obsm[high_dim_key][sample_indices]
+        
+    low_dim_data = adata.obsm[low_dim_key][sample_indices]
+
+    # 2. Compute Pairwise Distances (Parallel with Progress)
+    # Using joblib inside pairwise_distances is usually handled by n_jobs
+    if verbose: print("Computing pairwise distances for High-Dim and Low-Dim...")
+    
+    n_samples_calc = high_dim_data.shape[0]
+    batch_size = 2000
+    
+    # High-Dim Distances
+    high_dim_dists = np.zeros((n_samples_calc, n_samples_calc), dtype=np.float32)
+    for i in tqdm(range(0, n_samples_calc, batch_size), desc="High-Dim Distances", disable=not verbose):
+        end = min(i + batch_size, n_samples_calc)
+        high_dim_dists[i:end, :] = pairwise_distances(high_dim_data[i:end], high_dim_data, metric='euclidean', n_jobs=n_jobs)
+
+    # Low-Dim Distances
+    low_dim_dists = np.zeros((n_samples_calc, n_samples_calc), dtype=np.float32)
+    for i in tqdm(range(0, n_samples_calc, batch_size), desc="Low-Dim Distances", disable=not verbose):
+        end = min(i + batch_size, n_samples_calc)
+        low_dim_dists[i:end, :] = pairwise_distances(low_dim_data[i:end], low_dim_data, metric='euclidean', n_jobs=n_jobs)
+    
+    # 3. Compute k-NN Graphs (Parallel with Progress)
+    if verbose: print(f"Computing k-NN graphs (k={k_neighbors}) for High-Dim and Low-Dim...")
+    
+    # Query k+1 to exclude self
+    nbrs_high = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(high_dim_data)
+    high_knn_dists_list, high_knn_indices_list = [], []
+    for i in tqdm(range(0, n_samples_calc, batch_size), desc="High-Dim KNN", disable=not verbose):
+        end = min(i + batch_size, n_samples_calc)
+        d, ind = nbrs_high.kneighbors(high_dim_data[i:end])
+        high_knn_dists_list.append(d)
+        high_knn_indices_list.append(ind)
+    high_knn_dists = np.vstack(high_knn_dists_list)
+    high_knn_indices = np.vstack(high_knn_indices_list)
+    
+    nbrs_low = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(low_dim_data)
+    low_knn_dists_list, low_knn_indices_list = [], []
+    for i in tqdm(range(0, n_samples_calc, batch_size), desc="Low-Dim KNN", disable=not verbose):
+        end = min(i + batch_size, n_samples_calc)
+        d, ind = nbrs_low.kneighbors(low_dim_data[i:end])
+        low_knn_dists_list.append(d)
+        low_knn_indices_list.append(ind)
+    low_knn_dists = np.vstack(low_knn_dists_list)
+    low_knn_indices = np.vstack(low_knn_indices_list)
+    
+    # Cache in adata.uns
+    adata.uns['_dimred_cache'] = {
+        'high_dim_dists': high_dim_dists,
+        'low_dim_dists': low_dim_dists,
+        'high_knn_indices': high_knn_indices,
+        'low_knn_indices': low_knn_indices,
+        'high_knn_dists': high_knn_dists,
+        'low_knn_dists': low_knn_dists,
+        'sample_indices': sample_indices
+    }
+
+    # Filter to ensure they exist
+    metrics_list = [m for m in metrics_list if m in METRICS_DIMRED]
 
     results = []
     
@@ -521,9 +601,8 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X_pca
             
             # Call the metric's run function with appropriate parameters
             # All dimred metrics now have a consistent signature:
-            # run(adata, low_dim_key, high_dim_key, k_neighbors, n_samples, seed, n_jobs, verbose)
+            # run(adata, low_dim_key, high_dim_key, k_neighbors, n_samples, seed, n_jobs, verbose, **kwargs)
             
-            # Check if metric accepts these parameters (some like trustworthiness don't use n_jobs)
             import inspect
             sig = inspect.signature(metric_module.run)
             params = sig.parameters
@@ -542,7 +621,21 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X_pca
             if 'n_jobs' in params:
                 kwargs['n_jobs'] = n_jobs
             if 'verbose' in params:
-                kwargs['verbose'] = verbose  # Pass global verbose to see per-metric progress
+                kwargs['verbose'] = verbose 
+            
+            # Pass precomputed data if accepted
+            if 'precomputed_high_dists' in params:
+                kwargs['precomputed_high_dists'] = high_dim_dists
+            if 'precomputed_low_dists' in params:
+                kwargs['precomputed_low_dists'] = low_dim_dists
+            if 'precomputed_high_knn' in params:
+                kwargs['precomputed_high_knn'] = high_knn_indices
+            if 'precomputed_low_knn' in params:
+                kwargs['precomputed_low_knn'] = low_knn_indices
+            if 'precomputed_high_knn_dists' in params:
+                kwargs['precomputed_high_knn_dists'] = high_knn_dists
+            if 'precomputed_low_knn_dists' in params:
+                kwargs['precomputed_low_knn_dists'] = low_knn_dists
             
             # Run the metric
             value = metric_module.run(adata, **kwargs)

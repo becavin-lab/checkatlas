@@ -3,92 +3,73 @@ import scanpy as sc
 from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm
 from joblib import Parallel, delayed
-import logging
 
-# # Configure logger
-# logger = logging.getLogger("checkatlas")
-# logger.setLevel(logging.DEBUG)
-
-def run(adata, low_dim_key='X_umap', high_dim_key='X_pca', k_neighbors=30, 
-        n_samples=5000, seed=42, n_jobs=-1, verbose=True):
+def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30, 
+        n_samples=5000, seed=42, n_jobs=-1, verbose=True,
+        precomputed_high_knn=None, precomputed_low_knn=None):
     """
     Computes the LCMC (Local Continuity Meta-Criterion).
-    
-    LCMC measures the overlap of local neighborhoods (like Entourage), 
-    but it is normalized against the baseline probability of overlapping by chance.
-    
-    Formula: LCMC = (Overlap - Baseline) / (1 - Baseline)
-    Where Baseline approx = k / (N - 1)
-
-    Parameters:
-    -----------
-    adata : AnnData
-        The annotated data matrix.
-    low_dim_key : str
-        Key in adata.obsm for embedding.
-    high_dim_key : str
-        Key in adata.obsm for reference.
-    k_neighbors : int, optional (default=30)
-        The size of the local neighborhood.
-    n_samples : int or None
-        Number of cells to subsample.
-    seed : int
-        Random seed.
-    n_jobs : int
-        Parallel jobs.
-    verbose : bool
-        Show progress.
-
-    Returns:
-    --------
-    float
-        LCMC Score (usually 0 to 1).
-        1.0 = Perfect.
-        0.0 = Random performance.
+    Compares High-Dim (adata.X) vs Low-Dim (X_umap).
     """
 
-    # 1. Check keys / Compute if missing
-    if low_dim_key not in adata.obsm.keys():
-        if verbose: print(f"Key '{low_dim_key}' not found. Calculating UMAP...")
-        sc.tl.umap(adata, n_components=2, random_state=seed)
-
-    if high_dim_key not in adata.obsm.keys():
-        if verbose: print(f"Key '{high_dim_key}' not found. Calculating PCA...")
-        sc.tl.pca(adata, random_state=seed) 
-
-    # 2. Subsampling
-    n_obs = adata.n_obs
-    if n_samples is not None and n_samples < n_obs:
-        if verbose:
-            print(f"Subsampling {n_samples} cells out of {n_obs}...")
-        np.random.seed(seed)
-        indices = np.random.choice(n_obs, n_samples, replace=False)
-        high_dim_data = adata.obsm[high_dim_key][indices]
-        low_dim_data = adata.obsm[low_dim_key][indices]
+    # 1. Use Precomputed Neighbors if available
+    if precomputed_high_knn is not None and precomputed_low_knn is not None:
+        if verbose: print("Using precomputed k-NN graphs...")
+        indices_high = precomputed_high_knn
+        indices_low = precomputed_low_knn
+        n_cells = indices_high.shape[0]
+        
+        # Precomputed (from metrics.py) includes self. Slice it.
+        indices_high = indices_high[:, 1:]
+        indices_low = indices_low[:, 1:]
     else:
-        if verbose:
-            print(f"Using all {n_obs} cells...")
-        high_dim_data = adata.obsm[high_dim_key]
-        low_dim_data = adata.obsm[low_dim_key]
+        # Fallback to local computation
+        if verbose: print("Precomputed k-NN not provided. Calculating locally...")
 
-    n_cells = high_dim_data.shape[0]
+        # Check keys
+        if low_dim_key not in adata.obsm.keys():
+            if verbose: print(f"Calculating {low_dim_key}...")
+            sc.tl.umap(adata, n_components=2, random_state=seed)
 
-    # 3. Fit Nearest Neighbors
-    # Query k+1 to account for self-neighbor
-    query_k = k_neighbors + 1
-    
-    if verbose: print(f"Finding {k_neighbors} neighbors (High-Dim)...")
-    nbrs_high = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(high_dim_data)
-    _, indices_high = nbrs_high.kneighbors(high_dim_data)
+        # Prepare Data
+        # Subsampling
+        n_obs = adata.n_obs
+        if n_samples is not None and n_samples < n_obs:
+            if verbose: print(f"Subsampling {n_samples} cells...")
+            np.random.seed(seed)
+            indices = np.random.choice(n_obs, n_samples, replace=False)
+        else:
+            indices = np.arange(n_obs)
 
-    if verbose: print(f"Finding {k_neighbors} neighbors (Low-Dim)...")
-    nbrs_low = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(low_dim_data)
-    _, indices_low = nbrs_low.kneighbors(low_dim_data)
+        # High Dim Data
+        if high_dim_key == 'X':
+            high_dim_data = adata.X[indices]
+            if hasattr(high_dim_data, "toarray"): high_dim_data = high_dim_data.toarray()
+        else:
+            if high_dim_key not in adata.obsm.keys():
+                if verbose: print(f"Calculating {high_dim_key}...")
+                sc.tl.pca(adata, random_state=seed)
+            high_dim_data = adata.obsm[high_dim_key][indices]
 
-    # 4. Calculate Raw Overlap with parallel processing
-    indices_high = indices_high[:, 1:]
-    indices_low = indices_low[:, 1:]
+        low_dim_data = adata.obsm[low_dim_key][indices]
+        n_cells = high_dim_data.shape[0]
 
+        # Fit Nearest Neighbors
+        query_k = k_neighbors + 1
+        
+        if verbose: print(f"Finding neighbors (k={k_neighbors}) in High-Dim...")
+        nbrs_high = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(high_dim_data)
+        _, indices_high = nbrs_high.kneighbors(high_dim_data)
+
+        if verbose: print(f"Finding neighbors (k={k_neighbors}) in Low-Dim...")
+        nbrs_low = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(low_dim_data)
+        _, indices_low = nbrs_low.kneighbors(low_dim_data)
+
+        # Slice off self-match
+        indices_high = indices_high[:, 1:]
+        indices_low = indices_low[:, 1:]
+
+    # 4. Calculate Raw Overlap (Parallel)
     def _overlap(high_row, low_row):
         return len(set(high_row) & set(low_row))
 
@@ -99,15 +80,11 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X_pca', k_neighbors=30,
     total_overlap = sum(overlaps)
 
     # Average overlap fraction (This is the Entourage Score)
-    # Average number of shared neighbors / k
     mean_overlap = (total_overlap / n_cells) / k_neighbors
 
     # 5. Apply LCMC Adjustment
-    # Baseline probability of picking a neighbor by chance
-    # Note: The pool of potential neighbors is N-1 (excluding self)
+    # Baseline probability of picking a neighbor by chance (pool of potential neighbors is N-1)
     baseline = k_neighbors / (n_cells - 1)
 
-    # LCMC Formula
     lcmc_score = (mean_overlap - baseline) / (1 - baseline)
-
     return lcmc_score
