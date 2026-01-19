@@ -7,13 +7,28 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         n_samples=5000, seed=42, verbose=True, n_jobs=-1,
         precomputed_high_dists=None, precomputed_low_dists=None):
     """
-    Computes the Trustworthiness metric.
-    Measures preservation of local neighborhood (penalizes false neighbors).
-    Compares High-Dim (adata.X) vs Low-Dim (X_umap).
-    
-    Note: sklearn.manifold.trustworthiness does NOT accept precomputed distance matrices
-    or n_jobs. It computes distances internally. Subsampling is the primary
-    optimization here.
+    Trustworthiness
+    Measures the preservation of local neighborhood by penalizing false neighbors (points that are neighbors in low-dim but not in high-dim).
+    It quantifies how trustworthy the embedding is in representing local relationships.
+
+    Args:
+        adata (AnnData): Annotated data matrix.
+        low_dim_key (str): Key for low-dimensional embedding in adata.obsm.
+        high_dim_key (str): Key for high-dimensional data (default: 'X').
+        k_neighbors (int): Number of neighbors to consider.
+        n_samples (int): Number of samples to subsample for calculation.
+        seed (int): Random seed for reproducibility.
+        verbose (bool): Whether to print progress.
+        n_jobs (int): Number of parallel jobs (not used by sklearn implementation).
+        precomputed_high_dists (np.ndarray): Precomputed distance matrix (not used by sklearn).
+        precomputed_low_dists (np.ndarray): Precomputed distance matrix (not used by sklearn).
+
+    Returns:
+        float: The Trustworthiness score.
+
+    Interpretation:
+        Range 0 to 1.
+        Higher is better (1 means perfect trustworthiness, i.e., no false neighbors).
     """
 
     # 1. Check keys
