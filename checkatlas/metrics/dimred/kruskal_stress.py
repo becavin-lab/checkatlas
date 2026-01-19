@@ -8,8 +8,28 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', n_samples=5000, seed=42,
         n_jobs=-1, verbose=True, batch_size=2000, 
         precomputed_high_dists=None, precomputed_low_dists=None):
     """
-    Computes the Kruskal stress using precomputed distances if available.
-    Compares low-dimensional embedding to high-dimensional reference (adata.X).
+    Kruskal Stress
+    Measures the mismatch between pairwise distances in high-dimensional and low-dimensional spaces.
+    It quantifies how well the global distance structure is preserved.
+
+    Args:
+        adata (AnnData): Annotated data matrix.
+        low_dim_key (str): Key for low-dimensional embedding in adata.obsm.
+        high_dim_key (str): Key for high-dimensional data (default: 'X').
+        n_samples (int): Number of samples to subsample for calculation.
+        seed (int): Random seed for reproducibility.
+        n_jobs (int): Number of parallel jobs.
+        verbose (bool): Whether to print progress.
+        batch_size (int): Batch size for distance computation.
+        precomputed_high_dists (np.ndarray): Precomputed high-dim distance matrix.
+        precomputed_low_dists (np.ndarray): Precomputed low-dim distance matrix.
+
+    Returns:
+        float: The Kruskal Stress score.
+
+    Interpretation:
+        Range 0 to 1 (typically).
+        Lower is better (0 means perfect preservation of distances).
     """
 
     # 1. Use Precomputed Distances if available

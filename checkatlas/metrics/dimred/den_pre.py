@@ -8,8 +8,30 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         precomputed_high_knn_dists=None, precomputed_low_knn_dists=None,
         precomputed_high_knn=None, precomputed_low_knn=None): # Added for API consistency
     """
-    Computes the Density Preservation metric (Pearson correlation of local radii).
-    Compares High-Dim (adata.X) vs Low-Dim (X_umap).
+    Density Preservation
+    Measures the preservation of local density by calculating the Pearson correlation between the radii of k-nearest neighbors in high-dimensional and low-dimensional spaces.
+
+    Args:
+        adata (AnnData): Annotated data matrix.
+        low_dim_key (str): Key for low-dimensional embedding in adata.obsm.
+        high_dim_key (str): Key for high-dimensional data (default: 'X').
+        k_neighbors (int): Number of neighbors to consider.
+        n_samples (int): Number of samples to subsample for calculation.
+        seed (int): Random seed for reproducibility.
+        n_jobs (int): Number of parallel jobs.
+        verbose (bool): Whether to print progress.
+        log_transform (bool): Whether to log-transform the radii before correlation.
+        precomputed_high_knn_dists (np.ndarray): Precomputed k-NN distances for high-dim data.
+        precomputed_low_knn_dists (np.ndarray): Precomputed k-NN distances for low-dim data.
+        precomputed_high_knn (np.ndarray): Precomputed k-NN indices (not used directly, but kept for API consistency).
+        precomputed_low_knn (np.ndarray): Precomputed k-NN indices (not used directly, but kept for API consistency).
+
+    Returns:
+        float: The Density Preservation score (Pearson Correlation).
+
+    Interpretation:
+        Range -1 to 1.
+        Higher is better (1 means perfect preservation of relative density).
     """
 
     # 1. Use Precomputed Neighbors if available

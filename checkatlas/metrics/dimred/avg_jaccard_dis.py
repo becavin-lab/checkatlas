@@ -8,8 +8,27 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         n_samples=5000, seed=42, n_jobs=-1, verbose=True,
         precomputed_high_knn=None, precomputed_low_knn=None):
     """
-    Computes the Average Jaccard Distance.
-    Compares High-Dim (adata.X) vs Low-Dim (X_umap).
+    Average Jaccard Distance
+    Measures the average Jaccard distance between the k-nearest neighbors in high-dimensional and low-dimensional spaces.
+
+    Args:
+        adata (AnnData): Annotated data matrix.
+        low_dim_key (str): Key for low-dimensional embedding in adata.obsm.
+        high_dim_key (str): Key for high-dimensional data (default: 'X').
+        k_neighbors (int): Number of neighbors to consider.
+        n_samples (int): Number of samples to subsample for calculation.
+        seed (int): Random seed for reproducibility.
+        n_jobs (int): Number of parallel jobs.
+        verbose (bool): Whether to print progress.
+        precomputed_high_knn (np.ndarray): Precomputed k-NN indices for high-dim data.
+        precomputed_low_knn (np.ndarray): Precomputed k-NN indices for low-dim data.
+
+    Returns:
+        float: The average Jaccard distance.
+
+    Interpretation:
+        Range 0 to 1.
+        Lower is better (0 means perfect preservation of neighbors, 1 means no overlap).
     """
 
     # 1. Use Precomputed Neighbors if available

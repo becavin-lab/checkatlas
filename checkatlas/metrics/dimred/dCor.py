@@ -8,7 +8,28 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', n_samples=5000, seed=42,
         n_jobs=-1, verbose=True, batch_size=2000,
         precomputed_high_dists=None, precomputed_low_dists=None):
     """
-    Computes Distance Correlation (dCor) using precomputed distances if available.
+    Distance Correlation (dCor)
+    Measures the dependence between the pairwise distance matrices of the high-dimensional and low-dimensional data.
+    It assesses how well the global structure (distances) is preserved.
+
+    Args:
+        adata (AnnData): Annotated data matrix.
+        low_dim_key (str): Key for low-dimensional embedding in adata.obsm.
+        high_dim_key (str): Key for high-dimensional data (default: 'X').
+        n_samples (int): Number of samples to subsample for calculation.
+        seed (int): Random seed for reproducibility.
+        n_jobs (int): Number of parallel jobs.
+        verbose (bool): Whether to print progress.
+        batch_size (int): Batch size for distance computation.
+        precomputed_high_dists (np.ndarray): Precomputed high-dim distance matrix.
+        precomputed_low_dists (np.ndarray): Precomputed low-dim distance matrix.
+
+    Returns:
+        float: The Distance Correlation score.
+
+    Interpretation:
+        Range 0 to 1.
+        Higher is better (1 means perfect correlation of distances, 0 means no correlation).
     """
 
     # 1. Use Precomputed Distances if available
