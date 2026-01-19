@@ -579,8 +579,26 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
         'sample_indices': sample_indices
     }
 
-    # Filter to ensure they exist
-    metrics_list = [m for m in metrics_list if m in METRICS_DIMRED]
+    # Define metrics to run
+    if all_metrics:
+        metrics_list = METRICS_DIMRED
+    else:
+        # Default subset of metrics
+        metrics_list = [
+            'trustworthiness',
+            'continuity',
+            'kruskal_stress',
+            # 'spearman_rho',
+            # 'dCor',
+            # 'lcmc',
+            # 'entourage',
+            # 'coknn',
+            # 'ged',
+            'avg_jaccard_dis',
+            # 'den_pre'
+        ]
+        # Filter to ensure they exist in METRICS_DIMRED
+        metrics_list = [m for m in metrics_list if m in METRICS_DIMRED]
 
     results = []
     
