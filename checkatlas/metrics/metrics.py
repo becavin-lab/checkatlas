@@ -441,8 +441,9 @@ def calc_metric_annot_seurat(metric, seurat, obs_key, ref_obs):
 
 
 def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
-               k_neighbors=30, n_samples=5000, seed=42, n_jobs=-1, 
-               all_metrics=True, file_dir=None, verbose=True):
+               k_neighbors=30, n_samples=None, seed=42, n_jobs=-1, 
+               all_metrics=True, file_dir=None, verbose=True, use_memmap=True,
+               temp_dir=None, chunk_size=1000):
     """
     Comprehensive dimensionality reduction assessment pipeline.
     
@@ -451,7 +452,8 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
     
     Optimizations:
     1. Precomputes pairwise distances and kNN graphs for both high and low dim spaces.
-    2. Caches results in adata.uns['_dimred_cache'] to avoid redundant calculation.
+    2. Uses memory-mapped files for distance matrices to avoid RAM overload.
+    3. Caches kNN results in adata.uns['_dimred_cache'] for efficiency.
     
     Args:
         adata (AnnData): Annotated data matrix.
@@ -459,12 +461,15 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
         low_dim_key (str): Key in adata.obsm for embedding (default: 'X_umap').
         high_dim_key (str): Key for reference data. 'X' means adata.X. (default: 'X').
         k_neighbors (int): Number of neighbors for neighborhood-based metrics.
-        n_samples (int or None): Number of cells to subsample. None = use all.
+        n_samples (int or None): Number of cells to subsample. None = use all cells.
         seed (int): Random seed for reproducibility.
         n_jobs (int): Number of parallel jobs (-1 = all cores).
         all_metrics (bool): If True, calculate all metrics. If False, use a default subset.
         file_dir (str): Directory to save results CSV. If None, saves to cwd.
         verbose (bool): Show progress bars and status messages.
+        use_memmap (bool): If True, use memory-mapped arrays for distance matrices (recommended for large datasets).
+        temp_dir (str): Directory for temporary memmap files. If None, uses system temp.
+        chunk_size (int): Chunk size for distance computation (default: 1000).
                      
     Returns:
         pd.DataFrame: Results dataframe with columns:
@@ -476,6 +481,10 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
     from sklearn.metrics import pairwise_distances
     from sklearn.neighbors import NearestNeighbors
     from joblib import Parallel, delayed
+
+    ## if the temp_dir is not provided, use the 'file_dir'
+    if temp_dir is None:
+        temp_dir = file_dir
     
     # Set file directory
     if file_dir is None:
@@ -505,19 +514,20 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
     # --- Precomputation Step ---
     if verbose: print("Precomputing distances and neighbors to optimize metric calculation...")
     
-    # 1. Subsampling
+    # 1. Subsampling (if specified)
     n_obs = adata.n_obs
     if n_samples is not None and n_samples < n_obs:
         if verbose: print(f"Subsampling {n_samples} cells out of {n_obs}...")
         np.random.seed(seed)
         sample_indices = np.random.choice(n_obs, n_samples, replace=False)
     else:
+        if verbose: print(f"Using all {n_obs} cells...")
         sample_indices = np.arange(n_obs)
 
     # Get data subsets
     if high_dim_key == 'X':
         high_dim_data = adata.X[sample_indices]
-        # Convert sparse to dense if needed for some metrics, but pairwise_distances handles sparse
+        # Convert sparse to dense if needed
         if hasattr(high_dim_data, "toarray"):
             high_dim_data = high_dim_data.toarray()
     else:
@@ -525,59 +535,125 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
         
     low_dim_data = adata.obsm[low_dim_key][sample_indices]
 
-    # 2. Compute Pairwise Distances (Parallel with Progress)
-    # Using joblib inside pairwise_distances is usually handled by n_jobs
-    if verbose: print("Computing pairwise distances for High-Dim and Low-Dim...")
+    n_cells = high_dim_data.shape[0]
     
-    n_samples_calc = high_dim_data.shape[0]
-    batch_size = 2000
+    # Setup temp directory for memmap files
+    import tempfile
+    import gc
     
-    # High-Dim Distances
-    high_dim_dists = np.zeros((n_samples_calc, n_samples_calc), dtype=np.float32)
-    for i in tqdm(range(0, n_samples_calc, batch_size), desc="High-Dim Distances", disable=not verbose):
-        end = min(i + batch_size, n_samples_calc)
-        high_dim_dists[i:end, :] = pairwise_distances(high_dim_data[i:end], high_dim_data, metric='euclidean', n_jobs=n_jobs)
+    if temp_dir is None:
+        temp_dir = tempfile.gettempdir()
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    # Generate unique filenames for this run
+    import uuid
+    run_id = str(uuid.uuid4())[:8]
+    high_dists_path = os.path.join(temp_dir, f"high_dim_dists_{run_id}.dat")
+    low_dists_path = os.path.join(temp_dir, f"low_dim_dists_{run_id}.dat")
+    
+    # Track memmap files for cleanup
+    memmap_files = [high_dists_path, low_dists_path]
+    
+    # Initialize variables to None to prevent UnboundLocalError
+    high_dim_dists = None
+    low_dim_dists = None
+    high_knn_indices = None
+    low_knn_indices = None
+    high_knn_dists = None
+    low_knn_dists = None
 
-    # Low-Dim Distances
-    low_dim_dists = np.zeros((n_samples_calc, n_samples_calc), dtype=np.float32)
-    for i in tqdm(range(0, n_samples_calc, batch_size), desc="Low-Dim Distances", disable=not verbose):
-        end = min(i + batch_size, n_samples_calc)
-        low_dim_dists[i:end, :] = pairwise_distances(low_dim_data[i:end], low_dim_data, metric='euclidean', n_jobs=n_jobs)
-    
-    # 3. Compute k-NN Graphs (Parallel with Progress)
-    if verbose: print(f"Computing k-NN graphs (k={k_neighbors}) for High-Dim and Low-Dim...")
-    
-    # Query k+1 to exclude self
-    nbrs_high = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(high_dim_data)
-    high_knn_dists_list, high_knn_indices_list = [], []
-    for i in tqdm(range(0, n_samples_calc, batch_size), desc="High-Dim KNN", disable=not verbose):
-        end = min(i + batch_size, n_samples_calc)
-        d, ind = nbrs_high.kneighbors(high_dim_data[i:end])
-        high_knn_dists_list.append(d)
-        high_knn_indices_list.append(ind)
-    high_knn_dists = np.vstack(high_knn_dists_list)
-    high_knn_indices = np.vstack(high_knn_indices_list)
-    
-    nbrs_low = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(low_dim_data)
-    low_knn_dists_list, low_knn_indices_list = [], []
-    for i in tqdm(range(0, n_samples_calc, batch_size), desc="Low-Dim KNN", disable=not verbose):
-        end = min(i + batch_size, n_samples_calc)
-        d, ind = nbrs_low.kneighbors(low_dim_data[i:end])
-        low_knn_dists_list.append(d)
-        low_knn_indices_list.append(ind)
-    low_knn_dists = np.vstack(low_knn_dists_list)
-    low_knn_indices = np.vstack(low_knn_indices_list)
-    
-    # Cache in adata.uns
-    adata.uns['_dimred_cache'] = {
-        'high_dim_dists': high_dim_dists,
-        'low_dim_dists': low_dim_dists,
-        'high_knn_indices': high_knn_indices,
-        'low_knn_indices': low_knn_indices,
-        'high_knn_dists': high_knn_dists,
-        'low_knn_dists': low_knn_dists,
-        'sample_indices': sample_indices
-    }
+    try:
+        # 2. Compute Pairwise Distances using Memory-Mapped Arrays
+        if use_memmap:
+            if verbose: 
+                print(f"Computing pairwise distances using memory-mapped arrays...")
+                print(f"  Memory-efficient mode: storing {n_cells}x{n_cells} matrices on disk")
+            
+            # Create memory-mapped arrays on disk
+            high_dim_dists = np.memmap(high_dists_path, dtype='float32', mode='w+', shape=(n_cells, n_cells))
+            low_dim_dists = np.memmap(low_dists_path, dtype='float32', mode='w+', shape=(n_cells, n_cells))
+            
+            # Fill in chunks to minimize RAM usage
+            for i in tqdm(range(0, n_cells, chunk_size), desc="High-Dim Distances", disable=not verbose):
+                end = min(i + chunk_size, n_cells)
+                high_dim_dists[i:end, :] = pairwise_distances(
+                    high_dim_data[i:end], high_dim_data, metric='euclidean', n_jobs=n_jobs
+                )
+                high_dim_dists.flush()  # Write to disk immediately
+            
+            for i in tqdm(range(0, n_cells, chunk_size), desc="Low-Dim Distances", disable=not verbose):
+                end = min(i + chunk_size, n_cells)
+                low_dim_dists[i:end, :] = pairwise_distances(
+                    low_dim_data[i:end], low_dim_data, metric='euclidean', n_jobs=n_jobs
+                )
+                low_dim_dists.flush()  # Write to disk immediately
+            
+            # Force garbage collection to free any temporary memory
+            gc.collect()
+            
+        else:
+            # Standard in-memory computation (for smaller datasets)
+            if verbose: print("Computing pairwise distances in memory...")
+            
+            high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
+            for i in tqdm(range(0, n_cells, chunk_size), desc="High-Dim Distances", disable=not verbose):
+                end = min(i + chunk_size, n_cells)
+                high_dim_dists[i:end, :] = pairwise_distances(
+                    high_dim_data[i:end], high_dim_data, metric='euclidean', n_jobs=n_jobs
+                )
+            
+            low_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
+            for i in tqdm(range(0, n_cells, chunk_size), desc="Low-Dim Distances", disable=not verbose):
+                end = min(i + chunk_size, n_cells)
+                low_dim_dists[i:end, :] = pairwise_distances(
+                    low_dim_data[i:end], low_dim_data, metric='euclidean', n_jobs=n_jobs
+                )
+        
+        # 3. Compute k-NN Graphs (always in memory - small footprint)
+        if verbose: print(f"Computing k-NN graphs (k={k_neighbors}) for High-Dim and Low-Dim...")
+        
+        # Query k+1 to exclude self
+        nbrs_high = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(high_dim_data)
+        high_knn_dists_list, high_knn_indices_list = [], []
+        for i in tqdm(range(0, n_cells, chunk_size), desc="High-Dim KNN", disable=not verbose):
+            end = min(i + chunk_size, n_cells)
+            d, ind = nbrs_high.kneighbors(high_dim_data[i:end])
+            high_knn_dists_list.append(d)
+            high_knn_indices_list.append(ind)
+        high_knn_dists = np.vstack(high_knn_dists_list)
+        high_knn_indices = np.vstack(high_knn_indices_list)
+        
+        nbrs_low = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(low_dim_data)
+        low_knn_dists_list, low_knn_indices_list = [], []
+        for i in tqdm(range(0, n_cells, chunk_size), desc="Low-Dim KNN", disable=not verbose):
+            end = min(i + chunk_size, n_cells)
+            d, ind = nbrs_low.kneighbors(low_dim_data[i:end])
+            low_knn_dists_list.append(d)
+            low_knn_indices_list.append(ind)
+        low_knn_dists = np.vstack(low_knn_dists_list)
+        low_knn_indices = np.vstack(low_knn_indices_list)
+        
+        # Free intermediate lists
+        del high_knn_dists_list, high_knn_indices_list, low_knn_dists_list, low_knn_indices_list
+        gc.collect()
+        
+        # Cache kNN data in adata.uns (distance matrices are in memmap)
+        adata.uns['_dimred_cache'] = {
+            'high_dim_dists': high_dim_dists,  # memmap reference or numpy array
+            'low_dim_dists': low_dim_dists,    # memmap reference or numpy array
+            'high_knn_indices': high_knn_indices,
+            'low_knn_indices': low_knn_indices,
+            'high_knn_dists': high_knn_dists,
+            'low_knn_dists': low_knn_dists,
+            'sample_indices': sample_indices,
+            'use_memmap': use_memmap,
+            'memmap_files': memmap_files if use_memmap else []
+        }
+
+    except Exception as e:
+        logger.warning(f"Precomputation failed: {e}. Metrics will attempt local calculation.")
+        if verbose: print(f"Warning: Precomputation failed ({e}). Proceeding with local calculation (slower).")
+        pass
 
     # Define metrics to run
     if all_metrics:
@@ -701,6 +777,31 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
             print(f"Saved dimred metrics to {filename}")
         logger.info(f"Saved dimred metrics to {filename}")
         
+    # Cleanup memory-mapped files before returning
+    if use_memmap:
+        if verbose: print("Cleaning up temporary memmap files...")
+        # Close memmap references
+        try:
+            if 'high_dim_dists' in dir() and hasattr(high_dim_dists, '_mmap'):
+                del high_dim_dists
+            if 'low_dim_dists' in dir() and hasattr(low_dim_dists, '_mmap'):
+                del low_dim_dists
+        except:
+            pass
+        gc.collect()
+        
+        # Remove files from disk
+        for fpath in memmap_files:
+            try:
+                if os.path.exists(fpath):
+                    os.remove(fpath)
+            except Exception as e:
+                logger.warning(f"Failed to cleanup temp file {fpath}: {e}")
+                
+        # Clear cache reference
+        if '_dimred_cache' in adata.uns:
+            adata.uns['_dimred_cache']['memmap_files'] = []
+            
     return df
 
 
