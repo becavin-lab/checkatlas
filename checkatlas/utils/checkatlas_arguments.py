@@ -108,8 +108,8 @@ def create_parser():
         "--metric_cluster",
         nargs="+",
         type=str,
-        default=["davies_bouldin"],
-        #default=["silhouette", "davies_bouldin"],
+        #default=["davies_bouldin"],
+        default=["silhouette", "davies_bouldin","calinski_harabasz"],
         # default=[""],
         help="Specify the list of clustering metrics to calculate.\n"
         "   Example: --metric_cluster silhouette davies_bouldin\n"
@@ -120,7 +120,8 @@ def create_parser():
         nargs="+",
         type=str,
         # default=[],
-        default=["rand_index"],
+        # default=["rand_index"],
+        default=["rand_index","adj_mutual_info","isolated_f1_score"], 
         help=f"Specify the list of clustering metrics to calculate."
         f"   Example: --metric_annot rand_index"
         f"   List of annotation metrics: {annot.__all__}",
@@ -129,8 +130,8 @@ def create_parser():
         "--metric_dimred",
         nargs="+",
         type=str,
-        default=[],
-        # default=["kruskal_stress"],
+        #default=[],
+        default=["kruskal_stress","entourage"],
         help="Specify the list of dimensionality reduction "
         "metrics to calculate.\n"
         "   Example: --metric_dimred kruskal_stress\n"

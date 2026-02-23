@@ -9,6 +9,8 @@ checkatlas_path=/home/moccia/checkatlas
 # nextflow
 nextflow run main.nf --path=/data/analysis/data_moccia/checkatlas/tuto/data1/ --outdir=/data/analysis/data_moccia/checkatlas/tuto/data1/
 
+nextflow run main.nf --path=/data/analysis/data_becavin/checkatlas_test/tuto/data1/ --outdir=/data/analysis/data_becavin/checkatlas_test/tuto/data1/
+
 checkatlas-wf = "nextflow run main.nf" --multiqc  folder/
 
 --multiqc = Run only multiqc
