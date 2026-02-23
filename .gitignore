@@ -6,6 +6,8 @@ dask-worker-space/
 
 # CheckAtlas_*
 tests/data/checkatlas_files/
+multiqc_data/
+multiqc_report.html
 
 # powerpoint / office
 docs/~$*
