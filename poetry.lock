@@ -1666,6 +1666,17 @@ test = ["pytest (>=7.2)", "pytest-cov (>=4.0)", "pytest-xdist (>=3.0)"]
 test-extras = ["pytest-mpl", "pytest-randomly"]
 
 [[package]]
+name = "nextflow"
+version = "25.10.3"
+description = "A Python wrapper that installs the Nextflow launcher"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "nextflow-25.10.3.tar.gz", hash = "sha256:4c1a0ff0807305a708806c72a5489cb3a9428b6626ce6a8ce56615de70943267"},
+]
+
+[[package]]
 name = "no-implicit-optional"
 version = "1.4"
 description = "A codemod to make your implicit optional type hints PEP 484 compliant."
@@ -3655,4 +3666,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "5d93ee91b3299cead94c3a6fde42dbfe6a843450d0c365877aced02b164d81a4"
+content-hash = "72d9b98a78e15c2fedf6e74e8c3e57b34d5314eb9389c82446cd28b0170ba201"
