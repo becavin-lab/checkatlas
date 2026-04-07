@@ -97,8 +97,20 @@ class CheckAtlasColumnDetector:
             r'\blabel\b': 0.6,
             r'\bontology\b': 0.7,
             r'\bcurated\b': 0.8,
+            r'\bpredict(ed)?\b': 1.0,
+            r'(?i).*celltypist.*': 1.0,
+            r'\binfer(red)?\b': 0.95,
+            r'\bannot[_\s]?cell\b': 0.9,
+            r'\bauto(matic|mated)?\b': 0.85,
+            r'\bsctype\b': 0.9,
+            r'\bsingleR\b': 0.9,
+            r'(^|[_\s])annotation($|[_\s])': 0.9,
+            r'(^|[_\s])annotated($|[_\s])': 0.9,
+
+
         }
         
+        ## annotation
         predicted_patterns = {
             # Cluster-based
             r'\b(leiden|louvain)\b': 1.0,
@@ -108,14 +120,6 @@ class CheckAtlasColumnDetector:
             r'\bSCT[_\s]?snn[_\s]?res': 0.95,
             r'\bgraph[_\s]?clust': 0.9,
             r'\bkmeans\b': 0.85,
-            # Automated prediction-based
-            r'\bpredict(ed)?\b': 1.0,
-            r'(?i).*celltypist.*': 1.0,
-            r'\binfer(red)?\b': 0.95,
-            r'\bannot[_\s]?cell\b': 0.9,
-            r'\bauto(matic|mated)?\b': 0.85,
-            r'\bsctype\b': 0.9,
-            r'\bsingleR\b': 0.9,
         }
         
         # Metadata indicators (to exclude)
