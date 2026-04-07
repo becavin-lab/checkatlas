@@ -4,13 +4,21 @@ import os
 import pandas as pd
 
 try:
-    from . import atlas, cellranger, seurat
+    from . import atlas, cellranger
     from .utils import files as chk_files
     from .utils import folders
+    try:
+        from . import seurat
+    except (ImportError, OSError):
+        seurat = None
 except ImportError:
-    from checkatlas import atlas, cellranger, seurat
+    from checkatlas import atlas, cellranger
     from checkatlas.utils import files as chk_files
     from checkatlas.utils import folders
+    try:
+        from checkatlas import seurat
+    except (ImportError, OSError):
+        seurat = None
 
 """
 checkatlas base module.
@@ -125,6 +133,9 @@ def list_cellranger_atlases(checkatlas_path: str) -> None:
 
 
 def list_seurat_atlases(checkatlas_path: str) -> None:
+    if seurat is None:
+        logger.warning("Seurat module not available (rpy2/R not installed). Skipping.")
+        return
     # Get all files with matching extension
     atlas_list = list()
     for root, dirs, files in os.walk(checkatlas_path):

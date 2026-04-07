@@ -33,7 +33,7 @@ def _detect_embedding_keys(adata):
     return matched_keys
 
 
-def run(adata, neighbors_key='neighbors', label_key=None):
+def run(adata, neighbors_key='neighbors', label_key=None, n_jobs=-1, verbose=True):
     """
     Calculate Graph Connectivity metric for batch integration quality.
     
