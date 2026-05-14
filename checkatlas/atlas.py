@@ -16,10 +16,12 @@ try:
     from . import cellranger, check
     from .metrics import metrics
     from .utils import files, folders
+    from .utils.col_detector import CheckAtlasColumnDetector
 except ImportError:
     from checkatlas import cellranger, check
     from checkatlas.metrics import metrics
     from checkatlas.utils import files, folders
+    from checkatlas.utils.col_detector import CheckAtlasColumnDetector
 
 """
 Atlas module for AnnData (Scanpy)
@@ -31,349 +33,34 @@ ANNDATA_EXTENSION = ".h5ad"
 
 CELLINDEX_HEADER = "cell_index"
 
+# Default obs columns to search for clustering/annotation keys
+OBS_CLUSTERS = [
+    "leiden",
+    "louvain",
+    "celltype",
+    "cell_type",
+    "cell_annotation",
+    "cluster",
+    "seurat_clusters",
+    "annotation",
+]
+
+# Default obs columns for QC display
+OBS_QC = [
+    "n_genes_by_counts",
+    "total_counts",
+    "pct_counts_mt",
+    "pct_counts_ribo",
+    "n_genes",
+    "n_counts",
+]
+
 logger = logging.getLogger("checkatlas")
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=UserWarning)
 sc.settings.verbosity = 0
 
-
-class CheckAtlasColumnDetector:
-    """
-    Unified column detector for all CheckAtlas metric types.
-    
-    Detects parameters for:
-    1. Annotation metrics (reference vs predicted annotations)
-    2. Clustering metrics (embeddings + cluster labels)
-    3. Dimensionality reduction representations
-    
-    Uses multiple strategies:
-    - Semantic analysis (regex pattern matching on column names)
-    - Statistical properties (cardinality, distribution)
-    - Data quality indicators (completeness, consistency)
-    - Domain-specific heuristics (single-cell biology standards)
-    """
-    
-    def __init__(self, adata: AnnData):
-        """
-        Initialize the detector with an AnnData object.
-        
-        Args:
-            adata (AnnData): Scanpy AnnData object to analyze
-        """
-        self.adata = adata
-        self.obs_columns = adata.obs.columns.tolist()
-        self.obsm_keys = list(adata.obsm.keys()) if hasattr(adata, 'obsm') else []
-        self.analysis_results = {}
-        
-    def analyze_column_semantics(self, col_name: str) -> Dict[str, float]:
-        
-        # Score column name based on semantic indicators using regex patterns.
-        # Returns confidence scores for different column types.
-        
-        # Args:
-        #     col_name (str): Column name to analyze
-            
-        # Returns:
-        #     Dict[str, float]: Confidence scores for reference, predicted, and metadata types
-        
-        
-        col_lower = col_name.lower()
-        
-        # Define semantic patterns with confidence weights
-        semantic_scores = {
-            'reference_annotation': 0.0,
-            'predicted_annotation': 0.0,
-            'metadata': 0.0
-        }
-        
-        # Reference annotation indicators (ground truth)
-        reference_patterns = {
-            r'\bcell[_\s]?type\b': 1.0,
-            r'\bauthor[_\s]?cell[_\s]?type\b': 0.95,
-            r'\bann(otation)?[_\s]?(finest|level|label)\b': 0.9,
-            r'\bground[_\s]?truth\b': 0.95,
-            r'\breference\b': 0.85,
-            r'\blabel\b': 0.6,
-            r'\bontology\b': 0.7,
-            r'\bcurated\b': 0.8,
-            r'\bpredict(ed)?\b': 1.0,
-            r'(?i).*celltypist.*': 1.0,
-            r'\binfer(red)?\b': 0.95,
-            r'\bannot[_\s]?cell\b': 0.9,
-            r'\bauto(matic|mated)?\b': 0.85,
-            r'\bsctype\b': 0.9,
-            r'\bsingleR\b': 0.9,
-            r'(^|[_\s])annotation($|[_\s])': 0.9,
-            r'(^|[_\s])annotated($|[_\s])': 0.9,
-
-
-        }
-        
-        ## annotation
-        predicted_patterns = {
-            # Cluster-based
-            r'\b(leiden|louvain)\b': 1.0,
-            r'\bseurat[_\s]?clusters?\b': 1.0,
-            r'\bcluster(s|ing)?\b': 0.9,
-            r'\bRNA[_\s]?snn[_\s]?res': 0.95,
-            r'\bSCT[_\s]?snn[_\s]?res': 0.95,
-            r'\bgraph[_\s]?clust': 0.9,
-            r'\bkmeans\b': 0.85,
-        }
-        
-        # Metadata indicators (to exclude)
-        metadata_patterns = {
-            r'\b(batch|sample|donor|patient|replicate)\b': 1.0,
-            r'(?i).*(id|dataset).*': 1.0,
-            r'\b(tissue|organ|disease|condition)\b': 0.7,
-            r'\b(barcode|cell[_\s]?id|obs[_\s]?names)\b': 1.0,
-            r'\b(n[_\s]?(genes|counts|umis))\b': 0.9,
-            r'\b(percent|pct)[_\s]': 0.8,
-            r'\b(phase|cycle)\b': 0.7,
-        }
-        
-        # Calculate scores
-        for pattern, weight in reference_patterns.items():
-            if re.search(pattern, col_lower):
-                semantic_scores['reference_annotation'] = max(
-                    semantic_scores['reference_annotation'], weight
-                )
-        
-        for pattern, weight in predicted_patterns.items():
-            if re.search(pattern, col_lower):
-                semantic_scores['predicted_annotation'] = max(
-                    semantic_scores['predicted_annotation'], weight
-                )
-        
-        for pattern, weight in metadata_patterns.items():
-            if re.search(pattern, col_lower):
-                semantic_scores['metadata'] = max(
-                    semantic_scores['metadata'], weight
-                )
-        
-        return semantic_scores
-    
-    def analyze_obsm_semantics(self) -> List[str]:
-        """
-        Simple regex-based matching for all obsm embedding keys.
-        Returns list of all matched embedding keys.
-        
-        Returns:
-            List[str]: List of matched embedding keys
-        """
-        embedding_patterns = [
-            r'^(X_pca|X_umap|X_tsne|X_scvi|X_emb)$',
-            r'^X_diffmap$',
-            r'^X_draw_graph',
-            r'^X_.*pca',
-            r'^X_.*umap',
-            r'^X_.*tsne',
-            r'^X_',  # Match any X_ prefixed key
-        ]
-        
-        matched_keys = []
-        
-        for key in self.obsm_keys:
-            for pattern in embedding_patterns:
-                if re.search(pattern, key):
-                    matched_keys.append(key)
-                    break
-        
-        return matched_keys
-    
-    def analyze_column_statistics(self, col_name: str) -> Dict[str, float]:
-        # Analyze statistical properties of the column data.
-        
-        # Args:
-        #     col_name (str): Column name to analyze
-            
-        # Returns:
-        #     Dict[str, float]: Statistical profile of the column
-
-        data = self.adata.obs[col_name]
-        
-        stats_profile = {
-            'cardinality_ratio': 0.0,
-            'completeness': 0.0,
-            'is_categorical': 0.0,
-            'label_length_avg': 0.0,
-            'numeric_ratio': 0.0,
-            'n_unique': 0,
-        }
-        
-        # Completeness
-        non_null = data.notna().sum()
-        total = len(data)
-        stats_profile['completeness'] = non_null / total if total > 0 else 0
-        
-        # Cardinality
-        n_unique = data.nunique()
-        stats_profile['n_unique'] = n_unique
-        stats_profile['cardinality_ratio'] = n_unique / total if total > 0 else 0
-        
-        # Check if categorical
-        if data.dtype == 'object' or data.dtype.name == 'category':
-            stats_profile['is_categorical'] = 1.0
-            
-            valid_data = data.dropna()
-            if len(valid_data) > 0:
-                try:
-                    avg_len = valid_data.astype(str).str.len().mean()
-                    stats_profile['label_length_avg'] = avg_len
-                except:
-                    pass
-        else:
-            try:
-                numeric_data = pd.to_numeric(data, errors='coerce')
-                stats_profile['numeric_ratio'] = numeric_data.notna().sum() / total
-            except:
-                pass
-        
-        return stats_profile
-    
-    def score_reference_annotation(self, col_name: str) -> float:
-    
-        # Calculate confidence score for reference/ground truth annotation.
-        # Scoring: Semantic 40% + Statistical 60%
-        
-        # Args:
-        #     col_name (str): Column name to score
-            
-        # Returns:
-        #     float: Confidence score (0-1)
-
-        semantic = self.analyze_column_semantics(col_name)
-        stats = self.analyze_column_statistics(col_name)
-        
-        score = 0.0
-        
-        # Semantic contribution (40%)
-        score += semantic['reference_annotation'] * 0.4
-        score -= semantic['metadata'] * 0.6
-        
-        # Statistical indicators (60%)
-        if stats['is_categorical'] < 0.5:
-            return 0.0
-        
-        cardinality = stats['n_unique']
-        if 5 <= cardinality <= 200:
-            score += 0.25
-        elif cardinality < 5:
-            score += 0.05
-        elif cardinality > 500:
-            score -= 0.2
-        
-        score += stats['completeness'] * 0.2
-        
-        if stats['label_length_avg'] > 5:
-            score += 0.15
-        elif stats['label_length_avg'] > 10:
-            score += 0.25
-        
-        return np.clip(score, 0, 1)
-    
-    def score_predicted_annotation(self, col_name: str) -> float:
-        """
-        Calculate confidence score for predicted/cluster annotation.
-        Scoring: Semantic 60% + Statistical 40%
-        
-        Args:
-            col_name (str): Column name to score
-            
-        Returns:
-            float: Confidence score (0-1)
-        """
-        
-        semantic = self.analyze_column_semantics(col_name)
-        stats = self.analyze_column_statistics(col_name)
-        
-        score = 0.0
-        
-        # Semantic contribution (60%)
-        score += semantic['predicted_annotation'] * 0.6
-        score -= semantic['metadata'] * 0.6
-        
-        # Statistical indicators (40%)
-        cardinality = stats['n_unique']
-        if 2 <= cardinality <= 50:
-            score += 0.20
-        elif 51 <= cardinality <= 100:
-            score += 0.15
-        elif cardinality < 2:
-            return 0.0
-        elif cardinality > 200:
-            score -= 0.15
-        
-        score += stats['completeness'] * 0.10
-        
-        if stats['numeric_ratio'] > 0.9:
-            score += 0.10
-        elif stats['is_categorical'] > 0.5:
-            score += 0.10
-        
-        return np.clip(score, 0, 1)
-    
-    def detect_all_parameters(self, min_reference_score: float = 0.95,
-                             min_predicted_score: float = 0.6) -> Dict:
-        """
-        Detect all column parameters with confidence scores.
-        
-        Args:
-            min_reference_score (float): Minimum score for reference annotations
-            min_predicted_score (float): Minimum score for predicted annotations
-            
-        Returns:
-            Dict: Detected parameters with scores
-        """
-        results = {
-            'annotation': {
-                'reference': [],
-                'predicted': []
-            },
-            'clustering': {
-                'embeddings': [],
-                'cluster_labels': []
-            }
-        }
-        
-        # Scan .obs columns
-        for col in self.obs_columns:
-            if col.startswith('_') or col in ['index']:
-                continue
-            
-            ref_score = self.score_reference_annotation(col)
-            pred_score = self.score_predicted_annotation(col)
-            
-            if ref_score >= min_reference_score:
-                results['annotation']['reference'].append((col, ref_score))
-            
-            if pred_score >= min_predicted_score:
-                results['annotation']['predicted'].append((col, pred_score))
-                results['clustering']['cluster_labels'].append((col, pred_score))
-        
-        # Scan .obsm keys
-        matched_embeddings = self.analyze_obsm_semantics()
-        
-        for key in matched_embeddings:
-            embedding_data = self.adata.obsm[key]
-            shape = embedding_data.shape
-            n_components = embedding_data.shape[1] if len(embedding_data.shape) > 1 else 1
-            
-            results['clustering']['embeddings'].append((
-                key,
-                {
-                    'shape': shape,
-                    'n_components': n_components
-                }
-            ))
-        
-        # Sort results by score
-        results['annotation']['reference'].sort(key=lambda x: x[1], reverse=True)
-        results['annotation']['predicted'].sort(key=lambda x: x[1], reverse=True)
-        results['clustering']['cluster_labels'].sort(key=lambda x: x[1], reverse=True)
-        
-        return results
 
 
 def detect_scanpy(atlas_path: str) -> dict:
@@ -930,7 +617,12 @@ def create_metric_annot(
     adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
-    Calc annotation metrics
+    Calculate all annotation metrics via the comprehensive ``cal_annot``
+    pipeline (ref-vs-pred, embedding-based, batch/integration, graph).
+
+    The pipeline auto-detects reference/predicted columns, embedding keys,
+    and batch labels; runs every metric listed in ``METRICS_ANNOT``; and
+    writes results as tab-separated files in the annotation folder.
 
     Args:
         adata (AnnData): atlas to analyse
@@ -938,42 +630,33 @@ def create_metric_annot(
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
-    csv_path = files.get_file_path(
-        atlas_name,
-        folders.ANNOTATION,
-        check.TSV_EXTENSION,
-        args.path,
+    annotation_dir = folders.get_folder(args.path, folders.ANNOTATION)
+
+    logger.info("Running full annotation pipeline for %s", atlas_name)
+
+    # cal_annot auto-detects columns, runs all 16 metrics (ref-vs-pred
+    # plus embedding/batch/graph-dependent ones), and saves its own CSV.
+    df = metrics.cal_annot(
+        adata,
+        atlas_name=atlas_name,
+        all=True,               # run every metric in METRICS_ANNOT
+        file_dir=annotation_dir,
+        n_jobs=-1,
+        verbose=True,
     )
-    header = ["Annot_Sample", "Reference", "obs"] + args.metric_annot
-    df_annot = pd.DataFrame(columns=header)
-    obs_keys = get_viable_obs_annot(adata, args)
-    if len(obs_keys) > 1:
-        logger.debug(f"Calc annotation metrics for {atlas_name}")
-        ref_obs = obs_keys[0]
-        for i in range(1, len(obs_keys)):
-            obs_key = obs_keys[i]
-            dict_line = {
-                "Annot_Sample": [atlas_name + "_" + obs_key],
-                "Reference": [ref_obs],
-                "obs": [obs_key],
-            }
-            for metric in args.metric_annot:
-                logger.debug(
-                    f"Calc {metric} for {atlas_name} "
-                    f"with obs {obs_key} vs ref_obs {ref_obs}"
-                )
-                metric_value, running_time = metrics.calc_metric_annot_scanpy(
-                    metric, adata, obs_key, ref_obs
-                )
-                dict_line[metric] = metric_value
-                dict_line[f"{metric}_running_time"] = running_time
-            df_line = pd.DataFrame(dict_line)
-            df_annot = pd.concat(
-                [df_annot, df_line], ignore_index=True, axis=0
-            )
-        df_annot.to_csv(csv_path, index=False, sep="\t")
+
+    # Also write a MultiQC-compatible TSV in the annotation folder.
+    if not df.empty:
+        csv_path = files.get_file_path(
+            atlas_name,
+            folders.ANNOTATION,
+            check.TSV_EXTENSION,
+            args.path,
+        )
+        df.to_csv(csv_path, index=False, sep="\t")
+        logger.info("Annotation metrics saved to %s", csv_path)
     else:
-        logger.debug(f"No viable obs_key was found for {atlas_name}")
+        logger.warning("No annotation metrics calculated for %s", atlas_name)
 
 
 def create_metric_dimred(
@@ -1149,22 +832,23 @@ def col_cluster(adata: AnnData,
                 max_results: int = 5) -> Optional[List[str]]:
     """
     Detect cluster label columns in AnnData object.
-    
-    This is an alias for col_annotation_pred() as cluster labels and predicted
-    annotations are detected using the same logic in CheckAtlas.
-    
+
+    Uses the dedicated cluster-label detector (Leiden, Louvain, k‑means,
+    Seurat clusters, PhenoGraph, etc.) which applies semantic 70 % +
+    statistical 30 % scoring tuned for algorithmic clustering outputs.
+
     Args:
         adata (AnnData): Scanpy AnnData object to analyze
         min_score (float): Minimum confidence score threshold (0-1). Default: 0.5
         return_all (bool): If True, return with scores. Default: False
         max_results (int): Maximum number of columns to return. Default: 5
-        
+
     Returns:
         List[str] or List[Tuple[str, float]] or None:
             - If return_all=False: List of column names sorted by confidence
             - If return_all=True: List of (column_name, score) tuples
             - None if no columns found
-            
+
     Example:
         >>> import scanpy as sc
         >>> import checkatlas.atlas as atlas
@@ -1172,7 +856,18 @@ def col_cluster(adata: AnnData,
         >>> cluster_cols = atlas.col_cluster(adata)
         >>> print(f"Cluster columns: {cluster_cols}")
     """
-    return col_annotation_pred(adata, min_score, return_all, max_results)
+    detector = CheckAtlasColumnDetector(adata)
+    results = detector.detect_all_parameters(min_cluster_score=min_score)
+
+    clust_candidates = results["clustering"]["cluster_labels"][:max_results]
+
+    if not clust_candidates:
+        return None
+
+    if return_all:
+        return clust_candidates
+    else:
+        return [col for col, _score in clust_candidates]
 
 
 def col_dimred(adata: AnnData,
