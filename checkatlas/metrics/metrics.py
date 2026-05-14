@@ -56,8 +56,7 @@ def cal_annot(adata, atlas_name=None, all=False, file_dir=None,
                        [Atlas Name, Metric Name, Reference/Input 1, Prediction/Input 2, Value, Time (s)]
     """
     import inspect
-    # Import here to avoid circular dependency
-    from ..atlas import CheckAtlasColumnDetector
+    from ..utils.col_detector import CheckAtlasColumnDetector
     
     # Set file directory
     if file_dir is None:
@@ -445,7 +444,7 @@ def cal_cluster(adata, atlas_name=None, all_metrics=True, file_dir=None,
     import gc
     import inspect
     from scipy.sparse import issparse
-    from ..atlas import CheckAtlasColumnDetector
+    from ..utils.col_detector import CheckAtlasColumnDetector
     
     # Set file directory
     if file_dir is None:
@@ -736,7 +735,7 @@ def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
                       [Atlas Name, Metric Name, Low Dim Key, High Dim Key, Value, Time (s)]
     """
     # Import here to avoid circular dependency
-    from ..atlas import CheckAtlasColumnDetector
+    from ..utils.col_detector import CheckAtlasColumnDetector
     import scanpy as sc
     from sklearn.metrics import pairwise_distances
     from sklearn.neighbors import NearestNeighbors
