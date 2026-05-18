@@ -275,6 +275,7 @@ class CheckAtlasColumnDetector:
         )
         self._semantic_cache: Dict[str, Dict[str, float]] = {}
         self._stats_cache: Dict[str, Dict[str, float]] = {}
+        self.results_cache: Dict[str, Any] = {}
 
     # ── Semantic analysis ───────────────────────────────────────────
 
@@ -608,6 +609,108 @@ class CheckAtlasColumnDetector:
 
         return float(np.clip(score, 0.0, 1.0))
 
+    # ── Batch key detection ───────────────────────────────────────
+
+    _BATCH_CARDINALITY_RANGE = (2, 200)
+    _BATCH_MAX_CARDINALITY_RATIO = 0.3
+
+    def detect_batch_keys(
+        self,
+        min_batch_score: float = 0.5,
+        exclude_ref_pred_cluster: bool = True,
+    ) -> List[Tuple[str, float]]:
+        """Detect columns that likely represent batch / experimental covariates.
+
+        Scores every ``.obs`` column against ``_METADATA_PATTERNS``
+        (batch, donor, sample, tissue, assay, protocol, etc.) and
+        filters by cardinality — batch factors should have 2–1000
+        unique values and be categorical in nature.
+
+        Columns already classified as reference, predicted, or cluster
+        annotations are excluded by default.
+
+        Parameters
+        ----------
+        min_batch_score : float
+            Minimum confidence score (default 0.5).  Includes any
+            column whose name matches a metadata pattern.
+        exclude_ref_pred_cluster : bool
+            If True, columns already identified as reference /
+            predicted / cluster labels are removed from the result.
+
+        Returns
+        -------
+        List[Tuple[str, float]]
+            Sorted list of ``(column_name, batch_confidence_score)``.
+        """
+        ref_pred_cluster: set[str] = set()
+        if exclude_ref_pred_cluster:
+            for col, _ in self.results_cache.get("annotation", {}).get(
+                "reference", []
+            ):
+                ref_pred_cluster.add(col)
+            for col, _ in self.results_cache.get("annotation", {}).get(
+                "predicted", []
+            ):
+                ref_pred_cluster.add(col)
+            for col, _ in self.results_cache.get("clustering", {}).get(
+                "cluster_labels", []
+            ):
+                ref_pred_cluster.add(col)
+
+        batch_keys: list[tuple[str, float]] = []
+
+        for col in self.obs_columns:
+            # Skip system columns (unless they contain 'batch' — e.g. _scvi_batch)
+            is_batch_named = 'batch' in col.lower()
+            if col.startswith("_") and not is_batch_named:
+                continue
+            if col in ref_pred_cluster:
+                continue
+
+            semantic = self.analyze_column_semantics(col)
+            stats = self.analyze_column_statistics(col)
+
+            # ── "batch" in name → force-include (cardinality still applies) ─
+            if is_batch_named:
+                n_unique = int(stats["n_unique"])
+                if n_unique < 2 or n_unique > self._BATCH_CARDINALITY_RANGE[1]:
+                    continue
+                batch_keys.append((col, 1.0))
+                continue
+
+            if semantic["metadata"] < min_batch_score:
+                continue
+
+            n_unique = int(stats["n_unique"])
+            if n_unique < self._BATCH_CARDINALITY_RANGE[0]:
+                continue
+            if n_unique > self._BATCH_CARDINALITY_RANGE[1]:
+                continue
+
+            cardinality_ratio = stats["cardinality_ratio"]
+            if cardinality_ratio > self._BATCH_MAX_CARDINALITY_RATIO:
+                continue
+
+            is_cat = stats["is_categorical"] > 0.5
+            is_num = stats["numeric_ratio"] > 0.9
+            completeness = stats["completeness"]
+            n_unique = int(stats["n_unique"])
+
+            score = semantic["metadata"]
+            if is_cat or is_num:
+                score += 0.15
+            score += completeness * 0.10
+            if n_unique <= 50:
+                score += 0.10
+
+            score = float(np.clip(score, 0.0, 1.0))
+            if score >= min_batch_score:
+                batch_keys.append((col, round(score, 3)))
+
+        batch_keys.sort(key=lambda x: x[1], reverse=True)
+        return batch_keys
+
     # ── Main detection entry-point ──────────────────────────────────
 
     def detect_all_parameters(
@@ -656,6 +759,7 @@ class CheckAtlasColumnDetector:
                 "embeddings": [],
                 "cluster_labels": [],
             },
+            "batch": [],
         }
 
         # ── Scan .obs columns ────────────────────────────────────
@@ -724,5 +828,9 @@ class CheckAtlasColumnDetector:
         results["clustering"]["cluster_labels"].sort(
             key=lambda x: x[1], reverse=True
         )
+
+        # ── Detect batch / covariate keys ─────────────────────────
+        self.results_cache = results
+        results["batch"] = self.detect_batch_keys()
 
         return results

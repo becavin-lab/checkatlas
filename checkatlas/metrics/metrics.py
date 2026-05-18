@@ -76,10 +76,11 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
     pred_keys = [x[0] for x in params['annotation']['predicted']]
     embedding_keys = [x[0] for x in params['clustering']['embeddings']]
     
-    # Detect batch keys (heuristic: look for 'batch' in metadata or column name)
-    # CheckAtlasColumnDetector identifies metadata, but doesn't explicitly label 'batch'.
-    # We'll look for columns containing 'batch' or use a default list if provided in adata.uns
-    batch_keys = [col for col in adata.obs.columns if 'batch' in col.lower()]
+    # Detect batch keys using the column detector (semantic + statistical)
+    # Falls back to the simple 'batch' substring heuristic if detector returns nothing
+    batch_keys = [x[0] for x in params.get("batch", [])]
+    if not batch_keys:
+        batch_keys = [col for col in adata.obs.columns if 'batch' in col.lower()]
     
     # Define metrics to run
     if metric_list is not None:
@@ -299,39 +300,51 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
                     except Exception as e:
                         logger.warning(f"Failed to calculate cLISI for {label}: {e}")
 
-            # 4. Batch Metrics (kBET, PCR)
+            # 4. Batch Metrics (kBET, PCR) — evaluate per (embedding × batch)
             elif metric in batch_metrics:
                 if not batch_keys:
                     continue
                 for batch in batch_keys:
-                    try:
-                        # kBET and PCR take adata and batch_label
-                        # They might use X or embedding internally.
-                        # kBET usually uses X or embedding.
-                        # My updated kBET uses adata.X.
-                        # PCR uses adata.X.
-                        # If they support embeddings, we should loop embeddings?
-                        # The signatures I saw: run(adata, batch_label, ...)
-                        # They use adata.X by default.
-                        # If we want to test embeddings, we might need to swap adata.X or pass embedding?
-                        # For now, run on default adata.X (or whatever run uses).
-                        pair_start = time.time()
-                        sig = inspect.signature(metric_module.run)
-                        kw = {'batch_label': batch}
-                        if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
-                        if 'verbose' in sig.parameters: kw['verbose'] = False
-                        val = metric_module.run(adata, **kw)
-                        pair_elapsed = time.time() - pair_start
-                        results.append({
-                            'Atlas Name': atlas_name,
-                            'Metric Name': metric,
-                            'Reference/Input 1': 'adata',
-                            'Prediction/Input 2': batch,
-                            'Value': val,
-                            'Time (s)': round(pair_elapsed, 3)
-                        })
-                    except Exception as e:
-                        logger.warning(f"Failed to calculate {metric} for {batch}: {e}")
+                    if embedding_keys:
+                        for emb in embedding_keys:
+                            try:
+                                X_emb = adata.obsm[emb]
+                                pair_start = time.time()
+                                sig = inspect.signature(metric_module.run)
+                                kw = {}
+                                if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
+                                if 'verbose' in sig.parameters: kw['verbose'] = False
+                                val = metric_module.run(X_emb, adata.obs[batch], **kw)
+                                pair_elapsed = time.time() - pair_start
+                                results.append({
+                                    'Atlas Name': atlas_name,
+                                    'Metric Name': metric,
+                                    'Reference/Input 1': emb,
+                                    'Prediction/Input 2': batch,
+                                    'Value': val,
+                                    'Time (s)': round(pair_elapsed, 3)
+                                })
+                            except Exception as e:
+                                logger.warning(f"Failed to calculate {metric} for {emb} vs {batch}: {e}")
+                    else:
+                        try:
+                            pair_start = time.time()
+                            sig = inspect.signature(metric_module.run)
+                            kw = {}
+                            if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
+                            if 'verbose' in sig.parameters: kw['verbose'] = False
+                            val = metric_module.run(adata.X, adata.obs[batch], **kw)
+                            pair_elapsed = time.time() - pair_start
+                            results.append({
+                                'Atlas Name': atlas_name,
+                                'Metric Name': metric,
+                                'Reference/Input 1': 'X',
+                                'Prediction/Input 2': batch,
+                                'Value': val,
+                                'Time (s)': round(pair_elapsed, 3)
+                            })
+                        except Exception as e:
+                            logger.warning(f"Failed to calculate {metric} for {batch}: {e}")
 
             # 5. Graph Connectivity
             elif metric in graph_metrics:
@@ -411,6 +424,18 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
         pbar.set_postfix_str(f"Time: {metric_elapsed:.2f}s", refresh=True)
 
     df = pd.DataFrame(results)
+    
+    # Clear LISI and kBET kNN caches to free memory
+    try:
+        from .annot import lisi as _lisi
+        _lisi._clear_knn_cache()
+    except Exception:
+        pass
+    try:
+        from .annot import kbet as _kbet
+        _kbet._clear_knn_cache()
+    except Exception:
+        pass
     
     # Save to CSV if results exist
     if not df.empty:
