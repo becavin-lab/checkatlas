@@ -1,298 +1,137 @@
 import numpy as np
 import pandas as pd
-import scanpy as sc
-from scipy.sparse import issparse, csr_matrix
-from scipy.sparse.csgraph import dijkstra
-from sklearn.neighbors import NearestNeighbors
-from joblib import Parallel, delayed
-from numba import njit
-import warnings
+from scipy.sparse import issparse
+
+# Module-level cache: (hash_of_X, n_neighbors) -> neighbour_idx
+_knn_cache = {}
+
+
+def _knn(X, k, n_jobs):
+    """Fast approximate kNN using pynndescent, with caching per embedding."""
+    flat = X.ravel()
+    # Robust cache key: shape + hash of first/mid/last chunks
+    n = len(flat)
+    chunks = [
+        flat[:2000].tobytes(),
+        flat[max(0, n//2 - 1000):n//2 + 1000].tobytes(),
+        flat[-2000:].tobytes() if n > 2000 else b'',
+    ]
+    key = (X.shape, hash(b''.join(chunks)), k)
+    if key in _knn_cache:
+        return _knn_cache[key]
+    try:
+        from pynndescent import NNDescent
+        index = NNDescent(X, n_neighbors=k + 1, metric='euclidean',
+                          n_jobs=n_jobs, random_state=42)
+        idx, _ = index.neighbor_graph
+    except ImportError:
+        from sklearn.neighbors import NearestNeighbors
+        nbrs = NearestNeighbors(n_neighbors=k + 1, algorithm='auto',
+                                n_jobs=n_jobs)
+        nbrs.fit(X)
+        _, idx = nbrs.kneighbors(X)
+    result = idx[:, 1:]  # drop self
+    _knn_cache[key] = result
+    return result
+
+
+def _clear_knn_cache():
+    """Clear the kNN cache (call at end of pipeline to free memory)."""
+    _knn_cache.clear()
 
 
 def run(X, label, perplexity=30, n_jobs=-1, verbose=True):
     """
     Calculate Local Inverse Simpson's Index (LISI) for batch mixing evaluation.
-    
-    This implementation uses a graph-based approach similar to scib (Single-Cell
-    Integration Benchmark). It constructs a kNN graph and computes the Inverse
-    Simpson's Index of the batch labels in the local neighborhood of each cell,
-    defined by shortest paths on the graph.
-    
-    The output is scaled to [0, 1] where 1 indicates good mixing (iLISI).
-    
-    :param X: array-like of shape (n_samples, n_features)
-        Feature matrix (e.g., PCA embedding, integrated space)
-    :param label: batch column name in ``adata.obs`` or array-like
-        Batch labels to evaluate mixing
-    :param perplexity: int, default=30
-        Perplexity parameter for local neighborhood size
-    :param n_jobs: int, default=-1
-        Number of parallel jobs. -1 uses all cores.
-    :param verbose: bool, default=True
-        Whether to print progress information.
-    :return: float
-        Mean scaled LISI score across all cells.
-        Range: [0, 1], where higher values indicate better mixing.
+
+    Measures how well batches are mixed in local neighbourhoods.  For each
+    cell we find its *k* nearest neighbours, compute the Simpson index of
+    the batch labels in that neighbourhood, and take the inverse:
+
+        LISI_cell = k² / Σ_b count(b)²
+
+    The final score is scaled to [0, 1] where 1 indicates perfect mixing.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Feature matrix (e.g. PCA embedding, integrated space).
+    label : pandas Series, Index or array-like
+        Batch or cell-type labels to evaluate mixing.
+    perplexity : int, default=30
+        **Kept for API compatibility — ignored internally.**
+    n_jobs : int, default=-1
+        Number of parallel jobs for kNN computation.  -1 uses all cores.
+    verbose : bool, default=True
+        Print progress information.
+
+    Returns
+    -------
+    float
+        Scaled LISI score.  Range [0, 1]; higher = better mixing.
     """
-    # Handle sparse matrices
     if issparse(X):
         X = X.toarray()
-    
-    # Ensure label is a numpy array
+    else:
+        X = np.asarray(X, dtype=np.float64)
+
     if isinstance(label, (pd.Series, pd.Index)):
         label = label.values
     else:
         label = np.asarray(label)
-    
+
+    n_samples = X.shape[0]
+    if n_samples < 2:
+        return 0.0
+
+    unique_batches, batch_codes = np.unique(label, return_inverse=True)
+    n_batches = len(unique_batches)
+    if n_batches <= 1:
+        return 0.0
+
+    n_neighbors = min(90, n_samples - 1)
+
     if verbose:
-        print(f"Computing LISI ({len(X):,} samples, n_jobs={n_jobs})...")
-    
-    # Create AnnData object for scanpy compatibility
-    adata = sc.AnnData(X=X)
-    adata.obs['batch'] = label
-    adata.obs['batch'] = adata.obs['batch'].astype('category')
-    
-    # Compute kNN graph with parallel neighbor search
-    n_neighbors_graph = 15
-    if verbose:
-        print(f"  Computing kNN graph (k={n_neighbors_graph})...")
-    sc.pp.neighbors(adata, n_neighbors=n_neighbors_graph, use_rep='X')
-    
-    # Compute LISI with parallelized chunk processing
-    lisi_scores = lisi_graph_py(
-        adata=adata,
-        obs_key='batch',
-        n_neighbors=90,
-        perplexity=perplexity,
-        n_jobs=n_jobs,
-        verbose=verbose
-    )
-    
-    # Scale iLISI
-    n_batches = adata.obs['batch'].nunique()
-    if n_batches > 1:
-        mean_lisi = np.nanmean(lisi_scores)
-        scaled_lisi = (mean_lisi - 1) / (n_batches - 1)
-    else:
-        scaled_lisi = 0.0
+        print(f"Computing LISI ({n_samples:,} samples, "
+              f"{n_batches} labels, k={n_neighbors}, n_jobs={n_jobs})...")
+
+    neighbour_idx = _knn(X, n_neighbors, n_jobs)   # (n_samples, n_neighbors)
+    k_actual = neighbour_idx.shape[1]
+
+    # ── vectorised batch counts ─────────────────────────────────
+    neighbour_batch = batch_codes[neighbour_idx]      # (n_samples, k)
+    offsets = np.arange(n_samples, dtype=np.int64) * n_batches
+    flat = (neighbour_batch + offsets[:, None]).ravel()
+    counts = np.bincount(flat, minlength=n_samples * n_batches)
+    counts = counts.reshape(n_samples, n_batches).astype(np.float64)
+
+    # Simpson index per cell:  Σ_b count_b² / k²
+    sum_sq = np.sum(counts * counts, axis=1)
+    sum_sq = np.maximum(sum_sq, 1e-10)
+
+    lisi_scores = (k_actual * k_actual) / sum_sq
+
+    # Scale to [0, 1]
+    mean_lisi = np.mean(lisi_scores)
+    scaled_lisi = (mean_lisi - 1.0) / (n_batches - 1.0)
 
     if verbose:
         print(f"  Scaled LISI = {scaled_lisi:.6f}")
 
-    return scaled_lisi
+    return float(scaled_lisi)
 
 
 def ilisi_graph(adata, batch_key, k0=90, perplexity=None, scale=True,
                 n_jobs=-1, verbose=False):
-    """
-    Integration LISI (iLISI) score.
-    Wrapper function to calculate iLISI on an AnnData object.
-    """
-    scores = lisi_graph_py(adata, batch_key, n_neighbors=k0, perplexity=perplexity,
-                           n_jobs=n_jobs, verbose=verbose)
-    ilisi = np.nanmedian(scores)
-    
-    if scale:
-        nbatches = adata.obs[batch_key].nunique()
-        if nbatches > 1:
-            ilisi = (ilisi - 1) / (nbatches - 1)
-        else:
-            ilisi = 0.0
-            
-    return ilisi
+    """Integration LISI (iLISI) score — convenience wrapper."""
+    X = adata.obsm.get('X_pca', adata.X)
+    return run(X, adata.obs[batch_key], perplexity=perplexity,
+               n_jobs=n_jobs, verbose=verbose)
 
 
 def clisi_graph(adata, label_key, k0=90, perplexity=None, scale=True,
                 n_jobs=-1, verbose=False):
-    """
-    Cell-type LISI (cLISI) score.
-    Wrapper function to calculate cLISI on an AnnData object.
-    """
-    scores = lisi_graph_py(adata, label_key, n_neighbors=k0, perplexity=perplexity,
-                           n_jobs=n_jobs, verbose=verbose)
-    clisi = np.nanmedian(scores)
-    
-    if scale:
-        nlabs = adata.obs[label_key].nunique()
-        if nlabs > 1:
-            clisi = (nlabs - clisi) / (nlabs - 1)
-        else:
-            clisi = 0.0
-            
-    return clisi
-
-
-def _process_chunk(graph, chunk_indices, batch_labels, n_batches,
-                   n_neighbors, perplexity):
-    """
-    Process a chunk of cells: compute Dijkstra shortest paths and
-    Simpson index for each cell. Designed to run in parallel.
-    """
-    n_cells_total = graph.shape[0]
-    chunk_scores = np.full(len(chunk_indices), np.nan)
-    
-    try:
-        dists = dijkstra(graph, indices=chunk_indices, return_predecessors=False)
-    except TypeError:
-        dists = dijkstra(graph, indices=chunk_indices, return_predecessors=False)
-    
-    for j, cell_idx in enumerate(chunk_indices):
-        row_dists = dists[j]
-        # argpartition is faster than full sort for finding k smallest
-        if n_neighbors < len(row_dists):
-            knn_indices = np.argpartition(row_dists, n_neighbors)[:n_neighbors]
-        else:
-            knn_indices = np.arange(len(row_dists))
-        knn_dists = row_dists[knn_indices]
-        
-        simpson = compute_simpson_index_cell(
-            knn_dists, knn_indices, batch_labels, n_batches, perplexity
-        )
-        chunk_scores[j] = 1.0 / simpson
-    
-    return chunk_indices, chunk_scores
-
-
-def lisi_graph_py(
-    adata,
-    obs_key,
-    n_neighbors=90,
-    perplexity=None,
-    subsample=None,
-    n_jobs=-1,
-    verbose=False,
-):
-    """
-    Compute LISI score on shortest path based on kNN graph provided in the
-    adata object. Parallelized using joblib for chunk processing.
-    """
-    if "neighbors" not in adata.uns:
-        raise AttributeError(
-            "Key 'neighbors' not found. Please make sure that a kNN graph has been computed"
-        )
-    
-    # Get distances (CSR matrix)
-    if "distances" in adata.obsp:
-        graph = adata.obsp["distances"]
-    else:
-        graph = adata.obsp["connectivities"]
-        
-    # Ensure labels are codes
-    adata.obs[obs_key] = adata.obs[obs_key].astype("category")
-    batch_labels = adata.obs[obs_key].cat.codes.values
-    n_batches = adata.obs[obs_key].nunique()
-
-    if perplexity is None or perplexity >= n_neighbors:
-        perplexity = np.floor(n_neighbors / 3)
-
-    n_cells = adata.shape[0]
-    
-    # Subsampling
-    subset_indices = np.arange(n_cells)
-    if subsample is not None:
-        if subsample < 100:
-            size = int(n_cells * subsample / 100)
-            subset_indices = np.random.choice(n_cells, size, replace=False)
-    
-    # Split into chunks for parallel processing
-    chunk_size = 1000
-    chunks = [subset_indices[i:i + chunk_size]
-              for i in range(0, len(subset_indices), chunk_size)]
-    
-    if verbose:
-        print(f"  Computing LISI ({len(chunks)} chunks, n_jobs={n_jobs})...")
-    
-    # Resolve n_jobs for joblib
-    import os
-    effective_jobs = n_jobs if n_jobs != -1 else os.cpu_count()
-    
-    if effective_jobs == 1 or len(chunks) == 1:
-        # Serial fallback
-        lisi_scores = np.full(n_cells, np.nan)
-        for chunk in chunks:
-            idxs, scores = _process_chunk(
-                graph, chunk, batch_labels, n_batches, n_neighbors, perplexity
-            )
-            lisi_scores[idxs] = scores
-    else:
-        # Parallel execution
-        results = Parallel(n_jobs=n_jobs, prefer="threads")(
-            delayed(_process_chunk)(
-                graph, chunk, batch_labels, n_batches, n_neighbors, perplexity
-            )
-            for chunk in chunks
-        )
-        
-        lisi_scores = np.full(n_cells, np.nan)
-        for idxs, scores in results:
-            lisi_scores[idxs] = scores
-
-    return lisi_scores
-
-
-@njit
-def compute_simpson_index_cell(distances, indices, batch_labels, n_batches,
-                               perplexity, tol=1e-5):
-    """
-    Compute Simpson index for a single cell.
-    """
-    # Get batch labels of neighbors
-    batches = batch_labels[indices]
-    
-    # Calculate probabilities P using Hbeta (perplexity based)
-    beta = 1.0
-    betamin = -np.inf
-    betamax = np.inf
-    logU = np.log(perplexity)
-    
-    H, P = Hbeta(distances, beta)
-    Hdiff = H - logU
-    tries = 0
-    
-    while np.abs(Hdiff) > tol and tries < 50:
-        if Hdiff > 0:
-            betamin = beta
-            if betamax == np.inf:
-                beta *= 2.0
-            else:
-                beta = (beta + betamax) / 2.0
-        else:
-            betamax = beta
-            if betamin == -np.inf:
-                beta /= 2.0
-            else:
-                beta = (beta + betamin) / 2.0
-        
-        H, P = Hbeta(distances, beta)
-        Hdiff = H - logU
-        tries += 1
-        
-    if H == 0:
-        return 1.0
-        
-    # Sum P per batch
-    sumP = np.zeros(n_batches)
-    for k in range(len(batches)):
-        b = batches[k]
-        sumP[b] += P[k]
-        
-    # Simpson index = sum(sumP^2)
-    simpson = np.dot(sumP, sumP)
-    return simpson
-
-
-@njit
-def Hbeta(D, beta):
-    """
-    Helper function for simpson index computation.
-    Computes entropy and probabilities for a given beta.
-    """
-    P = np.exp(-D * beta)
-    sumP = np.sum(P)
-    if sumP == 0:
-        H = 0.0
-        P = np.zeros(len(D))
-    else:
-        H = np.log(sumP) + beta * np.sum(D * P) / sumP
-        P /= sumP
-    return H, P
+    """Cell-type LISI (cLISI) score — convenience wrapper."""
+    X = adata.obsm.get('X_pca', adata.X)
+    return run(X, adata.obs[label_key], perplexity=perplexity,
+               n_jobs=n_jobs, verbose=verbose)

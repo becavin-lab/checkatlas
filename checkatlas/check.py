@@ -182,7 +182,31 @@ def read_list_atlases(checkatlas_path: str) -> tuple:
             chk_files.get_table_seurat_path(checkatlas_path)
         )
         clean_seurat_list.index = clean_seurat_list[ATLAS_NAME_KEY]
+    if clean_scanpy_list.empty and clean_cellranger_list.empty and clean_seurat_list.empty:
+        clean_scanpy_list = _scan_raw_atlases(checkatlas_path)
     return clean_scanpy_list, clean_cellranger_list, clean_seurat_list
+
+
+def _scan_raw_atlases(checkatlas_path: str) -> pd.DataFrame:
+    records = []
+    for fname in sorted(os.listdir(checkatlas_path)):
+        if not fname.endswith(".h5ad"):
+            continue
+        fpath = os.path.join(checkatlas_path, fname)
+        if not os.path.isfile(fpath):
+            continue
+        atlas_name = os.path.splitext(fname)[0]
+        records.append({
+            ATLAS_NAME_KEY: atlas_name,
+            ATLAS_TYPE_KEY: "AnnData",
+            ATLAS_EXTENSION_KEY: ".h5ad",
+            ATLAS_PATH_KEY: os.path.abspath(fpath),
+        })
+    if not records:
+        return pd.DataFrame()
+    df = pd.DataFrame(records)
+    df.index = df[ATLAS_NAME_KEY]
+    return df
 
 
 def generate_fig_html(checkatlas_path: str, type_viz: str):
