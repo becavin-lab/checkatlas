@@ -63,6 +63,7 @@ def main() -> None:  # pragma: no cover
         atlas_info = clean_seurat_list[args.atlas_name]
     else:
         logger.error(f"Cannot found {args.atlas_name}")
+        sys.exit(1)
     logger.debug(f"Found atlas: {atlas_info}")
     # Run process
     process = args.process

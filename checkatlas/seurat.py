@@ -518,7 +518,10 @@ def create_metric_annot(
         folders.get_folder(args.path, folders.ANNOTATION),
         atlas_name + check.TSV_EXTENSION,
     )
-    header = ["Annot_Sample", "Reference", "obs"] + args.metric_annot
+    metric_annot = args.metric_annot
+    if metric_annot is None:
+        metric_annot = metrics.METRICS_ANNOT
+    header = ["Annot_Sample", "Reference", "obs"] + metric_annot
     df_annot = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(seurat, args)
     if len(obs_keys) > 1:
@@ -532,7 +535,7 @@ def create_metric_annot(
                     "Reference": [ref_obs],
                     "obs": [obs_key],
                 }
-                for metric in args.metric_annot:
+                for metric in metric_annot:
                     logger.debug(
                         f"Calc {metric} for {atlas_name} "
                         f"with obs {obs_key} vs ref_obs {ref_obs}"

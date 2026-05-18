@@ -1,62 +1,196 @@
-from sklearn.metrics import silhouette_score
-from scipy.sparse import issparse
 import numpy as np
+from sklearn.metrics import pairwise_distances
+from scipy.sparse import issparse
 
 
-def run(X, labels, n_jobs=-1, verbose=True):
+def run(X, labels, n_jobs=-1, verbose=True, sample_size=None):
     """
-    Calculate the Average Silhouette Width for clustering quality evaluation.
-    
-    The Average Silhouette Width (Silhouette Score) measures how similar an object is
-    to its own cluster compared to other clusters. It combines both cohesion and 
-    separation aspects of clustering.
-    
+    Calculate the Average Silhouette Width for clustering quality.
+
+    Silhouette measures how well each point fits within its assigned
+    cluster relative to its nearest neighbouring cluster.
+    Values range from -1 (misassigned) to +1 (well assigned).
+
+    **Large‑data strategy**: intra‑cluster distances *a(i)* are computed
+    exactly via bounded‑memory chunked pairwise blocks.  Inter‑cluster
+    distances *b(i)* use the squared‑Euclidean centroid‑expansion
+    formula — an O(N·K·d) approximation that avoids the full O(N²)
+    distance matrix entirely while preserving cluster ordering.
+
     `Average Silhouette Width readthedocs
     <https://checkatlas.readthedocs.io/en/latest/metrics/clustering/silhouette/>`__
 
-    :param X: array-like of shape (n_samples, n_features)
-        Feature matrix containing the data points
-    :param labels: array-like of shape (n_samples,)
-        Cluster labels for each sample
-    :param n_jobs: int, default=-1
-        Number of parallel jobs for distance computation. -1 uses all cores.
-    :param verbose: bool, default=True
-        Whether to print progress information.
-    :return: float
-        The mean Silhouette Coefficient over all samples.
-        Range: [-1, 1], where higher values indicate better clustering.
-        
-    Notes
-    -----
-    The Silhouette Coefficient for a single sample is defined as:
-    
-    .. math::
-        s = \\frac{b - a}{\\max(a, b)}
-    
-    where:
-    - a: mean intra-cluster distance (cohesion)
-    - b: mean nearest-cluster distance (separation)
-    
-    The average over all samples gives the Average Silhouette Width.
-    
-    Interpretation:
-    - Values close to +1: Sample is well matched to its own cluster
-    - Values close to 0: Sample is on or very close to decision boundary
-    - Values close to -1: Sample might be assigned to wrong cluster
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Feature matrix.  Sparse inputs are densified.
+    labels : array-like of shape (n_samples,)
+        Cluster labels.
+    n_jobs : int, default=-1
+        Parallel jobs (-1 = all cores).
+    verbose : bool, default=True
+        Print progress.
+    sample_size : int, optional
+        **Ignored** — always processes every sample.
+
+    Returns
+    -------
+    float
+        Mean silhouette coefficient.  Range [-1, 1].
     """
     if issparse(X):
         X = X.toarray()
     else:
         X = np.asarray(X)
 
+    labels = np.asarray(labels)
+    n_total = len(X)
+
+    if n_total != len(labels):
+        raise ValueError(
+            f"X and labels must have same length. "
+            f"Got X: {n_total}, labels: {len(labels)}"
+        )
+
+    unique_labels = np.unique(labels)
+    n_clusters = len(unique_labels)
+    if n_clusters < 2:
+        return 0.0
+
     if verbose:
-        n_clusters = len(np.unique(labels))
-        print(f"Computing Average Silhouette Width ({len(X):,} samples, "
-              f"{n_clusters} clusters, n_jobs={n_jobs})...")
-    
-    score = silhouette_score(X, labels, metric='euclidean', n_jobs=n_jobs)
-    
+        print(
+            f"Computing Average Silhouette Width "
+            f"({n_total:,} samples, {n_clusters} clusters, n_jobs={n_jobs})..."
+        )
+
+    # ── Step 1: a(i) — exact intra-cluster mean Euclidean distance ─
+    a_values = np.zeros(n_total)
+    cluster_sizes = {}
+
+    for lbl in unique_labels:
+        idx = np.where(labels == lbl)[0]
+        nk = len(idx)
+        cluster_sizes[lbl] = nk
+        if nk < 2:
+            continue
+        Xk = X[idx]
+        if verbose and nk > 5000:
+            print(f"  Intra-cluster '{lbl}' ({nk:,} samples)…")
+
+        _exact_intra_mean(Xk, a_values, idx, n_jobs=n_jobs, chunk=2000)
+
+    # ── Step 2: b(i) via centroid-expansion formula ───────────────
+    # For point i and cluster C:
+    #   mean_sq_dist(i, C) = ||i||² + mean(||c||²) - 2·i·centroid
+    #   b_approx(i) = min_{C≠cl(i)} sqrt(mean_sq_dist(i, C))
+    #
+    # Pre-compute per-cluster statistics.
+    norms_sq = np.einsum("ij,ij->i", X, X)  # ||x||² per point
+
+    cluster_centroids = {}
+    cluster_mean_norms = {}
+    for lbl in unique_labels:
+        idx = np.where(labels == lbl)[0]
+        cluster_centroids[lbl] = X[idx].mean(axis=0)
+        cluster_mean_norms[lbl] = norms_sq[idx].mean()
+
+    b_values = np.full(n_total, np.inf)
+
+    # For each cluster, compute b(i) against every *other* cluster in
+    # one vectorised block (O(|Ck|·K·d)).
+    for lbl_i in unique_labels:
+        idx_i = np.where(labels == lbl_i)[0]
+        Xi = X[idx_i]
+        ni = len(idx_i)
+
+        # All data for points in this cluster
+        norms_i = norms_sq[idx_i]  # shape (ni,)
+
+        # For each other cluster, compute mean_sq_dist block
+        for lbl_j in unique_labels:
+            if lbl_i == lbl_j:
+                continue
+            centroid_j = cluster_centroids[lbl_j]       # shape (d,)
+            mean_norm_j = cluster_mean_norms[lbl_j]
+
+            # mean_sq_dist(i, Cj) = ||i||² + mean(||c||²) - 2·i·centroid_j
+            # shape: (ni,)
+            mean_sq = (
+                norms_i
+                + mean_norm_j
+                - 2.0 * np.dot(Xi, centroid_j)
+            )
+            # Clamp near-zero negatives (floating-point noise)
+            mean_sq = np.maximum(mean_sq, 0.0)
+            mean_dist = np.sqrt(mean_sq)
+
+            b_values[idx_i] = np.minimum(b_values[idx_i], mean_dist)
+
     if verbose:
-        print(f"  ASW = {score:.6f}")
-    
-    return score
+        print(f"  Completed b(i) approximation via centroid expansion.")
+
+    # ── Step 3: per-point silhouette ──────────────────────────────
+    s = _silhouette_from_apoint(a_values, b_values)
+
+    if verbose:
+        print(f"  ASW = {s:.6f}")
+
+    return s
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Helpers
+# ═══════════════════════════════════════════════════════════════════════
+
+def _exact_intra_mean(Xk, a_out, global_idx, n_jobs=1, chunk=2000):
+    """
+    Compute a(i) = mean Euclidean distance from each point to all
+    *other* points in the same cluster.  Uses chunked upper-triangular
+    pairwise blocks so the full |Ck|×|Ck| matrix is never stored.
+    """
+    n = len(Xk)
+    counts = np.zeros(n)   # per-point count of other points seen
+
+    for r in range(0, n, chunk):
+        re = min(r + chunk, n)
+        Xr = Xk[r:re]
+        for c in range(r, n, chunk):
+            ce = min(c + chunk, n)
+            Xc = Xk[c:ce]
+            block = pairwise_distances(Xr, Xc, n_jobs=n_jobs)
+            # block shape: (re-r) × (ce-c)
+
+            if r == c:
+                # diagonal — zero out self-distances
+                dlen = block.shape[0]
+                for d in range(dlen):
+                    if d < block.shape[1]:
+                        block[d, d] = np.nan
+                with np.errstate(all="ignore"):
+                    row_sum = np.nansum(block, axis=1)
+                row_cnt = (ce - c) - 1  # exclude self
+                # Points in this block pair with (ce-c)-1 others
+            else:
+                row_sum = block.sum(axis=1)
+                row_cnt = ce - c
+
+            a_out[global_idx[r:re]] += row_sum
+            counts[r:re] += row_cnt
+
+    # Normalise: a(i) = sum / (n-1)
+    for i in range(n):
+        if counts[i] > 0:
+            a_out[global_idx[i]] /= counts[i]
+
+
+def _silhouette_from_apoint(a, b):
+    """Per-point silhouette from precomputed a(i) and b(i)."""
+    denom = np.maximum(a, b)
+    mask = denom > 0
+    s = np.zeros(len(a))
+    s[mask] = (b[mask] - a[mask]) / denom[mask]
+    return float(np.mean(s))
+
+
+# Keep old name for backward-compat references
+_silhouette_per_point = _silhouette_from_apoint

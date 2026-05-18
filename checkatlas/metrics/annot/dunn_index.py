@@ -1,114 +1,160 @@
 import numpy as np
 from sklearn.metrics import pairwise_distances
+from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import issparse
 
 
-def run(X, labels, n_jobs=-1, verbose=True):
+def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
     """
     Calculate the Dunn Index for clustering quality evaluation.
-    
-    The Dunn Index is an internal clustering validation metric that measures
-    the ratio of the minimum inter-cluster distance to the maximum intra-cluster
-    distance. Higher values indicate better clustering (well-separated, compact clusters).
-    
+
+    The Dunn Index is the ratio of the minimum inter-cluster distance to
+    the maximum intra-cluster distance.  Higher values indicate better,
+    more compact and well-separated clusters.
+
+    On large datasets the computation uses spatial indexing (ball-tree
+    nearest-neighbour search) for inter-cluster distances and a chunked
+    pairwise strategy for intra-cluster diameters — the full O(n²)
+    distance matrix is **never** materialised in memory.
+
     `Dunn Index readthedocs
     <https://checkatlas.readthedocs.io/en/latest/metrics/clustering/dunn/>`__
 
-    :param X: array-like of shape (n_samples, n_features)
-        Feature matrix containing the data points. Can be sparse or dense.
-    :param labels: array-like of shape (n_samples,)
-        Cluster labels for each sample
-    :param n_jobs: int, default=-1
-        Number of parallel jobs for pairwise distance computation.
-        -1 uses all available cores.
-    :param verbose: bool, default=True
-        Whether to print progress information.
-    :return: float
-        The Dunn Index score. Higher values indicate better clustering.
-        Range: [0, infinity), where higher is better.
-    
-    Notes
-    -----
-    The Dunn Index is defined as:
-    
-    .. math::
-        DI = \\frac{\\min_{i \\neq j} \\delta(C_i, C_j)}{\\max_k \\Delta(C_k)}
-    
-    where:
-    - δ(C_i, C_j) is the inter-cluster distance (minimum distance between clusters)
-    - Δ(C_k) is the intra-cluster distance (maximum diameter of a cluster)
-    
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Feature matrix.  Sparse matrices are densified automatically.
+    labels : array-like of shape (n_samples,)
+        Cluster labels.
+    n_jobs : int, default=-1
+        Number of parallel jobs for distance computations (-1 = all cores).
+    verbose : bool, default=True
+        Print progress.
+    max_samples : int, optional
+        **Ignored** — kept for backward compatibility with older callers.
+        The function always processes the full dataset.
+
+    Returns
+    -------
+    float
+        Dunn Index.  Range [0, ∞); higher is better.
     """
-    # Convert to numpy arrays, handle sparse matrices
     if issparse(X):
         X = X.toarray()
     else:
         X = np.asarray(X)
-    
+
     labels = np.asarray(labels)
-    
-    # Get unique cluster labels
+
+    if len(X) != len(labels):
+        raise ValueError(
+            f"X and labels must have same length. "
+            f"Got X: {len(X)}, labels: {len(labels)}"
+        )
+
     unique_labels = np.unique(labels)
     n_clusters = len(unique_labels)
-    
-    # Handle edge cases
     if n_clusters < 2:
         return 0.0
-    
-    if len(X) != len(labels):
-        raise ValueError(f"X and labels must have the same length. "
-                        f"Got X: {len(X)}, labels: {len(labels)}")
-    
+
+    # ── Per-cluster index arrays ──────────────────────────────────
+    cluster_idx = {}
+    for lbl in unique_labels:
+        cluster_idx[lbl] = np.where(labels == lbl)[0]
+
+    # ── Inter-cluster: minimum distance between clusters ──────────
+    # Uses NearestNeighbors (ball-tree for low-dim data) so each
+    # cross-cluster query is O(|Ci|・log|Cj|) instead of O(|Ci|・|Cj|).
+    inter_pairs = (n_clusters * (n_clusters - 1)) // 2
     if verbose:
-        print(f"Computing Dunn Index ({len(X):,} samples, {n_clusters} clusters)...")
-    
-    # Compute pairwise distances with parallelism
-    if verbose:
-        print(f"  Computing pairwise distances (n_jobs={n_jobs})...")
-    distances = pairwise_distances(X, n_jobs=n_jobs)
-    
-    # Pre-compute cluster masks and indices for vectorized operations
-    cluster_masks = {}
-    cluster_indices = {}
-    for label in unique_labels:
-        mask = labels == label
-        cluster_masks[label] = mask
-        cluster_indices[label] = np.where(mask)[0]
-    
-    # Vectorized inter-cluster minimum distances
-    if verbose:
-        print(f"  Computing inter-cluster distances ({n_clusters * (n_clusters - 1) // 2} pairs)...")
-    
-    min_inter_cluster_dist = np.inf
+        print(
+            f"Computing Dunn Index "
+            f"({len(X):,} samples, {n_clusters} clusters)..."
+        )
+        print(f"  Inter-cluster distances ({inter_pairs} pairs)...")
+
+    min_inter = np.inf
     for i in range(n_clusters):
-        idx_i = cluster_indices[unique_labels[i]]
+        li = unique_labels[i]
+        Xi = X[cluster_idx[li]]
         for j in range(i + 1, n_clusters):
-            idx_j = cluster_indices[unique_labels[j]]
-            # Use np.ix_ for efficient submatrix extraction
-            min_dist = distances[np.ix_(idx_i, idx_j)].min()
-            if min_dist < min_inter_cluster_dist:
-                min_inter_cluster_dist = min_dist
-    
-    # Vectorized intra-cluster maximum distances
+            lj = unique_labels[j]
+            Xj = X[cluster_idx[lj]]
+
+            # Fit ball-tree on one cluster, query the other for the
+            # single nearest-neighbour distance.  For low‑dimensional
+            # data ball‑tree is lightning fast → single-threaded.
+            if len(Xi) <= len(Xj):
+                nn = NearestNeighbors(n_neighbors=1, algorithm="ball_tree")
+                nn.fit(Xj)
+                dists, _ = nn.kneighbors(Xi)
+            else:
+                nn = NearestNeighbors(n_neighbors=1, algorithm="ball_tree")
+                nn.fit(Xi)
+                dists, _ = nn.kneighbors(Xj)
+
+            d = float(dists.min())
+            if d < min_inter:
+                min_inter = d
+
+    # ── Intra-cluster: maximum diameter per cluster ───────────────
+    # Chunked pairwise to avoid storing the full |Ck|×|Ck| matrix.
     if verbose:
-        print(f"  Computing intra-cluster diameters ({n_clusters} clusters)...")
-    
-    max_intra_cluster_dist = 0.0
-    for label in unique_labels:
-        idx = cluster_indices[label]
-        if len(idx) < 2:
+        print(f"  Intra-cluster diameters ({n_clusters} clusters)...")
+
+    max_intra = 0.0
+
+    # Threshold below which we compute the full intra-cluster matrix
+    # in one shot (fast, bounded memory); above it we fall back to
+    # chunked upper-triangular blocks.
+    _DIRECT_THRESHOLD = 10000
+
+    for lbl in unique_labels:
+        idx = cluster_idx[lbl]
+        nk = len(idx)
+        if nk < 2:
             continue
-        max_dist = distances[np.ix_(idx, idx)].max()
-        if max_dist > max_intra_cluster_dist:
-            max_intra_cluster_dist = max_dist
-    
-    # Avoid division by zero
-    if max_intra_cluster_dist == 0:
+
+        Xk = X[idx]
+
+        if nk <= _DIRECT_THRESHOLD:
+            dk = pairwise_distances(Xk, n_jobs=n_jobs).max()
+        else:
+            dk = _chunked_diameter(Xk, n_jobs=n_jobs)
+
+        if dk > max_intra:
+            max_intra = dk
+
+    if max_intra == 0:
         return 0.0
-    
-    dunn_index = min_inter_cluster_dist / max_intra_cluster_dist
-    
+
+    dunn_index = min_inter / max_intra
+
     if verbose:
         print(f"  Dunn Index = {dunn_index:.6f}")
-    
+
     return dunn_index
+
+
+# ── Chunked upper-triangular pairwise max ────────────────────────────
+
+def _chunked_diameter(X, n_jobs=1, chunk_size=2000):
+    """Maximum pairwise distance in *X*, computed in memory-bounded
+    upper-triangular blocks so the full |X|×|X| matrix is never stored."""
+    n = len(X)
+    max_d = 0.0
+
+    for i in range(0, n, chunk_size):
+        end_i = min(i + chunk_size, n)
+        Xi = X[i:end_i]
+
+        for j in range(i, n, chunk_size):
+            end_j = min(j + chunk_size, n)
+            Xj = X[j:end_j]
+
+            block = pairwise_distances(Xi, Xj, n_jobs=n_jobs)
+            bmax = float(block.max())
+            if bmax > max_d:
+                max_d = bmax
+
+    return max_d
