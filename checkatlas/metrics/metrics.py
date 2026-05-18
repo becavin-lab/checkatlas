@@ -37,15 +37,18 @@ else:
     R_ANNOT = None
     R_REDUCTION = None
 
-def cal_annot(adata, atlas_name=None, all=False, file_dir=None,
-              n_jobs=-1, verbose=True):
+def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
+              file_dir=None, n_jobs=-1, verbose=True):
     """
     Comprehensive annotation pipeline for all annotation metrics.
     
     Args:
         adata (AnnData): Annotated data matrix.
+        metric_list (list): List of metric names to calculate.
+                           If provided, overrides `all` parameter.
         all (bool): If True, calculate all available annotation metrics. 
                     If False, calculate a default subset.
+                    Ignored if metric_list is provided.
         file_dir (str): Directory path where the results CSV will be saved.
                        If None, saves to current working directory.
         n_jobs (int): Number of parallel jobs (-1 = all cores).
@@ -79,7 +82,9 @@ def cal_annot(adata, atlas_name=None, all=False, file_dir=None,
     batch_keys = [col for col in adata.obs.columns if 'batch' in col.lower()]
     
     # Define metrics to run
-    if all:
+    if metric_list is not None:
+        metrics_list = [m for m in metric_list if m in METRICS_ANNOT]
+    elif all:
         metrics_list = METRICS_ANNOT
     else:
         # Default subset of metrics

@@ -634,12 +634,13 @@ def create_metric_annot(
 
     logger.info("Running full annotation pipeline for %s", atlas_name)
 
-    # cal_annot auto-detects columns, runs all 16 metrics (ref-vs-pred
+    # cal_annot auto-detects columns, runs specified metrics (ref-vs-pred
     # plus embedding/batch/graph-dependent ones), and saves its own CSV.
     df = metrics.cal_annot(
         adata,
         atlas_name=atlas_name,
-        all=True,               # run every metric in METRICS_ANNOT
+        metric_list=args.metric_annot,
+        all=True,               # fallback: run every metric in METRICS_ANNOT
         file_dir=annotation_dir,
         n_jobs=-1,
         verbose=True,
