@@ -807,6 +807,11 @@ class CheckAtlasColumnDetector:
                 shape = (-1,)
                 n_components = 0
 
+            # Skip visualisation-only embeddings (UMAP, t‑SNE, draw_graph, …)
+            # which carry ≤ 3 dimensions — useless for kNN-based metrics.
+            if n_components <= 3:
+                continue
+
             results["clustering"]["embeddings"].append(
                 (
                     key,
