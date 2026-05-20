@@ -108,9 +108,7 @@ def create_parser():
         "--metric_cluster",
         nargs="+",
         type=str,
-        default=["davies_bouldin"],
-        # default=["silhouette", "davies_bouldin"],
-        # default=[""],
+        default=cluster.__all__,
         help="Specify the list of clustering metrics to calculate.\n"
         "   Example: --metric_cluster silhouette davies_bouldin\n"
         f"   List of cluster metrics: {cluster.__all__}",

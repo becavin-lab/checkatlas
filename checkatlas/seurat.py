@@ -489,10 +489,15 @@ def create_metric_cluster(
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} and obsm {obsm_key_representation}"
                 )
-                metric_value = metrics.calc_metric_cluster_seurat(
+                result = metrics.calc_metric_cluster_seurat(
                     metric, seurat, obs_key, obsm_key_representation
                 )
-                dict_line[metric] = metric_value
+                if isinstance(result, tuple):
+                    metric_value, running_time = result
+                    dict_line[metric] = metric_value
+                    dict_line[f"{metric}_running_time"] = running_time
+                else:
+                    dict_line[metric] = result
             df_line = pd.DataFrame(dict_line)
             df_cluster = pd.concat(
                 [df_cluster, df_line], ignore_index=True, axis=0

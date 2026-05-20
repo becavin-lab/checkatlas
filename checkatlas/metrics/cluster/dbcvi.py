@@ -56,8 +56,8 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=5000, k=10):
     try:
         from sklearn.neighbors import NearestNeighbors
         
-        # Subsample if too large (MST is O(N²))
-        if len(X_clean) > max_samples:
+        # Subsample if too large (MST is O(N²)) — only if max_samples is set
+        if max_samples is not None and len(X_clean) > max_samples:
             if verbose:
                 print(f"Subsampling {max_samples} points for DBCVI (from {len(X_clean)})...")
             np.random.seed(42)

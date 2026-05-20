@@ -45,30 +45,43 @@ def main() -> None:  # pragma: no cover
     logger.debug(f"Program arguments: {args}")
 
     #   ######    Run Checkatlas   #########
-    (
-        clean_scanpy_list,
-        clean_cellranger_list,
-        clean_seurat_list,
-    ) = check.read_list_atlases(args.path)
-    clean_scanpy_list = clean_scanpy_list.to_dict("index")
-    clean_cellranger_list = clean_cellranger_list.to_dict("index")
-    clean_seurat_list = clean_seurat_list.to_dict("index")
+    # Look up <atlas_name>.h5ad / .rds / .qs directly at the given path
+    atlas_name = args.atlas_name
+    base_path = os.path.join(args.path, atlas_name)
+    h5ad_path = base_path + ".h5ad"
+    rds_path = base_path + ".rds"
+    qs_path = base_path + ".qs"
+    atlas_info = None
 
-    # get atlas_info
-    if args.atlas_name in clean_scanpy_list:
-        atlas_info = clean_scanpy_list[args.atlas_name]
-    elif args.atlas_name in clean_cellranger_list:
-        atlas_info = clean_cellranger_list[args.atlas_name]
-    elif args.atlas_name in clean_seurat_list:
-        atlas_info = clean_seurat_list[args.atlas_name]
+    if os.path.isfile(h5ad_path):
+        atlas_info = {
+            check.ATLAS_NAME_KEY: atlas_name,
+            check.ATLAS_TYPE_KEY: atlas.ANNDATA_TYPE,
+            check.ATLAS_EXTENSION_KEY: ".h5ad",
+            check.ATLAS_PATH_KEY: os.path.abspath(h5ad_path),
+        }
+    elif os.path.isfile(rds_path):
+        atlas_info = {
+            check.ATLAS_NAME_KEY: atlas_name,
+            check.ATLAS_TYPE_KEY: seurat.SEURAT_TYPE,
+            check.ATLAS_EXTENSION_KEY: ".rds",
+            check.ATLAS_PATH_KEY: os.path.abspath(rds_path),
+        }
+    elif os.path.isfile(qs_path):
+        atlas_info = {
+            check.ATLAS_NAME_KEY: atlas_name,
+            check.ATLAS_TYPE_KEY: seurat.SEURAT_TYPE,
+            check.ATLAS_EXTENSION_KEY: ".qs",
+            check.ATLAS_PATH_KEY: os.path.abspath(qs_path),
+        }
     else:
-        logger.error(f"Cannot found {args.atlas_name}")
+        logger.error(f"Cannot find {atlas_name}.h5ad, .rds, or .qs in {args.path}")
         sys.exit(1)
+
     logger.debug(f"Found atlas: {atlas_info}")
     # Run process
     process = args.process
     atlas_type = atlas_info[check.ATLAS_TYPE_KEY]
-    print(atlas_info)
     if (
         atlas_type == atlas.ANNDATA_TYPE
         or atlas_type == cellranger.CELLRANGER_TYPE_CURRENT
