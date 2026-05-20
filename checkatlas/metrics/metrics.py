@@ -54,6 +54,38 @@ def _pivot_annot_to_wide(df, atlas_name):
     col_order = ['Annot_Sample', 'Reference', 'obs'] + [c for c in value_cols if c in result_df.columns]
     return result_df[col_order]
 
+
+def _pivot_cluster_to_wide(df, atlas_name):
+    """Pivot long-format cluster results to MultiQC-compatible wide format.
+
+    Converts a DataFrame with columns [Atlas Name, Metric Name,
+    Embedding, Label Key, Value, Time (s)] into a wide table headed by
+    [Clust_Sample, obs, <metric>, <metric>_running_time, ...] where each
+    row is one unique (Embedding × Label Key) combination.
+    """
+    if df.empty:
+        return df
+    metric_names = sorted(df['Metric Name'].unique())
+    wide_rows = []
+    for (emb_val, label_val), group in df.groupby(['Embedding', 'Label Key']):
+        row = {
+            'Clust_Sample': f"{atlas_name}_{emb_val}_{label_val}",
+            'obs': label_val,
+        }
+        for _, r in group.iterrows():
+            metric = r['Metric Name']
+            row[metric] = r['Value']
+            row[f"{metric}_running_time"] = r['Time (s)']
+        wide_rows.append(row)
+    result_df = pd.DataFrame(wide_rows)
+    value_cols = []
+    for m in metric_names:
+        value_cols.append(m)
+        value_cols.append(f"{m}_running_time")
+    col_order = ['Clust_Sample', 'obs'] + [c for c in value_cols if c in result_df.columns]
+    return result_df[col_order]
+
+
 logger = logging.getLogger("checkatlas")
 
 if robjects is not None:
@@ -476,8 +508,8 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
     return df
 
 
-def cal_cluster(adata, atlas_name=None, all_metrics=True, file_dir=None,
-                n_jobs=-1, verbose=True, seed=42):
+def cal_cluster(adata, atlas_name=None, metric_list=None, all_metrics=True,
+                file_dir=None, n_jobs=-1, verbose=True, seed=42):
     """
     Comprehensive clustering assessment pipeline.
     
@@ -488,8 +520,11 @@ def cal_cluster(adata, atlas_name=None, all_metrics=True, file_dir=None,
     Args:
         adata (AnnData): Annotated data matrix.
         atlas_name (str): Name of the atlas for labeling results.
+        metric_list (list, optional): List of metric names to calculate.
+                           If provided, overrides ``all_metrics``.
         all_metrics (bool): If True, calculate all available cluster metrics.
-                           If False, calculate a default subset.
+                            If False, calculate a default subset.
+                            Ignored if ``metric_list`` is provided.
         file_dir (str): Directory path where the results CSV will be saved.
                        If None, saves to current working directory.
         n_jobs (int): Number of parallel jobs (-1 = all cores).
@@ -532,7 +567,9 @@ def cal_cluster(adata, atlas_name=None, all_metrics=True, file_dir=None,
         return pd.DataFrame()
     
     # Define metrics to run
-    if all_metrics:
+    if metric_list is not None:
+        metrics_list = [m for m in metric_list if m in METRICS_CLUST]
+    elif all_metrics:
         metrics_list = METRICS_CLUST
     else:
         # Default subset: fastest and most commonly used
@@ -601,11 +638,13 @@ def cal_cluster(adata, atlas_name=None, all_metrics=True, file_dir=None,
                     if 'n_jobs' in metric_params:
                         kwargs['n_jobs'] = n_jobs
                     if 'verbose' in metric_params:
-                        kwargs['verbose'] = False  # Suppress per-metric prints inside progress bar
+                        kwargs['verbose'] = False
                     if 'random_state' in metric_params:
                         kwargs['random_state'] = seed
                     if 'seed' in metric_params:
                         kwargs['seed'] = seed
+                    if 'max_samples' in metric_params:
+                        kwargs['max_samples'] = None  # disable subsampling
                     
                     # Call the metric
                     value = metric_module.run(X_emb, labels, **kwargs)
@@ -647,14 +686,6 @@ def cal_cluster(adata, atlas_name=None, all_metrics=True, file_dir=None,
         total_time = df['Time (s)'].sum()
         print(f"\nTotal computation time: {total_time:.2f}s")
         print(f"Results: {len(df)} measurements across {len(df['Metric Name'].unique())} metrics")
-    
-    # Save to CSV
-    if not df.empty:
-        filename = os.path.join(file_dir, f"checkatlas_cluster_metrics_{atlas_name}.csv")
-        df.to_csv(filename, index=False)
-        if verbose:
-            print(f"Saved cluster metrics to {filename}")
-        logger.info(f"Saved cluster metrics to {filename}")
     
     gc.collect()
     return df

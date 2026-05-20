@@ -182,8 +182,13 @@ def read_list_atlases(checkatlas_path: str) -> tuple:
             chk_files.get_table_seurat_path(checkatlas_path)
         )
         clean_seurat_list.index = clean_seurat_list[ATLAS_NAME_KEY]
-    if clean_scanpy_list.empty and clean_cellranger_list.empty and clean_seurat_list.empty:
-        clean_scanpy_list = _scan_raw_atlases(checkatlas_path)
+    raw_df = _scan_raw_atlases(checkatlas_path)
+    if not raw_df.empty:
+        existing = set(clean_scanpy_list.index) | set(clean_cellranger_list.index) | set(clean_seurat_list.index)
+        new_atlases = raw_df[~raw_df.index.isin(existing)]
+        if not new_atlases.empty:
+            clean_scanpy_list = pd.concat([clean_scanpy_list, new_atlases], ignore_index=False)
+            clean_scanpy_list.index = clean_scanpy_list[ATLAS_NAME_KEY]
     return clean_scanpy_list, clean_cellranger_list, clean_seurat_list
 
 

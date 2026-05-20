@@ -85,8 +85,7 @@ def run(X, labels, n_components=50, cv=5, n_jobs=-1, verbose=True):
     if verbose:
         print(f"  Running {cv}-fold cross-validation (n_jobs={n_jobs})...")
 
-    clf = LogisticRegression(max_iter=1000, random_state=0,
-                             multi_class='auto', n_jobs=n_jobs)
+    clf = LogisticRegression(max_iter=1000, random_state=0, n_jobs=n_jobs)
     try:
         scores = cross_val_score(clf, X_pca, y, cv=cv, scoring='accuracy',
                                  n_jobs=n_jobs)
