@@ -654,7 +654,8 @@ def create_metric_annot(
             check.TSV_EXTENSION,
             args.path,
         )
-        df.to_csv(csv_path, index=False, sep="\t")
+        wide_df = metrics._pivot_annot_to_wide(df, atlas_name)
+        wide_df.to_csv(csv_path, index=False, sep="\t")
         logger.info("Annotation metrics saved to %s", csv_path)
     else:
         logger.warning("No annotation metrics calculated for %s", atlas_name)

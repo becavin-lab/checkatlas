@@ -21,6 +21,39 @@ METRICS_CLUST = cluster.__all__
 METRICS_ANNOT = annot.__all__
 METRICS_DIMRED = dimred.__all__
 
+
+def _pivot_annot_to_wide(df, atlas_name):
+    """Pivot long-format annotation results to MultiQC-compatible wide format.
+
+    Converts a DataFrame with columns [Atlas Name, Metric Name,
+    Reference/Input 1, Prediction/Input 2, Value, Time (s)] into a wide
+    table headed by [Annot_Sample, Reference, obs, <metric>_value,
+    <metric>_running_time, ...] where each row is one unique
+    (Reference/Input 1 × Prediction/Input 2) combination.
+    """
+    if df.empty:
+        return df
+    metric_names = sorted(df['Metric Name'].unique())
+    wide_rows = []
+    for (ref_val, pred_val), group in df.groupby(['Reference/Input 1', 'Prediction/Input 2']):
+        row = {
+            'Annot_Sample': f"{atlas_name}_{ref_val}_{pred_val}",
+            'Reference': ref_val,
+            'obs': pred_val,
+        }
+        for _, r in group.iterrows():
+            metric = r['Metric Name']
+            row[metric] = r['Value']
+            row[f"{metric}_running_time"] = r['Time (s)']
+        wide_rows.append(row)
+    result_df = pd.DataFrame(wide_rows)
+    value_cols = []
+    for m in metric_names:
+        value_cols.append(m)
+        value_cols.append(f"{m}_running_time")
+    col_order = ['Annot_Sample', 'Reference', 'obs'] + [c for c in value_cols if c in result_df.columns]
+    return result_df[col_order]
+
 logger = logging.getLogger("checkatlas")
 
 if robjects is not None:
@@ -419,6 +452,14 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
         pbar.set_postfix_str(f"Time: {metric_elapsed:.2f}s", refresh=True)
 
     df = pd.DataFrame(results)
+
+    # Save MultiQC-compatible wide format to file_dir if provided
+    if not df.empty and file_dir is not None and atlas_name is not None:
+        os.makedirs(file_dir, exist_ok=True)
+        wide_df = _pivot_annot_to_wide(df, atlas_name)
+        wide_path = os.path.join(file_dir, f"{atlas_name}.tsv")
+        wide_df.to_csv(wide_path, sep='\t', index=False)
+        logger.info("MultiQC-compatible annotation table saved to %s", wide_path)
     
     # Clear LISI and kBET kNN caches to free memory
     try:
