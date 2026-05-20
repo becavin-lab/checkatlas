@@ -88,16 +88,11 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
     elif all:
         metrics_list = METRICS_ANNOT
     else:
-        # Default subset of metrics
-        ## default is only ARI
         metrics_list = [
             'adj_rand_index', 
             'normalized_mutual_info', 
             'adj_mutual_info',
-            # 'lisi',
-            # 'kbet'
         ]
-        # Filter to ensure they exist in METRICS_ANNOT
         metrics_list = [m for m in metrics_list if m in METRICS_ANNOT]
 
     results = []
@@ -437,13 +432,6 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
     except Exception:
         pass
     
-    # Save to CSV if results exist
-    if not df.empty:
-        # Define a filename with full path
-        filename = os.path.join(file_dir, f"checkatlas_annotation_metrics_{atlas_name}.csv")
-        df.to_csv(filename, index=False)
-        logger.info(f"Saved annotation metrics to {filename}")
-        
     return df
 
 

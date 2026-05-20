@@ -119,7 +119,16 @@ def create_parser():
         "--metric_annot",
         nargs="+",
         type=str,
-        default=None,
+        default=[
+            "rand_index",
+            "adj_rand_index",
+            "normalized_mutual_info",
+            "adj_mutual_info",
+            "mutual_info",
+            "fowlkes_mallows",
+            "vmeasure",
+            "isolated_f1_score",
+        ],
         help="Specify the list of annotation metrics to calculate."
         f"   Example: --metric_annot rand_index"
         f"   List of annotation metrics: {annot.__all__}",
