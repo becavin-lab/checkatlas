@@ -2,6 +2,85 @@ import logging
 import os
 import sys
 
+# Patch Python 3.13 multiprocessing resource_tracker to handle joblib/loky
+# resource types (file, folder, semlock) that the tracker doesn't recognize.
+# Without this, cleanup floods stderr with hundreds of ValueError messages.
+def _patch_resource_tracker():
+    try:
+        import multiprocessing.resource_tracker as _rt
+        import multiprocessing.resource_tracker as _mp_rt
+
+        # Build a replacement main() that handles unknown rtypes gracefully
+        _KNOWN = frozenset(("semlock", "file", "folder", "shared_memory"))
+
+        def _safe_main():
+            import atexit
+            import os
+            import signal
+            import sys
+            import threading
+            import warnings
+            from multiprocessing.util import info, warning
+
+            keep_running = True
+            locked_files = set()
+
+            def _cleanup(signum=-1, frame=None):
+                nonlocal keep_running
+                keep_running = False
+
+            signal.signal(signal.SIGINT, _cleanup)
+            signal.signal(signal.SIGTERM, _cleanup)
+
+            # Read fd from argv (copied from original main)
+            fd = int(sys.argv[1]) if len(sys.argv) > 1 else None
+            if fd is None:
+                return
+
+            while keep_running:
+                try:
+                    # Read a line from the pipe
+                    line = os.read(fd, 300)
+                    if not line:
+                        break
+                    line = line.decode("ascii", errors="replace").strip()
+                    if not line:
+                        break
+                    parts = line.split()
+                    if len(parts) < 3:
+                        continue
+                    cmd, name, rtype = parts[0], parts[1], parts[2]
+
+                    if rtype not in _KNOWN:
+                        continue  # silently skip unknown types
+
+                    if cmd == "REGISTER":
+                        locked_files.add(name)
+                    elif cmd == "UNREGISTER":
+                        try:
+                            locked_files.remove(name)
+                        except KeyError:
+                            pass
+                except (OSError, EOFError):
+                    break
+
+            # Cleanup remaining
+            for name in list(locked_files):
+                try:
+                    if os.path.exists(name):
+                        if os.path.isdir(name):
+                            os.rmdir(name)
+                        else:
+                            os.unlink(name)
+                except OSError:
+                    pass
+
+        _rt.main = _safe_main
+    except Exception:
+        pass
+
+_patch_resource_tracker()
+
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 try:
