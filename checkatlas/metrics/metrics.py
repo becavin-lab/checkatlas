@@ -86,6 +86,37 @@ def _pivot_cluster_to_wide(df, atlas_name):
     return result_df[col_order]
 
 
+def _pivot_dimred_to_wide(df, atlas_name):
+    """Pivot long-format dimred results to MultiQC-compatible wide format.
+
+    Converts a DataFrame with columns [Metric Name, Low Dim Key,
+    High Dim Key, Value, Time (s)] into a wide table headed by
+    [Dimred_Sample, obsm, <metric>, <metric>_running_time, …] where
+    each row is one unique Low Dim Key (embedding).
+    """
+    if df.empty:
+        return df
+    metric_names = sorted(df['Metric Name'].unique())
+    wide_rows = []
+    for low_dim_key, group in df.groupby('Low Dim Key'):
+        row = {
+            'Dimred_Sample': f"{atlas_name}_{low_dim_key}",
+            'obsm': low_dim_key,
+        }
+        for _, r in group.iterrows():
+            metric = r['Metric Name']
+            row[metric] = r['Value']
+            row[f"{metric}_running_time"] = r['Time (s)']
+        wide_rows.append(row)
+    result_df = pd.DataFrame(wide_rows)
+    value_cols = []
+    for m in metric_names:
+        value_cols.append(m)
+        value_cols.append(f"{m}_running_time")
+    col_order = ['Dimred_Sample', 'obsm'] + [c for c in value_cols if c in result_df.columns]
+    return result_df[col_order]
+
+
 logger = logging.getLogger("checkatlas")
 
 if robjects is not None:
@@ -789,368 +820,308 @@ def calc_metric_annot_seurat(metric, seurat, obs_key, ref_obs):
         return -1
 
 
-def cal_dimred(adata, atlas_name=None, low_dim_key='X_umap', high_dim_key='X',
-               k_neighbors=30, n_samples=None, seed=42, n_jobs=-1, 
-               all_metrics=True, file_dir=None, verbose=True, use_memmap=True,
-               temp_dir=None, chunk_size=1000):
+def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
+               metric_list=None, k_neighbors=30, n_samples=None, seed=42,
+               n_jobs=-1, file_dir=None, verbose=True):
+    """Calculate dimensionality reduction metrics for multiple embeddings.
+
+    For each ``low_dim_key`` the embedding is compared against the
+    reference ``high_dim_key`` (defaults to ``adata.X`` — the raw gene
+    expression matrix).
+
+    Precomputation (distance matrices + kNN graphs) is performed once for
+    the high‑dimensional reference and once per low‑dimensional embedding
+    key.  Memory‑mapped files are used for N×N distance matrices on
+    datasets with > 10 000 cells to keep RAM usage bounded.
+
+    Parameters
+    ----------
+    adata : AnnData
+    atlas_name : str, optional
+        Used only for logging.
+    low_dim_keys : list of str, optional
+        ``.obsm`` keys to evaluate.  Defaults to all keys returned by
+        :meth:`CheckAtlasColumnDetector.get_dimred_embeddings`.
+    high_dim_key : str
+        Reference key.  ``'X'`` means ``adata.X``.  (Default ``'X'``)
+    metric_list : list of str, optional
+        Metrics to compute.  Defaults to :data:`METRICS_DIMRED`.
+    k_neighbors : int
+    n_samples : int or None
+        Number of cells to subsample.  ``None`` = use all cells.
+    seed : int
+    n_jobs : int
+    file_dir : str, optional
+        Directory for temporary memmap files.  Falls back to system
+        ``/tmp``.
+    verbose : bool
+
+    Returns
+    -------
+    pd.DataFrame
+        Long‑format table with columns
+        ``[Metric Name, Low Dim Key, High Dim Key, Value, Time (s)]``.
+        Caller is responsible for pivoting and saving.
     """
-    Comprehensive dimensionality reduction assessment pipeline.
-    
-    Calculates all dimred metrics to assess the quality of embeddings (UMAP, t-SNE, etc.)
-    compared to the high-dimensional reference (adata.X).
-    
-    Optimizations:
-    1. Precomputes pairwise distances and kNN graphs for both high and low dim spaces.
-    2. Uses memory-mapped files for distance matrices to avoid RAM overload.
-    3. Caches kNN results in adata.uns['_dimred_cache'] for efficiency.
-    
-    Args:
-        adata (AnnData): Annotated data matrix.
-        atlas_name (str): Name of the atlas for labeling results.
-        low_dim_key (str): Key in adata.obsm for embedding (default: 'X_umap').
-        high_dim_key (str): Key for reference data. 'X' means adata.X. (default: 'X').
-        k_neighbors (int): Number of neighbors for neighborhood-based metrics.
-        n_samples (int or None): Number of cells to subsample. None = use all cells.
-        seed (int): Random seed for reproducibility.
-        n_jobs (int): Number of parallel jobs (-1 = all cores).
-        all_metrics (bool): If True, calculate all metrics. If False, use a default subset.
-        file_dir (str): Directory to save results CSV. If None, saves to cwd.
-        verbose (bool): Show progress bars and status messages.
-        use_memmap (bool): If True, use memory-mapped arrays for distance matrices (recommended for large datasets).
-        temp_dir (str): Directory for temporary memmap files. If None, uses system temp.
-        chunk_size (int): Chunk size for distance computation (default: 1000).
-                     
-    Returns:
-        pd.DataFrame: Results dataframe with columns:
-                      [Atlas Name, Metric Name, Low Dim Key, High Dim Key, Value, Time (s)]
-    """
-    # Import here to avoid circular dependency
-    from ..utils.col_detector import CheckAtlasColumnDetector
-    import scanpy as sc
+    import gc
+    import inspect
+    import tempfile
+    import uuid
+
     from sklearn.metrics import pairwise_distances
     from sklearn.neighbors import NearestNeighbors
-    from joblib import Parallel, delayed
 
-    ## if the temp_dir is not provided, use the 'file_dir'
-    if temp_dir is None:
-        temp_dir = file_dir
-    
-    # Set file directory
-    if file_dir is None:
-        file_dir = os.getcwd()
-    else:
-        os.makedirs(file_dir, exist_ok=True)
-    
-    # Check if low dim key exists, compute if missing
-    if low_dim_key not in adata.obsm.keys():
-        if verbose: 
-            print(f"Key '{low_dim_key}' not found. Calculating UMAP...")
-        sc.tl.umap(adata, n_components=2, random_state=seed)
+    from ..utils.col_detector import CheckAtlasColumnDetector
 
-    # Prepare data for high dimension
-    if high_dim_key == 'X':
-        if verbose: print("Using adata.X as high-dimensional reference.")
-        # Check if X is sparse, convert to dense if needed for distance calc
-        # Note: pairwise_distances handles sparse, but dense might be faster for smaller subsamples
-        pass 
-    elif high_dim_key in adata.obsm.keys():
-        pass # Use as is
-    else:
-        # Fallback or error? User requested adata.X mostly.
-        if verbose: print(f"Key '{high_dim_key}' not found. Using adata.X.")
-        high_dim_key = 'X'
+    if metric_list is None:
+        metric_list = METRICS_DIMRED
+    metric_list = [m for m in metric_list if m in METRICS_DIMRED]
+    if not metric_list:
+        return pd.DataFrame()
 
-    # --- Precomputation Step ---
-    if verbose: print("Precomputing distances and neighbors to optimize metric calculation...")
-    
-    # 1. Subsampling (if specified)
+    if low_dim_keys is None:
+        detector = CheckAtlasColumnDetector(adata)
+        low_dim_keys = detector.get_dimred_embeddings()
+
+    low_dim_keys = [k for k in low_dim_keys if k != high_dim_key]
+    if not low_dim_keys:
+        if verbose:
+            print(f"  No embeddings to compare "
+                  f"(only key is {high_dim_key}).")
+        return pd.DataFrame()
+
     n_obs = adata.n_obs
     if n_samples is not None and n_samples < n_obs:
-        if verbose: print(f"Subsampling {n_samples} cells out of {n_obs}...")
         np.random.seed(seed)
         sample_indices = np.random.choice(n_obs, n_samples, replace=False)
+        n_cells = n_samples
     else:
-        if verbose: print(f"Using all {n_obs} cells...")
         sample_indices = np.arange(n_obs)
+        n_cells = n_obs
 
-    # Get data subsets
     if high_dim_key == 'X':
         high_dim_data = adata.X[sample_indices]
-        # Convert sparse to dense if needed
         if hasattr(high_dim_data, "toarray"):
             high_dim_data = high_dim_data.toarray()
     else:
+        if high_dim_key not in adata.obsm_keys():
+            raise ValueError(
+                f"High-dim key '{high_dim_key}' not found in adata.obsm.")
         high_dim_data = adata.obsm[high_dim_key][sample_indices]
-        
-    low_dim_data = adata.obsm[low_dim_key][sample_indices]
 
-    n_cells = high_dim_data.shape[0]
-    
-    # Setup temp directory for memmap files
-    import tempfile
-    import gc
-    
-    if temp_dir is None:
-        temp_dir = tempfile.gettempdir()
-    os.makedirs(temp_dir, exist_ok=True)
-    
-    # Generate unique filenames for this run
-    import uuid
-    run_id = str(uuid.uuid4())[:8]
-    high_dists_path = os.path.join(temp_dir, f"high_dim_dists_{run_id}.dat")
-    low_dists_path = os.path.join(temp_dir, f"low_dim_dists_{run_id}.dat")
-    
-    # Track memmap files for cleanup
-    memmap_files = [high_dists_path, low_dists_path]
-    
-    # Initialize variables to None to prevent UnboundLocalError
-    high_dim_dists = None
-    low_dim_dists = None
-    high_knn_indices = None
-    low_knn_indices = None
-    high_knn_dists = None
-    low_knn_dists = None
+    high_n_features = high_dim_data.shape[1]
 
-    try:
-        # 2. Compute Pairwise Distances using Memory-Mapped Arrays
-        if use_memmap:
-            if verbose: 
-                print(f"Computing pairwise distances using memory-mapped arrays...")
-                print(f"  Memory-efficient mode: storing {n_cells}x{n_cells} matrices on disk")
-            
-            # Create memory-mapped arrays on disk
-            high_dim_dists = np.memmap(high_dists_path, dtype='float32', mode='w+', shape=(n_cells, n_cells))
-            low_dim_dists = np.memmap(low_dists_path, dtype='float32', mode='w+', shape=(n_cells, n_cells))
-            
-            # Fill in chunks to minimize RAM usage
-            for i in tqdm(range(0, n_cells, chunk_size), desc="High-Dim Distances", disable=not verbose):
-                end = min(i + chunk_size, n_cells)
-                high_dim_dists[i:end, :] = pairwise_distances(
-                    high_dim_data[i:end], high_dim_data, metric='euclidean', n_jobs=n_jobs
-                )
-                high_dim_dists.flush()  # Write to disk immediately
-            
-            for i in tqdm(range(0, n_cells, chunk_size), desc="Low-Dim Distances", disable=not verbose):
-                end = min(i + chunk_size, n_cells)
-                low_dim_dists[i:end, :] = pairwise_distances(
-                    low_dim_data[i:end], low_dim_data, metric='euclidean', n_jobs=n_jobs
-                )
-                low_dim_dists.flush()  # Write to disk immediately
-            
-            # Force garbage collection to free any temporary memory
-            gc.collect()
-            
-        else:
-            # Standard in-memory computation (for smaller datasets)
-            if verbose: print("Computing pairwise distances in memory...")
-            
-            high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
-            for i in tqdm(range(0, n_cells, chunk_size), desc="High-Dim Distances", disable=not verbose):
-                end = min(i + chunk_size, n_cells)
-                high_dim_dists[i:end, :] = pairwise_distances(
-                    high_dim_data[i:end], high_dim_data, metric='euclidean', n_jobs=n_jobs
-                )
-            
-            low_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
-            for i in tqdm(range(0, n_cells, chunk_size), desc="Low-Dim Distances", disable=not verbose):
-                end = min(i + chunk_size, n_cells)
-                low_dim_dists[i:end, :] = pairwise_distances(
-                    low_dim_data[i:end], low_dim_data, metric='euclidean', n_jobs=n_jobs
-                )
-        
-        # 3. Compute k-NN Graphs (always in memory - small footprint)
-        if verbose: print(f"Computing k-NN graphs (k={k_neighbors}) for High-Dim and Low-Dim...")
-        
-        # Query k+1 to exclude self
-        nbrs_high = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(high_dim_data)
-        high_knn_dists_list, high_knn_indices_list = [], []
-        for i in tqdm(range(0, n_cells, chunk_size), desc="High-Dim KNN", disable=not verbose):
-            end = min(i + chunk_size, n_cells)
-            d, ind = nbrs_high.kneighbors(high_dim_data[i:end])
-            high_knn_dists_list.append(d)
-            high_knn_indices_list.append(ind)
-        high_knn_dists = np.vstack(high_knn_dists_list)
-        high_knn_indices = np.vstack(high_knn_indices_list)
-        
-        nbrs_low = NearestNeighbors(n_neighbors=k_neighbors+1, n_jobs=n_jobs).fit(low_dim_data)
-        low_knn_dists_list, low_knn_indices_list = [], []
-        for i in tqdm(range(0, n_cells, chunk_size), desc="Low-Dim KNN", disable=not verbose):
-            end = min(i + chunk_size, n_cells)
-            d, ind = nbrs_low.kneighbors(low_dim_data[i:end])
-            low_knn_dists_list.append(d)
-            low_knn_indices_list.append(ind)
-        low_knn_dists = np.vstack(low_knn_dists_list)
-        low_knn_indices = np.vstack(low_knn_indices_list)
-        
-        # Free intermediate lists
-        del high_knn_dists_list, high_knn_indices_list, low_knn_dists_list, low_knn_indices_list
-        gc.collect()
-        
-        # Cache kNN data in adata.uns (distance matrices are in memmap)
-        adata.uns['_dimred_cache'] = {
-            'high_dim_dists': high_dim_dists,  # memmap reference or numpy array
-            'low_dim_dists': low_dim_dists,    # memmap reference or numpy array
-            'high_knn_indices': high_knn_indices,
-            'low_knn_indices': low_knn_indices,
-            'high_knn_dists': high_knn_dists,
-            'low_knn_dists': low_knn_dists,
-            'sample_indices': sample_indices,
-            'use_memmap': use_memmap,
-            'memmap_files': memmap_files if use_memmap else []
-        }
+    use_memmap = n_cells > 10000
+    all_memmap_files = []
 
-    except Exception as e:
-        logger.warning(f"Precomputation failed: {e}. Metrics will attempt local calculation.")
-        if verbose: print(f"Warning: Precomputation failed ({e}). Proceeding with local calculation (slower).")
-        pass
-
-    # Define metrics to run
-    if all_metrics:
-        metrics_list = METRICS_DIMRED
+    if file_dir:
+        temp_dir = file_dir
     else:
-        # Default subset of metrics
-        metrics_list = [
-            'trustworthiness',
-            'continuity',
-            'kruskal_stress',
-            # 'spearman_rho',
-            # 'dCor',
-            # 'lcmc',
-            # 'entourage',
-            # 'coknn',
-            # 'ged',
-            'avg_jaccard_dis',
-            # 'den_pre'
-        ]
-        # Filter to ensure they exist in METRICS_DIMRED
-        metrics_list = [m for m in metrics_list if m in METRICS_DIMRED]
+        temp_dir = os.path.join(os.path.expanduser("~"), ".checkatlas", "tmp")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    run_id = str(uuid.uuid4())[:8]
+    chunk_size = min(1000, n_cells)
+
+    if verbose:
+        print(f"  Reference: {high_dim_key}  "
+              f"({n_cells:,} cells  ×  {high_n_features} features)")
+        print(f"  Embeddings: {low_dim_keys}")
+        print(f"  Metrics: {metric_list}")
+
+    # ── High‑dim kNN ──
+    nbrs_high = NearestNeighbors(
+        n_neighbors=k_neighbors + 1, n_jobs=n_jobs
+    ).fit(high_dim_data)
+    high_knn_dists, high_knn_indices = nbrs_high.kneighbors(high_dim_data)
+
+    # ── High‑dim distance matrix (only when distance‑based metrics
+    #     are in the list) ──
+    _DIST_METRICS = frozenset(("kruskal_stress", "spearman_rho", "dCor",
+                               "trustworthiness", "continuity"))
+    need_high_dists = bool(set(metric_list) & _DIST_METRICS)
+    high_dim_dists = None
+
+    if need_high_dists:
+        if verbose:
+            print("  Precomputing high-dim distance matrix "
+                  f"({n_cells:,}×{n_cells:,})…")
+        if use_memmap:
+            high_dists_path = os.path.join(
+                temp_dir, f"high_dists_{run_id}.dat")
+            all_memmap_files.append(high_dists_path)
+            high_dim_dists = np.memmap(
+                high_dists_path, dtype="float32", mode="w+",
+                shape=(n_cells, n_cells))
+        else:
+            high_dim_dists = np.zeros(
+                (n_cells, n_cells), dtype=np.float32)
+
+        for i in tqdm(range(0, n_cells, chunk_size),
+                      desc="High-Dim Distances", disable=not verbose):
+            end = min(i + chunk_size, n_cells)
+            high_dim_dists[i:end, :] = pairwise_distances(
+                high_dim_data[i:end], high_dim_data, n_jobs=n_jobs)
+            if use_memmap:
+                high_dim_dists.flush()
+        gc.collect()
+
+    total_combos = len(low_dim_keys) * len(metric_list)
+    if verbose:
+        print(
+            f"\n  {len(metric_list)} metrics × {len(low_dim_keys)} embeddings"
+            f" = {total_combos} calculations\n")
 
     results = []
-    
-    # Create progress bar
-    pbar = tqdm(metrics_list, desc="Calculating Dimred Metrics", 
-                bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]',
-                disable=not verbose)
-    
-    for metric in pbar:
-        # Update progress bar with current metric name
-        pbar.set_description(f"Processing: {metric}")
-        
-        # Start timing
-        metric_start_time = time.time()
-        
-        try:
-            metric_module = getattr(dimred, metric)
-            
-            # Call the metric's run function with appropriate parameters
-            # All dimred metrics now have a consistent signature:
-            # run(adata, low_dim_key, high_dim_key, k_neighbors, n_samples, seed, n_jobs, verbose, **kwargs)
-            
-            import inspect
-            sig = inspect.signature(metric_module.run)
-            params = sig.parameters
-            
-            # Build kwargs based on what the metric accepts
-            kwargs = {
-                'low_dim_key': low_dim_key,
-                'high_dim_key': high_dim_key,
-                'seed': seed,
-            }
-            
-            if 'k_neighbors' in params:
-                kwargs['k_neighbors'] = k_neighbors
-            if 'n_samples' in params:
-                kwargs['n_samples'] = n_samples
-            if 'n_jobs' in params:
-                kwargs['n_jobs'] = n_jobs
-            if 'verbose' in params:
-                kwargs['verbose'] = verbose 
-            
-            # Pass precomputed data if accepted
-            if 'precomputed_high_dists' in params:
-                kwargs['precomputed_high_dists'] = high_dim_dists
-            if 'precomputed_low_dists' in params:
-                kwargs['precomputed_low_dists'] = low_dim_dists
-            if 'precomputed_high_knn' in params:
-                kwargs['precomputed_high_knn'] = high_knn_indices
-            if 'precomputed_low_knn' in params:
-                kwargs['precomputed_low_knn'] = low_knn_indices
-            if 'precomputed_high_knn_dists' in params:
-                kwargs['precomputed_high_knn_dists'] = high_knn_dists
-            if 'precomputed_low_knn_dists' in params:
-                kwargs['precomputed_low_knn_dists'] = low_knn_dists
-            
-            # Run the metric
-            value = metric_module.run(adata, **kwargs)
-            
-            # Calculate elapsed time
-            elapsed_time = time.time() - metric_start_time
-            
-            results.append({
-                'Atlas Name': atlas_name,
-                'Metric Name': metric,
-                'Low Dim Key': low_dim_key,
-                'High Dim Key': high_dim_key,
-                'Value': value,
-                'Time (s)': round(elapsed_time, 3)
-            })
-            
-            # Update progress bar with time
-            pbar.set_postfix_str(f"Time: {elapsed_time:.2f}s", refresh=True)
-            
-        except Exception as e:
-            elapsed_time = time.time() - metric_start_time
-            logger.warning(f"Failed to calculate {metric}: {e}")
-            results.append({
-                'Atlas Name': atlas_name,
-                'Metric Name': metric,
-                'Low Dim Key': low_dim_key,
-                'High Dim Key': high_dim_key,
-                'Value': np.nan,
-                'Time (s)': round(elapsed_time, 3)
-            })
-    
-    # Create DataFrame
-    df = pd.DataFrame(results)
-    
-    # Calculate total time
-    total_time = df['Time (s)'].sum()
-    if verbose:
-        print(f"\nTotal computation time: {total_time:.2f}s")
-    
-    # Save to CSV if results exist
-    if not df.empty:
-        filename = os.path.join(file_dir, f"checkatlas_dimred_metrics_{atlas_name}.csv")
-        df.to_csv(filename, index=False)
-        if verbose:
-            print(f"Saved dimred metrics to {filename}")
-        logger.info(f"Saved dimred metrics to {filename}")
-        
-    # Cleanup memory-mapped files before returning
-    if use_memmap:
-        if verbose: print("Cleaning up temporary memmap files...")
-        # Close memmap references
-        try:
-            if 'high_dim_dists' in dir() and hasattr(high_dim_dists, '_mmap'):
-                del high_dim_dists
-            if 'low_dim_dists' in dir() and hasattr(low_dim_dists, '_mmap'):
+    pbar = tqdm(
+        total=total_combos,
+        desc="Calculating Dimred Metrics",
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} "
+                   "[{elapsed}<{remaining}]",
+        disable=not verbose)
+
+    for low_dim_key in low_dim_keys:
+        low_dim_data = adata.obsm[low_dim_key][sample_indices]
+
+        nbrs_low = NearestNeighbors(
+            n_neighbors=k_neighbors + 1, n_jobs=n_jobs
+        ).fit(low_dim_data)
+        low_knn_dists, low_knn_indices = nbrs_low.kneighbors(low_dim_data)
+
+        low_dim_dists = None
+        low_dists_path = None
+        need_low_dists = bool(set(metric_list) & _DIST_METRICS)
+
+        if need_low_dists:
+            if use_memmap:
+                low_dists_path = os.path.join(
+                    temp_dir,
+                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
+                all_memmap_files.append(low_dists_path)
+                low_dim_dists = np.memmap(
+                    low_dists_path, dtype="float32", mode="w+",
+                    shape=(n_cells, n_cells))
+            else:
+                low_dim_dists = np.zeros(
+                    (n_cells, n_cells), dtype=np.float32)
+
+            for i in tqdm(range(0, n_cells, chunk_size),
+                          desc=f"Low-Dim Distances ({low_dim_key})",
+                          disable=not verbose):
+                end = min(i + chunk_size, n_cells)
+                low_dim_dists[i:end, :] = pairwise_distances(
+                    low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
+                if use_memmap:
+                    low_dim_dists.flush()
+            gc.collect()
+
+        for metric_name in metric_list:
+            pbar.set_description(f"{low_dim_key}: {metric_name}")
+            t_start = time.time()
+
+            try:
+                metric_module = getattr(dimred, metric_name)
+                sig = inspect.signature(metric_module.run)
+                params = sig.parameters
+
+                kwargs = {}
+                if "low_dim_key" in params:
+                    kwargs["low_dim_key"] = low_dim_key
+                if "high_dim_key" in params:
+                    kwargs["high_dim_key"] = high_dim_key
+                if "k_neighbors" in params:
+                    kwargs["k_neighbors"] = k_neighbors
+                if "n_samples" in params:
+                    kwargs["n_samples"] = n_samples
+                if "n_jobs" in params:
+                    kwargs["n_jobs"] = n_jobs
+                if "seed" in params:
+                    kwargs["seed"] = seed
+                if "verbose" in params:
+                    kwargs["verbose"] = False
+
+                if "precomputed_high_knn" in params:
+                    kwargs["precomputed_high_knn"] = high_knn_indices
+                if "precomputed_low_knn" in params:
+                    kwargs["precomputed_low_knn"] = low_knn_indices
+                if "precomputed_high_knn_dists" in params:
+                    kwargs["precomputed_high_knn_dists"] = high_knn_dists
+                if "precomputed_low_knn_dists" in params:
+                    kwargs["precomputed_low_knn_dists"] = low_knn_dists
+                if "precomputed_high_dists" in params:
+                    kwargs["precomputed_high_dists"] = high_dim_dists
+                if "precomputed_low_dists" in params:
+                    kwargs["precomputed_low_dists"] = low_dim_dists
+
+                value = metric_module.run(adata, **kwargs)
+                elapsed = round(time.time() - t_start, 3)
+
+                results.append({
+                    "Metric Name": metric_name,
+                    "Low Dim Key": low_dim_key,
+                    "High Dim Key": high_dim_key,
+                    "Value": value,
+                    "Time (s)": elapsed,
+                })
+            except Exception as e:
+                elapsed = round(time.time() - t_start, 3)
+                logger.warning(
+                    "Failed %s on %s: %s", metric_name, low_dim_key, e)
+                results.append({
+                    "Metric Name": metric_name,
+                    "Low Dim Key": low_dim_key,
+                    "High Dim Key": high_dim_key,
+                    "Value": np.nan,
+                    "Time (s)": elapsed,
+                })
+
+            pbar.update(1)
+
+        if low_dim_dists is not None:
+            try:
                 del low_dim_dists
-        except:
+            except Exception:
+                pass
+            if low_dists_path and os.path.exists(low_dists_path):
+                try:
+                    os.remove(low_dists_path)
+                except Exception:
+                    pass
+                if low_dists_path in all_memmap_files:
+                    all_memmap_files.remove(low_dists_path)
+        gc.collect()
+
+    pbar.close()
+
+    if high_dim_dists is not None:
+        try:
+            del high_dim_dists
+        except Exception:
             pass
         gc.collect()
-        
-        # Remove files from disk
-        for fpath in memmap_files:
-            try:
-                if os.path.exists(fpath):
-                    os.remove(fpath)
-            except Exception as e:
-                logger.warning(f"Failed to cleanup temp file {fpath}: {e}")
-                
-        # Clear cache reference
-        if '_dimred_cache' in adata.uns:
-            adata.uns['_dimred_cache']['memmap_files'] = []
-            
+
+    for fpath in all_memmap_files:
+        try:
+            if os.path.exists(fpath):
+                os.remove(fpath)
+        except Exception as exc:
+            logger.debug(
+                "Failed to clean up temp file %s: %s", fpath, exc)
+
+    if "_dimred_cache" in adata.uns:
+        del adata.uns["_dimred_cache"]
+
+    gc.collect()
+
+    df = pd.DataFrame(results)
+
+    if verbose and not df.empty:
+        total_time = df["Time (s)"].sum()
+        n_results = len(df)
+        print(f"\nTotal computation time: {total_time:.2f}s")
+        print(f"Results: {n_results} measurements across "
+              f"{len(metric_list)} metrics")
+
     return df
 
 
@@ -1382,25 +1353,22 @@ def run_all_metrics(adata=None, atlas_path=None, atlas_name=None,
             print(f"{'─'*50}")
         
         try:
+            metric_list = METRICS_DIMRED if all_dimred_metrics else None
             df_dimred = cal_dimred(
                 adata, atlas_name=atlas_name,
-                low_dim_key=low_dim_key,
                 high_dim_key=high_dim_key,
+                metric_list=metric_list,
                 k_neighbors=k_neighbors,
                 n_samples=n_samples,
                 seed=seed,
                 n_jobs=n_jobs,
-                all_metrics=all_dimred_metrics,
                 file_dir=file_dir,
                 verbose=verbose,
-                use_memmap=use_memmap,
-                temp_dir=temp_dir,
-                chunk_size=chunk_size
             )
             
             if not df_dimred.empty:
                 unified = pd.DataFrame({
-                    'Atlas Name': df_dimred['Atlas Name'],
+                    'Atlas Name': atlas_name,
                     'Task': 'dimred',
                     'Metric Name': df_dimred['Metric Name'],
                     'Input 1': df_dimred['Low Dim Key'],
