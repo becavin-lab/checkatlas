@@ -27,11 +27,12 @@ This is the principal module of the checkatlas project.
 """
 
 PROCESS_TYPE = [
+    "preprocess",
     "summary",
     "qc",
     "metric_cluster",
     "metric_annot",
-    "metric_dimred",
+    "metric_dimred"
 ]
 
 TSV_EXTENSION = ".tsv"

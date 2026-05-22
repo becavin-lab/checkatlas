@@ -4,6 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+include { PREPROCESS_SCANPY } from '../modules/local/checkatlas_process'
 include { SUMMARY } from '../modules/local/checkatlas_process'
 include { QC } from '../modules/local/checkatlas_process'
 include { METRIC_CLUST } from '../modules/local/checkatlas_process'
@@ -24,12 +25,14 @@ workflow CHECKATLAS_SCANPY{
     ch_search_path
     
     main:
+    // Preprocess scanpy
+    PREPROCESS_SCANPY(atlas_info, ch_search_path)
     // Run all checkatlas processes
-    SUMMARY(atlas_info, ch_search_path)
-    QC(atlas_info, ch_search_path)
-    METRIC_CLUST(atlas_info, ch_search_path)
-    METRIC_ANNOT(atlas_info, ch_search_path)
-    METRIC_DIMRED(atlas_info, ch_search_path)
+    SUMMARY(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
+    QC(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
+    METRIC_CLUST(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
+    METRIC_ANNOT(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
+    METRIC_DIMRED(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
     
     // Mix all out channels
     scanpy_out = SUMMARY.out.out_info

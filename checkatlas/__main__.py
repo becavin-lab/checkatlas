@@ -166,29 +166,20 @@ def main() -> None:  # pragma: no cover
         or atlas_type == cellranger.CELLRANGER_TYPE_CURRENT
         or atlas_type == cellranger.CELLRANGER_TYPE_OBSOLETE
     ):
-        if process == check.PROCESS_TYPE[0]:
-            adata = atlas.read_atlas(atlas_info)
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+        adata = atlas.preprocess_atlas(atlas_info)
+        if process == check.PROCESS_TYPE[1]:
             atlas.create_summary_table(adata, atlas_info, args)
             atlas.create_anndata_table(adata, atlas_info, args)
             atlas.create_umap_fig(adata, atlas_info, args)
             atlas.create_tsne_fig(adata, atlas_info, args)
-        elif process == check.PROCESS_TYPE[1]:
-            adata = atlas.read_atlas(atlas_info)
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+        elif process == check.PROCESS_TYPE[2]:
             atlas.create_qc_tables(adata, atlas_info, args)
             atlas.create_qc_plots(adata, atlas_info, args)
-        elif process == check.PROCESS_TYPE[2]:
-            adata = atlas.read_atlas(atlas_info)
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            atlas.create_metric_cluster(adata, atlas_info, args)
         elif process == check.PROCESS_TYPE[3]:
-            adata = atlas.read_atlas(atlas_info)
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
-            atlas.create_metric_annot(adata, atlas_info, args)
+            atlas.create_metric_cluster(adata, atlas_info, args)
         elif process == check.PROCESS_TYPE[4]:
-            adata = atlas.read_atlas(atlas_info)
-            adata = atlas.clean_scanpy_atlas(adata, atlas_info)
+            atlas.create_metric_annot(adata, atlas_info, args)
+        elif process == check.PROCESS_TYPE[5]:
             atlas.create_metric_dimred(adata, atlas_info, args)
     elif atlas_type == seurat.SEURAT_TYPE:
         if process == check.PROCESS_TYPE[0]:
