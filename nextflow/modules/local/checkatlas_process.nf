@@ -1,3 +1,20 @@
+process PREPROCESS_SCANPY{
+    label 'process_preprocess_scanpy'
+
+    input:
+    val atlas_info
+    path samplesheet
+
+    output:
+    val atlas_info, emit: atlas_info
+
+    script:
+    out_info = atlas_info.atlas_name + "_PreProcess_Scanpy"
+    """
+    checkatlas preprocess ${atlas_info.atlas_name} $samplesheet
+    """
+}
+
 process SUMMARY{
     label 'process_summary'
 

@@ -62,6 +62,19 @@ warnings.simplefilter(action="ignore", category=UserWarning)
 sc.settings.verbosity = 0
 
 
+def preprocess_atlas(atlas_info: dict) -> AnnData:
+    """
+    Read adata
+    If it the first time clean it and save temp files with .obs and .obsm
+
+    """
+    adata = read_atlas(atlas_info)
+    adata = clean_scanpy_atlas(adata, atlas_info)
+    return adata
+
+
+
+
 
 def detect_scanpy(atlas_path: str) -> dict:
     if atlas_path.endswith(ANNDATA_EXTENSION):
