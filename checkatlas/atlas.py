@@ -646,46 +646,45 @@ def create_metric_dimred(
     adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
     """
-    Calc dimensionality reduction metrics
+    Calculate all dimred metrics via the comprehensive ``cal_dimred``
+    pipeline.  The pipeline auto-detects all ``.obsm`` embedding keys,
+    compares each against ``adata.X`` as the high‑dimensional reference,
+    runs every metric listed by ``--metric_dimred``, and writes results as
+    a tab‑separated file in the dimred folder compatible with MultiQC.
 
     Args:
         adata (AnnData): atlas to analyse
-        atlas_info (dict): path of the atlas
+        atlas_info (dict): info of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
-    csv_path = files.get_file_path(
-        atlas_name,
-        folders.DIMRED,
-        check.TSV_EXTENSION,
-        args.path,
+
+    logger.info("Running full dimred pipeline for %s", atlas_name)
+
+    dimred_dir = folders.get_folder(args.path, folders.DIMRED)
+
+    df = metrics.cal_dimred(
+        adata,
+        atlas_name=atlas_name,
+        metric_list=args.metric_dimred,
+        file_dir=dimred_dir,
+        n_jobs=-1,
+        verbose=True,
+        seed=42,
     )
-    header = ["Dimred_Sample", "obsm"] + args.metric_dimred
-    df_dimred = pd.DataFrame(columns=header)
-    obsm_keys = get_viable_obsm(adata, args)
-    if len(obsm_keys) > 0:
-        logger.debug(f"Calc dim red metrics for {atlas_name}")
-        for obsm_key in obsm_keys:
-            dict_line = {
-                "Dimred_Sample": [atlas_name + "_" + obsm_key],
-                "obsm": [obsm_key],
-            }
-            for metric in args.metric_dimred:
-                logger.debug(
-                    f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
-                )
-                metric_value, running_time = metrics.calc_metric_dimred(
-                    metric, adata, obsm_key
-                )
-                dict_line[metric] = metric_value
-                dict_line[f"{metric}_running_time"] = running_time
-            df_line = pd.DataFrame(dict_line)
-            df_dimred = pd.concat(
-                [df_dimred, df_line], ignore_index=True, axis=0
-            )
-        df_dimred.to_csv(csv_path, index=False, sep="\t")
+
+    if not df.empty:
+        csv_path = files.get_file_path(
+            atlas_name,
+            folders.DIMRED,
+            check.TSV_EXTENSION,
+            args.path,
+        )
+        wide_df = metrics._pivot_dimred_to_wide(df, atlas_name)
+        wide_df.to_csv(csv_path, index=False, sep="\t")
+        logger.info("Dimred metrics saved to %s", csv_path)
     else:
-        logger.debug(f"No viable obsm_key was found for {atlas_name}")
+        logger.warning("No dimred metrics calculated for %s", atlas_name)
 
 
 def atlas_sampling(

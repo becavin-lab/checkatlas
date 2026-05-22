@@ -609,6 +609,24 @@ class CheckAtlasColumnDetector:
 
         return float(np.clip(score, 0.0, 1.0))
 
+    # ── Dimred embedding detection ────────────────────────────────
+
+    def get_dimred_embeddings(self) -> list[str]:
+        """Get all ``.obsm`` keys suitable for dimred evaluation.
+
+        Unlike the clustering detection path, dimred metrics should
+        evaluate ALL embeddings regardless of dimensionality, including
+        UMAP / t‑SNE visualisation keys.  The point of dimred metrics
+        *is* to quantify how well those low‑dimensional representations
+        preserve the original high‑dimensional structure.
+
+        Returns
+        -------
+        list[str]
+            All ``.obsm`` key names present in the AnnData object.
+        """
+        return list(self.obsm_keys)
+
     # ── Batch key detection ───────────────────────────────────────
 
     _BATCH_CARDINALITY_RANGE = (2, 200)

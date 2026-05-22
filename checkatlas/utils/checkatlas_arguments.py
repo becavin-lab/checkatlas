@@ -126,8 +126,7 @@ def create_parser():
         "--metric_dimred",
         nargs="+",
         type=str,
-        default=[],
-        # default=["kruskal_stress"],
+        default=dimred.__all__,
         help="Specify the list of dimensionality reduction "
         "metrics to calculate.\n"
         "   Example: --metric_dimred kruskal_stress\n"
