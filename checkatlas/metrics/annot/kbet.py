@@ -140,3 +140,114 @@ def run(X, labels, k=25, alpha=0.05, n_jobs=-1, verbose=True):
               f"({rejections:,}/{n_samples:,} cells rejected)")
 
     return float(rejection_rate)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# JAX GPU-accelerated kBET (Phase 4b)
+# ═══════════════════════════════════════════════════════════════════════
+
+try:
+    import functools
+    import jax
+    import jax.numpy as jnp
+    _HAS_JAX_KBET = True
+except ImportError:
+    _HAS_JAX_KBET = False
+
+
+if _HAS_JAX_KBET:
+
+    @functools.partial(jax.jit, static_argnums=(2,))
+    def _kbet_chi2_jax(
+        neigh_batch_ids: jnp.ndarray,
+        batches: jnp.ndarray,
+        n_batches: int,
+    ) -> jnp.ndarray:
+        """JIT-compiled chi-squared test per cell (GPU kernel).
+
+        Fuses bincount → expected_counts → chi² → p-value into one
+        GPU kernel, avoiding Python interpreter overhead between steps.
+        """
+        expected_freq = jnp.bincount(batches, length=n_batches) / batches.shape[0]
+        dof = n_batches - 1
+
+        observed_counts = jax.vmap(
+            functools.partial(jnp.bincount, length=n_batches)
+        )(neigh_batch_ids)
+        expected_counts = expected_freq * neigh_batch_ids.shape[1]
+        test_stats = jnp.sum(
+            jnp.square(observed_counts - expected_counts) / expected_counts,
+            axis=1,
+        )
+        p_values = 1.0 - jax.scipy.special.gammainc(dof / 2.0, test_stats / 2.0)
+        return p_values
+
+
+def run_with_neighbors(neighbor_results, labels, alpha=0.05, verbose=True):
+    """kBET using precomputed kNN (NeighborResults).
+
+    Uses JAX GPU acceleration when available; falls back to numpy.
+
+    Parameters
+    ----------
+    neighbor_results : NeighborResults
+        Precomputed kNN from :func:`checkatlas.metrics._neighbors.compute_neighbors`.
+    labels : array-like
+        Batch labels.
+    alpha : float
+        Significance level.
+    verbose : bool
+
+    Returns
+    -------
+    float
+        kBET rejection rate [0, 1]; lower = better mixing.
+    """
+    from .._neighbors import NeighborResults
+
+    labels = np.asarray(labels)
+
+    n_samples = neighbor_results.n_samples
+    if n_samples < 2:
+        return 0.0
+
+    unique_batches, batch_counts = np.unique(labels, return_counts=True)
+    n_batches = len(unique_batches)
+    if n_batches <= 1:
+        return 0.0
+
+    neighbour_idx = neighbor_results.indices
+    k_actual = neighbour_idx.shape[1]
+
+    batch_to_code = {b: i for i, b in enumerate(unique_batches)}
+    batch_codes = np.array([batch_to_code[b] for b in labels], dtype=np.intp)
+    neighbour_batch = batch_codes[neighbour_idx]
+
+    if _HAS_JAX_KBET:
+        jax_neigh = jnp.asarray(neighbour_batch, dtype=jnp.int32)
+        jax_batches = jnp.asarray(batch_codes, dtype=jnp.int32)
+        p_values = _kbet_chi2_jax(jax_neigh, jax_batches, n_batches)
+        p_values = np.asarray(p_values)
+    else:
+        expected_freqs = batch_counts / n_samples
+        expected_counts = expected_freqs * k_actual
+        expected_counts = np.maximum(expected_counts, 1e-10)
+
+        offsets = np.arange(n_samples, dtype=np.int64) * n_batches
+        flat = (neighbour_batch + offsets[:, None]).ravel()
+        observed_flat = np.bincount(flat, minlength=n_samples * n_batches)
+        observed = observed_flat.reshape(n_samples, n_batches).astype(np.float64)
+
+        chi2_stats = np.sum(
+            (observed - expected_counts) ** 2 / expected_counts, axis=1
+        )
+        p_values = 1.0 - chi2.cdf(chi2_stats, n_batches - 1)
+
+    rejections = np.sum(p_values < alpha)
+    rejection_rate = rejections / n_samples
+
+    if verbose:
+        print(f"  kBET rejection rate = {rejection_rate:.4f} "
+              f"({rejections:,}/{n_samples:,} cells rejected)")
+
+    return float(rejection_rate)
