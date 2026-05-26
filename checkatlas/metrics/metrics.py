@@ -14,8 +14,8 @@ except (ImportError, OSError):
 from sklearn.preprocessing import LabelEncoder
 
 from . import annot, cluster, dimred
-# Import CheckAtlasColumnDetector inside function or at top if no circular dependency
-# from ..atlas import CheckAtlasColumnDetector # This might cause circular import if atlas imports metrics
+from ._jax_utils import _JAX_AVAILABLE, _GPU_AVAILABLE, pdist_squareform, _get_ndarray
+from ._neighbors import compute_neighbors, NeighborResults, _clear_neighbors_cache
 
 METRICS_CLUST = cluster.__all__
 METRICS_ANNOT = annot.__all__
@@ -156,6 +156,10 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
     """
     import inspect
     from ..utils.col_detector import CheckAtlasColumnDetector
+    from ._jax_utils import _JAX_AVAILABLE as _cal_jax, _GPU_AVAILABLE as _cal_gpu
+    from ._neighbors import compute_neighbors as _cal_knn, NeighborResults, _clear_neighbors_cache
+
+    _USE_JAX = _cal_jax and _cal_gpu
     
     # Set file directory
     if file_dir is None:
@@ -305,22 +309,30 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
 
             # 3. LISI (Special Case: iLISI and cLISI)
             elif metric == 'lisi':
+                # ── Precompute kNN per embedding once (GPU/JAX or CPU) ──
+                emb_nn = {}
+                if _USE_JAX:
+                    for emb in embedding_keys:
+                        X_emb = np.asarray(adata.obsm[emb], dtype=np.float64)
+                        emb_nn[emb] = _cal_knn(X_emb, n_neighbors=90, backend="auto")
+
                 # iLISI: needs batch
                 if batch_keys:
                     for batch in batch_keys:
                         try:
-                            # LISI run takes X and label.
-                            # For iLISI, label is batch.
-                            # We should run it on embeddings usually.
                             if embedding_keys:
                                 for emb in embedding_keys:
                                     X_emb = adata.obsm[emb]
                                     pair_start = time.time()
-                                    sig = inspect.signature(metric_module.run)
-                                    kw = {}
-                                    if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
-                                    if 'verbose' in sig.parameters: kw['verbose'] = False
-                                    val = metric_module.run(X_emb, adata.obs[batch], **kw)
+                                    if _USE_JAX and emb in emb_nn:
+                                        val = metric_module.run_with_neighbors(
+                                            emb_nn[emb], adata.obs[batch], verbose=False)
+                                    else:
+                                        sig = inspect.signature(metric_module.run)
+                                        kw = {}
+                                        if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
+                                        if 'verbose' in sig.parameters: kw['verbose'] = False
+                                        val = metric_module.run(X_emb, adata.obs[batch], **kw)
                                     pair_elapsed = time.time() - pair_start
                                     results.append({
                                         'Atlas Name': atlas_name,
@@ -331,7 +343,6 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
                                         'Time (s)': round(pair_elapsed, 3)
                                     })
                             else:
-                                # Run on X
                                 pair_start = time.time()
                                 sig = inspect.signature(metric_module.run)
                                 kw = {}
@@ -358,11 +369,15 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
                             for emb in embedding_keys:
                                 X_emb = adata.obsm[emb]
                                 pair_start = time.time()
-                                sig = inspect.signature(metric_module.run)
-                                kw = {}
-                                if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
-                                if 'verbose' in sig.parameters: kw['verbose'] = False
-                                val = metric_module.run(X_emb, adata.obs[label], **kw)
+                                if _USE_JAX and emb in emb_nn:
+                                    val = metric_module.run_with_neighbors(
+                                        emb_nn[emb], adata.obs[label], verbose=False)
+                                else:
+                                    sig = inspect.signature(metric_module.run)
+                                    kw = {}
+                                    if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
+                                    if 'verbose' in sig.parameters: kw['verbose'] = False
+                                    val = metric_module.run(X_emb, adata.obs[label], **kw)
                                 pair_elapsed = time.time() - pair_start
                                 results.append({
                                     'Atlas Name': atlas_name,
@@ -401,11 +416,18 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
                             try:
                                 X_emb = adata.obsm[emb]
                                 pair_start = time.time()
-                                sig = inspect.signature(metric_module.run)
-                                kw = {}
-                                if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
-                                if 'verbose' in sig.parameters: kw['verbose'] = False
-                                val = metric_module.run(X_emb, adata.obs[batch], **kw)
+                                # kBET: use JAX-accelerated path with precomputed kNN
+                                if _USE_JAX and metric == 'kbet' and hasattr(metric_module, 'run_with_neighbors'):
+                                    X_arr = np.asarray(X_emb, dtype=np.float64)
+                                    nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
+                                    val = metric_module.run_with_neighbors(
+                                        nn, adata.obs[batch], verbose=False)
+                                else:
+                                    sig = inspect.signature(metric_module.run)
+                                    kw = {}
+                                    if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
+                                    if 'verbose' in sig.parameters: kw['verbose'] = False
+                                    val = metric_module.run(X_emb, adata.obs[batch], **kw)
                                 pair_elapsed = time.time() - pair_start
                                 results.append({
                                     'Atlas Name': atlas_name,
@@ -420,11 +442,19 @@ def cal_annot(adata, atlas_name=None, metric_list=None, all=False,
                     else:
                         try:
                             pair_start = time.time()
-                            sig = inspect.signature(metric_module.run)
-                            kw = {}
-                            if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
-                            if 'verbose' in sig.parameters: kw['verbose'] = False
-                            val = metric_module.run(adata.X, adata.obs[batch], **kw)
+                            if _USE_JAX and metric == 'kbet' and hasattr(metric_module, 'run_with_neighbors'):
+                                X_arr = np.asarray(adata.X, dtype=np.float64)
+                                if hasattr(adata.X, 'toarray'):
+                                    X_arr = adata.X.toarray().astype(np.float64)
+                                nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
+                                val = metric_module.run_with_neighbors(
+                                    nn, adata.obs[batch], verbose=False)
+                            else:
+                                sig = inspect.signature(metric_module.run)
+                                kw = {}
+                                if 'n_jobs' in sig.parameters: kw['n_jobs'] = n_jobs
+                                if 'verbose' in sig.parameters: kw['verbose'] = False
+                                val = metric_module.run(adata.X, adata.obs[batch], **kw)
                             pair_elapsed = time.time() - pair_start
                             results.append({
                                 'Atlas Name': atlas_name,
@@ -917,7 +947,23 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
     if file_dir:
         temp_dir = file_dir
     else:
-        temp_dir = os.path.join(os.path.expanduser("~"), ".checkatlas", "tmp")
+        # Try default, fall back to /data if system temp is on a small partition
+        default_tmp = os.path.join(os.path.expanduser("~"), ".checkatlas", "tmp")
+        temp_dir = default_tmp
+        try:
+            import shutil
+            _usage = shutil.disk_usage(default_tmp)
+            if _usage.free < 50 * 1024**3:  # < 50 GB free
+                _fallback = "/data/tmp" if os.path.exists("/data/tmp") else "/tmp"
+                # Also try nextflow TMPDIR if set
+                _nf_tmp = os.environ.get("TMPDIR", "")
+                if _nf_tmp and os.path.exists(_nf_tmp):
+                    _fallback = _nf_tmp
+                temp_dir = os.path.join(_fallback, ".checkatlas_tmp")
+                if verbose:
+                    print(f"  Low disk space on default temp; using {temp_dir}")
+        except Exception:
+            pass
     os.makedirs(temp_dir, exist_ok=True)
 
     run_id = str(uuid.uuid4())[:8]
@@ -928,43 +974,114 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
               f"({n_cells:,} cells  ×  {high_n_features} features)")
         print(f"  Embeddings: {low_dim_keys}")
         print(f"  Metrics: {metric_list}")
+        backend = "GPU (JAX)" if (_JAX_AVAILABLE and _GPU_AVAILABLE) else "CPU"
+        print(f"  Backend: {backend}")
 
-    # ── High‑dim kNN ──
-    nbrs_high = NearestNeighbors(
-        n_neighbors=k_neighbors + 1, n_jobs=n_jobs
-    ).fit(high_dim_data)
-    high_knn_dists, high_knn_indices = nbrs_high.kneighbors(high_dim_data)
+    # ── GPU path: single-kernel distance matrix + kNN (Phase 3) ────
+    # Memory: N² float32 ≈ 4·N² bytes → with intermediate buffers ≈ 4·N²·3.5 bytes
+    # A100 40 GB: safe N ≤ 50 000 (≈ 32.6 GB total)
+    # For 50k < N ≤ 150k: chunked GPU + memmap on /data (avoid disk IO bottleneck)
+    _GPU_SINGLE_SHOT = _JAX_AVAILABLE and _GPU_AVAILABLE and (n_cells <= 50000)
+    _GPU_CHUNKED = _JAX_AVAILABLE and _GPU_AVAILABLE and (50000 < n_cells <= 150000)
 
-    # ── High‑dim distance matrix (only when distance‑based metrics
-    #     are in the list) ──
-    _DIST_METRICS = frozenset(("kruskal_stress", "spearman_rho", "dCor",
-                               "trustworthiness", "continuity"))
-    need_high_dists = bool(set(metric_list) & _DIST_METRICS)
-    high_dim_dists = None
+    if _GPU_SINGLE_SHOT:
+        import jax.numpy as jnp
 
-    if need_high_dists:
+        high_dim_dists = pdist_squareform(high_dim_data)  # GPU matmul → (n,n) float32
+        high_dists_jax = jnp.asarray(high_dim_dists, dtype=jnp.float32)
+
+        # kNN from precomputed distance matrix on GPU
+        import jax
+        high_knn_dists_jax, high_knn_indices_jax = jax.lax.approx_min_k(
+            high_dists_jax, k=k_neighbors + 1
+        )
+        high_knn_dists = _get_ndarray(high_knn_dists_jax)
+        high_knn_indices = _get_ndarray(high_knn_indices_jax)
+
+    elif _GPU_CHUNKED:
+        # ── Chunked GPU path: compute distances on GPU in chunks,
+        #     store full matrix in memmap on /data, then kNN via CPU
+        import jax.numpy as jnp
+        import jax
+
+        _gpu_chunk = 10000
+
         if verbose:
-            print("  Precomputing high-dim distance matrix "
-                  f"({n_cells:,}×{n_cells:,})…")
-        if use_memmap:
-            high_dists_path = os.path.join(
-                temp_dir, f"high_dists_{run_id}.dat")
-            all_memmap_files.append(high_dists_path)
-            high_dim_dists = np.memmap(
-                high_dists_path, dtype="float32", mode="w+",
-                shape=(n_cells, n_cells))
-        else:
-            high_dim_dists = np.zeros(
-                (n_cells, n_cells), dtype=np.float32)
+            print(f"  Chunked GPU path: {n_cells:,} cells, chunk_size={_gpu_chunk}")
+            print(f"  Storing in: {temp_dir}")
 
-        for i in tqdm(range(0, n_cells, chunk_size),
-                      desc="High-Dim Distances", disable=not verbose):
-            end = min(i + chunk_size, n_cells)
-            high_dim_dists[i:end, :] = pairwise_distances(
-                high_dim_data[i:end], high_dim_data, n_jobs=n_jobs)
-            if use_memmap:
-                high_dim_dists.flush()
+        # High-dim kNN via chunked GPU (no full distance matrix needed)
+        high_knn_results = compute_neighbors(
+            np.asarray(high_dim_data, dtype=np.float64),
+            n_neighbors=k_neighbors + 1,
+            backend="auto",
+        )
+        high_knn_dists = high_knn_results.distances
+        high_knn_indices = high_knn_results.indices
+
+        # Distance matrix via chunked GPU + memmap on data partition
+        high_dists_path = os.path.join(
+            temp_dir, f"high_dists_{run_id}.dat")
+        all_memmap_files.append(high_dists_path)
+        high_dim_dists = np.memmap(
+            high_dists_path, dtype="float32", mode="w+",
+            shape=(n_cells, n_cells))
+
+        for start in tqdm(range(0, n_cells, _gpu_chunk),
+                          desc="High-Dim Distances (GPU chunked)",
+                          disable=not verbose):
+            end = min(start + _gpu_chunk, n_cells)
+            chunk = jnp.asarray(high_dim_data[start:end], dtype=jnp.float32)
+            full = jnp.asarray(high_dim_data, dtype=jnp.float32)
+            # GPU cdist: (chunk, N)
+            high_dim_dists[start:end, :] = _get_ndarray(
+                jnp.sqrt(jnp.maximum(
+                    jnp.sum(chunk**2, axis=1)[:, None]
+                    + jnp.sum(full**2, axis=1)[None, :]
+                    - 2 * jnp.dot(chunk, full.T),
+                    0.0
+                ))
+            )
+            high_dim_dists.flush()
         gc.collect()
+    else:
+        # ─── CPU path (unchanged) ───────────────────────────────────
+        # ── High‑dim kNN ──
+        nbrs_high = NearestNeighbors(
+            n_neighbors=k_neighbors + 1, n_jobs=n_jobs
+        ).fit(high_dim_data)
+        high_knn_dists, high_knn_indices = nbrs_high.kneighbors(high_dim_data)
+
+        # ── High‑dim distance matrix (only when distance‑based metrics
+        #     are in the list) ──
+        _DIST_METRICS = frozenset(("kruskal_stress", "spearman_rho", "dCor",
+                                    "trustworthiness", "continuity"))
+        need_high_dists = bool(set(metric_list) & _DIST_METRICS)
+        high_dim_dists = None
+
+        if need_high_dists:
+            if verbose:
+                print("  Precomputing high-dim distance matrix "
+                      f"({n_cells:,}×{n_cells:,})…")
+            if use_memmap:
+                high_dists_path = os.path.join(
+                    temp_dir, f"high_dists_{run_id}.dat")
+                all_memmap_files.append(high_dists_path)
+                high_dim_dists = np.memmap(
+                    high_dists_path, dtype="float32", mode="w+",
+                    shape=(n_cells, n_cells))
+            else:
+                high_dim_dists = np.zeros(
+                    (n_cells, n_cells), dtype=np.float32)
+
+            for i in tqdm(range(0, n_cells, chunk_size),
+                          desc="High-Dim Distances", disable=not verbose):
+                end = min(i + chunk_size, n_cells)
+                high_dim_dists[i:end, :] = pairwise_distances(
+                    high_dim_data[i:end], high_dim_data, n_jobs=n_jobs)
+                if use_memmap:
+                    high_dim_dists.flush()
+            gc.collect()
 
     total_combos = len(low_dim_keys) * len(metric_list)
     if verbose:
@@ -983,37 +1100,50 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
     for low_dim_key in low_dim_keys:
         low_dim_data = adata.obsm[low_dim_key][sample_indices]
 
-        nbrs_low = NearestNeighbors(
-            n_neighbors=k_neighbors + 1, n_jobs=n_jobs
-        ).fit(low_dim_data)
-        low_knn_dists, low_knn_indices = nbrs_low.kneighbors(low_dim_data)
-
         low_dim_dists = None
         low_dists_path = None
-        need_low_dists = bool(set(metric_list) & _DIST_METRICS)
 
-        if need_low_dists:
-            if use_memmap:
-                low_dists_path = os.path.join(
-                    temp_dir,
-                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
-                all_memmap_files.append(low_dists_path)
-                low_dim_dists = np.memmap(
-                    low_dists_path, dtype="float32", mode="w+",
-                    shape=(n_cells, n_cells))
-            else:
-                low_dim_dists = np.zeros(
-                    (n_cells, n_cells), dtype=np.float32)
+        if _GPU_SINGLE_SHOT or _GPU_CHUNKED:
+            # ── GPU path: single-kernel distance + kNN ──────────
+            import jax
+            import jax.numpy as jnp
+            low_dim_dists = pdist_squareform(low_dim_data)
+            low_dists_jax = jnp.asarray(low_dim_dists, dtype=jnp.float32)
+            low_knn_dists_jax, low_knn_indices_jax = jax.lax.approx_min_k(
+                low_dists_jax, k=k_neighbors + 1
+            )
+            low_knn_dists = _get_ndarray(low_knn_dists_jax)
+            low_knn_indices = _get_ndarray(low_knn_indices_jax)
+        else:
+            # ── CPU path ────────────────────────────────────────
+            nbrs_low = NearestNeighbors(
+                n_neighbors=k_neighbors + 1, n_jobs=n_jobs
+            ).fit(low_dim_data)
+            low_knn_dists, low_knn_indices = nbrs_low.kneighbors(low_dim_data)
 
-            for i in tqdm(range(0, n_cells, chunk_size),
-                          desc=f"Low-Dim Distances ({low_dim_key})",
-                          disable=not verbose):
-                end = min(i + chunk_size, n_cells)
-                low_dim_dists[i:end, :] = pairwise_distances(
-                    low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
+            need_low_dists = bool(set(metric_list) & _DIST_METRICS)
+            if need_low_dists:
                 if use_memmap:
-                    low_dim_dists.flush()
-            gc.collect()
+                    low_dists_path = os.path.join(
+                        temp_dir,
+                        f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
+                    all_memmap_files.append(low_dists_path)
+                    low_dim_dists = np.memmap(
+                        low_dists_path, dtype="float32", mode="w+",
+                        shape=(n_cells, n_cells))
+                else:
+                    low_dim_dists = np.zeros(
+                        (n_cells, n_cells), dtype=np.float32)
+
+                for i in tqdm(range(0, n_cells, chunk_size),
+                              desc=f"Low-Dim Distances ({low_dim_key})",
+                              disable=not verbose):
+                    end = min(i + chunk_size, n_cells)
+                    low_dim_dists[i:end, :] = pairwise_distances(
+                        low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
+                    if use_memmap:
+                        low_dim_dists.flush()
+                gc.collect()
 
         for metric_name in metric_list:
             pbar.set_description(f"{low_dim_key}: {metric_name}")

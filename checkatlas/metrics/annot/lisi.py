@@ -135,3 +135,99 @@ def clisi_graph(adata, label_key, k0=90, perplexity=None, scale=True,
     X = adata.obsm.get('X_pca', adata.X)
     return run(X, adata.obs[label_key], perplexity=perplexity,
                n_jobs=n_jobs, verbose=verbose)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# JAX GPU-accelerated LISI (Phase 4a)
+# ═══════════════════════════════════════════════════════════════════════
+
+try:
+    import functools
+    import jax
+    import jax.numpy as jnp
+    _HAS_JAX_LISI = True
+except ImportError:
+    _HAS_JAX_LISI = False
+
+
+if _HAS_JAX_LISI:
+
+    @functools.partial(jax.jit, static_argnums=(2,))
+    def _lisi_simpson_jax(
+        neigh_batch_codes: jnp.ndarray,
+        k_actual: int,
+        n_batches: int,
+    ) -> jnp.ndarray:
+        """JIT-compiled per-cell Simpson index (GPU kernel).
+
+        ``bincount`` is vmap'd over all cells → single fused GPU kernel.
+        """
+        observed = jax.vmap(
+            functools.partial(jnp.bincount, length=n_batches)
+        )(neigh_batch_codes)
+        sum_sq = jnp.sum(observed * observed, axis=1)
+        sum_sq = jnp.maximum(sum_sq, 1e-10)
+        lisi = (k_actual * k_actual) / sum_sq
+        return lisi
+
+
+def run_with_neighbors(neighbor_results, label, perplexity=30, verbose=True):
+    """LISI using precomputed kNN (NeighborResults).
+
+    Uses JAX GPU acceleration when available; falls back to numpy.
+
+    Parameters
+    ----------
+    neighbor_results : NeighborResults
+        Precomputed kNN from :func:`checkatlas.metrics._neighbors.compute_neighbors`.
+    label : array-like
+        Batch or cell-type labels.
+    perplexity : int
+        Kept for API compatibility — ignored in uniform-weight mode.
+    verbose : bool
+
+    Returns
+    -------
+    float
+        Scaled LISI score [0, 1]; higher = better mixing.
+    """
+    from .._neighbors import NeighborResults
+
+    if isinstance(label, (pd.Series, pd.Index)):
+        label = label.values
+    else:
+        label = np.asarray(label)
+
+    n_samples = neighbor_results.n_samples
+    if n_samples < 2:
+        return 0.0
+
+    unique_batches, batch_codes = np.unique(label, return_inverse=True)
+    n_batches = len(unique_batches)
+    if n_batches <= 1:
+        return 0.0
+
+    neighbour_idx = neighbor_results.indices
+    k_actual = neighbour_idx.shape[1]
+    neighbour_batch = batch_codes[neighbour_idx]
+
+    if _HAS_JAX_LISI:
+        jax_batch = jnp.asarray(neighbour_batch, dtype=jnp.int32)
+        lisi_scores = _lisi_simpson_jax(jax_batch, k_actual, n_batches)
+        lisi_scores = np.asarray(lisi_scores)
+    else:
+        offsets = np.arange(n_samples, dtype=np.int64) * n_batches
+        flat = (neighbour_batch + offsets[:, None]).ravel()
+        counts = np.bincount(flat, minlength=n_samples * n_batches)
+        counts = counts.reshape(n_samples, n_batches).astype(np.float64)
+        sum_sq = np.sum(counts * counts, axis=1)
+        sum_sq = np.maximum(sum_sq, 1e-10)
+        lisi_scores = (k_actual * k_actual) / sum_sq
+
+    mean_lisi = float(np.mean(lisi_scores))
+    scaled_lisi = (mean_lisi - 1.0) / (n_batches - 1.0)
+
+    if verbose:
+        print(f"  Scaled LISI = {scaled_lisi:.6f}")
+
+    return scaled_lisi
