@@ -850,6 +850,32 @@ def calc_metric_annot_seurat(metric, seurat, obs_key, ref_obs):
         return -1
 
 
+def _safe_close_memmap(memmap_obj):
+    """Force-close a numpy memmap so the backing .dat file can be deleted.
+
+    ``del memmap_obj`` does not reliably release the file handle in time
+    for a subsequent ``os.remove()``.  This helper walks the buffer chain
+    to close the underlying mmap explicitly.
+    """
+    import mmap as _mmap_mod
+    if memmap_obj is None:
+        return
+    # Walk the memmap object's inheritance chain to find the raw mmap
+    for _attr in ("_mmap", "base"):
+        inner = getattr(memmap_obj, _attr, None)
+        if inner is not None and isinstance(inner, _mmap_mod.mmap):
+            try:
+                inner.close()
+            except Exception:
+                pass
+    # Also try closing the memmap directly if it IS an mmap
+    if isinstance(memmap_obj, _mmap_mod.mmap):
+        try:
+            memmap_obj.close()
+        except Exception:
+            pass
+
+
 def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
                metric_list=None, k_neighbors=30, n_samples=None, seed=42,
                n_jobs=-1, file_dir=None, verbose=True):
@@ -999,18 +1025,22 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
         high_knn_indices = _get_ndarray(high_knn_indices_jax)
 
     elif _GPU_CHUNKED:
-        # ── Chunked GPU path: compute distances on GPU in chunks,
-        #     store full matrix in memmap on /data, then kNN via CPU
+        # ── Chunked GPU path: streaming kNN + GPU sub-chunked distances ──
+        # kNN: auto-detect — streaming GPU for large, one-shot GPU for fits
+        # Distances: GPU sub-chunked → memmap on data partition
         import jax.numpy as jnp
-        import jax
 
-        _gpu_chunk = 10000
+        _qchunk = 15000  # query rows per chunk
+        _rchunk = 10000  # reference columns per chunk
 
         if verbose:
-            print(f"  Chunked GPU path: {n_cells:,} cells, chunk_size={_gpu_chunk}")
+            print(f"  Chunked GPU/streaming: {n_cells:,} cells, "
+                  f"query={_qchunk}, ref={_rchunk}")
             print(f"  Storing in: {temp_dir}")
 
-        # High-dim kNN via chunked GPU (no full distance matrix needed)
+        # kNN via auto-backend (streaming GPU if large, one-shot GPU if fits)
+        if verbose:
+            print("  Computing kNN (auto GPU)...")
         high_knn_results = compute_neighbors(
             np.asarray(high_dim_data, dtype=np.float64),
             n_neighbors=k_neighbors + 1,
@@ -1019,7 +1049,7 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
         high_knn_dists = high_knn_results.distances
         high_knn_indices = high_knn_results.indices
 
-        # Distance matrix via chunked GPU + memmap on data partition
+        # Distance matrix via GPU sub-chunked + memmap on /data
         high_dists_path = os.path.join(
             temp_dir, f"high_dists_{run_id}.dat")
         all_memmap_files.append(high_dists_path)
@@ -1027,22 +1057,33 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
             high_dists_path, dtype="float32", mode="w+",
             shape=(n_cells, n_cells))
 
-        for start in tqdm(range(0, n_cells, _gpu_chunk),
-                          desc="High-Dim Distances (GPU chunked)",
-                          disable=not verbose):
-            end = min(start + _gpu_chunk, n_cells)
-            chunk = jnp.asarray(high_dim_data[start:end], dtype=jnp.float32)
-            full = jnp.asarray(high_dim_data, dtype=jnp.float32)
-            # GPU cdist: (chunk, N)
-            high_dim_dists[start:end, :] = _get_ndarray(
-                jnp.sqrt(jnp.maximum(
-                    jnp.sum(chunk**2, axis=1)[:, None]
-                    + jnp.sum(full**2, axis=1)[None, :]
-                    - 2 * jnp.dot(chunk, full.T),
-                    0.0
-                ))
-            )
-            high_dim_dists.flush()
+        n_qchunks = (n_cells + _qchunk - 1) // _qchunk
+        n_rchunks = (n_cells + _rchunk - 1) // _rchunk
+        total_blocks = n_qchunks * n_rchunks
+
+        with tqdm(total=total_blocks,
+                  desc="High-Dim Distances (GPU sub-chunked)",
+                  disable=not verbose) as pbar_dist:
+            for qs in range(0, n_cells, _qchunk):
+                qe = min(qs + _qchunk, n_cells)
+                chunk = jnp.asarray(
+                    high_dim_data[qs:qe], dtype=jnp.float32)
+                chunk_sq = jnp.sum(chunk**2, axis=1)  # (qsize,)
+
+                for rs in range(0, n_cells, _rchunk):
+                    re = min(rs + _rchunk, n_cells)
+                    ref = jnp.asarray(
+                        high_dim_data[rs:re], dtype=jnp.float32)
+                    ref_sq = jnp.sum(ref**2, axis=1)    # (rsize,)
+                    dot = jnp.dot(chunk, ref.T)          # (qsize, rsize)
+                    D_sub_sq = (chunk_sq[:, None]
+                                + ref_sq[None, :]
+                                - 2 * dot)
+                    D_sub = jnp.sqrt(jnp.maximum(D_sub_sq, 0.0))
+                    high_dim_dists[qs:qe, rs:re] = _get_ndarray(D_sub)
+                    pbar_dist.update(1)
+
+                high_dim_dists.flush()
         gc.collect()
     else:
         # ─── CPU path (unchanged) ───────────────────────────────────
@@ -1103,7 +1144,7 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
         low_dim_dists = None
         low_dists_path = None
 
-        if _GPU_SINGLE_SHOT or _GPU_CHUNKED:
+        if _GPU_SINGLE_SHOT:
             # ── GPU path: single-kernel distance + kNN ──────────
             import jax
             import jax.numpy as jnp
@@ -1114,6 +1155,74 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
             )
             low_knn_dists = _get_ndarray(low_knn_dists_jax)
             low_knn_indices = _get_ndarray(low_knn_indices_jax)
+        elif _GPU_CHUNKED:
+            # ── GPU for low-dim when features ≤ 200 dims ─────────
+            # Low-dim embeddings (X_pca=50d, X_umap=2d) fit on GPU easily.
+            # High-dim X (60k genes) needs CPU memmap for N×N storage.
+            low_ndim = low_dim_data.shape[1]
+            if low_ndim <= 200 and n_cells <= 50000:
+                # One-shot GPU: small feature dim → N² fits
+                import jax
+                import jax.numpy as jnp
+                low_dim_dists = pdist_squareform(low_dim_data)
+                low_dists_jax = jnp.asarray(low_dim_dists, dtype=jnp.float32)
+                low_knn_dists_jax, low_knn_indices_jax = jax.lax.approx_min_k(
+                    low_dists_jax, k=k_neighbors + 1
+                )
+                low_knn_dists = _get_ndarray(low_knn_dists_jax)
+                low_knn_indices = _get_ndarray(low_knn_indices_jax)
+            elif low_ndim <= 200:
+                # GPU streaming kNN + GPU sub-chunked distance matrix
+                kNN = compute_neighbors(
+                    np.asarray(low_dim_data, dtype=np.float64),
+                    n_neighbors=k_neighbors + 1, backend="auto")
+                low_knn_dists = kNN.distances
+                low_knn_indices = kNN.indices
+                # GPU sub-chunked distance matrix for dist-based metrics
+                low_dists_path = os.path.join(
+                    temp_dir,
+                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
+                all_memmap_files.append(low_dists_path)
+                low_dim_dists = np.memmap(
+                    low_dists_path, dtype="float32", mode="w+",
+                    shape=(n_cells, n_cells))
+                _lq = 20000
+                _lr = 20000
+                for qs in range(0, n_cells, _lq):
+                    qe = min(qs + _lq, n_cells)
+                    chunk = jnp.asarray(low_dim_data[qs:qe], dtype=jnp.float32)
+                    chunk_sq = jnp.sum(chunk**2, axis=1)
+                    for rs in range(0, n_cells, _lr):
+                        re = min(rs + _lr, n_cells)
+                        ref = jnp.asarray(low_dim_data[rs:re], dtype=jnp.float32)
+                        ref_sq = jnp.sum(ref**2, axis=1)
+                        dot = jnp.dot(chunk, ref.T)
+                        D_sub_sq = chunk_sq[:, None] + ref_sq[None, :] - 2 * dot
+                        low_dim_dists[qs:qe, rs:re] = _get_ndarray(
+                            jnp.sqrt(jnp.maximum(D_sub_sq, 0.0)))
+                    low_dim_dists.flush()
+                gc.collect()
+            else:
+                # High-dim X — CPU memmap (sklearn)
+                nbrs_low = NearestNeighbors(
+                    n_neighbors=k_neighbors + 1, n_jobs=n_jobs
+                ).fit(low_dim_data)
+                low_knn_dists, low_knn_indices = nbrs_low.kneighbors(low_dim_data)
+                low_dists_path = os.path.join(
+                    temp_dir,
+                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
+                all_memmap_files.append(low_dists_path)
+                low_dim_dists = np.memmap(
+                    low_dists_path, dtype="float32", mode="w+",
+                    shape=(n_cells, n_cells))
+                for i in tqdm(range(0, n_cells, chunk_size),
+                              desc=f"Low-Dim Distances ({low_dim_key})",
+                              disable=not verbose):
+                    end = min(i + chunk_size, n_cells)
+                    low_dim_dists[i:end, :] = pairwise_distances(
+                        low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
+                    low_dim_dists.flush()
+                gc.collect()
         else:
             # ── CPU path ────────────────────────────────────────
             nbrs_low = NearestNeighbors(
@@ -1209,9 +1318,10 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
 
         if low_dim_dists is not None:
             try:
-                del low_dim_dists
+                _safe_close_memmap(low_dim_dists)
             except Exception:
                 pass
+            time.sleep(0.1)
             if low_dists_path and os.path.exists(low_dists_path):
                 try:
                     os.remove(low_dists_path)
@@ -1225,17 +1335,18 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
 
     if high_dim_dists is not None:
         try:
-            del high_dim_dists
+            _safe_close_memmap(high_dim_dists)
         except Exception:
             pass
+        time.sleep(0.2)
         gc.collect()
 
     for fpath in all_memmap_files:
         try:
             if os.path.exists(fpath):
                 os.remove(fpath)
-        except Exception as exc:
-            logger.debug(
+        except OSError as exc:
+            logger.warning(
                 "Failed to clean up temp file %s: %s", fpath, exc)
 
     if "_dimred_cache" in adata.uns:

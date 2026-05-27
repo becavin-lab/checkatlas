@@ -136,18 +136,31 @@ def _jax_exact_knn(
     computes *every* pairwise distance on the GPU (via a single matrix
     multiplication) and then selects the top-k via ``approx_min_k``.
 
-    For N ≤ 15 000 cells the full N×N distance matrix fits in GPU
+    For N ≤ 30 000 cells the full N×N distance matrix fits in GPU
     memory in a single pass.  For larger atlases the computation is
     chunked in the query axis.
+
+    **Falls back to pynndescent CPU when the input data size exceeds
+    GPU memory** (e.g. 85k cells × 60k genes ≈ 20 GB on GPU).
     """
     import jax
     import jax.numpy as jnp
     import functools
 
-    n = X.shape[0]
+    n, d = X.shape
+    data_size_gb = (n * d * 4) / (1024**3)  # float32 bytes
+
+    # ── GPU OOM guard: if input alone exceeds 10 GB, use CPU ────
+    if data_size_gb > 10.0:
+        from logging import getLogger
+        getLogger("checkatlas").debug(
+            "JAX kNN: input too large (%.1f GB). Falling back to pynndescent.",
+            data_size_gb)
+        return _pynndescent_knn(X, n_neighbors, n_jobs=-1)
 
     # ── Small atlas: one-shot full matrix ──────────────────────────
-    # 10k×10k float32 = 400 MB — easily fits in 40 GB A100
+    # 15k×15k float32 = 900 MB — easily fits in 40 GB A100
+    n, d = X.shape
     if n <= 15000:
         db = jnp.asarray(X, dtype=jnp.float32)
         D = pdist_squareform(X)  # returns numpy via our jax_utils path
@@ -158,7 +171,7 @@ def _jax_exact_knn(
             distances=_get_ndarray(knn_dists),
         )
 
-    # ── Large atlas: chunked ───────────────────────────────────────
+    # ── Medium atlas: chunked GPU (10k query rows at a time) ──────
     db = jnp.asarray(X, dtype=jnp.float32)
     all_dists = []
     all_idx = []
@@ -181,6 +194,91 @@ def _jax_exact_knn(
         indices=np.concatenate(all_idx, axis=0),
         distances=np.concatenate(all_dists, axis=0),
     )
+
+
+def _jax_streaming_knn(
+    X: np.ndarray,
+    n_neighbors: int,
+    qchunk: int = 15000,
+    rchunk: int = 10000,
+) -> NeighborResults:
+    """GPU kNN for **any atlas size** — chunks both queries and references.
+
+    Unlike :func:`_jax_exact_knn` which loads the full database on GPU,
+    this function streams through the data in (query × reference) blocks.
+    Each block computes a sub‑matrix of distances on GPU, then merges
+    partial top‑k results into a running buffer.
+
+    This is the scib‑metrics *external‑memory kNN* pattern, but with
+    two‑axis chunking to avoid ``db = jnp.asarray(X)`` for high‑dim
+    gene expression data (e.g. 85 k × 60 k = 20 GB on GPU).
+
+    Parameters
+    ----------
+    X : shape (n, d)
+    n_neighbors : int
+    qchunk : int
+        Query rows per GPU block.
+    rchunk : int
+        Reference rows per GPU block.
+
+    Returns
+    -------
+    NeighborResults
+    """
+    import jax
+    import jax.numpy as jnp
+
+    n, d = X.shape
+    k = n_neighbors
+
+    # ── Running top‑k buffers (CPU) ───────────────────────────────
+    running_dist = np.full((n, k), np.inf, dtype=np.float32)
+    running_idx = np.full((n, k), -1, dtype=np.int32)
+
+    n_qchunks = (n + qchunk - 1) // qchunk
+    n_rchunks = (n + rchunk - 1) // rchunk
+    total_blocks = n_qchunks * n_rchunks
+
+    from tqdm import tqdm as _tqdm  # lazy import
+
+    with _tqdm(total=total_blocks, desc="GPU kNN (streaming)",
+               disable=(total_blocks < 10)) as pbar:
+        for qs in range(0, n, qchunk):
+            qe = min(qs + qchunk, n)
+            q = jnp.asarray(X[qs:qe], dtype=jnp.float32)
+            q_sq = jnp.sum(q**2, axis=1)               # (qsize,)
+
+            for rs in range(0, n, rchunk):
+                re = min(rs + rchunk, n)
+                r = jnp.asarray(X[rs:re], dtype=jnp.float32)
+                r_sq = jnp.sum(r**2, axis=1)            # (rsize,)
+                dot = jnp.dot(q, r.T)                   # (qsize, rsize) ← GPU matmul
+                D_sq = q_sq[:, None] + r_sq[None, :] - 2 * dot
+                D = jnp.sqrt(jnp.maximum(D_sq, 0.0))
+                D_np = _get_ndarray(D)
+
+                # ── Merge with running top‑k ───────────────────
+                ref_idx = np.arange(rs, re, dtype=np.int32)[None, :]
+                ref_idx_broad = np.broadcast_to(ref_idx, (qe - qs, re - rs))
+
+                merged_dist = np.concatenate(
+                    [running_dist[qs:qe], D_np], axis=1)
+                merged_idx = np.concatenate(
+                    [running_idx[qs:qe], ref_idx_broad], axis=1)
+
+                topk = np.argpartition(merged_dist, k, axis=1)[:, :k]
+                running_dist[qs:qe] = np.take_along_axis(merged_dist, topk, axis=1)
+                running_idx[qs:qe] = np.take_along_axis(merged_idx, topk, axis=1)
+
+                pbar.update(1)
+
+    # ── Final sort ───────────────────────────────────────────────
+    sort_idx = np.argsort(running_dist, axis=1)
+    running_dist = np.take_along_axis(running_dist, sort_idx, axis=1)
+    running_idx = np.take_along_axis(running_idx, sort_idx, axis=1)
+
+    return NeighborResults(indices=running_idx, distances=running_dist)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -262,7 +360,16 @@ def compute_neighbors(
         raise ValueError(f"Unknown backend '{backend}'. Use 'auto', 'jax', or 'pynndescent'.")
 
     if use_jax:
-        result = _jax_exact_knn(X_arr, n_neighbors)
+        # ── Select GPU path based on input size ─────────────────
+        data_gb = (X_arr.shape[0] * X_arr.shape[1] * 4) / (1024**3)
+        if data_gb <= 10.0:
+            result = _jax_exact_knn(X_arr, n_neighbors)
+        else:
+            # Large atlas — streaming GPU kNN (query×ref chunked)
+            logger.debug(
+                "Streaming GPU kNN (%.1f GB input, chunks q=%d r=%d)",
+                data_gb, 15000, 10000)
+            result = _jax_streaming_knn(X_arr, n_neighbors)
     else:
         result = _pynndescent_knn(X_arr, n_neighbors, n_jobs=n_jobs)
 

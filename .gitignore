@@ -155,3 +155,4 @@ dmypy.json
 # MACOSX files
 .DS_Store
 
+test_result/
