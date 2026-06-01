@@ -16,6 +16,11 @@ from sklearn.preprocessing import LabelEncoder
 from . import annot, cluster, dimred
 from ._jax_utils import _JAX_AVAILABLE, _GPU_AVAILABLE, pdist_squareform, _get_ndarray
 from ._neighbors import compute_neighbors, NeighborResults, _clear_neighbors_cache
+from ._triangular import TriangularMatrix
+from ._cache import (
+    compute_fingerprint, load_dimred_cache, save_dimred_cache,
+    save_knn, load_knn, save_triangular, load_triangular,
+)
 
 METRICS_CLUST = cluster.__all__
 METRICS_ANNOT = annot.__all__
@@ -876,9 +881,58 @@ def _safe_close_memmap(memmap_obj):
             pass
 
 
+def _store_upper_triangle_to_memmap(tri_data, block, row_start, col_start, n_total):
+    """Store the upper‑triangle portion of a distance block into a 1‑D triangular array.
+
+    Parameters
+    ----------
+    tri_data : np.ndarray
+        1‑D float16 memmap, length ``n_total·(n_total−1)//2``.
+    block : np.ndarray
+        Sub‑matrix of pairwise distances, shape ``(qsize, rsize)``.
+    row_start : int
+        Global row offset of *block*.
+    col_start : int
+        Global column offset of *block*.
+    n_total : int
+        Full matrix dimension.
+    """
+    qsize, rsize = block.shape
+    block_f16 = np.asarray(block, dtype=np.float16)
+
+    for i in range(qsize):
+        global_row = row_start + i
+        if global_row >= n_total - 1:
+            continue
+        first_col = max(0, global_row + 1 - col_start)
+        if first_col >= rsize:
+            continue
+        last_valid_col = min(rsize - 1, n_total - 1 - col_start)
+        if last_valid_col < first_col:
+            continue
+        local_cols = np.arange(first_col, last_valid_col + 1, dtype=np.int64)
+        # Correct flat-index formula (matches TriangularMatrix.row_starts):
+        #   idx(i, j) = row_starts[i] + (j - i - 1)
+        #             = i*n - i*(i+1)/2 + j - i - 1
+        flat_idx = (
+            global_row * np.int64(n_total)
+            - global_row * (global_row + 1) // 2
+            + col_start + local_cols
+            - global_row - 1
+        )
+        tri_data[flat_idx] = block_f16[i, local_cols]
+
+
+def _safe_close_triangular(tri):
+    """Close the underlying mmap of a TriangularMatrix."""
+    if tri is None:
+        return
+    tri._close_mmap()
+
+
 def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
                metric_list=None, k_neighbors=30, n_samples=None, seed=42,
-               n_jobs=-1, file_dir=None, verbose=True):
+               n_jobs=-1, file_dir=None, verbose=True, use_cache=True):
     """Calculate dimensionality reduction metrics for multiple embeddings.
 
     For each ``low_dim_key`` the embedding is compared against the
@@ -992,6 +1046,31 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
             pass
     os.makedirs(temp_dir, exist_ok=True)
 
+    # ── Persistent cache check ───────────────────────────────────
+    _from_cache = False
+    _cache_low_dim = {}
+    if use_cache and atlas_name:
+        _fp = compute_fingerprint(
+            n_cells=n_cells,
+            n_features=high_n_features,
+            embedding_keys=low_dim_keys,
+            embedding_shapes={
+                k: tuple(adata.obsm[k][sample_indices].shape)
+                for k in low_dim_keys
+            },
+            k_neighbors=k_neighbors,
+            source_path=getattr(adata, "filename", None),
+        )
+        _cached = load_dimred_cache(temp_dir, _fp, n_cells, low_dim_keys)
+        if _cached is not None:
+            high_dim_dists = _cached["high_dim_dists"]
+            high_knn_dists = _cached["high_knn_dists"]
+            high_knn_indices = _cached["high_knn_indices"]
+            _cache_low_dim = _cached["low_dim"]
+            _from_cache = True
+            if verbose:
+                print("  [CACHE HIT] Reusing precomputed distances & kNN")
+
     run_id = str(uuid.uuid4())[:8]
     chunk_size = min(1000, n_cells)
 
@@ -1010,7 +1089,12 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
     _GPU_SINGLE_SHOT = _JAX_AVAILABLE and _GPU_AVAILABLE and (n_cells <= 50000)
     _GPU_CHUNKED = _JAX_AVAILABLE and _GPU_AVAILABLE and (50000 < n_cells <= 150000)
 
-    if _GPU_SINGLE_SHOT:
+    _low_dim_precomputed = {}  # collect for saving to cache later
+
+    if _from_cache:
+        pass  # precomputation already loaded
+
+    elif _GPU_SINGLE_SHOT:
         import jax.numpy as jnp
 
         high_dim_dists = pdist_squareform(high_dim_data)  # GPU matmul → (n,n) float32
@@ -1049,38 +1133,40 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
         high_knn_dists = high_knn_results.distances
         high_knn_indices = high_knn_results.indices
 
-        # Distance matrix via GPU sub-chunked + memmap on /data
+        # Distance matrix via GPU sub-chunked → float16 upper‑triangle memmap
         high_dists_path = os.path.join(
-            temp_dir, f"high_dists_{run_id}.dat")
+            temp_dir, f"high_dists_{run_id}.tri")
         all_memmap_files.append(high_dists_path)
-        high_dim_dists = np.memmap(
-            high_dists_path, dtype="float32", mode="w+",
-            shape=(n_cells, n_cells))
+        high_dim_dists = TriangularMatrix(
+            n=n_cells, filepath=high_dists_path, mode="w+")
 
         n_qchunks = (n_cells + _qchunk - 1) // _qchunk
         n_rchunks = (n_cells + _rchunk - 1) // _rchunk
         total_blocks = n_qchunks * n_rchunks
 
         with tqdm(total=total_blocks,
-                  desc="High-Dim Distances (GPU sub-chunked)",
+                  desc="High-Dim Distances (GPU sub-chunked, float16 tri)",
                   disable=not verbose) as pbar_dist:
             for qs in range(0, n_cells, _qchunk):
                 qe = min(qs + _qchunk, n_cells)
                 chunk = jnp.asarray(
                     high_dim_data[qs:qe], dtype=jnp.float32)
-                chunk_sq = jnp.sum(chunk**2, axis=1)  # (qsize,)
+                chunk_sq = jnp.sum(chunk**2, axis=1)
 
                 for rs in range(0, n_cells, _rchunk):
                     re = min(rs + _rchunk, n_cells)
                     ref = jnp.asarray(
                         high_dim_data[rs:re], dtype=jnp.float32)
-                    ref_sq = jnp.sum(ref**2, axis=1)    # (rsize,)
-                    dot = jnp.dot(chunk, ref.T)          # (qsize, rsize)
+                    ref_sq = jnp.sum(ref**2, axis=1)
+                    dot = jnp.dot(chunk, ref.T)
                     D_sub_sq = (chunk_sq[:, None]
                                 + ref_sq[None, :]
                                 - 2 * dot)
                     D_sub = jnp.sqrt(jnp.maximum(D_sub_sq, 0.0))
-                    high_dim_dists[qs:qe, rs:re] = _get_ndarray(D_sub)
+                    _store_upper_triangle_to_memmap(
+                        high_dim_dists._data,
+                        _get_ndarray(D_sub),
+                        qs, rs, n_cells)
                     pbar_dist.update(1)
 
                 high_dim_dists.flush()
@@ -1106,23 +1192,29 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
                       f"({n_cells:,}×{n_cells:,})…")
             if use_memmap:
                 high_dists_path = os.path.join(
-                    temp_dir, f"high_dists_{run_id}.dat")
+                    temp_dir, f"high_dists_{run_id}.tri")
                 all_memmap_files.append(high_dists_path)
-                high_dim_dists = np.memmap(
-                    high_dists_path, dtype="float32", mode="w+",
-                    shape=(n_cells, n_cells))
+                high_dim_dists = TriangularMatrix(
+                    n=n_cells, filepath=high_dists_path, mode="w+")
+                for i in tqdm(range(0, n_cells, chunk_size),
+                              desc="High-Dim Distances", disable=not verbose):
+                    end = min(i + chunk_size, n_cells)
+                    block = pairwise_distances(
+                        high_dim_data[i:end], high_dim_data, n_jobs=n_jobs)
+                    _store_upper_triangle_to_memmap(
+                        high_dim_dists._data, block, i, 0, n_cells)
+                    high_dim_dists.flush()
             else:
                 high_dim_dists = np.zeros(
                     (n_cells, n_cells), dtype=np.float32)
-
-            for i in tqdm(range(0, n_cells, chunk_size),
-                          desc="High-Dim Distances", disable=not verbose):
-                end = min(i + chunk_size, n_cells)
-                high_dim_dists[i:end, :] = pairwise_distances(
-                    high_dim_data[i:end], high_dim_data, n_jobs=n_jobs)
-                if use_memmap:
-                    high_dim_dists.flush()
+                for i in tqdm(range(0, n_cells, chunk_size),
+                              desc="High-Dim Distances", disable=not verbose):
+                    end = min(i + chunk_size, n_cells)
+                    high_dim_dists[i:end, :] = pairwise_distances(
+                        high_dim_data[i:end], high_dim_data, n_jobs=n_jobs)
             gc.collect()
+
+    # ── end of precomputation block ──
 
     total_combos = len(low_dim_keys) * len(metric_list)
     if verbose:
@@ -1144,7 +1236,13 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
         low_dim_dists = None
         low_dists_path = None
 
-        if _GPU_SINGLE_SHOT:
+        if _from_cache and low_dim_key in _cache_low_dim:
+            # ── Load from cache ───────────────────────────────
+            _c = _cache_low_dim[low_dim_key]
+            low_dim_dists = _c.get("dists")
+            low_knn_dists = _c["knn_dists"]
+            low_knn_indices = _c["knn_indices"]
+        elif _GPU_SINGLE_SHOT:
             # ── GPU path: single-kernel distance + kNN ──────────
             import jax
             import jax.numpy as jnp
@@ -1178,14 +1276,13 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
                     n_neighbors=k_neighbors + 1, backend="auto")
                 low_knn_dists = kNN.distances
                 low_knn_indices = kNN.indices
-                # GPU sub-chunked distance matrix for dist-based metrics
+                # GPU sub-chunked → float16 upper‑triangle memmap
                 low_dists_path = os.path.join(
                     temp_dir,
-                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
+                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.tri")
                 all_memmap_files.append(low_dists_path)
-                low_dim_dists = np.memmap(
-                    low_dists_path, dtype="float32", mode="w+",
-                    shape=(n_cells, n_cells))
+                low_dim_dists = TriangularMatrix(
+                    n=n_cells, filepath=low_dists_path, mode="w+")
                 _lq = 20000
                 _lr = 20000
                 for qs in range(0, n_cells, _lq):
@@ -1198,29 +1295,32 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
                         ref_sq = jnp.sum(ref**2, axis=1)
                         dot = jnp.dot(chunk, ref.T)
                         D_sub_sq = chunk_sq[:, None] + ref_sq[None, :] - 2 * dot
-                        low_dim_dists[qs:qe, rs:re] = _get_ndarray(
-                            jnp.sqrt(jnp.maximum(D_sub_sq, 0.0)))
+                        _store_upper_triangle_to_memmap(
+                            low_dim_dists._data,
+                            _get_ndarray(jnp.sqrt(jnp.maximum(D_sub_sq, 0.0))),
+                            qs, rs, n_cells)
                     low_dim_dists.flush()
                 gc.collect()
             else:
-                # High-dim X — CPU memmap (sklearn)
+                # High-dim X — CPU memmap (sklearn) → float16 upper‑triangle
                 nbrs_low = NearestNeighbors(
                     n_neighbors=k_neighbors + 1, n_jobs=n_jobs
                 ).fit(low_dim_data)
                 low_knn_dists, low_knn_indices = nbrs_low.kneighbors(low_dim_data)
                 low_dists_path = os.path.join(
                     temp_dir,
-                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
+                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.tri")
                 all_memmap_files.append(low_dists_path)
-                low_dim_dists = np.memmap(
-                    low_dists_path, dtype="float32", mode="w+",
-                    shape=(n_cells, n_cells))
+                low_dim_dists = TriangularMatrix(
+                    n=n_cells, filepath=low_dists_path, mode="w+")
                 for i in tqdm(range(0, n_cells, chunk_size),
                               desc=f"Low-Dim Distances ({low_dim_key})",
                               disable=not verbose):
                     end = min(i + chunk_size, n_cells)
-                    low_dim_dists[i:end, :] = pairwise_distances(
+                    block = pairwise_distances(
                         low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
+                    _store_upper_triangle_to_memmap(
+                        low_dim_dists._data, block, i, 0, n_cells)
                     low_dim_dists.flush()
                 gc.collect()
         else:
@@ -1235,28 +1335,51 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
                 if use_memmap:
                     low_dists_path = os.path.join(
                         temp_dir,
-                        f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.dat")
+                        f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.tri")
                     all_memmap_files.append(low_dists_path)
-                    low_dim_dists = np.memmap(
-                        low_dists_path, dtype="float32", mode="w+",
-                        shape=(n_cells, n_cells))
+                    low_dim_dists = TriangularMatrix(
+                        n=n_cells, filepath=low_dists_path, mode="w+")
+                    for i in tqdm(range(0, n_cells, chunk_size),
+                                  desc=f"Low-Dim Distances ({low_dim_key})",
+                                  disable=not verbose):
+                        end = min(i + chunk_size, n_cells)
+                        block = pairwise_distances(
+                            low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
+                        _store_upper_triangle_to_memmap(
+                            low_dim_dists._data, block, i, 0, n_cells)
+                        low_dim_dists.flush()
                 else:
                     low_dim_dists = np.zeros(
                         (n_cells, n_cells), dtype=np.float32)
-
-                for i in tqdm(range(0, n_cells, chunk_size),
-                              desc=f"Low-Dim Distances ({low_dim_key})",
-                              disable=not verbose):
-                    end = min(i + chunk_size, n_cells)
-                    low_dim_dists[i:end, :] = pairwise_distances(
-                        low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
-                    if use_memmap:
-                        low_dim_dists.flush()
+                    for i in tqdm(range(0, n_cells, chunk_size),
+                                  desc=f"Low-Dim Distances ({low_dim_key})",
+                                  disable=not verbose):
+                        end = min(i + chunk_size, n_cells)
+                        low_dim_dists[i:end, :] = pairwise_distances(
+                            low_dim_data[i:end], low_dim_data, n_jobs=n_jobs)
                 gc.collect()
+
+        # ── Capture precomputed low-dim data for cache ────────
+        if use_cache and atlas_name and not _from_cache:
+            _low_dim_precomputed[low_dim_key] = {
+                "dists": low_dim_dists,
+                "knn_indices": low_knn_indices,
+                "knn_dists": low_knn_dists,
+            }
 
         for metric_name in metric_list:
             pbar.set_description(f"{low_dim_key}: {metric_name}")
             t_start = time.time()
+
+            # ── Materialize TriangularMatrix for joblib-using metrics ─
+            _JOBLIB_METRICS = frozenset(("trustworthiness", "continuity"))
+            _high_mat = high_dim_dists
+            _low_mat = low_dim_dists
+            if metric_name in _JOBLIB_METRICS:
+                if isinstance(high_dim_dists, TriangularMatrix):
+                    _high_mat = high_dim_dists.to_dense()
+                if isinstance(low_dim_dists, TriangularMatrix):
+                    _low_mat = low_dim_dists.to_dense() if low_dim_dists is not None else None
 
             try:
                 metric_module = getattr(dimred, metric_name)
@@ -1288,9 +1411,9 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
                 if "precomputed_low_knn_dists" in params:
                     kwargs["precomputed_low_knn_dists"] = low_knn_dists
                 if "precomputed_high_dists" in params:
-                    kwargs["precomputed_high_dists"] = high_dim_dists
+                    kwargs["precomputed_high_dists"] = _high_mat
                 if "precomputed_low_dists" in params:
-                    kwargs["precomputed_low_dists"] = low_dim_dists
+                    kwargs["precomputed_low_dists"] = _low_mat
 
                 value = metric_module.run(adata, **kwargs)
                 elapsed = round(time.time() - t_start, 3)
@@ -1318,36 +1441,67 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
 
         if low_dim_dists is not None:
             try:
-                _safe_close_memmap(low_dim_dists)
+                if isinstance(low_dim_dists, TriangularMatrix):
+                    _safe_close_triangular(low_dim_dists)
+                else:
+                    _safe_close_memmap(low_dim_dists)
             except Exception:
                 pass
             time.sleep(0.1)
-            if low_dists_path and os.path.exists(low_dists_path):
-                try:
-                    os.remove(low_dists_path)
-                except Exception:
-                    pass
-                if low_dists_path in all_memmap_files:
-                    all_memmap_files.remove(low_dists_path)
+            # Persist when caching; delete otherwise
+            if not use_cache:
+                if low_dists_path and os.path.exists(low_dists_path):
+                    try:
+                        os.remove(low_dists_path)
+                    except Exception:
+                        pass
+                    if low_dists_path in all_memmap_files:
+                        all_memmap_files.remove(low_dists_path)
         gc.collect()
 
     pbar.close()
 
     if high_dim_dists is not None:
         try:
-            _safe_close_memmap(high_dim_dists)
+            if isinstance(high_dim_dists, TriangularMatrix):
+                _safe_close_triangular(high_dim_dists)
+            else:
+                _safe_close_memmap(high_dim_dists)
         except Exception:
             pass
         time.sleep(0.2)
         gc.collect()
 
-    for fpath in all_memmap_files:
+    # ── Save to persistent cache ──
+    if use_cache and atlas_name and not _from_cache and high_dim_dists is not None:
+        _low_info = {}
+        for emb in low_dim_keys:
+            _low_info[emb] = {
+                "dists": _low_dim_precomputed.get(emb, {}).get("dists"),
+                "knn_indices": _low_dim_precomputed.get(emb, {}).get("knn_indices"),
+                "knn_dists": _low_dim_precomputed.get(emb, {}).get("knn_dists"),
+            }
         try:
-            if os.path.exists(fpath):
-                os.remove(fpath)
-        except OSError as exc:
-            logger.warning(
-                "Failed to clean up temp file %s: %s", fpath, exc)
+            save_dimred_cache(
+                temp_dir, _fp,
+                high_dim_dists=high_dim_dists if isinstance(high_dim_dists, TriangularMatrix) else None,
+                high_knn_dists=high_knn_dists,
+                high_knn_indices=high_knn_indices,
+                low_dim_data=_low_info,
+                low_dim_keys=low_dim_keys,
+            )
+        except Exception as exc:
+            logger.warning("Failed to save dimred cache: %s", exc)
+
+    # Delete leftover temp files (only when NOT caching)
+    if not use_cache:
+        for fpath in all_memmap_files:
+            try:
+                if os.path.exists(fpath):
+                    os.remove(fpath)
+            except OSError as exc:
+                logger.warning(
+                    "Failed to clean up temp file %s: %s", fpath, exc)
 
     if "_dimred_cache" in adata.uns:
         del adata.uns["_dimred_cache"]

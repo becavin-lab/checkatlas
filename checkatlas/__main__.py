@@ -85,10 +85,10 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 try:
     from . import atlas, cellranger, check, seurat
-    from .utils import checkatlas_arguments
+    from .utils import checkatlas_arguments, folders
 except ImportError:
     from checkatlas import atlas, cellranger, check, seurat
-    from checkatlas.utils import checkatlas_arguments
+    from checkatlas.utils import checkatlas_arguments, folders
 
 
 def main() -> None:  # pragma: no cover
@@ -122,6 +122,9 @@ def main() -> None:  # pragma: no cover
         logger.setLevel(getattr(logging, "INFO"))
 
     logger.debug(f"Program arguments: {args}")
+
+    # ── Create checkatlas folder tree before any processing ──────
+    folders.checkatlas_folders(args.path)
 
     #   ######    Run Checkatlas   #########
     # Look up <atlas_name>.h5ad / .rds / .qs directly at the given path

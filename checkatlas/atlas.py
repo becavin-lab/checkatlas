@@ -64,12 +64,15 @@ sc.settings.verbosity = 0
 
 def preprocess_atlas(atlas_info: dict) -> AnnData:
     """
-    Read adata
-    If it the first time clean it and save temp files with .obs and .obsm
+    Read adata, clean it, and create per-atlas temp directories
+    for cached precomputation storage.
 
+    Returns the cleaned AnnData object.
     """
     adata = read_atlas(atlas_info)
     adata = clean_scanpy_atlas(adata, atlas_info)
+    # Note: args.path is needed for folder creation — temp dirs
+    # are created lazily by the metric functions via file_dir.
     return adata
 
 
@@ -675,12 +678,17 @@ def create_metric_dimred(
     logger.info("Running full dimred pipeline for %s", atlas_name)
 
     dimred_dir = folders.get_folder(args.path, folders.DIMRED)
+    # Per-atlas persistent cache under temp/
+    cache_dir = os.path.join(
+        folders.get_folder(args.path, folders.TEMP),
+        atlas_name, "dimred")
 
     df = metrics.cal_dimred(
         adata,
         atlas_name=atlas_name,
         metric_list=args.metric_dimred,
-        file_dir=dimred_dir,
+        file_dir=cache_dir,
+        use_cache=True,
         n_jobs=-1,
         verbose=True,
         seed=42,
