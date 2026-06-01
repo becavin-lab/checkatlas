@@ -2,12 +2,14 @@ import numpy as np
 import scanpy as sc
 from sklearn.metrics import pairwise_distances
 from joblib import Parallel, delayed
-from tqdm import tqdm
+from tqdm import tqdm, trange
 import gc
 
 def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30, 
         n_samples=None, seed=42, verbose=True, n_jobs=-1,
         precomputed_high_dists=None, precomputed_low_dists=None,
+        precomputed_high_knn=None, precomputed_low_knn=None,
+        precomputed_high_knn_dists=None, precomputed_low_knn_dists=None,
         use_memmap=True):
     """
     Continuity (Memory-Optimized)
@@ -89,10 +91,35 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         high_dists = pairwise_distances(high_dim_data, n_jobs=n_workers)
         low_dists = pairwise_distances(low_dim_data, n_jobs=n_workers)
 
-    # 2. Calculate Continuity Row-by-Row
-    # Continuity checks if HIGH-Dim neighbors are preserved in LOW-Dim.
-    # We find neighbors in HIGH, and check their ranks in LOW.
-    
+    # 2. Fast path: precomputed kNN available
+    # Use precomputed high-dim neighbours + direct row access (no to_dense, no joblib)
+    if (precomputed_high_dists is not None and 
+        precomputed_low_dists is not None and
+        precomputed_high_knn is not None):
+        if verbose:
+            print(f"Using precomputed kNN fast path (k={k_neighbors})...")
+        
+        # Continuity: high-dim neighbours, check ranks in low-dim
+        high_neighbors = precomputed_high_knn[:, 1:k_neighbors+1]  # skip self
+        
+        _total_penalty = 0.0
+        for i in trange(n_cells, desc="Continuity", disable=not verbose):
+            l_row = low_dists[i]
+            nbrs = high_neighbors[i].astype(np.int64, copy=False)
+            nbr_dists = l_row[nbrs]
+            for dist_j in nbr_dists:
+                r = np.count_nonzero(l_row < dist_j)
+                if r > k_neighbors:
+                    _total_penalty += (r - k_neighbors)
+        
+        max_penalty = (n_cells * k_neighbors *
+                       (2 * n_cells - 3 * k_neighbors - 1) / 2.0)
+        if max_penalty == 0:
+            return 1.0
+        score = 1.0 - (2.0 / max_penalty) * _total_penalty
+        return max(0.0, min(1.0, score))
+
+    # 3. Calculate Continuity Row-by-Row (original path)
     if verbose: print(f"Computing Continuity (k={k_neighbors}) row-by-row...")
 
     batch_size = 100
