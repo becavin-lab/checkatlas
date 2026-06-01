@@ -1371,21 +1371,30 @@ def cal_dimred(adata, atlas_name=None, low_dim_keys=None, high_dim_key='X',
             pbar.set_description(f"{low_dim_key}: {metric_name}")
             t_start = time.time()
 
-            # ── Materialize TriangularMatrix for joblib-using metrics ─
+            # ── Inspect metric signature to decide on to_dense ──────
+            metric_module = getattr(dimred, metric_name)
+            sig = inspect.signature(metric_module.run)
+            params = sig.parameters
+
+            # ── Materialize TriangularMatrix only when needed ───────
             _JOBLIB_METRICS = frozenset(("trustworthiness", "continuity"))
             _high_mat = high_dim_dists
             _low_mat = low_dim_dists
             if metric_name in _JOBLIB_METRICS:
-                if isinstance(high_dim_dists, TriangularMatrix):
-                    _high_mat = high_dim_dists.to_dense()
-                if isinstance(low_dim_dists, TriangularMatrix):
-                    _low_mat = low_dim_dists.to_dense() if low_dim_dists is not None else None
+                # Skip to_dense() when metric has precomputed kNN fast path
+                accept_knn = (
+                    "precomputed_high_knn" in params
+                    and "precomputed_low_knn" in params
+                    and high_knn_indices is not None
+                )
+                if not accept_knn:
+                    if isinstance(high_dim_dists, TriangularMatrix):
+                        _high_mat = high_dim_dists.to_dense()
+                    if isinstance(low_dim_dists, TriangularMatrix):
+                        _low_mat = (low_dim_dists.to_dense()
+                                    if low_dim_dists is not None else None)
 
             try:
-                metric_module = getattr(dimred, metric_name)
-                sig = inspect.signature(metric_module.run)
-                params = sig.parameters
-
                 kwargs = {}
                 if "low_dim_key" in params:
                     kwargs["low_dim_key"] = low_dim_key

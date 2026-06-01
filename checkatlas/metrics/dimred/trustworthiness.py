@@ -3,12 +3,14 @@ import scanpy as sc
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 from joblib import Parallel, delayed
-from tqdm import tqdm
+from tqdm import tqdm, trange
 import gc
 
 def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30, 
         n_samples=None, seed=42, verbose=True, n_jobs=-1,
         precomputed_high_dists=None, precomputed_low_dists=None,
+        precomputed_high_knn=None, precomputed_low_knn=None,
+        precomputed_high_knn_dists=None, precomputed_low_knn_dists=None,
         use_memmap=True):
     """
     Trustworthiness (Memory-Optimized)
@@ -97,9 +99,36 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         high_dists = pairwise_distances(high_dim_data, n_jobs=n_workers)
         low_dists = pairwise_distances(low_dim_data, n_jobs=n_workers)
 
-    # 2. Calculate Trustworthiness Row-by-Row
-    # Metric: T(k) = 1 - (2 / (N*k*(2N-3k-1))) * sum_{i} sum_{j in U_k(i)} max(0, r(i,j) - k)
-    
+    # 2. Fast path: precomputed kNN available
+    # Use precomputed low-dim neighbors + direct row access (no to_dense, no joblib)
+    if (precomputed_high_dists is not None and 
+        precomputed_low_dists is not None and
+        precomputed_low_knn is not None):
+        if verbose:
+            if precomputed_low_knn is not None:
+                print(f"Using precomputed kNN fast path (k={k_neighbors})...")
+        
+        # Trustworthiness: low-dim neighbours, check ranks in high-dim
+        low_neighbors = precomputed_low_knn[:, 1:k_neighbors+1]  # skip self
+        
+        _total_penalty = 0.0
+        for i in trange(n_cells, desc="Trustworthiness", disable=not verbose):
+            h_row = high_dists[i]
+            nbrs = low_neighbors[i].astype(np.int64, copy=False)
+            nbr_dists = h_row[nbrs]
+            for dist_j in nbr_dists:
+                r = np.count_nonzero(h_row < dist_j)
+                if r > k_neighbors:
+                    _total_penalty += (r - k_neighbors)
+        
+        max_penalty = (n_cells * k_neighbors *
+                       (2 * n_cells - 3 * k_neighbors - 1) / 2.0)
+        if max_penalty == 0:
+            return 1.0
+        score = 1.0 - (2.0 / max_penalty) * _total_penalty
+        return max(0.0, min(1.0, score))
+
+    # 3. Calculate Trustworthiness Row-by-Row (original path)
     if verbose: print(f"Computing Trustworthiness (k={k_neighbors}) row-by-row...")
 
     # We process in batches to allow joblib parallelism
@@ -110,86 +139,22 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
     def _process_batch(row_indices):
         batch_penalty = 0.0
         for i in row_indices:
-            # 1. Get neighbors in LOW dimension
-            # We need the k neighbors of i in low_dists
-            # Sorting the whole row takes O(N log N)
-            # argpartition takes O(N)
             l_row = low_dists[i]
-            # indices of k+1 smallest distances (including self at 0)
             knn_indices = np.argpartition(l_row, k_neighbors+1)[:k_neighbors+1]
-            
-            # Sort these specifically to find exact order? No, just need set of neighbors.
-            # But we need to exclude self (d=0). argpartition doesn't guarantee order.
-            # Let's verify self is in there. Usually yes.
-            
-            # Refine: get exact k neighbors excluding self
-            # We can just sort the small set of k+1 candidates
             candidate_dists = l_row[knn_indices]
             sorted_args = np.argsort(candidate_dists)
             knn_indices_sorted = knn_indices[sorted_args]
-            
-            # Exclude self (closest, index i)
-            # If i is in list (dist ~ 0), it should be first.
             if knn_indices_sorted[0] == i:
                 neighbors = knn_indices_sorted[1:k_neighbors+1]
             else:
-                # Fallback if i not found (numerical noise?)
-                # Just take first k that are not i
                 neighbors = knn_indices[knn_indices != i][:k_neighbors]
 
-            # 2. Calculate rank of these neighbors in HIGH dimension
             h_row = high_dists[i]
-            
-            # We need rank of each neighbor j in h_row
-            # Rank = count of elements smaller than h_row[j]
-            # Since we need ranks for strictly k items, we can iterate.
-            # But calculating rank for one item is O(N). Doing it k times is O(k*N).
-            # Sorting h_row is O(N log N).
-            # If K is small (30) and N is large (50k), K*N ~ 1.5M ops. N log N ~ 800k ops.
-            # Sorting is faster.
-            
-            # However, we only need to know if rank > k.
-            # Actually we need the value of (rank - k).
-            
-            # FULL SORT APPROACH (Memory Efficient than storing rank matrix)
-            # Just calculating argsort of h_row gives us the order.
-            # Ranks are positions in argsort.
-            # rank[j] is where j appears in argsort.
-            
-            # argsort of h_row: indices ordered by distance
-            # e.g. [i, closest1, closest2, ...]
-            # We can invert this permutation to get rank of each index.
-            
-            # This is O(N) memory per thread. Safe.
-            
-            # Optimization: We only care about rank of 'neighbors'.
-            # Extract their distances: d_j for j in neighbors.
-            # Rank of j = count(h_row < d_j). 
-            # This handles ties by using 'min' rank or similar?
-            # Sklearn implementation defines rank r(i, j) as "the number of sample points 
-            # closer to i than j in the high-dimensional space".
-            
             neighbor_dists_high = h_row[neighbors]
-            
             for dist_j in neighbor_dists_high:
-                # Count points closer than j
-                # Subtract 1 because 'i' itself has dist 0? 
-                # Definition usually excludes self.
-                # If we count all points < dist_j, that includes self (dist=0).
-                # So rank = count - 1?
-                # Actually, if we just count valid neighbors (excluding self), 
-                # then rank 1 is closest neighbor.
-                
-                # count_nonzero is fast C-level loop
                 r = np.count_nonzero(h_row < dist_j)
-                
-                # h_row contains self at 0. So r includes self. 
-                # So rank amongst others is r. (e.g. 1 smaller means only self is smaller -> rank 1).
-                # If rank > k, penalty.
-                
                 if r > k_neighbors:
                     batch_penalty += (r - k_neighbors)
-                    
         return batch_penalty
 
     # Execute parallel

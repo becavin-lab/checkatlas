@@ -167,6 +167,36 @@ class TriangularMatrix:
 
         return out
 
+    # ── Element-wise pair extraction ──────────────────────────────────
+    def _get_elements(
+        self, rows: np.ndarray, cols: np.ndarray
+    ) -> np.ndarray:
+        """Element-wise pair extraction (like ``arr[rows, cols]`` for 1‑D arrays).
+
+        Returns a 1‑D float32 array of length ``len(rows)`` where
+        ``out[i] = self[rows[i], cols[i]]``.
+        """
+        n = len(rows)
+        out = np.empty(n, dtype=np.float32)
+
+        ri = np.asarray(rows, dtype=np.int64)
+        cj = np.asarray(cols, dtype=np.int64)
+
+        diag_mask = ri == cj
+        out[diag_mask] = np.float32(0.0)
+
+        upper_mask = ri < cj
+        if np.any(upper_mask):
+            idx = self._row_starts[ri[upper_mask]] + (cj[upper_mask] - ri[upper_mask] - 1)
+            out[upper_mask] = self._data[idx].astype(np.float32)
+
+        lower_mask = ri > cj
+        if np.any(lower_mask):
+            idx = self._row_starts[cj[lower_mask]] + (ri[lower_mask] - cj[lower_mask] - 1)
+            out[lower_mask] = self._data[idx].astype(np.float32)
+
+        return out
+
     # ── Numpy indexing interface ─────────────────────────────────────
     def __getitem__(self, key):
         """Numpy‑compatible read‑only access.
@@ -198,6 +228,16 @@ class TriangularMatrix:
                 i = int(row_k)
                 cols = np.arange(self.n)[col_k]
                 return self._get_block(np.array([i]), cols)[0]
+
+            # ── Element‑wise pair indexing (1‑D arrays) ──────────
+            if (
+                isinstance(row_k, np.ndarray)
+                and row_k.ndim == 1
+                and isinstance(col_k, np.ndarray)
+                and col_k.ndim == 1
+                and row_k.dtype.kind not in ("b",)
+            ):
+                return self._get_elements(row_k, col_k)
 
             # ── Row slice × column slice → block ────────────────
             rows = np.arange(self.n)[row_k]

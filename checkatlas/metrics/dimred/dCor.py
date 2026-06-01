@@ -87,18 +87,30 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', n_samples=None, seed=42,
         np.random.seed(seed)
         sample_idx = np.random.choice(n_cells, max_cells_for_dcor, replace=False)
         
-        # Extract submatrix
-        A = np.zeros((max_cells_for_dcor, max_cells_for_dcor), dtype=np.float32)
-        B = np.zeros((max_cells_for_dcor, max_cells_for_dcor), dtype=np.float32)
-        
-        for i in tqdm(range(max_cells_for_dcor), desc="Extracting submatrix", disable=not verbose):
-            for j in range(max_cells_for_dcor):
-                A[i, j] = high_dim_dists[sample_idx[i], sample_idx[j]]
-                B[i, j] = low_dim_dists[sample_idx[i], sample_idx[j]]
+        # Extract submatrix efficiently
+        if hasattr(high_dim_dists, '_get_block'):
+            # TriangularMatrix — single block extraction
+            A = high_dim_dists._get_block(sample_idx, sample_idx)
+            B = low_dim_dists._get_block(sample_idx, sample_idx)
+        else:
+            try:
+                A = high_dim_dists[np.ix_(sample_idx, sample_idx)]
+                B = low_dim_dists[np.ix_(sample_idx, sample_idx)]
+            except Exception:
+                A = np.zeros((max_cells_for_dcor, max_cells_for_dcor), dtype=np.float32)
+                B = np.zeros((max_cells_for_dcor, max_cells_for_dcor), dtype=np.float32)
+                for i in range(max_cells_for_dcor):
+                    for j in range(max_cells_for_dcor):
+                        A[i, j] = high_dim_dists[sample_idx[i], sample_idx[j]]
+                        B[i, j] = low_dim_dists[sample_idx[i], sample_idx[j]]
     else:
-        # Use full matrices (copy to ensure contiguous for speed)
-        A = np.array(high_dim_dists, dtype=np.float32)
-        B = np.array(low_dim_dists, dtype=np.float32)
+        # Use full matrices
+        if hasattr(high_dim_dists, 'to_dense'):
+            A = high_dim_dists.to_dense()
+            B = low_dim_dists.to_dense()
+        else:
+            A = np.array(high_dim_dists, dtype=np.float32)
+            B = np.array(low_dim_dists, dtype=np.float32)
     
     # 3. Compute Distance Correlation
     if verbose: print("Calculating Distance Correlation (Double Centering)...")
