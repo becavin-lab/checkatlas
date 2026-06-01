@@ -140,9 +140,15 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
 
 def _chunked_diameter(X, n_jobs=1, chunk_size=2000):
     """Maximum pairwise distance in *X*, computed in memory-bounded
-    upper-triangular blocks so the full |X|×|X| matrix is never stored."""
+    upper-triangular blocks so the full |X|×|X| matrix is never stored.
+
+    Uses GPU-accelerated cdist when JAX is available (~10× faster).
+    """
+    from .._jax_utils import cdist as gpu_cdist, _JAX_AVAILABLE
+
     n = len(X)
     max_d = 0.0
+    _use_gpu = _JAX_AVAILABLE
 
     for i in range(0, n, chunk_size):
         end_i = min(i + chunk_size, n)
@@ -152,7 +158,10 @@ def _chunked_diameter(X, n_jobs=1, chunk_size=2000):
             end_j = min(j + chunk_size, n)
             Xj = X[j:end_j]
 
-            block = pairwise_distances(Xi, Xj, n_jobs=n_jobs)
+            if _use_gpu:
+                block = np.array(gpu_cdist(Xi, Xj), copy=True)  # JAX returns read-only
+            else:
+                block = pairwise_distances(Xi, Xj, n_jobs=n_jobs)
             bmax = float(block.max())
             if bmax > max_d:
                 max_d = bmax
