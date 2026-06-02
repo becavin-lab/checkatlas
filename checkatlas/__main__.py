@@ -117,6 +117,9 @@ def main() -> None:  # pragma: no cover
     # Parse all args
     args = parser.parse_args()
 
+    if args.process != check.PROCESS_TYPE[0] and args.atlas_name is None:
+        parser.error(f"--atlas_name is required for process '{args.process}'")
+
     # Set logger level
     if args.debug:
         logger.setLevel(getattr(logging, "DEBUG"))
