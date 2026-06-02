@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.7.3"
+version = "0.7.5"
 description="One liner tool to check the quality of your single-cell atlases."
 authors = ["becavin-lab"]
 readme = "README.md"
@@ -17,15 +17,46 @@ documentation = "https://checkatlas.readthedocs.io/"
 python = ">=3.12"
 scikit-learn = ">=1.7.0"
 scanpy = ">=1.12"
-rpy2 = ">=3.6.5"
 multiqc = {version = ">=1.35", python = ">=3.12, !=3.14.1"}
+# JAX is optional — install the group that matches your hardware (see below)
+jax = {version = "^0.10.1", optional = true}
+
+[tool.poetry.extras]
+# pip install checkatlas[cpu]        → CPU-only JAX
+# pip install checkatlas[cuda13]     → NVIDIA CUDA 13 (then: pip install -U "jax[cuda13]")
+# pip install checkatlas[tpu]        → Google Cloud TPU (then: pip install -U "jax[tpu]")
+# ROCm: pip install checkatlas, then: pip install -U "jax[rocm7-local]"
+cpu    = ["jax"]
+cuda13 = ["jax"]
+tpu    = ["jax"]
+
+# Poetry groups (poetry install --with jax-cpu / jax-cuda13 / jax-rocm / jax-tpu)
+[tool.poetry.group.jax-cpu]
+optional = true
+
+[tool.poetry.group.jax-cpu.dependencies]
+jax = "^0.10.1"
+
+[tool.poetry.group.jax-cuda13]
+optional = true
+
+[tool.poetry.group.jax-cuda13.dependencies]
+jax = {version = "^0.10.1", extras = ["cuda13"]}
+
+# ROCm: jax[rocm7-local] requires system ROCm packages not on PyPI — install manually:
+#   pip install -U "jax[rocm7-local]"
+
+[tool.poetry.group.jax-tpu]
+optional = true
+
+[tool.poetry.group.jax-tpu.dependencies]
+jax = {version = "^0.10.1", extras = ["tpu"]}
 
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.1"
 mkdocstrings = {version = "^0.27.0", extras = ["python"]}
 pymdown-extensions = "^10.0"
-
 
 [tool.poetry.group.dev.dependencies]
 setuptools = "^80.9.0"
