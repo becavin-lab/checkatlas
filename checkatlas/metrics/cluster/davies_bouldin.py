@@ -1,11 +1,11 @@
-from sklearn.metrics import davies_bouldin_score
 import numpy as np
+from sklearn.metrics import davies_bouldin_score
 
 
 def run(count_repr, annotations, n_jobs=-1, verbose=True):
     """
     Calculate the Davies-Bouldin Index.
-    
+
     Measures the average similarity ratio of each cluster with the cluster
     that is most similar to it. Lower values indicate better clustering.
 
@@ -25,6 +25,7 @@ def run(count_repr, annotations, n_jobs=-1, verbose=True):
     """
     count_repr = np.asarray(count_repr)
     annotations = np.asarray(annotations)
-    
-    if verbose: print("Computing Davies-Bouldin Index...")
+
+    if verbose:
+        print("Computing Davies-Bouldin Index...")
     return davies_bouldin_score(count_repr, annotations)

@@ -2,8 +2,8 @@ import argparse
 from importlib.resources import files
 
 try:
-    from ..metrics import annot, cluster, dimred
     from .. import atlas, check
+    from ..metrics import annot, cluster, dimred
 except ImportError:
     from checkatlas import atlas, check
     from checkatlas.metrics import annot, cluster, dimred
@@ -28,11 +28,9 @@ def create_parser():
     parser.add_argument(
         "process",
         type=str,
-        help="Required argument: Type of process to run"
-        f" among {check.PROCESS_TYPE}",
+        help="Required argument: Type of process to run" f" among {check.PROCESS_TYPE}",
         default="",
     )
-
 
     parser.add_argument(
         "path",
@@ -41,7 +39,6 @@ def create_parser():
         "Scanpy, CellRanger and Seurat atlases",
         default=".",
     )
-
 
     parser.add_argument(
         "--atlas_name",

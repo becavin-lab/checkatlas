@@ -1,9 +1,11 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from scipy.sparse import issparse
 
 # Module-level cache: (hash_of_X, n_neighbors) -> neighbour_idx
-_knn_cache = {}
+_knn_cache: dict[Any, Any] = {}
 
 
 def _knn(X, k, n_jobs):
@@ -13,21 +15,27 @@ def _knn(X, k, n_jobs):
     n = len(flat)
     chunks = [
         flat[:2000].tobytes(),
-        flat[max(0, n//2 - 1000):n//2 + 1000].tobytes(),
-        flat[-2000:].tobytes() if n > 2000 else b'',
+        flat[max(0, n // 2 - 1000) : n // 2 + 1000].tobytes(),
+        flat[-2000:].tobytes() if n > 2000 else b"",
     ]
-    key = (X.shape, hash(b''.join(chunks)), k)
+    key = (X.shape, hash(b"".join(chunks)), k)
     if key in _knn_cache:
         return _knn_cache[key]
     try:
         from pynndescent import NNDescent
-        index = NNDescent(X, n_neighbors=k + 1, metric='euclidean',
-                          n_jobs=n_jobs, random_state=42)
+
+        index = NNDescent(
+            X,
+            n_neighbors=k + 1,
+            metric="euclidean",
+            n_jobs=n_jobs,
+            random_state=42,
+        )
         idx, _ = index.neighbor_graph
     except ImportError:
         from sklearn.neighbors import NearestNeighbors
-        nbrs = NearestNeighbors(n_neighbors=k + 1, algorithm='auto',
-                                n_jobs=n_jobs)
+
+        nbrs = NearestNeighbors(n_neighbors=k + 1, algorithm="auto", n_jobs=n_jobs)
         nbrs.fit(X)
         _, idx = nbrs.kneighbors(X)
     result = idx[:, 1:]  # drop self
@@ -92,14 +100,16 @@ def run(X, label, perplexity=30, n_jobs=-1, verbose=True):
     n_neighbors = min(90, n_samples - 1)
 
     if verbose:
-        print(f"Computing LISI ({n_samples:,} samples, "
-              f"{n_batches} labels, k={n_neighbors}, n_jobs={n_jobs})...")
+        print(
+            f"Computing LISI ({n_samples:,} samples, "
+            f"{n_batches} labels, k={n_neighbors}, n_jobs={n_jobs})..."
+        )
 
-    neighbour_idx = _knn(X, n_neighbors, n_jobs)   # (n_samples, n_neighbors)
+    neighbour_idx = _knn(X, n_neighbors, n_jobs)  # (n_samples, n_neighbors)
     k_actual = neighbour_idx.shape[1]
 
     # ── vectorised batch counts ─────────────────────────────────
-    neighbour_batch = batch_codes[neighbour_idx]      # (n_samples, k)
+    neighbour_batch = batch_codes[neighbour_idx]  # (n_samples, k)
     offsets = np.arange(n_samples, dtype=np.int64) * n_batches
     flat = (neighbour_batch + offsets[:, None]).ravel()
     counts = np.bincount(flat, minlength=n_samples * n_batches)
@@ -121,20 +131,44 @@ def run(X, label, perplexity=30, n_jobs=-1, verbose=True):
     return float(scaled_lisi)
 
 
-def ilisi_graph(adata, batch_key, k0=90, perplexity=None, scale=True,
-                n_jobs=-1, verbose=False):
+def ilisi_graph(
+    adata,
+    batch_key,
+    k0=90,
+    perplexity=None,
+    scale=True,
+    n_jobs=-1,
+    verbose=False,
+):
     """Integration LISI (iLISI) score — convenience wrapper."""
-    X = adata.obsm.get('X_pca', adata.X)
-    return run(X, adata.obs[batch_key], perplexity=perplexity,
-               n_jobs=n_jobs, verbose=verbose)
+    X = adata.obsm.get("X_pca", adata.X)
+    return run(
+        X,
+        adata.obs[batch_key],
+        perplexity=perplexity,
+        n_jobs=n_jobs,
+        verbose=verbose,
+    )
 
 
-def clisi_graph(adata, label_key, k0=90, perplexity=None, scale=True,
-                n_jobs=-1, verbose=False):
+def clisi_graph(
+    adata,
+    label_key,
+    k0=90,
+    perplexity=None,
+    scale=True,
+    n_jobs=-1,
+    verbose=False,
+):
     """Cell-type LISI (cLISI) score — convenience wrapper."""
-    X = adata.obsm.get('X_pca', adata.X)
-    return run(X, adata.obs[label_key], perplexity=perplexity,
-               n_jobs=n_jobs, verbose=verbose)
+    X = adata.obsm.get("X_pca", adata.X)
+    return run(
+        X,
+        adata.obs[label_key],
+        perplexity=perplexity,
+        n_jobs=n_jobs,
+        verbose=verbose,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -143,8 +177,10 @@ def clisi_graph(adata, label_key, k0=90, perplexity=None, scale=True,
 
 try:
     import functools
+
     import jax
     import jax.numpy as jnp
+
     _HAS_JAX_LISI = True
 except ImportError:
     _HAS_JAX_LISI = False
@@ -162,9 +198,9 @@ if _HAS_JAX_LISI:
 
         ``bincount`` is vmap'd over all cells → single fused GPU kernel.
         """
-        observed = jax.vmap(
-            functools.partial(jnp.bincount, length=n_batches)
-        )(neigh_batch_codes)
+        observed = jax.vmap(functools.partial(jnp.bincount, length=n_batches))(
+            neigh_batch_codes
+        )
         sum_sq = jnp.sum(observed * observed, axis=1)
         sum_sq = jnp.maximum(sum_sq, 1e-10)
         lisi = (k_actual * k_actual) / sum_sq

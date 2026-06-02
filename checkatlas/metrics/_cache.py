@@ -13,7 +13,10 @@ import json
 import logging
 import os
 import time
-from typing import Dict, Optional, Any
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from ._triangular import TriangularMatrix
 
 import numpy as np
 
@@ -23,6 +26,7 @@ logger = logging.getLogger("checkatlas")
 # ═══════════════════════════════════════════════════════════════════════
 # Fingerprint
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def compute_fingerprint(
     n_cells: int,
@@ -53,9 +57,7 @@ def compute_fingerprint(
         "n_cells": n_cells,
         "n_features": n_features,
         "embedding_keys": sorted(embedding_keys),
-        "embedding_shapes": {
-            k: list(v) for k, v in sorted(embedding_shapes.items())
-        },
+        "embedding_shapes": {k: list(v) for k, v in sorted(embedding_shapes.items())},
         "k_neighbors": k_neighbors,
     }
     if source_path and os.path.exists(source_path):
@@ -110,8 +112,10 @@ def write_fingerprint(cache_dir: str, fp: dict) -> None:
 # kNN save / load (tiny — .npz)
 # ═══════════════════════════════════════════════════════════════════════
 
-def save_knn(cache_dir: str, name: str,
-             indices: np.ndarray, distances: np.ndarray) -> None:
+
+def save_knn(
+    cache_dir: str, name: str, indices: np.ndarray, distances: np.ndarray
+) -> None:
     """Save kNN indices + distances as ``{name}.npz``."""
     os.makedirs(cache_dir, exist_ok=True)
     np.savez_compressed(
@@ -137,8 +141,8 @@ def load_knn(cache_dir: str, name: str) -> Optional[tuple]:
 # Triangular distance matrix save / load
 # ═══════════════════════════════════════════════════════════════════════
 
-def save_triangular(cache_dir: str, name: str,
-                    tri: "TriangularMatrix") -> str:
+
+def save_triangular(cache_dir: str, name: str, tri: "TriangularMatrix") -> str:
     """Move/rename a TriangularMatrix's backing file to a canonical name.
 
     The *tri* object must have been created with a temp filepath.
@@ -146,6 +150,7 @@ def save_triangular(cache_dir: str, name: str,
     returns the new path.
     """
     from ._triangular import TriangularMatrix
+
     os.makedirs(cache_dir, exist_ok=True)
     dest = os.path.join(cache_dir, f"{name}.tri")
 
@@ -162,10 +167,10 @@ def save_triangular(cache_dir: str, name: str,
     return dest
 
 
-def load_triangular(cache_dir: str, name: str,
-                    n: int) -> Optional["TriangularMatrix"]:
+def load_triangular(cache_dir: str, name: str, n: int) -> Optional["TriangularMatrix"]:
     """Open a saved TriangularMatrix for reading. Returns None if missing."""
     from ._triangular import TriangularMatrix
+
     path = os.path.join(cache_dir, f"{name}.tri")
     if not os.path.exists(path):
         return None
@@ -179,10 +184,11 @@ def load_triangular(cache_dir: str, name: str,
 # Full dimred cache save / load
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def save_dimred_cache(
     cache_dir: str,
     fp: dict,
-    high_dim_dists,           # TriangularMatrix or numpy or None
+    high_dim_dists,  # TriangularMatrix or numpy or None
     high_knn_dists: np.ndarray,
     high_knn_indices: np.ndarray,
     low_dim_data: dict,
@@ -200,7 +206,7 @@ def save_dimred_cache(
     write_fingerprint(cache_dir, fp)
 
     # High-dim — only save if it's a TriangularMatrix (persisted memmap)
-    if high_dim_dists is not None and hasattr(high_dim_dists, '_filepath'):
+    if high_dim_dists is not None and hasattr(high_dim_dists, "_filepath"):
         save_triangular(cache_dir, "high_dists", high_dim_dists)
     save_knn(cache_dir, "knn_high", high_knn_indices, high_knn_dists)
 
@@ -209,11 +215,15 @@ def save_dimred_cache(
         info = low_dim_data.get(emb, {})
         safe_name = emb.replace("/", "_").replace(" ", "_")
         tri = info.get("dists")
-        if tri is not None and hasattr(tri, '_filepath'):
+        if tri is not None and hasattr(tri, "_filepath"):
             save_triangular(cache_dir, f"low_dists_{safe_name}", tri)
         if info.get("knn_indices") is not None:
-            save_knn(cache_dir, f"knn_low_{safe_name}",
-                     info["knn_indices"], info["knn_dists"])
+            save_knn(
+                cache_dir,
+                f"knn_low_{safe_name}",
+                info["knn_indices"],
+                info["knn_dists"],
+            )
 
     logger.info("Precomputed dimred data cached for reuse at %s", cache_dir)
 
@@ -255,7 +265,7 @@ def load_dimred_cache(
         low_indices, low_dists_knn = knn_low
         low_tri = load_triangular(cache_dir, f"low_dists_{safe_name}", n=n_cells)
         low_dim_data[emb] = {
-            "dists": low_tri,         # may be None
+            "dists": low_tri,  # may be None
             "knn_indices": low_indices,
             "knn_dists": low_dists_knn,
         }

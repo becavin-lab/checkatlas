@@ -19,6 +19,8 @@ Usage::
     print(tri.shape)        # (85233, 85233)
 """
 
+from typing import Literal
+
 import numpy as np
 
 
@@ -49,7 +51,7 @@ class TriangularMatrix:
         n: int,
         data: np.ndarray | None = None,
         filepath: str | None = None,
-        mode: str = "w+",
+        mode: Literal["r", "r+", "w+", "c"] = "w+",
     ):
         self.n = int(n)
         self._tri_size = self.n * (self.n - 1) // 2
@@ -66,7 +68,7 @@ class TriangularMatrix:
             if filepath is None:
                 raise ValueError("filepath required when data is None")
             self._data = np.memmap(
-                filepath, dtype=np.float16, mode=mode, shape=(self._tri_size,)
+                filepath, dtype=np.dtype(np.float16), mode=mode, shape=(self._tri_size,)
             )
             self._filepath = filepath
 
@@ -107,13 +109,7 @@ class TriangularMatrix:
         # Lower triangle: D[i, 0:i] = D[0:i, i] (symmetry)
         if i > 0:
             k = np.arange(i, dtype=np.int64)
-            lower_idx = (
-                k.astype(np.int64) * n
-                + i
-                - k * (k + 1) // 2
-                - k
-                - 1
-            )
+            lower_idx = k.astype(np.int64) * n + i - k * (k + 1) // 2 - k - 1
             out[:i] = self._data[lower_idx].astype(np.float32)
 
         # Upper triangle: D[i, i+1:n] — contiguous in _data
@@ -151,16 +147,24 @@ class TriangularMatrix:
         # ── Upper triangle: D[row, col] for row < col ────────────
         upper_mask = row_arr < col_arr
         if np.any(upper_mask):
-            ri = np.broadcast_to(row_arr, (n_rows, n_cols))[upper_mask].astype(np.int64, copy=False)
-            cj = np.broadcast_to(col_arr, (n_rows, n_cols))[upper_mask].astype(np.int64, copy=False)
+            ri = np.broadcast_to(row_arr, (n_rows, n_cols))[upper_mask].astype(
+                np.int64, copy=False
+            )
+            cj = np.broadcast_to(col_arr, (n_rows, n_cols))[upper_mask].astype(
+                np.int64, copy=False
+            )
             idx = self._row_starts[ri] + (cj - ri - 1)
             out[upper_mask] = self._data[idx].astype(np.float32)
 
         # ── Lower triangle: D[row, col] = D[col, row] ────────────
         lower_mask = row_arr > col_arr
         if np.any(lower_mask):
-            ri = np.broadcast_to(row_arr, (n_rows, n_cols))[lower_mask].astype(np.int64, copy=False)
-            cj = np.broadcast_to(col_arr, (n_rows, n_cols))[lower_mask].astype(np.int64, copy=False)
+            ri = np.broadcast_to(row_arr, (n_rows, n_cols))[lower_mask].astype(
+                np.int64, copy=False
+            )
+            cj = np.broadcast_to(col_arr, (n_rows, n_cols))[lower_mask].astype(
+                np.int64, copy=False
+            )
             # Swap: D[ri, cj] = D[cj, ri] since cj < ri
             idx = self._row_starts[cj] + (ri - cj - 1)
             out[lower_mask] = self._data[idx].astype(np.float32)
@@ -168,9 +172,7 @@ class TriangularMatrix:
         return out
 
     # ── Element-wise pair extraction ──────────────────────────────────
-    def _get_elements(
-        self, rows: np.ndarray, cols: np.ndarray
-    ) -> np.ndarray:
+    def _get_elements(self, rows: np.ndarray, cols: np.ndarray) -> np.ndarray:
         """Element-wise pair extraction (like ``arr[rows, cols]`` for 1‑D arrays).
 
         Returns a 1‑D float32 array of length ``len(rows)`` where
@@ -213,7 +215,9 @@ class TriangularMatrix:
             row_k, col_k = key
 
             # ── Scalar × scalar → single element ────────────────
-            if isinstance(row_k, (int, np.integer)) and isinstance(col_k, (int, np.integer)):
+            if isinstance(row_k, (int, np.integer)) and isinstance(
+                col_k, (int, np.integer)
+            ):
                 i = int(row_k)
                 j = int(col_k)
                 if i == j:
@@ -285,6 +289,7 @@ class TriangularMatrix:
         """Close the underlying mmap file handle."""
         if self._filepath is not None:
             import mmap as _mmap_mod
+
             attr = getattr(self._data, "_mmap", None)
             if attr is not None and isinstance(attr, _mmap_mod.mmap):
                 try:
@@ -293,7 +298,9 @@ class TriangularMatrix:
                     pass
 
 
-def save_triangular(filepath: str, n: int, upper_triangle: np.ndarray) -> TriangularMatrix:
+def save_triangular(
+    filepath: str, n: int, upper_triangle: np.ndarray
+) -> TriangularMatrix:
     """Save an upper‑triangle float16 array as a memmap and return wrapper.
 
     Parameters

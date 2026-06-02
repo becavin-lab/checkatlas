@@ -21,9 +21,7 @@ def test_read_scanpy_atlas(atlas_info, expected):
     assert isinstance(adata, expected)
 
 
-@given(
-    "atlas_info,expected", [(datasets.get_cellranger_atlas_info(), AnnData)]
-)
+@given("atlas_info,expected", [(datasets.get_cellranger_atlas_info(), AnnData)])
 def test_read_cellranger_atlas(atlas_info, expected):
     adata = cellranger.read_cellranger_current(atlas_info)
     assert isinstance(adata, expected)
@@ -139,9 +137,7 @@ def test_qc_table(atlas_info):
     folders.checkatlas_folders(checkatlas_path)
     atlas.create_qc_tables(adata, atlas_info, args)
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
-    csv_path = files.get_file_path(
-        atlas_name, folders.QC, check.TSV_EXTENSION, args.path
-    )
+    csv_path = files.get_file_path(atlas_name, folders.QC, check.TSV_EXTENSION, args.path)
     assert os.path.exists(csv_path)
 
 

@@ -9,15 +9,15 @@ Provides:
 - ``compute_neighbors()``  — auto-dispatches GPU (JAX) vs CPU (pynndescent)
 """
 
+import logging
 from dataclasses import dataclass, field
 from functools import cached_property
-import logging
 from typing import Optional, Tuple
 
 import numpy as np
-from scipy.sparse import csr_matrix, coo_matrix
+from scipy.sparse import coo_matrix, csr_matrix
 
-from ._jax_utils import _JAX_AVAILABLE, _GPU_AVAILABLE, pdist_squareform, _get_ndarray
+from ._jax_utils import _GPU_AVAILABLE, _JAX_AVAILABLE, _get_ndarray, pdist_squareform
 
 logger = logging.getLogger("checkatlas")
 
@@ -25,6 +25,7 @@ logger = logging.getLogger("checkatlas")
 # ═══════════════════════════════════════════════════════════════════════
 # NeighborResults dataclass
 # ═══════════════════════════════════════════════════════════════════════
+
 
 @dataclass
 class NeighborResults:
@@ -85,6 +86,7 @@ class NeighborResults:
 # CPU backend — pynndescent (approximate kNN, linear-ish time)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _pynndescent_knn(
     X: np.ndarray, n_neighbors: int, n_jobs: int = -1, random_state: int = 42
 ) -> NeighborResults:
@@ -111,9 +113,7 @@ def _pynndescent_knn(
     except ImportError:
         from sklearn.neighbors import NearestNeighbors
 
-        nbrs = NearestNeighbors(
-            n_neighbors=n_neighbors, algorithm="auto", n_jobs=n_jobs
-        )
+        nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm="auto", n_jobs=n_jobs)
         nbrs.fit(X)
         knn_dist, knn_idx = nbrs.kneighbors(X)
 
@@ -123,6 +123,7 @@ def _pynndescent_knn(
 # ═══════════════════════════════════════════════════════════════════════
 # GPU backend — JAX exact brute-force kNN (Phase 2)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def _jax_exact_knn(
     X: np.ndarray,
@@ -143,9 +144,10 @@ def _jax_exact_knn(
     **Falls back to pynndescent CPU when the input data size exceeds
     GPU memory** (e.g. 85k cells × 60k genes ≈ 20 GB on GPU).
     """
+    import functools
+
     import jax
     import jax.numpy as jnp
-    import functools
 
     n, d = X.shape
     data_size_gb = (n * d * 4) / (1024**3)  # float32 bytes
@@ -153,9 +155,11 @@ def _jax_exact_knn(
     # ── GPU OOM guard: if input alone exceeds 10 GB, use CPU ────
     if data_size_gb > 10.0:
         from logging import getLogger
+
         getLogger("checkatlas").debug(
             "JAX kNN: input too large (%.1f GB). Falling back to pynndescent.",
-            data_size_gb)
+            data_size_gb,
+        )
         return _pynndescent_knn(X, n_neighbors, n_jobs=-1)
 
     # ── Small atlas: one-shot full matrix ──────────────────────────
@@ -180,9 +184,9 @@ def _jax_exact_knn(
         end = min(start + chunk_size, n)
         qy = db[start:end]
         # Compute (chunk × n) distance matrix on GPU
-        qy_sq = jnp.sum(qy**2, axis=1)           # (chunk,)
-        db_sq = jnp.sum(db**2, axis=1)            # (n,)
-        dot = jnp.dot(qy, db.T)                    # (chunk, n) ← GPU matmul
+        qy_sq = jnp.sum(qy**2, axis=1)  # (chunk,)
+        db_sq = jnp.sum(db**2, axis=1)  # (n,)
+        dot = jnp.dot(qy, db.T)  # (chunk, n) ← GPU matmul
         D_chunk_sq = qy_sq[:, None] + db_sq[None, :] - 2 * dot
         D_chunk = jnp.sqrt(jnp.maximum(D_chunk_sq, 0.0))
 
@@ -242,18 +246,21 @@ def _jax_streaming_knn(
 
     from tqdm import tqdm as _tqdm  # lazy import
 
-    with _tqdm(total=total_blocks, desc="GPU kNN (streaming)",
-               disable=(total_blocks < 10)) as pbar:
+    with _tqdm(
+        total=total_blocks,
+        desc="GPU kNN (streaming)",
+        disable=(total_blocks < 10),
+    ) as pbar:
         for qs in range(0, n, qchunk):
             qe = min(qs + qchunk, n)
             q = jnp.asarray(X[qs:qe], dtype=jnp.float32)
-            q_sq = jnp.sum(q**2, axis=1)               # (qsize,)
+            q_sq = jnp.sum(q**2, axis=1)  # (qsize,)
 
             for rs in range(0, n, rchunk):
                 re = min(rs + rchunk, n)
                 r = jnp.asarray(X[rs:re], dtype=jnp.float32)
-                r_sq = jnp.sum(r**2, axis=1)            # (rsize,)
-                dot = jnp.dot(q, r.T)                   # (qsize, rsize) ← GPU matmul
+                r_sq = jnp.sum(r**2, axis=1)  # (rsize,)
+                dot = jnp.dot(q, r.T)  # (qsize, rsize) ← GPU matmul
                 D_sq = q_sq[:, None] + r_sq[None, :] - 2 * dot
                 D = jnp.sqrt(jnp.maximum(D_sq, 0.0))
                 D_np = _get_ndarray(D)
@@ -262,10 +269,8 @@ def _jax_streaming_knn(
                 ref_idx = np.arange(rs, re, dtype=np.int32)[None, :]
                 ref_idx_broad = np.broadcast_to(ref_idx, (qe - qs, re - rs))
 
-                merged_dist = np.concatenate(
-                    [running_dist[qs:qe], D_np], axis=1)
-                merged_idx = np.concatenate(
-                    [running_idx[qs:qe], ref_idx_broad], axis=1)
+                merged_dist = np.concatenate([running_dist[qs:qe], D_np], axis=1)
+                merged_idx = np.concatenate([running_idx[qs:qe], ref_idx_broad], axis=1)
 
                 topk = np.argpartition(merged_dist, k, axis=1)[:, :k]
                 running_dist[qs:qe] = np.take_along_axis(merged_dist, topk, axis=1)
@@ -294,7 +299,7 @@ def _make_cache_key(X: np.ndarray, n_neighbors: int) -> tuple:
     n = len(flat)
     chunks = [
         flat[:2000].tobytes(),
-        flat[max(0, n // 2 - 1000): n // 2 + 1000].tobytes(),
+        flat[max(0, n // 2 - 1000) : n // 2 + 1000].tobytes(),
         flat[-2000:].tobytes() if n > 2000 else b"",
     ]
     return (X.shape, hash(b"".join(chunks)), n_neighbors)
@@ -308,6 +313,7 @@ def _clear_neighbors_cache():
 # ═══════════════════════════════════════════════════════════════════════
 # Public API
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def compute_neighbors(
     X: np.ndarray,
@@ -357,7 +363,9 @@ def compute_neighbors(
     elif backend == "pynndescent":
         use_jax = False
     else:
-        raise ValueError(f"Unknown backend '{backend}'. Use 'auto', 'jax', or 'pynndescent'.")
+        raise ValueError(
+            f"Unknown backend '{backend}'. Use 'auto', 'jax', or 'pynndescent'."
+        )
 
     if use_jax:
         # ── Select GPU path based on input size ─────────────────
@@ -368,7 +376,10 @@ def compute_neighbors(
             # Large atlas — streaming GPU kNN (query×ref chunked)
             logger.debug(
                 "Streaming GPU kNN (%.1f GB input, chunks q=%d r=%d)",
-                data_gb, 15000, 10000)
+                data_gb,
+                15000,
+                10000,
+            )
             result = _jax_streaming_knn(X_arr, n_neighbors)
     else:
         result = _pynndescent_knn(X_arr, n_neighbors, n_jobs=n_jobs)

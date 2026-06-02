@@ -1,14 +1,17 @@
-import numpy as np
-from sklearn.metrics import pairwise_distances
-from scipy.sparse import issparse
+from typing import Callable, Optional
 
+import numpy as np
+from scipy.sparse import issparse
+from sklearn.metrics import pairwise_distances
 
 # ── GPU cdist import (optional, falls back to sklearn) ────────────
+_gpu_cdist: Optional[Callable[..., np.ndarray]] = None
+_HAS_JAX: bool = False
 try:
-    from .._jax_utils import cdist as _gpu_cdist, _JAX_AVAILABLE as _HAS_JAX
+    from .._jax_utils import _JAX_AVAILABLE as _HAS_JAX
+    from .._jax_utils import cdist as _gpu_cdist
 except ImportError:
-    _gpu_cdist = None
-    _HAS_JAX = False
+    pass
 
 
 def run(X, labels, n_jobs=-1, verbose=True, sample_size=None):
@@ -118,16 +121,12 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None):
         for lbl_j in unique_labels:
             if lbl_i == lbl_j:
                 continue
-            centroid_j = cluster_centroids[lbl_j]       # shape (d,)
+            centroid_j = cluster_centroids[lbl_j]  # shape (d,)
             mean_norm_j = cluster_mean_norms[lbl_j]
 
             # mean_sq_dist(i, Cj) = ||i||² + mean(||c||²) - 2·i·centroid_j
             # shape: (ni,)
-            mean_sq = (
-                norms_i
-                + mean_norm_j
-                - 2.0 * np.dot(Xi, centroid_j)
-            )
+            mean_sq = norms_i + mean_norm_j - 2.0 * np.dot(Xi, centroid_j)
             # Clamp near-zero negatives (floating-point noise)
             mean_sq = np.maximum(mean_sq, 0.0)
             mean_dist = np.sqrt(mean_sq)
@@ -150,6 +149,7 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None):
 # Helpers
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _exact_intra_mean(Xk, a_out, global_idx, n_jobs=1, chunk=2000):
     """
     Compute a(i) = mean Euclidean distance from each point to all
@@ -160,7 +160,7 @@ def _exact_intra_mean(Xk, a_out, global_idx, n_jobs=1, chunk=2000):
     for ~100× faster intra-cluster distance computation.
     """
     n = len(Xk)
-    counts = np.zeros(n)   # per-point count of other points seen
+    counts = np.zeros(n)  # per-point count of other points seen
     _use_gpu = _HAS_JAX and _gpu_cdist is not None
 
     for r in range(0, n, chunk):

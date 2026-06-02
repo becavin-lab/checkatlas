@@ -60,9 +60,7 @@ def specificity_summary(adata, marker_genes, partition_key: str = "CellType"):
 
     for celltype, genes in marker_genes.items():
         for gene in genes:
-            if (
-                gene in shannon.keys()
-            ):  # Check why some of them return an error
+            if gene in shannon.keys():  # Check why some of them return an error
                 summary.loc[gene, :] = [
                     gene,
                     celltype,
@@ -125,9 +123,7 @@ def specificity_quality_control(
     if not project_dir_path.joinpath(Path("SpecAnalysis")).is_dir():
         os.mkdir(project_dir_path.joinpath("SpecAnalysis"))
     os.mkdir(
-        project_dir_path.joinpath(
-            f'SpecAnalysis/Analysis_{now.strftime("%y%m%d_%H%M")}'
-        )
+        project_dir_path.joinpath(f'SpecAnalysis/Analysis_{now.strftime("%y%m%d_%H%M")}')
     )
     analysis_path = project_dir_path.joinpath(
         f'SpecAnalysis/Analysis_{now.strftime("%y%m%d_%H%M")}'
@@ -154,9 +150,7 @@ def specificity_quality_control(
     summary = specificity_summary(
         adata=adata, marker_genes=marker_genes, partition_key=partition_key
     )
-    summary.to_csv(
-        path_or_buf=analysis_path.joinpath("spec_summary.tsv"), sep="\t"
-    )
+    summary.to_csv(path_or_buf=analysis_path.joinpath("spec_summary.tsv"), sep="\t")
     plot.all_spec_distrib(adata=adata, partition_key=partition_key)
     plt.savefig(analysis_path.joinpath("spec_distrib.png"))
     plt.close()

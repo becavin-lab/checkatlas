@@ -1,24 +1,30 @@
 import logging
 import os
+from types import ModuleType
+from typing import Optional
 
 import pandas as pd
+
+seurat: Optional[ModuleType] = None
 
 try:
     from . import atlas, cellranger
     from .utils import files as chk_files
     from .utils import folders
+
     try:
         from . import seurat
     except (ImportError, OSError):
-        seurat = None
+        pass
 except ImportError:
     from checkatlas import atlas, cellranger
     from checkatlas.utils import files as chk_files
     from checkatlas.utils import folders
+
     try:
         from checkatlas import seurat
     except (ImportError, OSError):
-        seurat = None
+        pass
 
 """
 checkatlas base module.
@@ -33,7 +39,7 @@ PROCESS_TYPE = [
     "qc",
     "metric_cluster",
     "metric_annot",
-    "metric_dimred"
+    "metric_dimred",
 ]
 
 TSV_EXTENSION = ".tsv"
@@ -94,8 +100,7 @@ def list_scanpy_atlases(checkatlas_path: str) -> None:
             )
             clean_scanpy_list.append(atlas_info)
     logger.info(
-        f"Found {len(clean_scanpy_list)} potential "
-        f"seurat files with .rds extension"
+        f"Found {len(clean_scanpy_list)} potential " f"seurat files with .rds extension"
     )
     # Save the list of atlas taken into account
     chk_files.save_list_scanpy(clean_scanpy_list, checkatlas_path)
@@ -158,8 +163,7 @@ def list_seurat_atlases(checkatlas_path: str) -> None:
             )
             clean_seurat_list.append(atlas_info)
     logger.info(
-        f"Found {len(clean_seurat_list)} potential "
-        f"seurat files with .rds extension"
+        f"Found {len(clean_seurat_list)} potential " f"seurat files with .rds extension"
     )
     # Save the list of atlas taken into account
     chk_files.save_list_seurat(clean_seurat_list, checkatlas_path)
@@ -170,9 +174,7 @@ def read_list_atlases(checkatlas_path: str) -> tuple:
     clean_cellranger_list = pd.DataFrame()
     clean_seurat_list = pd.DataFrame()
     if os.path.exists(chk_files.get_table_scanpy_path(checkatlas_path)):
-        clean_scanpy_list = pd.read_csv(
-            chk_files.get_table_scanpy_path(checkatlas_path)
-        )
+        clean_scanpy_list = pd.read_csv(chk_files.get_table_scanpy_path(checkatlas_path))
         clean_scanpy_list.index = clean_scanpy_list[ATLAS_NAME_KEY]
     if os.path.exists(chk_files.get_table_cellranger_path(checkatlas_path)):
         clean_cellranger_list = pd.read_csv(
@@ -180,16 +182,20 @@ def read_list_atlases(checkatlas_path: str) -> tuple:
         )
         clean_cellranger_list.index = clean_cellranger_list[ATLAS_NAME_KEY]
     if os.path.exists(chk_files.get_table_seurat_path(checkatlas_path)):
-        clean_seurat_list = pd.read_csv(
-            chk_files.get_table_seurat_path(checkatlas_path)
-        )
+        clean_seurat_list = pd.read_csv(chk_files.get_table_seurat_path(checkatlas_path))
         clean_seurat_list.index = clean_seurat_list[ATLAS_NAME_KEY]
     raw_df = _scan_raw_atlases(checkatlas_path)
     if not raw_df.empty:
-        existing = set(clean_scanpy_list.index) | set(clean_cellranger_list.index) | set(clean_seurat_list.index)
+        existing = (
+            set(clean_scanpy_list.index)
+            | set(clean_cellranger_list.index)
+            | set(clean_seurat_list.index)
+        )
         new_atlases = raw_df[~raw_df.index.isin(existing)]
         if not new_atlases.empty:
-            clean_scanpy_list = pd.concat([clean_scanpy_list, new_atlases], ignore_index=False)
+            clean_scanpy_list = pd.concat(
+                [clean_scanpy_list, new_atlases], ignore_index=False
+            )
             clean_scanpy_list.index = clean_scanpy_list[ATLAS_NAME_KEY]
     return clean_scanpy_list, clean_cellranger_list, clean_seurat_list
 
@@ -203,12 +209,14 @@ def _scan_raw_atlases(checkatlas_path: str) -> pd.DataFrame:
         if not os.path.isfile(fpath):
             continue
         atlas_name = os.path.splitext(fname)[0]
-        records.append({
-            ATLAS_NAME_KEY: atlas_name,
-            ATLAS_TYPE_KEY: "AnnData",
-            ATLAS_EXTENSION_KEY: ".h5ad",
-            ATLAS_PATH_KEY: os.path.abspath(fpath),
-        })
+        records.append(
+            {
+                ATLAS_NAME_KEY: atlas_name,
+                ATLAS_TYPE_KEY: "AnnData",
+                ATLAS_EXTENSION_KEY: ".h5ad",
+                ATLAS_PATH_KEY: os.path.abspath(fpath),
+            }
+        )
     if not records:
         return pd.DataFrame()
     df = pd.DataFrame(records)
@@ -289,9 +297,7 @@ def create_img_html_content(type_viz, data):
         style = "display: none;"
         if counter == 0:
             style = "display: block;"
-        html_content += add_div_img(
-            fig_path, type_viz, atlas_name, style, tabcontent
-        )
+        html_content += add_div_img(fig_path, type_viz, atlas_name, style, tabcontent)
         counter += 1
 
     html_content += openpng_html_script
@@ -303,9 +309,7 @@ def create_img_html_content(type_viz, data):
     return html_content
 
 
-def add_selection_img_button(
-    class_tab, type_viz, atlas_name, tablinks, tabcontent
-):
+def add_selection_img_button(class_tab, type_viz, atlas_name, tablinks, tabcontent):
     return (
         """  <button class=\""""
         + class_tab

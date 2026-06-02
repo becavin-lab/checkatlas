@@ -70,9 +70,7 @@ def gene_expr_distribution(
     indent = ""
     for spe in ["shannon", "tau", "gini"]:
         spe_to_plot = round(
-            get_data.get_spe(adata, spe_metric=spe, partition_key="CellType")[
-                gene
-            ],
+            get_data.get_spe(adata, spe_metric=spe, partition_key="CellType")[gene],
             2,
         )
         out = plt.annotate(
@@ -82,9 +80,7 @@ def gene_expr_distribution(
         )
         indent += "\n"
     if isinstance(celltype, str):
-        out = sns.rugplot(
-            [average_by_celltype.loc[celltype, gene]], color="red"
-        )
+        out = sns.rugplot([average_by_celltype.loc[celltype, gene]], color="red")
         out = plt.annotate(
             celltype,
             xy=(average_by_celltype.loc[celltype, gene], 0.06),
@@ -126,9 +122,7 @@ def marker_genes_distribution(
     """
     plt.style.use(style)
     n_panels = len(gene_list)
-    f, grid = _panel_grid(
-        hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels
-    )
+    f, grid = _panel_grid(hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels)
     for i in range(n_panels):
         gene = gene_list[i]
         ax = f.add_subplot(grid[i])
@@ -171,16 +165,12 @@ def distrib_one_v_max(
     """
     one_v_max = one_v_max_matrix(adata, partition_key=partition_key)
     to_plot = one_v_max.loc[celltype]
-    to_plot_trunc = to_plot[
-        to_plot > 1
-    ]  # The only relevant one_v_max are the ones >1
+    to_plot_trunc = to_plot[to_plot > 1]  # The only relevant one_v_max are the ones >1
     gene_highlight = list(set(gene_highlight) & set(list(to_plot_trunc.index)))
     if gene_highlight:
         to_plot_highlight = to_plot_trunc[gene_highlight]
         to_plot_trunc = to_plot_trunc.drop(gene_highlight)
-        out = sns.stripplot(
-            y=to_plot_trunc, ax=ax, orient="v", s=3, linewidth=0.25
-        )
+        out = sns.stripplot(y=to_plot_trunc, ax=ax, orient="v", s=3, linewidth=0.25)
         out = sns.stripplot(
             y=to_plot_highlight, ax=ax, orient="v", color="red", linewidth=0.5
         )
@@ -199,12 +189,8 @@ def distrib_one_v_max(
             )
         out.axes.set_ylabel(ylabel="")
     else:
-        out = sns.stripplot(
-            y=to_plot_trunc, ax=ax, orient="v", s=3, linewidth=0.25
-        )
-        out.axes.set_title(
-            label=f"{to_plot_trunc.name}", loc="center", fontsize="small"
-        )
+        out = sns.stripplot(y=to_plot_trunc, ax=ax, orient="v", s=3, linewidth=0.25)
+        out.axes.set_title(label=f"{to_plot_trunc.name}", loc="center", fontsize="small")
         out.axes.set_ylabel(ylabel="")
     return out
 
@@ -245,17 +231,13 @@ def one_v_max_celltypes(
         value_name="expression",
     )
     mean_melt = mean_melt[mean_melt["expression"] > 1]
-    out = sns.stripplot(
-        x=mean_melt["celltype"], y=mean_melt["expression"], s=2
-    )
+    out = sns.stripplot(x=mean_melt["celltype"], y=mean_melt["expression"], s=2)
     out.set(yscale="log")
     return out
 
 
 # Used
-def one_v_max_genelist(
-    adata: anndata, gene_list: list, partition_key: str = "CellType"
-):
+def one_v_max_genelist(adata: anndata, gene_list: list, partition_key: str = "CellType"):
     """
     For each gene, plots the one_v_max stripplot in the celltype where it is
     maximum.
@@ -272,9 +254,7 @@ def one_v_max_genelist(
     """
     one_v_max = one_v_max_matrix(adata, partition_key=partition_key)
     n_panels = len(gene_list)
-    f, grid = _panel_grid(
-        hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels
-    )
+    f, grid = _panel_grid(hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels)
     for i in range(n_panels):
         gene = gene_list[i]
         ax = f.add_subplot(grid[i])
@@ -318,9 +298,7 @@ def one_v_max_celltypes_sep(
 
     """
     n_panels = len(celltype_list)
-    f, grid = _panel_grid(
-        hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels
-    )
+    f, grid = _panel_grid(hspace=0.25, wspace=0.25, ncols=4, num_panels=n_panels)
     for i in range(n_panels):
         celltype = celltype_list[i]
         ax = f.add_subplot(grid[i])
@@ -370,15 +348,11 @@ def spec_distrib(
 def all_spec_distrib(adata: anndata, partition_key: str = "CellType"):
     f, (ax1, ax2, ax3) = plt.subplots(3, 1)
     for ax, spe in [(ax1, "shannon"), (ax2, "tau"), (ax3, "gini")]:
-        spec_distrib(
-            adata=adata, spe_name=spe, ax=ax, partition_key=partition_key
-        )
+        spec_distrib(adata=adata, spe_name=spe, ax=ax, partition_key=partition_key)
 
 
 # TODO
-def marked_celltype_UMAP(
-    adata: anndata, gene: str, marked_celltypes: Collection[str]
-):
+def marked_celltype_UMAP(adata: anndata, gene: str, marked_celltypes: Collection[str]):
     """
 
     Parameters

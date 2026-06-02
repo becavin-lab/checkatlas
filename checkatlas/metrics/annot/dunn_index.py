@@ -1,7 +1,7 @@
 import numpy as np
+from scipy.sparse import issparse
 from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
-from scipy.sparse import issparse
 
 
 def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
@@ -67,10 +67,7 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
     # cross-cluster query is O(|Ci|・log|Cj|) instead of O(|Ci|・|Cj|).
     inter_pairs = (n_clusters * (n_clusters - 1)) // 2
     if verbose:
-        print(
-            f"Computing Dunn Index "
-            f"({len(X):,} samples, {n_clusters} clusters)..."
-        )
+        print(f"Computing Dunn Index " f"({len(X):,} samples, {n_clusters} clusters)...")
         print(f"  Inter-cluster distances ({inter_pairs} pairs)...")
 
     min_inter = np.inf
@@ -138,13 +135,15 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
 
 # ── Chunked upper-triangular pairwise max ────────────────────────────
 
+
 def _chunked_diameter(X, n_jobs=1, chunk_size=2000):
     """Maximum pairwise distance in *X*, computed in memory-bounded
     upper-triangular blocks so the full |X|×|X| matrix is never stored.
 
     Uses GPU-accelerated cdist when JAX is available (~10× faster).
     """
-    from .._jax_utils import cdist as gpu_cdist, _JAX_AVAILABLE
+    from .._jax_utils import _JAX_AVAILABLE
+    from .._jax_utils import cdist as gpu_cdist
 
     n = len(X)
     max_d = 0.0

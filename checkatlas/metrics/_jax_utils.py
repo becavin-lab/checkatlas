@@ -14,7 +14,7 @@ automatically.
 
 import functools
 import logging
-from typing import Callable, Any, Literal, Optional
+from typing import Any, Callable, Literal, Optional
 
 import numpy as np
 
@@ -45,7 +45,7 @@ if _JAX_AVAILABLE:
         "JAX %s detected (%s backends: %s)",
         jax.__version__,
         "GPU" if _GPU_AVAILABLE else "CPU-only",
-        ", ".join(d.platform.upper() for d in _devices) if _GPU_AVAILABLE else "CPU",
+        (", ".join(d.platform.upper() for d in _devices) if _GPU_AVAILABLE else "CPU"),
     )
 else:
     logger.info("JAX not available — using CPU-only backends (pynndescent + numpy)")
@@ -57,7 +57,7 @@ else:
 
 if _JAX_AVAILABLE:
 
-    def _get_ndarray(arr: "jnp.ndarray | np.ndarray") -> np.ndarray:
+    def _get_ndarray(arr: Any) -> np.ndarray:
         """Convert JAX array to numpy, passing numpy through unmodified."""
         if isinstance(arr, jnp.ndarray):
             return np.asarray(arr)
@@ -65,7 +65,7 @@ if _JAX_AVAILABLE:
 
 else:
 
-    def _get_ndarray(arr: np.ndarray) -> np.ndarray:
+    def _get_ndarray(arr: Any) -> np.ndarray:
         return arr
 
 
@@ -185,6 +185,7 @@ else:
 # Public API — distance computation (auto-dispatches GPU vs CPU)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def cdist(
     X1: np.ndarray,
     X2: np.ndarray,
@@ -207,10 +208,15 @@ def cdist(
     shape (m, n)
     """
     if _JAX_AVAILABLE:
-        return _get_ndarray(_cdist_jax(jnp.asarray(X1, dtype=jnp.float32),
-                                       jnp.asarray(X2, dtype=jnp.float32),
-                                       metric=metric))
+        return _get_ndarray(
+            _cdist_jax(
+                jnp.asarray(X1, dtype=jnp.float32),
+                jnp.asarray(X2, dtype=jnp.float32),
+                metric=metric,
+            )
+        )
     from sklearn.metrics import pairwise_distances
+
     return pairwise_distances(X1, X2, metric=metric, n_jobs=n_jobs)
 
 
@@ -226,16 +232,16 @@ def pdist_squareform(X: np.ndarray) -> np.ndarray:
     shape (n, n)
     """
     if _JAX_AVAILABLE:
-        return _get_ndarray(
-            _pdist_squareform_jax(jnp.asarray(X, dtype=jnp.float32))
-        )
+        return _get_ndarray(_pdist_squareform_jax(jnp.asarray(X, dtype=jnp.float32)))
     from sklearn.metrics import pairwise_distances
+
     return pairwise_distances(X, X, metric="euclidean", n_jobs=-1)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Backend dispatcher
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def jax_or_cpu(jax_fn: Callable, cpu_fn: Callable) -> Callable:
     """Return the appropriate function based on JAX availability.
