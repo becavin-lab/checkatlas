@@ -17,6 +17,9 @@ docs/~$*
 PRESENTATION.md
 presentation.md
 
+# scFM logos / figures (downloaded from external sources, not for git)
+docs/figures/scfm_logos/
+
 # Nextflow
 .nextflow/
 .nextflow.log*
