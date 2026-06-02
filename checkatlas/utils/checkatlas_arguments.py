@@ -46,11 +46,11 @@ def create_parser():
     parser.add_argument(
         "--atlas_name",
         type=str,
-        help="Required argument: The name of the atlas to process."
-        "Atlas_name should be found in one of the samplesheet provided to"
-        "nf-checkatlas, or directly created by checkatlas.list_all_atlases()"
-        " function",
-        default=".",
+        help="Required for all processes except 'run': name of the atlas to "
+        "process. Atlas_name should be found in one of the samplesheet "
+        "provided to nf-checkatlas, or directly created by "
+        "checkatlas.list_all_atlases() function",
+        default=None,
     )
 
     parser.add_argument(
