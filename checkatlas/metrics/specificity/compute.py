@@ -83,11 +83,7 @@ def one_v_max_matrix(adata: anndata, partition_key: str = "CellType"):
         for celltype in average_by_celltype.index:
             spe_matrix.loc[celltype] = average_by_celltype.loc[
                 celltype
-            ] / average_by_celltype.loc[
-                average_by_celltype.index != celltype
-            ].max(
-                axis=0
-            )
+            ] / average_by_celltype.loc[average_by_celltype.index != celltype].max(axis=0)
         adata.uns[f"ovm_{partition_key}"] = spe_matrix
     else:
         spe_matrix = adata.uns[f"ovm_{partition_key}"]
@@ -115,9 +111,7 @@ def shannon_average(adata: anndata, partition_key: str = "CellType"):
 
     """
     prob_matrix = one_v_all_matrix(adata=adata, partition_key=partition_key)
-    spe_shannon = pd.Series(
-        index=prob_matrix.columns, name="Shannon_entropies"
-    )
+    spe_shannon = pd.Series(index=prob_matrix.columns, name="Shannon_entropies")
     for gene in prob_matrix.columns:
         spe_shannon[gene] = entropy(list(prob_matrix[gene]))
     return spe_shannon
@@ -230,9 +224,7 @@ def gini_average(adata: anndata, partition_key: str = "CellType"):
     average_by_celltype = get_average_celltype_counts(
         adata=adata, partition_key=partition_key
     )
-    spe_gini = pd.Series(
-        index=average_by_celltype.columns, name="gini_Coefficient"
-    )
+    spe_gini = pd.Series(index=average_by_celltype.columns, name="gini_Coefficient")
     n = average_by_celltype.shape[0]
     index = np.arange(1, n + 1)
     for gene in average_by_celltype.columns:

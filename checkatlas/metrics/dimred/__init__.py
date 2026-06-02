@@ -1,20 +1,20 @@
 from . import (
-    entourage, 
-    kruskal_stress, 
-    spearman_rho,
+    avg_jaccard_dis,
     coknn,
-    trustworthiness,
     continuity,
     dCor,
     den_pre,
+    entourage,
+    ged,
+    kruskal_stress,
     lcmc,
-    avg_jaccard_dis,
-    ged
+    spearman_rho,
+    trustworthiness,
 )
 
 __all__ = [
     "kruskal_stress",
-    "spearman_rho", 
+    "spearman_rho",
     "entourage",
     "coknn",
     "trustworthiness",
@@ -23,5 +23,5 @@ __all__ = [
     "den_pre",
     "lcmc",
     "avg_jaccard_dis",
-    "ged"
+    "ged",
 ]

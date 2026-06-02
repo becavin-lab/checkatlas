@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import warnings
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -76,15 +76,12 @@ def preprocess_atlas(atlas_info: dict) -> AnnData:
     return adata
 
 
-
-
-
 def detect_scanpy(atlas_path: str) -> dict:
     if atlas_path.endswith(ANNDATA_EXTENSION):
         atlas_info = dict()
-        atlas_info[check.ATLAS_NAME_KEY] = os.path.splitext(
-            os.path.basename(atlas_path)
-        )[0]
+        atlas_info[check.ATLAS_NAME_KEY] = os.path.splitext(os.path.basename(atlas_path))[
+            0
+        ]
         atlas_info[check.ATLAS_TYPE_KEY] = ANNDATA_TYPE
         atlas_info[check.ATLAS_EXTENSION_KEY] = ANNDATA_EXTENSION
         atlas_info[check.ATLAS_PATH_KEY] = atlas_path
@@ -108,34 +105,23 @@ def read_atlas(atlas_info: dict) -> AnnData:
         f"in {atlas_info[check.ATLAS_PATH_KEY]}"
     )
     try:
-        if (
-            atlas_info[check.ATLAS_TYPE_KEY]
-            == cellranger.CELLRANGER_TYPE_CURRENT
-        ):
+        if atlas_info[check.ATLAS_TYPE_KEY] == cellranger.CELLRANGER_TYPE_CURRENT:
             logger.debug(
-                "Read Cellranger >= v3 results "
-                f"{atlas_info[check.ATLAS_PATH_KEY]}"
+                "Read Cellranger >= v3 results " f"{atlas_info[check.ATLAS_PATH_KEY]}"
             )
             adata = cellranger.read_cellranger_current(atlas_info)
-        elif (
-            atlas_info[check.ATLAS_TYPE_KEY]
-            == cellranger.CELLRANGER_TYPE_OBSOLETE
-        ):
+        elif atlas_info[check.ATLAS_TYPE_KEY] == cellranger.CELLRANGER_TYPE_OBSOLETE:
             logger.debug(
-                "Read Cellranger < v3 results "
-                f"{atlas_info[check.ATLAS_PATH_KEY]}"
+                "Read Cellranger < v3 results " f"{atlas_info[check.ATLAS_PATH_KEY]}"
             )
             adata = cellranger.read_cellranger_obsolete(atlas_info)
         else:
-            logger.debug(
-                f"Read Scanpy file {atlas_info[check.ATLAS_PATH_KEY]}"
-            )
+            logger.debug(f"Read Scanpy file {atlas_info[check.ATLAS_PATH_KEY]}")
             adata = sc.read_h5ad(atlas_info[check.ATLAS_PATH_KEY])
         return adata
     except _io.utils.AnnDataReadError:
         logger.warning(
-            "AnnDataReadError, cannot read: "
-            f"{atlas_info[check.ATLAS_PATH_KEY]}"
+            "AnnDataReadError, cannot read: " f"{atlas_info[check.ATLAS_PATH_KEY]}"
         )
         return dict()
 
@@ -162,27 +148,21 @@ def clean_scanpy_atlas(adata: AnnData, atlas_info: dict) -> AnnData:
     if len(set(list_var)) == len(list_var):
         logger.debug("Var names unique")
     else:
-        logger.debug(
-            "Var names not unique, ran : adata.var_names_make_unique()"
-        )
+        logger.debug("Var names not unique, ran : adata.var_names_make_unique()")
         adata.var_names_make_unique()
         # Test a second time if it is unique (sometimes it helps)
         list_var = adata.var_names
         if len(set(list_var)) == len(list_var):
             logger.debug("Var names unique")
         else:
-            logger.debug(
-                "Var names not unique, ran : adata.var_names_make_unique()"
-            )
+            logger.debug("Var names not unique, ran : adata.var_names_make_unique()")
             adata.var_names_make_unique()
             # If it is still not unique, create unique var_names "by hand"
             list_var = adata.var_names
             if len(set(list_var)) == len(list_var):
                 logger.debug("Var names unique")
             else:
-                logger.debug(
-                    "Var names not unique, ran : adata.var_names_make_unique()"
-                )
+                logger.debug("Var names not unique, ran : adata.var_names_make_unique()")
                 adata.var.index = [
                     x + "_" + str(i)
                     for i, x in zip(range(len(adata.var)), adata.var_names)
@@ -270,9 +250,7 @@ def get_viable_obs_annot(adata: AnnData, args: argparse.Namespace) -> list:
                 categories = categories.delete(index)
             # Add obs_key with more than one category (with Nan removed)
             if len(categories) != 1:
-                logger.debug(
-                    f"Add obs_key {obs_key} with cat {categories_temp}"
-                )
+                logger.debug(f"Add obs_key {obs_key} with cat {categories_temp}")
                 obs_keys_final.append(obs_key)
     return sorted(obs_keys_final)
 
@@ -363,22 +341,16 @@ def create_anndata_table(
     #     new_line += html_element + value + "</span><br>"
     #     print(new_line)
     df_summary["atlas_obs"][atlas_name] = (
-        "<code>"
-        + "</code><br><code>".join(list(adata.obs.columns))
-        + "</code>"
+        "<code>" + "</code><br><code>".join(list(adata.obs.columns)) + "</code>"
     )
     df_summary["obsm"][atlas_name] = (
-        "<code>"
-        + "</code><br><code>".join(list(adata.obsm_keys()))
-        + "</code>"
+        "<code>" + "</code><br><code>".join(list(adata.obsm_keys())) + "</code>"
     )
     df_summary["var"][atlas_name] = (
         "<code>" + "</code><br><code>".join(list(adata.var_keys())) + "</code>"
     )
     df_summary["varm"][atlas_name] = (
-        "<code>"
-        + "</code><br><code>".join(list(adata.varm_keys()))
-        + "</code>"
+        "<code>" + "</code><br><code>".join(list(adata.varm_keys())) + "</code>"
     )
     df_summary["uns"][atlas_name] = (
         "<code>" + "</code><br><code>".join(list(adata.uns_keys())) + "</code>"
@@ -386,9 +358,7 @@ def create_anndata_table(
     df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_tables(
-    adata: AnnData, atlas_info: dict, args: argparse.Namespace
-) -> None:
+def create_qc_tables(adata: AnnData, atlas_info: dict, args: argparse.Namespace) -> None:
     """
     Display the atlas QC table
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
@@ -400,9 +370,7 @@ def create_qc_tables(
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
-    qc_path = files.get_file_path(
-        atlas_name, folders.QC, check.TSV_EXTENSION, args.path
-    )
+    qc_path = files.get_file_path(atlas_name, folders.QC, check.TSV_EXTENSION, args.path)
     logger.debug(f"Create QC tables for {atlas_name}")
     qc_genes = []
     # mitochondrial genes
@@ -441,9 +409,7 @@ def create_qc_tables(
     df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_plots(
-    adata: AnnData, atlas_info: dict, args: argparse.Namespace
-) -> None:
+def create_qc_plots(adata: AnnData, atlas_info: dict, args: argparse.Namespace) -> None:
     """
     Display the atlas QC plot
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
@@ -485,9 +451,7 @@ def create_qc_plots(
     )
 
 
-def create_umap_fig(
-    adata: AnnData, atlas_info: dict, args: argparse.Namespace
-) -> None:
+def create_umap_fig(adata: AnnData, atlas_info: dict, args: argparse.Namespace) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -505,9 +469,7 @@ def create_umap_fig(
     obsm_umap_keys = list(filter(r.match, obsm_keys))
     if len(obsm_umap_keys) > 0:
         obsm_umap = obsm_umap_keys[0]
-        logger.debug(
-            f"Create UMAP figure for {atlas_name} with obsm={obsm_umap}"
-        )
+        logger.debug(f"Create UMAP figure for {atlas_name} with obsm={obsm_umap}")
         # Set the umap to display
         if isinstance(adata.obsm[obsm_umap], pd.DataFrame):
             # Transform to numpy if it is a pandas dataframe
@@ -525,9 +487,7 @@ def create_umap_fig(
             sc.pl.umap(adata, show=False, save=umap_path)
 
 
-def create_tsne_fig(
-    adata: AnnData, atlas_info: dict, args: argparse.Namespace
-) -> None:
+def create_tsne_fig(adata: AnnData, atlas_info: dict, args: argparse.Namespace) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -545,9 +505,7 @@ def create_tsne_fig(
     obsm_tsne_keys = list(filter(r.match, obsm_keys))
     if len(obsm_tsne_keys) > 0:
         obsm_tsne = obsm_tsne_keys[0]
-        logger.debug(
-            f"Create t-SNE figure for {atlas_name} with obsm={obsm_tsne}"
-        )
+        logger.debug(f"Create t-SNE figure for {atlas_name} with obsm={obsm_tsne}")
         # Set the t-sne to display
         if isinstance(adata.obsm[obsm_tsne], pd.DataFrame):
             # Transform to numpy if it is a pandas dataframe
@@ -555,9 +513,7 @@ def create_tsne_fig(
         else:
             adata.obsm["X_tsne"] = adata.obsm[obsm_tsne]
         # Setting up figures directory
-        sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(
-            args.path
-        )
+        sc.settings.figdir = sc.settings.figdir = folders.get_workingdir(args.path)
         tsne_path = os.sep + atlas_name + check.TSNE_EXTENSION
         # Exporting tsne
         obs_keys = get_viable_obs_annot(adata, args)
@@ -637,7 +593,7 @@ def create_metric_annot(
         adata,
         atlas_name=atlas_name,
         metric_list=args.metric_annot,
-        all=True,               # fallback: run every metric in METRICS_ANNOT
+        all=True,  # fallback: run every metric in METRICS_ANNOT
         file_dir=annotation_dir,
         n_jobs=-1,
         verbose=True,
@@ -680,8 +636,8 @@ def create_metric_dimred(
     dimred_dir = folders.get_folder(args.path, folders.DIMRED)
     # Per-atlas persistent cache under temp/
     cache_dir = os.path.join(
-        folders.get_folder(args.path, folders.TEMP),
-        atlas_name, "dimred")
+        folders.get_folder(args.path, folders.TEMP), atlas_name, "dimred"
+    )
 
     df = metrics.cal_dimred(
         adata,
@@ -732,81 +688,83 @@ def atlas_sampling(
 
 # Public API functions for column detection
 
-def col_annotation_ref(adata: AnnData, 
-                       min_score: float = 0.5,
-                       return_all: bool = False) -> Optional[str]:
+
+def col_annotation_ref(
+    adata: AnnData, min_score: float = 0.5, return_all: bool = False
+) -> Optional[str]:
     """
     Detect reference (ground truth) annotation column in AnnData object.
-    
+
     This function uses intelligent semantic and statistical analysis to identify
     the most likely reference/ground truth cell type annotation column.
-    
+
     Args:
         adata (AnnData): Scanpy AnnData object to analyze
         min_score (float): Minimum confidence score threshold (0-1). Default: 0.5
         return_all (bool): If True, return list of all candidates with scores. Default: False
-        
+
     Returns:
-        str or List[Tuple[str, float]] or None: 
+        str or List[Tuple[str, float]] or None:
             - If return_all=False: Best reference column name, or None if none found
             - If return_all=True: List of (column_name, score) tuples sorted by score
-            
+
     Example:
         >>> import scanpy as sc
         >>> import checkatlas.atlas as atlas
         >>> adata = sc.read_h5ad("atlas.h5ad")
         >>> ref_col = atlas.col_annotation_ref(adata)
         >>> print(f"Reference column: {ref_col}")
-        >>> 
+        >>>
         >>> # Get all candidates with scores
         >>> all_refs = atlas.col_annotation_ref(adata, return_all=True)
         >>> for col, score in all_refs:
         ...     print(f"{col}: {score:.3f}")
     """
-    
+
     detector = CheckAtlasColumnDetector(adata)
     results = detector.detect_all_parameters(
-        min_reference_score=min_score,
-        min_predicted_score=0.3
+        min_reference_score=min_score, min_predicted_score=0.3
     )
-    
-    ref_candidates = results['annotation']['reference']
-    
+
+    ref_candidates = results["annotation"]["reference"]
+
     if return_all:
         return ref_candidates
     else:
         return ref_candidates[0][0] if ref_candidates else None
 
 
-def col_annotation_pred(adata: AnnData,
-                        min_score: float = 0.5,
-                        return_all: bool = False,
-                        max_results: int = 5) -> Optional[List[str]]:
+def col_annotation_pred(
+    adata: AnnData,
+    min_score: float = 0.5,
+    return_all: bool = False,
+    max_results: int = 5,
+) -> Optional[List[str]]:
     """
     Detect predicted/cluster annotation columns in AnnData object.
-    
+
     This function identifies columns containing cluster labels or automated
     cell type predictions (e.g., leiden, louvain, seurat_clusters, celltypist).
-    
+
     Args:
         adata (AnnData): Scanpy AnnData object to analyze
         min_score (float): Minimum confidence score threshold (0-1). Default: 0.5
         return_all (bool): If True, return with scores. Default: False
         max_results (int): Maximum number of columns to return. Default: 5
-        
+
     Returns:
         List[str] or List[Tuple[str, float]] or None:
             - If return_all=False: List of column names sorted by confidence
             - If return_all=True: List of (column_name, score) tuples
             - None if no columns found
-            
+
     Example:
         >>> import scanpy as sc
         >>> import checkatlas.atlas as atlas
         >>> adata = sc.read_h5ad("atlas.h5ad")
         >>> pred_cols = atlas.col_annotation_pred(adata)
         >>> print(f"Predicted columns: {pred_cols}")
-        >>> 
+        >>>
         >>> # Get with scores
         >>> pred_with_scores = atlas.col_annotation_pred(adata, return_all=True)
         >>> for col, score in pred_with_scores:
@@ -814,25 +772,26 @@ def col_annotation_pred(adata: AnnData,
     """
     detector = CheckAtlasColumnDetector(adata)
     results = detector.detect_all_parameters(
-        min_reference_score=0.3,
-        min_predicted_score=min_score
+        min_reference_score=0.3, min_predicted_score=min_score
     )
-    
-    pred_candidates = results['annotation']['predicted'][:max_results]
-    
+
+    pred_candidates = results["annotation"]["predicted"][:max_results]
+
     if not pred_candidates:
         return None
-    
+
     if return_all:
         return pred_candidates
     else:
         return [col for col, score in pred_candidates]
 
 
-def col_cluster(adata: AnnData,
-                min_score: float = 0.5,
-                return_all: bool = False,
-                max_results: int = 5) -> Optional[List[str]]:
+def col_cluster(
+    adata: AnnData,
+    min_score: float = 0.5,
+    return_all: bool = False,
+    max_results: int = 5,
+) -> Optional[List[str]]:
     """
     Detect cluster label columns in AnnData object.
 
@@ -873,32 +832,32 @@ def col_cluster(adata: AnnData,
         return [col for col, _score in clust_candidates]
 
 
-def col_dimred(adata: AnnData,
-               return_all: bool = False,
-               max_results: int = 10) -> Optional[List[str]]:
+def col_dimred(
+    adata: AnnData, return_all: bool = False, max_results: int = 10
+) -> Optional[List[str] | List[dict[str, Any]]]:
     """
     Detect dimensionality reduction representations in AnnData.obsm.
-    
+
     This function identifies embedding keys like X_pca, X_umap, X_tsne, etc.
-    
+
     Args:
         adata (AnnData): Scanpy AnnData object to analyze
         return_all (bool): If True, return with metadata. Default: False
         max_results (int): Maximum number of representations to return. Default: 10
-        
+
     Returns:
         List[str] or List[Dict] or None:
             - If return_all=False: List of obsm keys (e.g., ['X_umap', 'X_pca'])
             - If return_all=True: List of dicts with 'key', 'shape', 'n_components'
             - None if no representations found
-            
+
     Example:
         >>> import scanpy as sc
         >>> import checkatlas.atlas as atlas
         >>> adata = sc.read_h5ad("atlas.h5ad")
         >>> dimred_keys = atlas.col_dimred(adata)
         >>> print(f"Dimensionality reductions: {dimred_keys}")
-        >>> 
+        >>>
         >>> # Get with metadata
         >>> dimred_detailed = atlas.col_dimred(adata, return_all=True)
         >>> for emb in dimred_detailed:
@@ -906,18 +865,18 @@ def col_dimred(adata: AnnData,
     """
     detector = CheckAtlasColumnDetector(adata)
     results = detector.detect_all_parameters()
-    
-    embeddings = results['clustering']['embeddings'][:max_results]
-    
+
+    embeddings = results["clustering"]["embeddings"][:max_results]
+
     if not embeddings:
         return None
-    
+
     if return_all:
         return [
             {
-                'key': key,
-                'shape': meta['shape'],
-                'n_components': meta['n_components']
+                "key": key,
+                "shape": meta["shape"],
+                "n_components": meta["n_components"],
             }
             for key, meta in embeddings
         ]

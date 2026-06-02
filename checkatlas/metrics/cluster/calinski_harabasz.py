@@ -1,11 +1,11 @@
-from sklearn.metrics import calinski_harabasz_score
 import numpy as np
+from sklearn.metrics import calinski_harabasz_score
 
 
 def run(count_repr, annotations, n_jobs=-1, verbose=True):
     """
     Calculate the Calinski-Harabasz Index (Variance Ratio Criterion).
-    
+
     Measures the ratio of between-cluster dispersion to within-cluster dispersion.
     Higher values indicate better-defined clusters.
 
@@ -25,6 +25,7 @@ def run(count_repr, annotations, n_jobs=-1, verbose=True):
     """
     count_repr = np.asarray(count_repr)
     annotations = np.asarray(annotations)
-    
-    if verbose: print("Computing Calinski-Harabasz Index...")
+
+    if verbose:
+        print("Computing Calinski-Harabasz Index...")
     return calinski_harabasz_score(count_repr, annotations)

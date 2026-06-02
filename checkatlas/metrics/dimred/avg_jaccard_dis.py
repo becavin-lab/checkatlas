@@ -1,12 +1,22 @@
 import numpy as np
 import scanpy as sc
+from joblib import Parallel, delayed
 from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm
-from joblib import Parallel, delayed
 
-def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30, 
-        n_samples=5000, seed=42, n_jobs=-1, verbose=True,
-        precomputed_high_knn=None, precomputed_low_knn=None):
+
+def run(
+    adata,
+    low_dim_key="X_umap",
+    high_dim_key="X",
+    k_neighbors=30,
+    n_samples=5000,
+    seed=42,
+    n_jobs=-1,
+    verbose=True,
+    precomputed_high_knn=None,
+    precomputed_low_knn=None,
+):
     """
     Average Jaccard Distance
     Measures the average Jaccard distance between the k-nearest neighbors in high-dimensional and low-dimensional spaces.
@@ -33,40 +43,46 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
 
     # 1. Use Precomputed Neighbors if available
     if precomputed_high_knn is not None and precomputed_low_knn is not None:
-        if verbose: print("Using precomputed k-NN graphs...")
+        if verbose:
+            print("Using precomputed k-NN graphs...")
         indices_high = precomputed_high_knn
         indices_low = precomputed_low_knn
         n_cells = indices_high.shape[0]
-        
+
         # Precomputed (from metrics.py) includes self. Slice it.
         indices_high = indices_high[:, 1:]
         indices_low = indices_low[:, 1:]
     else:
         # Fallback to local computation
-        if verbose: print("Precomputed k-NN not provided. Calculating locally...")
+        if verbose:
+            print("Precomputed k-NN not provided. Calculating locally...")
 
         # Check keys
         if low_dim_key not in adata.obsm.keys():
-            if verbose: print(f"Calculating {low_dim_key}...")
+            if verbose:
+                print(f"Calculating {low_dim_key}...")
             sc.tl.umap(adata, n_components=2, random_state=seed)
 
         # Prepare Data
         # Subsampling
         n_obs = adata.n_obs
         if n_samples is not None and n_samples < n_obs:
-            if verbose: print(f"Subsampling {n_samples} cells...")
+            if verbose:
+                print(f"Subsampling {n_samples} cells...")
             np.random.seed(seed)
             indices = np.random.choice(n_obs, n_samples, replace=False)
         else:
             indices = np.arange(n_obs)
 
         # High Dim Data
-        if high_dim_key == 'X':
+        if high_dim_key == "X":
             high_dim_data = adata.X[indices]
-            if hasattr(high_dim_data, "toarray"): high_dim_data = high_dim_data.toarray()
+            if hasattr(high_dim_data, "toarray"):
+                high_dim_data = high_dim_data.toarray()
         else:
             if high_dim_key not in adata.obsm.keys():
-                if verbose: print(f"Calculating {high_dim_key}...")
+                if verbose:
+                    print(f"Calculating {high_dim_key}...")
                 sc.tl.pca(adata, random_state=seed)
             high_dim_data = adata.obsm[high_dim_key][indices]
 
@@ -75,15 +91,19 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
 
         # Fit Nearest Neighbors
         query_k = k_neighbors + 1
-        
-        if verbose: print(f"Finding neighbors (k={k_neighbors}) in High-Dim...")
-        nbrs_high = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(high_dim_data)
+
+        if verbose:
+            print(f"Finding neighbors (k={k_neighbors}) in High-Dim...")
+        nbrs_high = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(
+            high_dim_data
+        )
         _, indices_high = nbrs_high.kneighbors(high_dim_data)
 
-        if verbose: print(f"Finding neighbors (k={k_neighbors}) in Low-Dim...")
+        if verbose:
+            print(f"Finding neighbors (k={k_neighbors}) in Low-Dim...")
         nbrs_low = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(low_dim_data)
         _, indices_low = nbrs_low.kneighbors(low_dim_data)
-        
+
         # Slice off self
         indices_high = indices_high[:, 1:]
         indices_low = indices_low[:, 1:]
@@ -98,7 +118,11 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
 
     jaccard_distances = Parallel(n_jobs=n_jobs)(
         delayed(_jaccard_distance)(indices_high[i], indices_low[i], k_neighbors)
-        for i in tqdm(range(n_cells), desc="Calculating Jaccard Dist", disable=not verbose)
+        for i in tqdm(
+            range(n_cells),
+            desc="Calculating Jaccard Dist",
+            disable=not verbose,
+        )
     )
 
     avg_jaccard_dist = np.mean(jaccard_distances)

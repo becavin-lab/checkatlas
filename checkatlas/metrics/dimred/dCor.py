@@ -1,12 +1,24 @@
+import gc
+
 import numpy as np
 import scanpy as sc
 from sklearn.metrics import pairwise_distances
 from tqdm import tqdm
-import gc
 
-def run(adata, low_dim_key='X_umap', high_dim_key='X', n_samples=None, seed=42, 
-        n_jobs=-1, verbose=True, batch_size=1000, sample_pairs=1000000,
-        precomputed_high_dists=None, precomputed_low_dists=None):
+
+def run(
+    adata,
+    low_dim_key="X_umap",
+    high_dim_key="X",
+    n_samples=None,
+    seed=42,
+    n_jobs=-1,
+    verbose=True,
+    batch_size=1000,
+    sample_pairs=1000000,
+    precomputed_high_dists=None,
+    precomputed_low_dists=None,
+):
     """
     Distance Correlation (dCor) - Memory-Optimized
     Measures the dependence between the pairwise distance matrices of the high-dimensional and low-dimensional data.
@@ -38,35 +50,41 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', n_samples=None, seed=42,
 
     # 1. Use Precomputed Distances if available
     if precomputed_high_dists is not None and precomputed_low_dists is not None:
-        if verbose: print("Using precomputed distance matrices...")
+        if verbose:
+            print("Using precomputed distance matrices...")
         high_dim_dists = precomputed_high_dists
         low_dim_dists = precomputed_low_dists
         n_cells = high_dim_dists.shape[0]
     else:
         # Fallback to local computation
-        if verbose: print("Precomputed distances not provided. Calculating locally...")
-        
+        if verbose:
+            print("Precomputed distances not provided. Calculating locally...")
+
         # Check keys
         if low_dim_key not in adata.obsm.keys():
-            if verbose: print(f"Calculating {low_dim_key}...")
+            if verbose:
+                print(f"Calculating {low_dim_key}...")
             sc.tl.umap(adata, n_components=2, random_state=seed)
 
         # Prepare Data
         n_obs = adata.n_obs
         if n_samples is not None and n_samples < n_obs:
-            if verbose: print(f"Subsampling {n_samples} cells...")
+            if verbose:
+                print(f"Subsampling {n_samples} cells...")
             np.random.seed(seed)
             indices = np.random.choice(n_obs, n_samples, replace=False)
         else:
             indices = np.arange(n_obs)
 
         # High Dim Data
-        if high_dim_key == 'X':
+        if high_dim_key == "X":
             high_dim_data = adata.X[indices]
-            if hasattr(high_dim_data, "toarray"): high_dim_data = high_dim_data.toarray()
+            if hasattr(high_dim_data, "toarray"):
+                high_dim_data = high_dim_data.toarray()
         else:
             if high_dim_key not in adata.obsm.keys():
-                if verbose: print(f"Calculating {high_dim_key}...")
+                if verbose:
+                    print(f"Calculating {high_dim_key}...")
                 sc.tl.pca(adata, random_state=seed)
             high_dim_data = adata.obsm[high_dim_key][indices]
 
@@ -74,21 +92,25 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', n_samples=None, seed=42,
         n_cells = high_dim_data.shape[0]
 
         # Compute Distances
-        high_dim_dists = _compute_distances_chunked(high_dim_data, n_jobs, batch_size, "High-Dim Dists", verbose)
-        low_dim_dists = _compute_distances_chunked(low_dim_data, n_jobs, batch_size, "Low-Dim Dists", verbose)
+        high_dim_dists = _compute_distances_chunked(
+            high_dim_data, n_jobs, batch_size, "High-Dim Dists", verbose
+        )
+        low_dim_dists = _compute_distances_chunked(
+            low_dim_data, n_jobs, batch_size, "Low-Dim Dists", verbose
+        )
 
     # 2. For dCor, we need to subsample CELLS (not pairs) because double-centering requires full submatrix
     # dCor on 5000 cells needs ~200MB for centering. Limit to sample_pairs (interpreted as n_cells here).
     max_cells_for_dcor = min(5000, sample_pairs // 1000) if sample_pairs else 5000
-    
+
     if n_cells > max_cells_for_dcor:
-        if verbose: 
+        if verbose:
             print(f"Subsampling {max_cells_for_dcor} cells for dCor (from {n_cells})...")
         np.random.seed(seed)
         sample_idx = np.random.choice(n_cells, max_cells_for_dcor, replace=False)
-        
+
         # Extract submatrix efficiently
-        if hasattr(high_dim_dists, '_get_block'):
+        if hasattr(high_dim_dists, "_get_block"):
             # TriangularMatrix — single block extraction
             A = high_dim_dists._get_block(sample_idx, sample_idx)
             B = low_dim_dists._get_block(sample_idx, sample_idx)
@@ -105,21 +127,22 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', n_samples=None, seed=42,
                         B[i, j] = low_dim_dists[sample_idx[i], sample_idx[j]]
     else:
         # Use full matrices
-        if hasattr(high_dim_dists, 'to_dense'):
+        if hasattr(high_dim_dists, "to_dense"):
             A = high_dim_dists.to_dense()
             B = low_dim_dists.to_dense()
         else:
             A = np.array(high_dim_dists, dtype=np.float32)
             B = np.array(low_dim_dists, dtype=np.float32)
-    
+
     # 3. Compute Distance Correlation
-    if verbose: print("Calculating Distance Correlation (Double Centering)...")
+    if verbose:
+        print("Calculating Distance Correlation (Double Centering)...")
     dcor_score = _distance_correlation(A, B)
-    
+
     # Cleanup
     del A, B
     gc.collect()
-    
+
     return dcor_score
 
 
@@ -149,15 +172,17 @@ def _double_center(D):
     return D - row_means - col_means + grand_mean
 
 
-def _compute_distances_chunked(data, n_jobs=-1, batch_size=1000, desc="Computing distances", verbose=True):
+def _compute_distances_chunked(
+    data, n_jobs=-1, batch_size=1000, desc="Computing distances", verbose=True
+):
     """Compute pairwise distances in chunks."""
     n_samples = data.shape[0]
-    
+
     distances = np.zeros((n_samples, n_samples), dtype=np.float32)
-    
+
     for i in tqdm(range(0, n_samples, batch_size), desc=desc, disable=not verbose):
         end = min(i + batch_size, n_samples)
         distances[i:end, :] = pairwise_distances(data[i:end], data, n_jobs=n_jobs)
-    
+
     np.fill_diagonal(distances, 0)
     return distances

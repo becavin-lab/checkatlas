@@ -1,6 +1,6 @@
 import numpy as np
+from scipy.sparse import coo_matrix, csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
-from scipy.sparse import csr_matrix, coo_matrix
 
 
 def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, k=10):
@@ -72,13 +72,23 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, k=10):
     try:
         if use_knn_path:
             dbcvi = _dbcvi_knn_approx(
-                X_clean, labels_clean, unique_labels, n_clusters,
-                k_core, n_jobs, verbose,
+                X_clean,
+                labels_clean,
+                unique_labels,
+                n_clusters,
+                k_core,
+                n_jobs,
+                verbose,
             )
         else:
             dbcvi = _dbcvi_exact(
-                X_clean, labels_clean, unique_labels, n_clusters,
-                k_core, n_jobs, verbose,
+                X_clean,
+                labels_clean,
+                unique_labels,
+                n_clusters,
+                k_core,
+                n_jobs,
+                verbose,
             )
         if verbose:
             print(f"DBCVI: {dbcvi:.4f}")
@@ -92,9 +102,10 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, k=10):
 # Exact path (N ≤ 10 000) — full O(N²) distance matrix
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _dbcvi_exact(X, labels, unique_labels, n_clusters, k_core, n_jobs, verbose):
-    from sklearn.neighbors import NearestNeighbors
     from scipy.spatial.distance import pdist, squareform
+    from sklearn.neighbors import NearestNeighbors
 
     if verbose:
         print(f"Computing core distances (k={k_core})...")
@@ -117,6 +128,7 @@ def _dbcvi_exact(X, labels, unique_labels, n_clusters, k_core, n_jobs, verbose):
 # Approximate path (N > 10 000) — kNN‑graph based, sparse MRD
 # ═══════════════════════════════════════════════════════════════════════
 
+
 def _dbcvi_knn_approx(X, labels, unique_labels, n_clusters, k_core, n_jobs, verbose):
     n = len(X)
     # kNN for MRD graph — use ~100 neighbours to capture cluster borders
@@ -127,11 +139,18 @@ def _dbcvi_knn_approx(X, labels, unique_labels, n_clusters, k_core, n_jobs, verb
 
     try:
         from pynndescent import NNDescent
-        index = NNDescent(X, n_neighbors=knn_k + 1, metric='euclidean',
-                          n_jobs=n_jobs, random_state=42)
+
+        index = NNDescent(
+            X,
+            n_neighbors=knn_k + 1,
+            metric="euclidean",
+            n_jobs=n_jobs,
+            random_state=42,
+        )
         knn_idx, knn_dist = index.neighbor_graph
     except ImportError:
         from sklearn.neighbors import NearestNeighbors
+
         nbrs = NearestNeighbors(n_neighbors=knn_k + 1, n_jobs=n_jobs).fit(X)
         knn_dist, knn_idx = nbrs.kneighbors(X)
 
@@ -161,13 +180,13 @@ def _dbcvi_knn_approx(X, labels, unique_labels, n_clusters, k_core, n_jobs, verb
         nnz = mrd_sparse.nnz
         print(f"  Sparse MRD: {nnz:,} edges ({nnz/n**2*100:.2f}% of full)")
 
-    return _compute_dbcvi_sparse(mrd_sparse, labels, unique_labels,
-                                 n_clusters, verbose)
+    return _compute_dbcvi_sparse(mrd_sparse, labels, unique_labels, n_clusters, verbose)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Shared DBCVI computation (works on dense or sparse MRD)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 def _compute_dbcvi(mrd, labels, unique_labels, n_clusters, verbose):
     """DBCVI from a dense MRD matrix."""
@@ -192,6 +211,7 @@ def _compute_dbcvi_sparse(mrd_sparse, labels, unique_labels, n_clusters, verbose
 
 
 # ── DSC (Density Sparseness of a Cluster) ──────────────────────────
+
 
 def _dsc_dense(mrd, unique_labels, cluster_indices):
     """DSC = max MST edge weight per cluster (dense)."""
@@ -223,6 +243,7 @@ def _dsc_sparse(mrd_sparse, unique_labels, cluster_indices):
 
 
 # ── DSPC (Density Separation between Pairs of Clusters) ─────────────
+
 
 def _dspc_dense(mrd, unique_labels, cluster_indices, n_clusters):
     """Min MRD between each cluster pair (dense)."""
@@ -256,6 +277,7 @@ def _dspc_sparse(mrd_sparse, unique_labels, cluster_indices, n_clusters):
 
 
 # ── Validity index (shared) ─────────────────────────────────────────
+
 
 def _validity_index(unique_labels, cluster_indices, dsc, dspc):
     validity_indices = []

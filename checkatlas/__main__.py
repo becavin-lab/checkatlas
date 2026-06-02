@@ -4,6 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 # Patch Python 3.13 multiprocessing resource_tracker to handle joblib/loky
 # resource types (file, folder, semlock) that the tracker doesn't recognize.
 # Without this, cleanup floods stderr with hundreds of ValueError messages.
@@ -81,6 +82,7 @@ def _patch_resource_tracker():
     except Exception:
         pass
 
+
 _patch_resource_tracker()
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
@@ -132,12 +134,14 @@ def main() -> None:  # pragma: no cover
     folders.checkatlas_folders(args.path)
 
     process = args.process
-    if process == check.PROCESS_TYPE[0]: # Run pipeline
+    if process == check.PROCESS_TYPE[0]:  # Run pipeline
         args.path = os.path.abspath(args.path)
         logger.info(f"Running Nextflow pipeline on {args.path}")
         nf_script = Path(__file__).resolve().parent.parent / "main.nf"
         cmd = [
-            "nextflow", "run", str(nf_script),
+            "nextflow",
+            "run",
+            str(nf_script),
             f"--path={args.path}",
             f"--outdir={args.path}",
         ]
@@ -162,6 +166,9 @@ def main() -> None:  # pragma: no cover
                 check.ATLAS_PATH_KEY: os.path.abspath(h5ad_path),
             }
         elif os.path.isfile(rds_path):
+            if seurat is None:
+                logger.error("Seurat module not available (rpy2/R not installed)")
+                sys.exit(1)
             atlas_info = {
                 check.ATLAS_NAME_KEY: atlas_name,
                 check.ATLAS_TYPE_KEY: seurat.SEURAT_TYPE,
@@ -169,6 +176,9 @@ def main() -> None:  # pragma: no cover
                 check.ATLAS_PATH_KEY: os.path.abspath(rds_path),
             }
         elif os.path.isfile(qs_path):
+            if seurat is None:
+                logger.error("Seurat module not available (rpy2/R not installed)")
+                sys.exit(1)
             atlas_info = {
                 check.ATLAS_NAME_KEY: atlas_name,
                 check.ATLAS_TYPE_KEY: seurat.SEURAT_TYPE,
@@ -189,22 +199,22 @@ def main() -> None:  # pragma: no cover
             or atlas_type == cellranger.CELLRANGER_TYPE_OBSOLETE
         ):
             adata = atlas.preprocess_atlas(atlas_info)
-            if process == check.PROCESS_TYPE[2]: # summary
+            if process == check.PROCESS_TYPE[2]:  # summary
                 atlas.create_summary_table(adata, atlas_info, args)
                 atlas.create_anndata_table(adata, atlas_info, args)
                 atlas.create_umap_fig(adata, atlas_info, args)
                 atlas.create_tsne_fig(adata, atlas_info, args)
-            elif process == check.PROCESS_TYPE[3]:  # qc  
+            elif process == check.PROCESS_TYPE[3]:  # qc
                 atlas.create_qc_tables(adata, atlas_info, args)
                 atlas.create_qc_plots(adata, atlas_info, args)
-            elif process == check.PROCESS_TYPE[4]: # cluster metrics
+            elif process == check.PROCESS_TYPE[4]:  # cluster metrics
                 atlas.create_metric_cluster(adata, atlas_info, args)
-            elif process == check.PROCESS_TYPE[5]: # annotation metrics
+            elif process == check.PROCESS_TYPE[5]:  # annotation metrics
                 atlas.create_metric_annot(adata, atlas_info, args)
-            elif process == check.PROCESS_TYPE[6]: # dimred metrics
+            elif process == check.PROCESS_TYPE[6]:  # dimred metrics
                 atlas.create_metric_dimred(adata, atlas_info, args)
-        elif atlas_type == seurat.SEURAT_TYPE:
-            if process == check.PROCESS_TYPE[2]: # summary 
+        elif seurat is not None and atlas_type == seurat.SEURAT_TYPE:
+            if process == check.PROCESS_TYPE[2]:  # summary
                 seurat_data = seurat.read_atlas(atlas_info)
                 seurat.create_summary_table(seurat_data, atlas_info, args)
                 seurat.create_anndata_table(seurat_data, atlas_info, args)
@@ -214,13 +224,13 @@ def main() -> None:  # pragma: no cover
                 seurat_data = seurat.read_atlas(atlas_info)
                 seurat.create_qc_tables(seurat_data, atlas_info, args)
                 seurat.create_qc_plots(seurat_data, atlas_info, args)
-            elif process == check.PROCESS_TYPE[4]: # cluster metrics
+            elif process == check.PROCESS_TYPE[4]:  # cluster metrics
                 seurat_data = seurat.read_atlas(atlas_info)
                 seurat.create_metric_cluster(seurat_data, atlas_info, args)
-            elif process == check.PROCESS_TYPE[5]: # annotation metrics
+            elif process == check.PROCESS_TYPE[5]:  # annotation metrics
                 seurat_data = seurat.read_atlas(atlas_info)
                 seurat.create_metric_annot(seurat_data, atlas_info, args)
-            elif process == check.PROCESS_TYPE[6]: # dimred metrics
+            elif process == check.PROCESS_TYPE[6]:  # dimred metrics
                 seurat_data = seurat.read_atlas(atlas_info)
                 seurat.create_metric_dimred(seurat_data, atlas_info, args)
         else:

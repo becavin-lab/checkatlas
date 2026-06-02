@@ -1,11 +1,21 @@
 import numpy as np
 import scanpy as sc
-from sklearn.neighbors import NearestNeighbors
 from joblib import Parallel, delayed
+from sklearn.neighbors import NearestNeighbors
 
-def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30, 
-        n_samples=5000, seed=42, n_jobs=-1, verbose=True,
-        precomputed_high_knn=None, precomputed_low_knn=None):
+
+def run(
+    adata,
+    low_dim_key="X_umap",
+    high_dim_key="X",
+    k_neighbors=30,
+    n_samples=5000,
+    seed=42,
+    n_jobs=-1,
+    verbose=True,
+    precomputed_high_knn=None,
+    precomputed_low_knn=None,
+):
     """
     Entourage
     Measures the overlap of k-nearest neighbors between high-dimensional and low-dimensional spaces.
@@ -33,7 +43,8 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
 
     # 1. Use Precomputed Neighbors if available
     if precomputed_high_knn is not None and precomputed_low_knn is not None:
-        if verbose: print("Using precomputed k-NN graphs...")
+        if verbose:
+            print("Using precomputed k-NN graphs...")
         indices_high = precomputed_high_knn
         indices_low = precomputed_low_knn
         n_cells = indices_high.shape[0]
@@ -43,30 +54,35 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         indices_low = indices_low[:, 1:]
     else:
         # Fallback to local computation
-        if verbose: print("Precomputed k-NN not provided. Calculating locally...")
+        if verbose:
+            print("Precomputed k-NN not provided. Calculating locally...")
 
         # Check keys
         if low_dim_key not in adata.obsm.keys():
-            if verbose: print(f"Calculating {low_dim_key}...")
+            if verbose:
+                print(f"Calculating {low_dim_key}...")
             sc.tl.umap(adata, n_components=2, random_state=seed)
 
         # Prepare Data
         # Subsampling
         n_obs = adata.n_obs
         if n_samples is not None and n_samples < n_obs:
-            if verbose: print(f"Subsampling {n_samples} cells...")
+            if verbose:
+                print(f"Subsampling {n_samples} cells...")
             np.random.seed(seed)
             indices = np.random.choice(n_obs, n_samples, replace=False)
         else:
             indices = np.arange(n_obs)
 
         # High Dim Data
-        if high_dim_key == 'X':
+        if high_dim_key == "X":
             high_dim_data = adata.X[indices]
-            if hasattr(high_dim_data, "toarray"): high_dim_data = high_dim_data.toarray()
+            if hasattr(high_dim_data, "toarray"):
+                high_dim_data = high_dim_data.toarray()
         else:
             if high_dim_key not in adata.obsm.keys():
-                if verbose: print(f"Calculating {high_dim_key}...")
+                if verbose:
+                    print(f"Calculating {high_dim_key}...")
                 sc.tl.pca(adata, random_state=seed)
             high_dim_data = adata.obsm[high_dim_key][indices]
 
@@ -75,11 +91,15 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
 
         # Fit Nearest Neighbors
         query_k = k_neighbors + 1
-        if verbose: print(f"Finding neighbors (k={k_neighbors}) in High-Dim...")
-        nbrs_high = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(high_dim_data)
+        if verbose:
+            print(f"Finding neighbors (k={k_neighbors}) in High-Dim...")
+        nbrs_high = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(
+            high_dim_data
+        )
         _, indices_high = nbrs_high.kneighbors(high_dim_data)
 
-        if verbose: print(f"Finding neighbors (k={k_neighbors}) in Low-Dim...")
+        if verbose:
+            print(f"Finding neighbors (k={k_neighbors}) in Low-Dim...")
         nbrs_low = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(low_dim_data)
         _, indices_low = nbrs_low.kneighbors(low_dim_data)
 
@@ -87,7 +107,8 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         indices_low = indices_low[:, 1:]
 
     # 4. Calculate Overlap (Parallel)
-    if verbose: print("Calculate final entourage score...")
+    if verbose:
+        print("Calculate final entourage score...")
 
     def count_intersection(h_row, l_row):
         # np.intersect1d assumes sorted sets for O(N), but rows aren't sorted.
@@ -95,10 +116,10 @@ def run(adata, low_dim_key='X_umap', high_dim_key='X', k_neighbors=30,
         return len(set(h_row).intersection(l_row))
 
     intersection_counts = Parallel(n_jobs=n_jobs)(
-        delayed(count_intersection)(indices_high[i], indices_low[i]) 
+        delayed(count_intersection)(indices_high[i], indices_low[i])
         for i in range(n_cells)
     )
-    
+
     total_intersection = sum(intersection_counts)
 
     # 5. Compute Final Score

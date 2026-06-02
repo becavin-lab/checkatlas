@@ -35,9 +35,9 @@ Task Categories Detected
   barcode, QC metrics, cell-cycle phase, etc.)
 """
 
-import re
 import logging
-from typing import Dict, List, Tuple, Optional, Any
+import re
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -51,114 +51,100 @@ logger = logging.getLogger("checkatlas")
 
 _REFERENCE_ANNOTATION_PATTERNS: Dict[str, float] = {
     # ── Ground truth / author-curated ──────────────────────────────
-    r"\bcell[_\s]?type\b":                              1.00,
-    r"\bauthor[_\s]?cell[_\s]?type\b":                  0.95,
-    r"\bground[_\s]?truth\b":                           0.95,
-    r"\breference\b":                                   0.85,
-    r"\bcurated\b":                                     0.85,
-    r"\bontology\b":                                    0.75,
-
+    r"\bcell[_\s]?type\b": 1.00,
+    r"\bauthor[_\s]?cell[_\s]?type\b": 0.95,
+    r"\bground[_\s]?truth\b": 0.95,
+    r"\breference\b": 0.85,
+    r"\bcurated\b": 0.85,
+    r"\bontology\b": 0.75,
     # ── Verified / known ──────────────────────────────────────────
-    r"\btrue[_\s]?(label|annotation|celltype)\b":       0.90,
-    r"\boriginal[_\s]?(label|annotation|celltype)\b":   0.90,
-    r"\bexpert[_\s]?(label|annotation)\b":              0.90,
-    r"\bmanual[_\s]?(label|annotation)\b":              0.90,
-    r"\bknown[_\s]?(label|annotation)\b":               0.85,
-    r"\bverified[_\s]?(label|annotation)\b":            0.85,
-
+    r"\btrue[_\s]?(label|annotation|celltype)\b": 0.90,
+    r"\boriginal[_\s]?(label|annotation|celltype)\b": 0.90,
+    r"\bexpert[_\s]?(label|annotation)\b": 0.90,
+    r"\bmanual[_\s]?(label|annotation)\b": 0.90,
+    r"\bknown[_\s]?(label|annotation)\b": 0.85,
+    r"\bverified[_\s]?(label|annotation)\b": 0.85,
     # ── Annotation-specific naming ────────────────────────────────
-    r"\bann(otation)?[_\s]?(finest|level|label)\b":     0.85,
-    r"\bcell[_\s]?type[_\s]?annotation\b":             0.95,
-    r"\bannot[_\s]?cell\b":                             0.80,
-
+    r"\bann(otation)?[_\s]?(finest|level|label)\b": 0.85,
+    r"\bcell[_\s]?type[_\s]?annotation\b": 0.95,
+    r"\bannot[_\s]?cell\b": 0.80,
     # ── Biological groupings ──────────────────────────────────────
-    r"\blineage\b":                                     0.60,
-    r"\b(?<!sub)type\b":                                0.40,
-
+    r"\blineage\b": 0.60,
+    r"\b(?<!sub)type\b": 0.40,
     # ── Generic label terms (low weight — easy to false-positive) ─
-    r"(^|[_\s])annotation($|[_\s])":                    0.70,
-    r"(^|[_\s])annotated($|[_\s])":                     0.65,
-    r"\blabel\b":                                       0.35,
+    r"(^|[_\s])annotation($|[_\s])": 0.70,
+    r"(^|[_\s])annotated($|[_\s])": 0.65,
+    r"\blabel\b": 0.35,
 }
 
 _PREDICTED_ANNOTATION_PATTERNS: Dict[str, float] = {
     # ── Automated annotation tools ────────────────────────────────
-    r"(?<![a-zA-Z])celltypist(?![a-zA-Z])":             1.00,
-    r"(?<![a-zA-Z])single[_\s]?r(?![a-zA-Z])":          0.95,
-    r"(?<![a-zA-Z])sctype(?![a-zA-Z])":                 0.95,
-    r"(?<![a-zA-Z])azimuth(?![a-zA-Z])":                0.95,
-    r"(?<![a-zA-Z])cellassign(?![a-zA-Z])":             0.95,
-    r"(?<![a-zA-Z])garnett(?![a-zA-Z])":                0.90,
-    r"(?<![a-zA-Z])scmap(?![a-zA-Z])":                  0.90,
-    r"(?<![a-zA-Z])chetah(?![a-zA-Z])":                 0.90,
-    r"(?<![a-zA-Z])scpred(?![a-zA-Z])":                 0.85,
-    r"(?<![a-zA-Z])cello(?![a-zA-Z])":                  0.85,
-    r"(?<![a-zA-Z])onclass(?![a-zA-Z])":                0.85,
-    r"(?<![a-zA-Z])scarches(?![a-zA-Z])":               0.85,
-    r"(?<![a-zA-Z])scclassif[yi](?![a-zA-Z])":          0.85,
-    r"(?<![a-zA-Z])cellid(?![a-zA-Z])":                 0.80,
-    r"(?<![a-zA-Z])scina(?![a-zA-Z])":                  0.80,
-    r"(?<![a-zA-Z])itclust(?![a-zA-Z])":                0.75,
-    r"(?<![a-zA-Z])cellhint(?![a-zA-Z])":               0.85,
-
+    r"(?<![a-zA-Z])celltypist(?![a-zA-Z])": 1.00,
+    r"(?<![a-zA-Z])single[_\s]?r(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])sctype(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])azimuth(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])cellassign(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])garnett(?![a-zA-Z])": 0.90,
+    r"(?<![a-zA-Z])scmap(?![a-zA-Z])": 0.90,
+    r"(?<![a-zA-Z])chetah(?![a-zA-Z])": 0.90,
+    r"(?<![a-zA-Z])scpred(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])cello(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])onclass(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])scarches(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])scclassif[yi](?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])cellid(?![a-zA-Z])": 0.80,
+    r"(?<![a-zA-Z])scina(?![a-zA-Z])": 0.80,
+    r"(?<![a-zA-Z])itclust(?![a-zA-Z])": 0.75,
+    r"(?<![a-zA-Z])cellhint(?![a-zA-Z])": 0.85,
     # ── Deep generative / probabilistic ───────────────────────────
-    r"(?<![a-zA-Z])sc[_\s]?vi(?![a-zA-Z])":             0.90,
-    r"(?<![a-zA-Z])scanvi(?![a-zA-Z])":                 0.90,
-    r"(?<![a-zA-Z])scgen(?![a-zA-Z])":                  0.80,
-    r"(?<![a-zA-Z])scvi[_\s]?tools?(?![a-zA-Z])":       0.90,
-
+    r"(?<![a-zA-Z])sc[_\s]?vi(?![a-zA-Z])": 0.90,
+    r"(?<![a-zA-Z])scanvi(?![a-zA-Z])": 0.90,
+    r"(?<![a-zA-Z])scgen(?![a-zA-Z])": 0.80,
+    r"(?<![a-zA-Z])scvi[_\s]?tools?(?![a-zA-Z])": 0.90,
     # ── Generic predicted / inferred / automated ─────────────────
-    r"(?<![a-zA-Z])predict(ed|ion)?(?![a-zA-Z])":       0.85,
-    r"(?<![a-zA-Z])infer(red)?(?![a-zA-Z])":            0.85,
-    r"(?<![a-zA-Z])auto(matic|mated)?(?![a-zA-Z])":     0.80,
+    r"(?<![a-zA-Z])predict(ed|ion)?(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])infer(red)?(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])auto(matic|mated)?(?![a-zA-Z])": 0.80,
     r"(?<![a-zA-Z])transfer(red)?[_\s]?label(?![a-zA-Z])": 0.85,
     r"(?<![a-zA-Z])mapped?[_\s]?(label|annotation)(?![a-zA-Z])": 0.80,
-
     # ── Ensemble / consensus ─────────────────────────────────────
-    r"(?<![a-zA-Z])consensus(?![a-zA-Z])":              0.80,
-    r"(?<![a-zA-Z])majority[_\s]?vote(?![a-zA-Z])":     0.80,
-    r"(?<![a-zA-Z])ensemble(?![a-zA-Z])":               0.75,
-
+    r"(?<![a-zA-Z])consensus(?![a-zA-Z])": 0.80,
+    r"(?<![a-zA-Z])majority[_\s]?vote(?![a-zA-Z])": 0.80,
+    r"(?<![a-zA-Z])ensemble(?![a-zA-Z])": 0.75,
     # ── Harmonised / integrated annotations ──────────────────────
     r"(?<![a-zA-Z])harmon(ized|ised|y)[_\s]?(label|annotation)?(?![a-zA-Z])": 0.60,
     r"(?<![a-zA-Z])integrat(ed|ion)[_\s]?(label|annotation)(?![a-zA-Z])": 0.60,
-
     # ── Cross-species / reference-based ─────────────────────────
-    r"(?<![a-zA-Z])scsimilarity(?![a-zA-Z])":           0.80,
-    r"(?<![a-zA-Z])scjoint(?![a-zA-Z])":                0.75,
+    r"(?<![a-zA-Z])scsimilarity(?![a-zA-Z])": 0.80,
+    r"(?<![a-zA-Z])scjoint(?![a-zA-Z])": 0.75,
 }
 
 _CLUSTER_LABEL_PATTERNS: Dict[str, float] = {
     # ── Graph-based community detection ──────────────────────────
-    r"(?<![a-zA-Z])leiden(?![a-zA-Z])":                 1.00,
-    r"(?<![a-zA-Z])louvain(?![a-zA-Z])":                1.00,
-    r"(?<![a-zA-Z])walktrap(?![a-zA-Z])":               0.95,
-    r"(?<![a-zA-Z])infomap(?![a-zA-Z])":                0.90,
-
+    r"(?<![a-zA-Z])leiden(?![a-zA-Z])": 1.00,
+    r"(?<![a-zA-Z])louvain(?![a-zA-Z])": 1.00,
+    r"(?<![a-zA-Z])walktrap(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])infomap(?![a-zA-Z])": 0.90,
     # ── Seurat-specific ──────────────────────────────────────────
-    r"(?<![a-zA-Z])seurat[_\s]?clusters?(?![a-zA-Z])":  1.00,
-    r"(?<![a-zA-Z])rna[_\s]?snn[_\s]?res":              0.95,
-    r"(?<![a-zA-Z])sct[_\s]?snn[_\s]?res":              0.95,
-    r"(?<![a-zA-Z])integrated[_\s]?snn[_\s]?res":      0.90,
-    r"(?<![a-zA-Z])wsnn[_\s]?res":                     0.90,
-
+    r"(?<![a-zA-Z])seurat[_\s]?clusters?(?![a-zA-Z])": 1.00,
+    r"(?<![a-zA-Z])rna[_\s]?snn[_\s]?res": 0.95,
+    r"(?<![a-zA-Z])sct[_\s]?snn[_\s]?res": 0.95,
+    r"(?<![a-zA-Z])integrated[_\s]?snn[_\s]?res": 0.90,
+    r"(?<![a-zA-Z])wsnn[_\s]?res": 0.90,
     # ── Graph-based / other ─────────────────────────────────────
-    r"(?<![a-zA-Z])graph[_\s]?clust":                  0.90,
-    r"(?<![a-zA-Z])phenograph(?![a-zA-Z])":             0.85,
-
+    r"(?<![a-zA-Z])graph[_\s]?clust": 0.90,
+    r"(?<![a-zA-Z])phenograph(?![a-zA-Z])": 0.85,
     # ── Partitional ─────────────────────────────────────────────
-    r"(?<![a-zA-Z])k[_\s]?means?(?![a-zA-Z])":          0.85,
-    r"(?<![a-zA-Z])kmeans(?![a-zA-Z])":                 0.85,
-    r"(?<![a-zA-Z])hdbscan(?![a-zA-Z])":                0.85,
-    r"(?<![a-zA-Z])dbscan(?![a-zA-Z])":                 0.80,
-
+    r"(?<![a-zA-Z])k[_\s]?means?(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])kmeans(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])hdbscan(?![a-zA-Z])": 0.85,
+    r"(?<![a-zA-Z])dbscan(?![a-zA-Z])": 0.80,
     # ── scVI-then-cluster ──────────────────────────────────────
-    r"(?<![a-zA-Z])scvi[_\s]?clust(er)?(?![a-zA-Z])":   0.85,
+    r"(?<![a-zA-Z])scvi[_\s]?clust(er)?(?![a-zA-Z])": 0.85,
     r"(?<![a-zA-Z])scanvi[_\s]?clust(er)?(?![a-zA-Z])": 0.80,
-
     # ── Generic clustering (lower weight, high false-positive risk)
-    r"(?<![a-zA-Z])cluster(s|ing)?(?![a-zA-Z])":        0.65,
-    r"(?<![a-zA-Z])partition(?![a-zA-Z])":              0.55,
+    r"(?<![a-zA-Z])cluster(s|ing)?(?![a-zA-Z])": 0.65,
+    r"(?<![a-zA-Z])partition(?![a-zA-Z])": 0.55,
 }
 
 # Embedding patterns are intentionally *ordered* — the first match wins
@@ -166,21 +152,21 @@ _CLUSTER_LABEL_PATTERNS: Dict[str, float] = {
 # key like ``X_umap`` is first matched by the exact ``^X_umap$`` pattern
 # and receives full confidence instead of being slurped by the fallback.
 _EMBEDDING_PATTERNS: List[Tuple[str, float]] = [
-    (r"^X_pca$",                                       1.00),
-    (r"^X_umap$",                                      1.00),
-    (r"^X_tsne$",                                      1.00),
-    (r"^X_diffmap$",                                   0.95),
-    (r"^X_draw_graph",                                 0.90),
-    (r"^X_scvi$",                                      0.90),
-    (r"^X_scanvi$",                                    0.90),
-    (r"^X_mde$",                                       0.85),
-    (r"^X_phate$",                                     0.85),
-    (r"^X_pacmap$",                                    0.85),
-    (r"^X_trimap$",                                    0.85),
-    (r"^X_.*pca",                                      0.80),
-    (r"^X_.*umap",                                     0.75),
-    (r"^X_.*tsne",                                     0.75),
-    (r"^X_",                                           0.50),
+    (r"^X_pca$", 1.00),
+    (r"^X_umap$", 1.00),
+    (r"^X_tsne$", 1.00),
+    (r"^X_diffmap$", 0.95),
+    (r"^X_draw_graph", 0.90),
+    (r"^X_scvi$", 0.90),
+    (r"^X_scanvi$", 0.90),
+    (r"^X_mde$", 0.85),
+    (r"^X_phate$", 0.85),
+    (r"^X_pacmap$", 0.85),
+    (r"^X_trimap$", 0.85),
+    (r"^X_.*pca", 0.80),
+    (r"^X_.*umap", 0.75),
+    (r"^X_.*tsne", 0.75),
+    (r"^X_", 0.50),
 ]
 
 _METADATA_PATTERNS: Dict[str, float] = {
@@ -189,31 +175,27 @@ _METADATA_PATTERNS: Dict[str, float] = {
     r"(?<![a-zA-Z])(library|sequencing|chemistry|plate|well)(?![a-zA-Z])": 0.90,
     r"(?<![a-zA-Z])(tissue|organ|disease|condition|treatment)(?![a-zA-Z])": 0.70,
     r"(?<![a-zA-Z])(stim|stimulated|control|case)(?![a-zA-Z])": 0.65,
-    r"(?<![a-zA-Z])dataset(?![a-zA-Z])":                0.90,
+    r"(?<![a-zA-Z])dataset(?![a-zA-Z])": 0.90,
     r"(?<![a-zA-Z])(assay|protocol|platform)(?![a-zA-Z])": 0.70,
-    r"(?<![a-zA-Z])(sex|gender)(?![a-zA-Z])":           0.65,
+    r"(?<![a-zA-Z])(sex|gender)(?![a-zA-Z])": 0.65,
     r"(?<![a-zA-Z])(suspension|capture|preparation)(?![a-zA-Z])": 0.65,
-    r"(?<![a-zA-Z])(organism|species)(?![a-zA-Z])":     0.65,
-    r"(?<![a-zA-Z])development[_\s]?stage(?![a-zA-Z])":  0.70,
-
+    r"(?<![a-zA-Z])(organism|species)(?![a-zA-Z])": 0.65,
+    r"(?<![a-zA-Z])development[_\s]?stage(?![a-zA-Z])": 0.70,
     # ── Cell identifiers ────────────────────────────────────────
     r"(?<![a-zA-Z])(barcode|cell[_\s]?id|obs[_\s]?names)(?![a-zA-Z])": 1.00,
-    r"(?<![a-zA-Z])index(?![a-zA-Z])":                  0.95,
-
+    r"(?<![a-zA-Z])index(?![a-zA-Z])": 0.95,
     # ── QC metrics ──────────────────────────────────────────────
     r"(?<![a-zA-Z])n[_\s]?(genes|counts|umis?)(?![a-zA-Z])": 0.90,
     r"(?<![a-zA-Z])total[_\s]?(counts|umi)(?![a-zA-Z])": 0.90,
-    r"(?<![a-zA-Z])(percent|pct)[_\s]":                0.85,
+    r"(?<![a-zA-Z])(percent|pct)[_\s]": 0.85,
     r"(?<![a-zA-Z])(doublet|scrublet|simian)(?![a-zA-Z])": 0.85,
     r"(?<![a-zA-Z])(mito|ribo|mitochondrial|ribosomal)(?![a-zA-Z])": 0.75,
-    r"(?<![a-zA-Z])n_?feature(?![a-zA-Z])":             0.85,
+    r"(?<![a-zA-Z])n_?feature(?![a-zA-Z])": 0.85,
     r"(?<![a-zA-Z])(log1p|log|normalized)(?![a-zA-Z])": 0.60,
-
     # ── Cell cycle / biology ────────────────────────────────────
     r"(?<![a-zA-Z])(phase|s[_\s]?phase|g2m[_\s]?score)(?![a-zA-Z])": 0.70,
-
     # ── Dimensionality artifacts ────────────────────────────────
-    r"(?<![a-zA-Z])n[_\s]?(pc|count)(?![a-zA-Z])":      0.70,
+    r"(?<![a-zA-Z])n[_\s]?(pc|count)(?![a-zA-Z])": 0.70,
 }
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -237,6 +219,7 @@ _CLUST_CARDINALITY_PENALTY_UPPER = 150
 # ═══════════════════════════════════════════════════════════════════════
 # CheckAtlasColumnDetector
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class CheckAtlasColumnDetector:
     """Multi-strategy column detector for single-cell AnnData objects.
@@ -318,9 +301,7 @@ class CheckAtlasColumnDetector:
 
         for pattern, weight in _CLUSTER_LABEL_PATTERNS.items():
             if re.search(pattern, col_lower):
-                scores["cluster_label"] = max(
-                    scores["cluster_label"], weight
-                )
+                scores["cluster_label"] = max(scores["cluster_label"], weight)
 
         for pattern, weight in _METADATA_PATTERNS.items():
             if re.search(pattern, col_lower):
@@ -663,13 +644,9 @@ class CheckAtlasColumnDetector:
         """
         ref_pred_cluster: set[str] = set()
         if exclude_ref_pred_cluster:
-            for col, _ in self.results_cache.get("annotation", {}).get(
-                "reference", []
-            ):
+            for col, _ in self.results_cache.get("annotation", {}).get("reference", []):
                 ref_pred_cluster.add(col)
-            for col, _ in self.results_cache.get("annotation", {}).get(
-                "predicted", []
-            ):
+            for col, _ in self.results_cache.get("annotation", {}).get("predicted", []):
                 ref_pred_cluster.add(col)
             for col, _ in self.results_cache.get("clustering", {}).get(
                 "cluster_labels", []
@@ -680,7 +657,7 @@ class CheckAtlasColumnDetector:
 
         for col in self.obs_columns:
             # Skip system columns (unless they contain 'batch' — e.g. _scvi_batch)
-            is_batch_named = 'batch' in col.lower()
+            is_batch_named = "batch" in col.lower()
             if col.startswith("_") and not is_batch_named:
                 continue
             if col in ref_pred_cluster:
@@ -795,9 +772,7 @@ class CheckAtlasColumnDetector:
                 pred_score = self.score_predicted_annotation(col)
                 clust_score = self.score_cluster_label(col)
             except Exception as exc:
-                logger.debug(
-                    "Skipping column %r — scoring failed: %s", col, exc
-                )
+                logger.debug("Skipping column %r — scoring failed: %s", col, exc)
                 continue
 
             if ref_score >= min_reference_score:
@@ -807,9 +782,7 @@ class CheckAtlasColumnDetector:
                 results["annotation"]["predicted"].append((col, pred_score))
 
             if clust_score >= min_cluster_score:
-                results["clustering"]["cluster_labels"].append(
-                    (col, clust_score)
-                )
+                results["clustering"]["cluster_labels"].append((col, clust_score))
 
         # ── Scan .obsm keys ──────────────────────────────────────
         matched = self.analyze_obsm_semantics()
@@ -818,9 +791,7 @@ class CheckAtlasColumnDetector:
             try:
                 embedding_data = self.adata.obsm[key]
                 shape = embedding_data.shape
-                n_components = (
-                    shape[1] if len(shape) > 1 else 1
-                )
+                n_components = shape[1] if len(shape) > 1 else 1
             except Exception:
                 shape = (-1,)
                 n_components = 0
@@ -842,15 +813,9 @@ class CheckAtlasColumnDetector:
             )
 
         # ── Sort by confidence (descending) ───────────────────────
-        results["annotation"]["reference"].sort(
-            key=lambda x: x[1], reverse=True
-        )
-        results["annotation"]["predicted"].sort(
-            key=lambda x: x[1], reverse=True
-        )
-        results["clustering"]["cluster_labels"].sort(
-            key=lambda x: x[1], reverse=True
-        )
+        results["annotation"]["reference"].sort(key=lambda x: x[1], reverse=True)
+        results["annotation"]["predicted"].sort(key=lambda x: x[1], reverse=True)
+        results["clustering"]["cluster_labels"].sort(key=lambda x: x[1], reverse=True)
 
         # ── Detect batch / covariate keys ─────────────────────────
         self.results_cache = results
