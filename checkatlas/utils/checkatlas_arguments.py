@@ -33,21 +33,23 @@ def create_parser():
         default="",
     )
 
-    parser.add_argument(
-        "atlas_name",
-        type=str,
-        help="Required argument: The name of the atlas to process."
-        "Atlas_name should be found in one of the samplesheet provided to"
-        "nf-checkatlas, or directly created by checkatlas.list_all_atlases()"
-        " function",
-        default=".",
-    )
 
     parser.add_argument(
         "path",
         type=str,
         help="Required argument: Your folder containing "
-        "Scanpy, CellRanger and Seurat atlasesv",
+        "Scanpy, CellRanger and Seurat atlases",
+        default=".",
+    )
+
+
+    parser.add_argument(
+        "--atlas_name",
+        type=str,
+        help="Required argument: The name of the atlas to process."
+        "Atlas_name should be found in one of the samplesheet provided to"
+        "nf-checkatlas, or directly created by checkatlas.list_all_atlases()"
+        " function",
         default=".",
     )
 

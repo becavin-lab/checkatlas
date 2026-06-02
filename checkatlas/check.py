@@ -27,6 +27,7 @@ This is the principal module of the checkatlas project.
 """
 
 PROCESS_TYPE = [
+    "run",
     "preprocess",
     "summary",
     "qc",
