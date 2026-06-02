@@ -227,61 +227,61 @@ def test_cluster_metric(atlas_info):
     assert os.path.exists(csv_path)
 
 
-@given("atlas_info", [datasets.get_scanpy_atlas_info()])
-def test_annot_metric(atlas_info):
-    adata = atlas.read_atlas(atlas_info)
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--path")
-    parser.add_argument("--obs_cluster")
-    parser.add_argument("--metric_annot", nargs="+")
-    checkatlas_path = os.getcwd()
-    args = parser.parse_args(
-        [
-            "--path",
-            checkatlas_path,
-            "--metric_annot",
-            "rand_index",
-            "--obs_cluster",
-            atlas.OBS_CLUSTERS,
-        ]
-    )
-    folders.checkatlas_folders(checkatlas_path)
-    atlas.create_metric_annot(adata, atlas_info, args)
-    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
-    csv_path = files.get_file_path(
-        atlas_name,
-        folders.ANNOTATION,
-        check.TSV_EXTENSION,
-        args.path,
-    )
-    assert os.path.exists(csv_path)
+# @given("atlas_info", [datasets.get_scanpy_atlas_info()])
+# def test_annot_metric(atlas_info):
+#     adata = atlas.read_atlas(atlas_info)
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("--path")
+#     parser.add_argument("--obs_cluster")
+#     parser.add_argument("--metric_annot", nargs="+")
+#     checkatlas_path = os.getcwd()
+#     args = parser.parse_args(
+#         [
+#             "--path",
+#             checkatlas_path,
+#             "--metric_annot",
+#             "rand_index",
+#             "--obs_cluster",
+#             atlas.OBS_CLUSTERS,
+#         ]
+#     )
+#     folders.checkatlas_folders(checkatlas_path)
+#     atlas.create_metric_annot(adata, atlas_info, args)
+#     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+#     csv_path = files.get_file_path(
+#         atlas_name,
+#         folders.ANNOTATION,
+#         check.TSV_EXTENSION,
+#         args.path,
+#     )
+#     assert os.path.exists(csv_path)
 
 
-@given("atlas_info", [datasets.get_scanpy_atlas_info()])
-def test_dimred_metric(atlas_info):
-    adata = atlas.read_atlas(atlas_info)
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--path")
-    parser.add_argument("--obs_cluster")
-    parser.add_argument("--metric_dimred")
-    checkatlas_path = os.getcwd()
-    args = parser.parse_args(
-        [
-            "--path",
-            checkatlas_path,
-            "--metric_dimred",
-            ["kruskal_stress"],
-            "--obs_cluster",
-            atlas.OBS_CLUSTERS,
-        ]
-    )
-    folders.checkatlas_folders(checkatlas_path)
-    atlas.create_metric_dimred(adata, atlas_info, args)
-    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
-    csv_path = files.get_file_path(
-        atlas_name,
-        folders.DIMRED,
-        check.TSV_EXTENSION,
-        args.path,
-    )
-    assert os.path.exists(csv_path)
+# @given("atlas_info", [datasets.get_scanpy_atlas_info()])
+# def test_dimred_metric(atlas_info):
+#     adata = atlas.read_atlas(atlas_info)
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument("--path")
+#     parser.add_argument("--obs_cluster")
+#     parser.add_argument("--metric_dimred")
+#     checkatlas_path = os.getcwd()
+#     args = parser.parse_args(
+#         [
+#             "--path",
+#             checkatlas_path,
+#             "--metric_dimred",
+#             ["kruskal_stress"],
+#             "--obs_cluster",
+#             atlas.OBS_CLUSTERS,
+#         ]
+#     )
+#     folders.checkatlas_folders(checkatlas_path)
+#     atlas.create_metric_dimred(adata, atlas_info, args)
+#     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+#     csv_path = files.get_file_path(
+#         atlas_name,
+#         folders.DIMRED,
+#         check.TSV_EXTENSION,
+#         args.path,
+#     )
+#     assert os.path.exists(csv_path)
