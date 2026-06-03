@@ -11,7 +11,7 @@ process PREPROCESS_SCANPY{
     script:
     out_info = atlas_info.atlas_name + "_PreProcess_Scanpy"
     """
-    checkatlas preprocess ${atlas_info.atlas_name} $samplesheet
+    checkatlas preprocess $samplesheet --atlas_name ${atlas_info.atlas_name}
     """
 }
 
@@ -28,7 +28,7 @@ process SUMMARY{
     script:
     out_info = atlas_info.atlas_name + "_Summary"
     """
-    checkatlas summary ${atlas_info.atlas_name} $samplesheet
+    checkatlas summary $samplesheet --atlas_name ${atlas_info.atlas_name}
     """
 }
 
@@ -45,7 +45,7 @@ process QC{
     script:
     out_info = atlas_info.atlas_name + "_QC"
     """
-    checkatlas qc ${atlas_info.atlas_name} $samplesheet
+    checkatlas qc $samplesheet --atlas_name ${atlas_info.atlas_name}
     """
 }
 
@@ -62,7 +62,7 @@ process METRIC_CLUST{
     script:
     out_info = atlas_info.atlas_name + "_Metric_Clust"
     """
-    checkatlas metric_cluster ${atlas_info.atlas_name} $samplesheet
+    checkatlas metric_cluster $samplesheet --atlas_name ${atlas_info.atlas_name}
     """
 }
 
@@ -79,7 +79,7 @@ process METRIC_ANNOT{
     script:
     out_info = atlas_info.atlas_name + "_Metric_Annot"
     """
-    checkatlas metric_annot ${atlas_info.atlas_name} $samplesheet
+    checkatlas metric_annot $samplesheet --atlas_name ${atlas_info.atlas_name}
     """
 }
 
@@ -96,7 +96,7 @@ process METRIC_DIMRED{
     script:
     out_info = atlas_info.atlas_name + "_Metric_dimred"
     """
-    checkatlas metric_dimred ${atlas_info.atlas_name} $samplesheet
+    checkatlas metric_dimred $samplesheet --atlas_name ${atlas_info.atlas_name}
     """
 }
 
