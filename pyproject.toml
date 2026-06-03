@@ -20,6 +20,7 @@ scanpy = ">=1.12"
 multiqc = {version = ">=1.35", python = ">=3.12, !=3.14.1"}
 # JAX is optional — install the group that matches your hardware (see below)
 jax = {version = "^0.10.1", optional = true}
+nextflow = "^26.4.3"
 
 [tool.poetry.extras]
 # pip install checkatlas[cpu]        → CPU-only JAX

@@ -1,6 +1,4 @@
 
-// Info required for completion email and summary
-def multiqc_report = []
 
 
 process CREATE_REPORT {
