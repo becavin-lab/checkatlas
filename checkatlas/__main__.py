@@ -144,6 +144,13 @@ def main() -> None:  # pragma: no cover
             str(nf_script),
             f"--path={args.path}",
             f"--outdir={args.path}",
+            f"--qc_display={' '.join(args.qc_display)}",
+            f"--plot_celllimit={args.plot_celllimit}",
+            f"--obs_cluster={' '.join(args.obs_cluster)}",
+            f"--metric_cluster={' '.join(args.metric_cluster)}",
+            f"--metric_annot={' '.join(args.metric_annot)}",
+            f"--metric_dimred={' '.join(args.metric_dimred)}",
+            f"--checkatlas_debug={'true' if args.debug else 'false'}",
         ]
         logger.debug(f"Command: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
