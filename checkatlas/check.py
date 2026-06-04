@@ -40,7 +40,9 @@ PROCESS_TYPE = [
     "metric_cluster",
     "metric_annot",
     "metric_dimred",
+    "analyse"
 ]
+
 
 TSV_EXTENSION = ".tsv"
 QC_FIG_EXTENSION = "_qc.png"

@@ -213,6 +213,17 @@ def main() -> None:  # pragma: no cover
                 atlas.create_metric_annot(adata, atlas_info, args)
             elif process == check.PROCESS_TYPE[6]:  # dimred metrics
                 atlas.create_metric_dimred(adata, atlas_info, args)
+            elif process == check.PROCESS_TYPE[7]:  #  analyse
+                atlas.create_summary_table(adata, atlas_info, args)
+                atlas.create_anndata_table(adata, atlas_info, args)
+                atlas.create_umap_fig(adata, atlas_info, args)
+                atlas.create_tsne_fig(adata, atlas_info, args)
+                atlas.create_qc_tables(adata, atlas_info, args)
+                atlas.create_qc_plots(adata, atlas_info, args)
+                atlas.create_metric_cluster(adata, atlas_info, args)
+                atlas.create_metric_annot(adata, atlas_info, args)
+                atlas.create_metric_dimred(adata, atlas_info, args)
+            
         elif seurat is not None and atlas_type == seurat.SEURAT_TYPE:
             if process == check.PROCESS_TYPE[2]:  # summary
                 seurat_data = seurat.read_atlas(atlas_info)
