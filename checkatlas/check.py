@@ -40,7 +40,8 @@ PROCESS_TYPE = [
     "metric_cluster",
     "metric_annot",
     "metric_dimred",
-    "analyse"
+    "analyse",
+    "metric"
 ]
 
 
