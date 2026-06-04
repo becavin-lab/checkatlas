@@ -59,18 +59,18 @@ process METRIC_CLUST{
     label 'process_metric_clust'
 
     input:
-    val atlas_info
+    tuple val(atlas_info), val(metric)
     path samplesheet
 
     output:
     val out_info, emit: out_info
 
     script:
-    out_info = atlas_info.atlas_name + "_Metric_Clust"
+    out_info = atlas_info.atlas_name + "_Metric_Clust_" + metric
     """
     checkatlas metric_cluster $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --obs_cluster ${params.obs_cluster} \
-        --metric_cluster ${params.metric_cluster} \
+        --metric_cluster ${metric} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
@@ -79,18 +79,18 @@ process METRIC_ANNOT{
     label 'process_metric_annot'
 
     input:
-    val atlas_info
+    tuple val(atlas_info), val(metric)
     path samplesheet
 
     output:
     val out_info, emit: out_info
 
     script:
-    out_info = atlas_info.atlas_name + "_Metric_Annot"
+    out_info = atlas_info.atlas_name + "_Metric_Annot_" + metric
     """
     checkatlas metric_annot $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --obs_cluster ${params.obs_cluster} \
-        --metric_annot ${params.metric_annot} \
+        --metric_annot ${metric} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
@@ -99,17 +99,17 @@ process METRIC_DIMRED{
     label 'process_metric_dimred'
 
     input:
-    val atlas_info
+    tuple val(atlas_info), val(metric)
     path samplesheet
 
     output:
     val out_info, emit: out_info
 
     script:
-    out_info = atlas_info.atlas_name + "_Metric_dimred"
+    out_info = atlas_info.atlas_name + "_Metric_Dimred_" + metric
     """
     checkatlas metric_dimred $samplesheet --atlas_name ${atlas_info.atlas_name} \
-        --metric_dimred ${params.metric_dimred} \
+        --metric_dimred ${metric} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }

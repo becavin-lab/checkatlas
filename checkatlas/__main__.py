@@ -9,10 +9,26 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 try:
     from . import atlas, cellranger, check, seurat
+    from .metrics import annot, cluster, dimred
     from .utils import checkatlas_arguments, folders
 except ImportError:
     from checkatlas import atlas, cellranger, check, seurat
+    from checkatlas.metrics import annot, cluster, dimred
     from checkatlas.utils import checkatlas_arguments, folders
+
+
+def _metric_nf_arg(metrics: list, all_metrics: list) -> str:
+    """Prepare a metric list for the Nextflow --metric_* command-line argument.
+
+    ["none"]  -> "none"  : tells Nextflow to skip this metric category entirely.
+    []        -> all metrics joined by spaces (empty list means run everything).
+    [m1, m2]  -> "m1 m2" : run only the specified metrics.
+    """
+    if metrics == ["none"]:
+        return "none"
+    if not metrics:
+        return " ".join(all_metrics)
+    return " ".join(metrics)
 
 
 def main() -> None:  # pragma: no cover
@@ -67,9 +83,9 @@ def main() -> None:  # pragma: no cover
             f"--qc_display={' '.join(args.qc_display)}",
             f"--plot_celllimit={args.plot_celllimit}",
             f"--obs_cluster={' '.join(args.obs_cluster)}",
-            f"--metric_cluster={' '.join(args.metric_cluster)}",
-            f"--metric_annot={' '.join(args.metric_annot)}",
-            f"--metric_dimred={' '.join(args.metric_dimred)}",
+            f"--metric_cluster={_metric_nf_arg(args.metric_cluster, cluster.__all__)}",
+            f"--metric_annot={_metric_nf_arg(args.metric_annot, annot.__all__)}",
+            f"--metric_dimred={_metric_nf_arg(args.metric_dimred, dimred.__all__)}",
             f"--checkatlas_debug={'true' if args.debug else 'false'}",
         ]
         if args.with_report is not None:
