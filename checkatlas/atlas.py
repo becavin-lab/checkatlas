@@ -537,6 +537,14 @@ def create_metric_cluster(
         atlas_info (dict): info of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
+    if not args.metric_cluster:
+        logger.info("Skipping clustering metrics (no metrics requested)")
+        return
+
+    if args.metric_cluster == ["none"]:
+        logger.info("Skipping clustering metrics (--metric_cluster none)")
+        return
+
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     cluster_dir = folders.get_folder(args.path, folders.CLUSTER)
 
@@ -582,6 +590,10 @@ def create_metric_annot(
         atlas_info (dict): info of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
+    if args.metric_annot == ["none"]:
+        logger.info("Skipping annotation metrics (--metric_annot none)")
+        return
+
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     annotation_dir = folders.get_folder(args.path, folders.ANNOTATION)
 
@@ -629,6 +641,10 @@ def create_metric_dimred(
         atlas_info (dict): info of the atlas
         args (argparse.Namespace): list of arguments from checkatlas workflow
     """
+    if args.metric_dimred == ["none"]:
+        logger.info("Skipping dimred metrics (--metric_dimred none)")
+        return
+
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
 
     logger.info("Running full dimred pipeline for %s", atlas_name)
