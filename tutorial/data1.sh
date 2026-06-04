@@ -16,6 +16,10 @@ checkatlas metric_dimred Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 
 
 
 # metric
+checkatlas run /data/analysis/data_becavin/checkatlas_test/tuto/data1 \
+    --metric_cluster silhouette \
+    --metric_dimred "" \
+    --metric_annot rand_index
 
 ## FETAL
 
@@ -26,21 +30,21 @@ checkatlas metric_dimred Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 
 
 
 ### Cluster (need to run)
-checkatlas metric_cluster Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=silhouette # on teste les données fetal avec sillhouette
+checkatlas metric_cluster --atlas_name=Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=silhouette # on teste les données fetal avec sillhouette
 
-checkatlas metric_cluster Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=davies_bouldin  # on teste les données fetal avec davies-bouldin
+checkatlas metric_cluster --atlas_name=Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=davies_bouldin  # on teste les données fetal avec davies-bouldin
 
-checkatlas metric_cluster Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=calinski_harabasz  # on teste les données fetal avec calinski
+checkatlas metric_cluster --atlas_name=Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_cluster=calinski_harabasz  # on teste les données fetal avec calinski
 
 ### Annot
-checkatlas metric_annot Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_annot=vmeasure # on teste les données fetal avec vmeasure
+checkatlas metric_annot --atlas_name=Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_annot=vmeasure # on teste les données fetal avec vmeasure
 
-python /home/moccia/checkatlas/checkatlas/__main__.py metric_annot Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 \
+python /home/moccia/checkatlas/checkatlas/__main__.py metric_annot --atlas_name=Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 \
     --debug --metric_annot=rand_index # on teste les données fetal avec rand
 
-checkatlas metric_annot Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_annot=fowlkes_mallow # on teste les données fetal avec fowlkes-mallow
+checkatlas metric_annot --atlas_name=Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_annot=fowlkes_mallow # on teste les données fetal avec fowlkes-mallow
 
-checkatlas metric_annot Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_annot=adj_mutual_info # on teste les données fetal avec AMI
+checkatlas metric_annot --atlas_name=Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug --metric_annot=adj_mutual_info # on teste les données fetal avec AMI
 
 python /home/moccia/checkatlas/checkatlas/__main__.py metric_annot Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 \
     --debug --metric_annot=adj_rand_index # on teste les données fetal avec ARI \

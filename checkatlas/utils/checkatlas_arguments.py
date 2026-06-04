@@ -12,7 +12,8 @@ except ImportError:
 def create_parser():
     parser = argparse.ArgumentParser(
         prog="checkatlas",
-        usage="checkatlas [OPTIONS] process atlas_name your_search_folder/",
+        usage="checkatlas [OPTIONS] process path/ [--atlas_name ATLAS_NAME]",
+        formatter_class=argparse.RawTextHelpFormatter,
         description="CheckAtlas is a one liner tool to check the "
         "quality of your single-cell atlases. For "
         "every atlas, it produces the quality control "
@@ -28,7 +29,18 @@ def create_parser():
     parser.add_argument(
         "process",
         type=str,
-        help="Required argument: Type of process to run" f" among {check.PROCESS_TYPE}",
+        help=(
+            "Process to run. Choose from:\n"
+            "  run            — launch the full Nextflow pipeline on a folder\n"
+            "  preprocess     — load and preprocess a single atlas\n"
+            "  summary        — generate summary tables and UMAP/t-SNE figures\n"
+            "  qc             — compute QC tables and plots\n"
+            "  metric_cluster — compute clustering metrics\n"
+            "  metric_annot   — compute annotation metrics\n"
+            "  metric_dimred  — compute dimensionality-reduction metrics\n"
+            "  metric         — run all metric processes on a single atlas\n"
+            "  analyse        — run all analysis processes on a single atlas\n"
+        ),
         default="",
     )
 
@@ -108,28 +120,39 @@ def create_parser():
         nargs="+",
         type=str,
         default=cluster.__all__,
-        help="Specify the list of clustering metrics to calculate.\n"
+        help="List of clustering metrics to calculate.\n"
+        "   By default all available clustering metrics are run.\n"
+        "   Specify one or more metrics, or 'none' to skip this category.\n"
+        "   Example: --metric_cluster silhouette\n"
         "   Example: --metric_cluster silhouette davies_bouldin\n"
-        f"   List of cluster metrics: {cluster.__all__}",
+        "   Example: --metric_cluster none\n"
+        f"   Available: {cluster.__all__}",
     )
     metric_options.add_argument(
         "--metric_annot",
         nargs="+",
         type=str,
         default=annot.__all__,
-        help="Specify the list of annotation metrics to calculate."
-        f"   Example: --metric_annot rand_index"
-        f"   List of annotation metrics: {annot.__all__}",
+        help="List of annotation metrics to calculate.\n"
+        "   By default all available annotation metrics are run.\n"
+        "   Specify one or more metrics, or 'none' to skip this category.\n"
+        "   Example: --metric_annot rand_index\n"
+        "   Example: --metric_annot rand_index fowlkes_mallows\n"
+        "   Example: --metric_annot none\n"
+        f"   Available: {annot.__all__}",
     )
     metric_options.add_argument(
         "--metric_dimred",
         nargs="+",
         type=str,
         default=dimred.__all__,
-        help="Specify the list of dimensionality reduction "
-        "metrics to calculate.\n"
+        help="List of dimensionality reduction metrics to calculate.\n"
+        "   By default all available dimensionality reduction metrics are run.\n"
+        "   Specify one or more metrics, or 'none' to skip this category.\n"
         "   Example: --metric_dimred kruskal_stress\n"
-        f"   List of dim. red. metrics: {dimred.__all__}",
+        "   Example: --metric_dimred kruskal_stress spearman_rho\n"
+        "   Example: --metric_dimred none\n"
+        f"   Available: {dimred.__all__}",
     )
     return parser
 
