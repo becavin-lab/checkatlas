@@ -318,3 +318,42 @@ def save_triangular(
 def load_triangular(filepath: str, n: int) -> TriangularMatrix:
     """Open an existing triangular memmap for read‑only access."""
     return TriangularMatrix(n=n, filepath=filepath, mode="r")
+
+
+def store_upper_triangle(tri_data, block, row_start, col_start, n_total):
+    """Store the upper‑triangle portion of a distance block into a 1‑D triangular array.
+
+    Parameters
+    ----------
+    tri_data : np.ndarray
+        1‑D float16 memmap, length ``n_total·(n_total−1)//2``.
+    block : np.ndarray
+        Sub‑matrix of pairwise distances, shape ``(qsize, rsize)``.
+    row_start : int
+        Global row offset of *block*.
+    col_start : int
+        Global column offset of *block*.
+    n_total : int
+        Full matrix dimension.
+    """
+    import numpy as _np
+
+    qsize, rsize = block.shape
+    block_f16 = _np.asarray(block, dtype=_np.float16)
+
+    rows = _np.arange(qsize, dtype=_np.int64) + row_start
+    cols_all = _np.arange(rsize, dtype=_np.int64) + col_start
+    upper_mask = (rows[:, None] < cols_all[None, :]) & (cols_all[None, :] < n_total)
+    if not _np.any(upper_mask):
+        return
+    ri = _np.broadcast_to(rows[:, None], (qsize, rsize))[upper_mask]
+    cj = _np.broadcast_to(cols_all[None, :], (qsize, rsize))[upper_mask]
+    global_rows = ri.astype(_np.int64, copy=False)
+    flat_idx = (
+        global_rows * _np.int64(n_total)
+        - global_rows * (global_rows + 1) // 2
+        + cj
+        - global_rows
+        - 1
+    )
+    tri_data[flat_idx] = block_f16[upper_mask]
