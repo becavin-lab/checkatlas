@@ -97,4 +97,5 @@ clean:            ## Clean unused files.
 	@rm -rf htmlcov
 	@rm -rf .tox/
 	@rm -rf .nextflow/
+	@rm -rf .nextflow.*
 	@rm -rf docs/_build

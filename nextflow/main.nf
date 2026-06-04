@@ -23,14 +23,14 @@ include { paramsSummaryLog; paramsSummaryMap } from 'plugin/nf-validation'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { CHECKATLAS_SCANPY       } from './nextflow/workflows/checkatlas_scanpy'
-include { CHECKATLAS_CELLRANGER   } from './nextflow/workflows/checkatlas_cellranger'
-include { CHECKATLAS_SEURAT       } from './nextflow/workflows/checkatlas_seurat'
-include { LIST_SCANPY_ATLASES     } from './nextflow/workflows/checkatlas_listfiles'
-include { LIST_CELLRANGER_ATLASES } from './nextflow/workflows/checkatlas_listfiles'
-include { LIST_SEURAT_ATLASES     } from './nextflow/workflows/checkatlas_listfiles'
-include { CREATE_REPORT           } from './nextflow/workflows/checkatlas_multiqc'
-include { COPY_MULTIQC_REPORT     } from './nextflow/workflows/checkatlas_multiqc'
+include { CHECKATLAS_SCANPY       } from './workflows/checkatlas_scanpy'
+include { CHECKATLAS_CELLRANGER   } from './workflows/checkatlas_cellranger'
+include { CHECKATLAS_SEURAT       } from './workflows/checkatlas_seurat'
+include { LIST_SCANPY_ATLASES     } from './workflows/checkatlas_listfiles'
+include { LIST_CELLRANGER_ATLASES } from './workflows/checkatlas_listfiles'
+include { LIST_SEURAT_ATLASES     } from './workflows/checkatlas_listfiles'
+include { CREATE_REPORT           } from './workflows/checkatlas_multiqc'
+include { COPY_MULTIQC_REPORT     } from './workflows/checkatlas_multiqc'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,8 +38,8 @@ include { COPY_MULTIQC_REPORT     } from './nextflow/workflows/checkatlas_multiq
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { MULTIQC                     } from './nextflow/modules/nf-core/multiqc/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from './nextflow/modules/nf-core/custom/dumpsoftwareversions/main'
+include { MULTIQC                     } from './modules/nf-core/multiqc/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from './modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,12 +72,12 @@ workflow CHECKATLAS {
     WorkflowCheckatlas.initialise(params, log)
 
     // ── MultiQC config channels ──────────────────────────────────────────
-    ch_multiqc_config        = Channel.fromPath("$projectDir/nextflow/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_config        = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
     ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
     ch_multiqc_logo          = params.multiqc_logo   ? Channel.fromPath(params.multiqc_logo,   checkIfExists: true) : Channel.empty()
     ch_multiqc_custom_methods_description = params.multiqc_methods_description \
         ? file(params.multiqc_methods_description, checkIfExists: true) \
-        : file("$projectDir/nextflow/assets/methods_description_template.yml", checkIfExists: true)
+        : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
 
     ch_versions = Channel.empty()
 
