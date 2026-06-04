@@ -26,7 +26,7 @@ from ._cache import (
 )
 from ._jax_utils import _GPU_AVAILABLE, _JAX_AVAILABLE, _get_ndarray, pdist_squareform
 from ._neighbors import NeighborResults, _clear_neighbors_cache, compute_neighbors
-from ._triangular import TriangularMatrix
+from ._triangular import TriangularMatrix, store_upper_triangle
 
 METRICS_CLUST = cluster.__all__
 METRICS_ANNOT = annot.__all__
@@ -1013,50 +1013,6 @@ def _safe_close_memmap(memmap_obj):
             pass
 
 
-def _store_upper_triangle_to_memmap(tri_data, block, row_start, col_start, n_total):
-    """Store the upper‑triangle portion of a distance block into a 1‑D triangular array.
-
-    Parameters
-    ----------
-    tri_data : np.ndarray
-        1‑D float16 memmap, length ``n_total·(n_total−1)//2``.
-    block : np.ndarray
-        Sub‑matrix of pairwise distances, shape ``(qsize, rsize)``.
-    row_start : int
-        Global row offset of *block*.
-    col_start : int
-        Global column offset of *block*.
-    n_total : int
-        Full matrix dimension.
-    """
-    qsize, rsize = block.shape
-    block_f16 = np.asarray(block, dtype=np.float16)
-
-    for i in range(qsize):
-        global_row = row_start + i
-        if global_row >= n_total - 1:
-            continue
-        first_col = max(0, global_row + 1 - col_start)
-        if first_col >= rsize:
-            continue
-        last_valid_col = min(rsize - 1, n_total - 1 - col_start)
-        if last_valid_col < first_col:
-            continue
-        local_cols = np.arange(first_col, last_valid_col + 1, dtype=np.int64)
-        # Correct flat-index formula (matches TriangularMatrix.row_starts):
-        #   idx(i, j) = row_starts[i] + (j - i - 1)
-        #             = i*n - i*(i+1)/2 + j - i - 1
-        flat_idx = (
-            global_row * np.int64(n_total)
-            - global_row * (global_row + 1) // 2
-            + col_start
-            + local_cols
-            - global_row
-            - 1
-        )
-        tri_data[flat_idx] = block_f16[i, local_cols]
-
-
 def _safe_close_triangular(tri):
     """Close the underlying mmap of a TriangularMatrix."""
     if tri is None:
@@ -1234,6 +1190,16 @@ def cal_dimred(
     _GPU_SINGLE_SHOT = _JAX_AVAILABLE and _GPU_AVAILABLE and (n_cells <= 50000)
     _GPU_CHUNKED = _JAX_AVAILABLE and _GPU_AVAILABLE and (50000 < n_cells <= 150000)
 
+    _DIST_METRICS = frozenset(
+        (
+            "kruskal_stress",
+            "spearman_rho",
+            "dCor",
+            "trustworthiness",
+            "continuity",
+        )
+    )
+
     _low_dim_precomputed = {}  # collect for saving to cache later
 
     if _from_cache:
@@ -1255,9 +1221,9 @@ def cal_dimred(
         high_knn_indices = _get_ndarray(high_knn_indices_jax)
 
     elif _GPU_CHUNKED:
-        # ── Chunked GPU path: streaming kNN + GPU sub-chunked distances ──
-        # kNN: auto-detect — streaming GPU for large, one-shot GPU for fits
-        # Distances: GPU sub-chunked → memmap on data partition
+        # ── Chunked GPU path: fused kNN + distance matrix ──
+        # kNN: streaming GPU, auto-detect for large atlases
+        # Distances: upper‑triangle float16 memmap written in same pass
         import jax.numpy as jnp
 
         _qchunk = 15000  # query rows per chunk
@@ -1270,53 +1236,23 @@ def cal_dimred(
             )
             print(f"  Storing in: {temp_dir}")
 
-        # kNN via auto-backend (streaming GPU if large, one-shot GPU if fits)
+        # Create TriangularMatrix BEFORE kNN pass to fuse the operations
+        high_dists_path = os.path.join(temp_dir, f"high_dists_{run_id}.tri")
+        all_memmap_files.append(high_dists_path)
+        high_dim_dists = TriangularMatrix(
+            n=n_cells, filepath=high_dists_path, mode="w+")
+
         if verbose:
-            print("  Computing kNN (auto GPU)...")
+            print("  Computing kNN + distances (fused GPU)...")
         high_knn_results = compute_neighbors(
             np.asarray(high_dim_data, dtype=np.float64),
             n_neighbors=k_neighbors + 1,
             backend="auto",
+            tri_memmap=high_dim_dists,
         )
         high_knn_dists = high_knn_results.distances
         high_knn_indices = high_knn_results.indices
-
-        # Distance matrix via GPU sub-chunked → float16 upper‑triangle memmap
-        high_dists_path = os.path.join(temp_dir, f"high_dists_{run_id}.tri")
-        all_memmap_files.append(high_dists_path)
-        high_dim_dists = TriangularMatrix(n=n_cells, filepath=high_dists_path, mode="w+")
-
-        n_qchunks = (n_cells + _qchunk - 1) // _qchunk
-        n_rchunks = (n_cells + _rchunk - 1) // _rchunk
-        total_blocks = n_qchunks * n_rchunks
-
-        with tqdm(
-            total=total_blocks,
-            desc="High-Dim Distances (GPU sub-chunked, float16 tri)",
-            disable=not verbose,
-        ) as pbar_dist:
-            for qs in range(0, n_cells, _qchunk):
-                qe = min(qs + _qchunk, n_cells)
-                chunk = jnp.asarray(high_dim_data[qs:qe], dtype=jnp.float32)
-                chunk_sq = jnp.sum(chunk**2, axis=1)
-
-                for rs in range(0, n_cells, _rchunk):
-                    re = min(rs + _rchunk, n_cells)
-                    ref = jnp.asarray(high_dim_data[rs:re], dtype=jnp.float32)
-                    ref_sq = jnp.sum(ref**2, axis=1)
-                    dot = jnp.dot(chunk, ref.T)
-                    D_sub_sq = chunk_sq[:, None] + ref_sq[None, :] - 2 * dot
-                    D_sub = jnp.sqrt(jnp.maximum(D_sub_sq, 0.0))
-                    _store_upper_triangle_to_memmap(
-                        high_dim_dists._data,
-                        _get_ndarray(D_sub),
-                        qs,
-                        rs,
-                        n_cells,
-                    )
-                    pbar_dist.update(1)
-
-                high_dim_dists.flush()
+        high_dim_dists.flush()
         gc.collect()
     else:
         # ─── CPU path (unchanged) ───────────────────────────────────
@@ -1328,15 +1264,6 @@ def cal_dimred(
 
         # ── High‑dim distance matrix (only when distance‑based metrics
         #     are in the list) ──
-        _DIST_METRICS = frozenset(
-            (
-                "kruskal_stress",
-                "spearman_rho",
-                "dCor",
-                "trustworthiness",
-                "continuity",
-            )
-        )
         need_high_dists = bool(set(metric_list) & _DIST_METRICS)
         high_dim_dists = None
 
@@ -1361,7 +1288,7 @@ def cal_dimred(
                     block = pairwise_distances(
                         high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
                     )
-                    _store_upper_triangle_to_memmap(
+                    store_upper_triangle(
                         high_dim_dists._data, block, i, 0, n_cells
                     )
                     high_dim_dists.flush()
@@ -1437,42 +1364,29 @@ def cal_dimred(
                 low_knn_dists = _get_ndarray(low_knn_dists_jax)
                 low_knn_indices = _get_ndarray(low_knn_indices_jax)
             elif low_ndim <= 200:
-                # GPU streaming kNN + GPU sub-chunked distance matrix
+                # Fused GPU streaming kNN + optional distance matrix
+                need_low_dists = bool(set(metric_list) & _DIST_METRICS)
+                if need_low_dists:
+                    low_dists_path = os.path.join(
+                        temp_dir,
+                        f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.tri",
+                    )
+                    all_memmap_files.append(low_dists_path)
+                    low_dim_dists = TriangularMatrix(
+                        n=n_cells, filepath=low_dists_path, mode="w+"
+                    )
+                else:
+                    low_dim_dists = None
+
                 kNN = compute_neighbors(
                     np.asarray(low_dim_data, dtype=np.float64),
                     n_neighbors=k_neighbors + 1,
                     backend="auto",
+                    tri_memmap=low_dim_dists,
                 )
                 low_knn_dists = kNN.distances
                 low_knn_indices = kNN.indices
-                # GPU sub-chunked → float16 upper‑triangle memmap
-                low_dists_path = os.path.join(
-                    temp_dir,
-                    f"low_dists_{low_dim_key.replace('/', '_')}_{run_id}.tri",
-                )
-                all_memmap_files.append(low_dists_path)
-                low_dim_dists = TriangularMatrix(
-                    n=n_cells, filepath=low_dists_path, mode="w+"
-                )
-                _lq = 20000
-                _lr = 20000
-                for qs in range(0, n_cells, _lq):
-                    qe = min(qs + _lq, n_cells)
-                    chunk = jnp.asarray(low_dim_data[qs:qe], dtype=jnp.float32)
-                    chunk_sq = jnp.sum(chunk**2, axis=1)
-                    for rs in range(0, n_cells, _lr):
-                        re = min(rs + _lr, n_cells)
-                        ref = jnp.asarray(low_dim_data[rs:re], dtype=jnp.float32)
-                        ref_sq = jnp.sum(ref**2, axis=1)
-                        dot = jnp.dot(chunk, ref.T)
-                        D_sub_sq = chunk_sq[:, None] + ref_sq[None, :] - 2 * dot
-                        _store_upper_triangle_to_memmap(
-                            low_dim_dists._data,
-                            _get_ndarray(jnp.sqrt(jnp.maximum(D_sub_sq, 0.0))),
-                            qs,
-                            rs,
-                            n_cells,
-                        )
+                if need_low_dists and low_dim_dists is not None:
                     low_dim_dists.flush()
                 gc.collect()
             else:
@@ -1498,7 +1412,7 @@ def cal_dimred(
                     block = pairwise_distances(
                         low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
                     )
-                    _store_upper_triangle_to_memmap(
+                    store_upper_triangle(
                         low_dim_dists._data, block, i, 0, n_cells
                     )
                     low_dim_dists.flush()
@@ -1530,7 +1444,7 @@ def cal_dimred(
                         block = pairwise_distances(
                             low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
                         )
-                        _store_upper_triangle_to_memmap(
+                        store_upper_triangle(
                             low_dim_dists._data, block, i, 0, n_cells
                         )
                         low_dim_dists.flush()

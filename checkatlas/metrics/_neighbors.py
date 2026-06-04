@@ -205,6 +205,7 @@ def _jax_streaming_knn(
     n_neighbors: int,
     qchunk: int = 15000,
     rchunk: int = 10000,
+    tri_memmap=None,
 ) -> NeighborResults:
     """GPU kNN for **any atlas size** — chunks both queries and references.
 
@@ -225,6 +226,9 @@ def _jax_streaming_knn(
         Query rows per GPU block.
     rchunk : int
         Reference rows per GPU block.
+    tri_memmap : TriangularMatrix or None
+        If provided, the upper‑triangle distance matrix is written
+        to this memmap during the pass, fusing kNN + distance storage.
 
     Returns
     -------
@@ -236,7 +240,8 @@ def _jax_streaming_knn(
     n, d = X.shape
     k = n_neighbors
 
-    # ── Running top‑k buffers (CPU) ───────────────────────────────
+    _do_store = tri_memmap is not None
+
     running_dist = np.full((n, k), np.inf, dtype=np.float32)
     running_idx = np.full((n, k), -1, dtype=np.int32)
 
@@ -244,33 +249,38 @@ def _jax_streaming_knn(
     n_rchunks = (n + rchunk - 1) // rchunk
     total_blocks = n_qchunks * n_rchunks
 
-    from tqdm import tqdm as _tqdm  # lazy import
+    from tqdm import tqdm as _tqdm
 
-    with _tqdm(
-        total=total_blocks,
-        desc="GPU kNN (streaming)",
-        disable=(total_blocks < 10),
-    ) as pbar:
+    _desc = "GPU kNN + distances (streaming)" if _do_store else "GPU kNN (streaming)"
+
+    with _tqdm(total=total_blocks, desc=_desc,
+               disable=(total_blocks < 10)) as pbar:
         for qs in range(0, n, qchunk):
             qe = min(qs + qchunk, n)
             q = jnp.asarray(X[qs:qe], dtype=jnp.float32)
-            q_sq = jnp.sum(q**2, axis=1)  # (qsize,)
+            q_sq = jnp.sum(q**2, axis=1)
 
             for rs in range(0, n, rchunk):
                 re = min(rs + rchunk, n)
                 r = jnp.asarray(X[rs:re], dtype=jnp.float32)
-                r_sq = jnp.sum(r**2, axis=1)  # (rsize,)
-                dot = jnp.dot(q, r.T)  # (qsize, rsize) ← GPU matmul
+                r_sq = jnp.sum(r**2, axis=1)
+                dot = jnp.dot(q, r.T)
                 D_sq = q_sq[:, None] + r_sq[None, :] - 2 * dot
                 D = jnp.sqrt(jnp.maximum(D_sq, 0.0))
                 D_np = _get_ndarray(D)
 
-                # ── Merge with running top‑k ───────────────────
+                if _do_store:
+                    from ._triangular import store_upper_triangle
+                    store_upper_triangle(
+                        tri_memmap._data, D_np, qs, rs, n)
+
                 ref_idx = np.arange(rs, re, dtype=np.int32)[None, :]
                 ref_idx_broad = np.broadcast_to(ref_idx, (qe - qs, re - rs))
 
-                merged_dist = np.concatenate([running_dist[qs:qe], D_np], axis=1)
-                merged_idx = np.concatenate([running_idx[qs:qe], ref_idx_broad], axis=1)
+                merged_dist = np.concatenate(
+                    [running_dist[qs:qe], D_np], axis=1)
+                merged_idx = np.concatenate(
+                    [running_idx[qs:qe], ref_idx_broad], axis=1)
 
                 topk = np.argpartition(merged_dist, k, axis=1)[:, :k]
                 running_dist[qs:qe] = np.take_along_axis(merged_dist, topk, axis=1)
@@ -321,6 +331,7 @@ def compute_neighbors(
     backend: str = "auto",
     n_jobs: int = -1,
     use_cache: bool = True,
+    tri_memmap=None,
 ) -> NeighborResults:
     """Compute k-nearest neighbours with automatic backend selection.
 
@@ -339,6 +350,10 @@ def compute_neighbors(
     use_cache : bool
         Cache kNN results per unique input to avoid recomputation
         across multiple metrics that share the same embedding.
+    tri_memmap : TriangularMatrix or None
+        If provided, the upper‑triangle distance matrix is written
+        to this memmap during the streaming GPU pass (fusing
+        kNN computation with distance storage).
 
     Returns
     -------
@@ -376,11 +391,8 @@ def compute_neighbors(
             # Large atlas — streaming GPU kNN (query×ref chunked)
             logger.debug(
                 "Streaming GPU kNN (%.1f GB input, chunks q=%d r=%d)",
-                data_gb,
-                15000,
-                10000,
-            )
-            result = _jax_streaming_knn(X_arr, n_neighbors)
+                data_gb, 15000, 10000)
+            result = _jax_streaming_knn(X_arr, n_neighbors, tri_memmap=tri_memmap)
     else:
         result = _pynndescent_knn(X_arr, n_neighbors, n_jobs=n_jobs)
 
