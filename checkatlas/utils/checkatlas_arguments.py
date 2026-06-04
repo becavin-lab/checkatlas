@@ -154,6 +154,39 @@ def create_parser():
         "   Example: --metric_dimred none\n"
         f"   Available: {dimred.__all__}",
     )
+
+    # Nextflow reporting options (only used with 'run' process)
+    nf_options = parser.add_argument_group(
+        "Nextflow reporting options (only used with 'run' process)"
+    )
+    nf_options.add_argument(
+        "--with_report",
+        nargs="?",
+        const="report.html",
+        default=None,
+        metavar="FILE",
+        help="Generate a Nextflow execution report. "
+        "Optionally specify the output filename (default: report.html).",
+    )
+    nf_options.add_argument(
+        "--with_dag",
+        nargs="?",
+        const="dag.html",
+        default=None,
+        metavar="FILE",
+        help="Generate a Nextflow pipeline DAG. "
+        "Optionally specify the output filename (default: dag.html). "
+        "Use .dot extension for Graphviz format.",
+    )
+    nf_options.add_argument(
+        "--with_timeline",
+        nargs="?",
+        const="timeline.html",
+        default=None,
+        metavar="FILE",
+        help="Generate a Nextflow execution timeline. "
+        "Optionally specify the output filename (default: timeline.html).",
+    )
     return parser
 
 
