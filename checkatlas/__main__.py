@@ -137,7 +137,7 @@ def main() -> None:  # pragma: no cover
     if process == check.PROCESS_TYPE[0]:  # Run pipeline
         args.path = os.path.abspath(args.path)
         logger.info(f"Running Nextflow pipeline on {args.path}")
-        nf_script = Path(__file__).resolve().parent.parent / "main.nf"
+        nf_script = Path(__file__).resolve().parent.parent / "nextflow" / "main.nf"
         cmd = [
             "nextflow",
             "run",
