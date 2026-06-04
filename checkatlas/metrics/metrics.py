@@ -1479,25 +1479,23 @@ def cal_dimred(
             params = sig.parameters
 
             # ── Materialize TriangularMatrix only when needed ───────
+            # Trust/continuity use the shared _rank_penalty helper,
+            # which needs row-sortable dense buffers.  Force
+            # to_dense() for those two so the helper doesn't have to
+            # pay the per-row gather cost on a memmap-backed
+            # TriangularMatrix.
             _JOBLIB_METRICS = frozenset(("trustworthiness", "continuity"))
             _high_mat = high_dim_dists
             _low_mat = low_dim_dists
             if metric_name in _JOBLIB_METRICS:
-                # Skip to_dense() when metric has precomputed kNN fast path
-                accept_knn = (
-                    "precomputed_high_knn" in params
-                    and "precomputed_low_knn" in params
-                    and high_knn_indices is not None
-                )
-                if not accept_knn:
-                    if isinstance(high_dim_dists, TriangularMatrix):
-                        _high_mat = high_dim_dists.to_dense()
-                    if isinstance(low_dim_dists, TriangularMatrix):
-                        _low_mat = (
-                            low_dim_dists.to_dense()
-                            if low_dim_dists is not None
-                            else None
-                        )
+                if isinstance(high_dim_dists, TriangularMatrix):
+                    _high_mat = high_dim_dists.to_dense()
+                if isinstance(low_dim_dists, TriangularMatrix):
+                    _low_mat = (
+                        low_dim_dists.to_dense()
+                        if low_dim_dists is not None
+                        else None
+                    )
 
             try:
                 kwargs = {}
@@ -1515,6 +1513,11 @@ def cal_dimred(
                     kwargs["seed"] = seed
                 if "verbose" in params:
                     kwargs["verbose"] = False
+                if "rank_backend" in params:
+                    # Trust/continuity support "auto" | "jax_single_shot"
+                    # | "jax_chunked" | "cpu".  "auto" picks the
+                    # fastest backend based on N + GPU availability.
+                    kwargs["rank_backend"] = "auto"
 
                 if "precomputed_high_knn" in params:
                     kwargs["precomputed_high_knn"] = high_knn_indices
@@ -1564,7 +1567,6 @@ def cal_dimred(
                     _safe_close_memmap(low_dim_dists)
             except Exception:
                 pass
-            time.sleep(0.1)
             # Persist when caching; delete otherwise
             if not use_cache:
                 if low_dists_path and os.path.exists(low_dists_path):
@@ -1586,7 +1588,6 @@ def cal_dimred(
                 _safe_close_memmap(high_dim_dists)
         except Exception:
             pass
-        time.sleep(0.2)
         gc.collect()
 
     # ── Save to persistent cache ──
