@@ -1239,8 +1239,7 @@ def cal_dimred(
         # Create TriangularMatrix BEFORE kNN pass to fuse the operations
         high_dists_path = os.path.join(temp_dir, f"high_dists_{run_id}.tri")
         all_memmap_files.append(high_dists_path)
-        high_dim_dists = TriangularMatrix(
-            n=n_cells, filepath=high_dists_path, mode="w+")
+        high_dim_dists = TriangularMatrix(n=n_cells, filepath=high_dists_path, mode="w+")
 
         if verbose:
             print("  Computing kNN + distances (fused GPU)...")
@@ -1288,9 +1287,7 @@ def cal_dimred(
                     block = pairwise_distances(
                         high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
                     )
-                    store_upper_triangle(
-                        high_dim_dists._data, block, i, 0, n_cells
-                    )
+                    store_upper_triangle(high_dim_dists._data, block, i, 0, n_cells)
                     high_dim_dists.flush()
             else:
                 high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
@@ -1412,9 +1409,7 @@ def cal_dimred(
                     block = pairwise_distances(
                         low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
                     )
-                    store_upper_triangle(
-                        low_dim_dists._data, block, i, 0, n_cells
-                    )
+                    store_upper_triangle(low_dim_dists._data, block, i, 0, n_cells)
                     low_dim_dists.flush()
                 gc.collect()
         else:
@@ -1444,9 +1439,7 @@ def cal_dimred(
                         block = pairwise_distances(
                             low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
                         )
-                        store_upper_triangle(
-                            low_dim_dists._data, block, i, 0, n_cells
-                        )
+                        store_upper_triangle(low_dim_dists._data, block, i, 0, n_cells)
                         low_dim_dists.flush()
                 else:
                     low_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
@@ -1492,9 +1485,7 @@ def cal_dimred(
                     _high_mat = high_dim_dists.to_dense()
                 if isinstance(low_dim_dists, TriangularMatrix):
                     _low_mat = (
-                        low_dim_dists.to_dense()
-                        if low_dim_dists is not None
-                        else None
+                        low_dim_dists.to_dense() if low_dim_dists is not None else None
                     )
 
             try:
