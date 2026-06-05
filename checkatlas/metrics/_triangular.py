@@ -5,10 +5,10 @@ Provides numpy-array-like read access to a full N×N symmetric matrix
 that is physically stored as only the upper triangle (excluding diagonal)
 at float16 precision — **75 % less space** than a full float32 matrix.
 
-Space comparison for N = 85 233 cells:
-    float32 full:     85 233² × 4  = 27.1 GB
-    float16 full:     85 233² × 2  = 13.5 GB
-    float16 tri (this):  N·(N−1)÷2 × 2 =  6.8 GB  ←
+Space comparison for a large N ≈ 85 000 cells:
+    float32 full:        N² × 4  = 27.1 GB
+    float16 full:        N² × 2  = 13.5 GB
+    float16 tri (this):  N·(N−1)÷2 × 2 =  6.8 GB  ←
 
 Usage::
 
@@ -16,7 +16,7 @@ Usage::
     row_i = tri[i]          # full row as float32 (reconstructed on read)
     upper = tri[i, i+1:]    # upper triangle of row i
     block = tri[100:200, :] # block reconstruction
-    print(tri.shape)        # (85233, 85233)
+    print(tri.shape)        # (N, N)
 """
 
 from typing import Literal
@@ -282,7 +282,7 @@ class TriangularMatrix:
 
         The fast path is taken when the underlying storage is a 1-D
         float16 array of length ``n·(n−1)/2`` (the normal case for
-        the blood-atlas memmap).  It:
+        large memmap distance matrices).  It:
 
         1. Reads the entire memmap in one sequential pass;
         2. Allocates a dense float16 (N, N) buffer and fills the
@@ -291,8 +291,8 @@ class TriangularMatrix:
            upper);
         4. Converts to float32 in-place.
 
-        For N = 85 000 this is ~ 25-40 s on a 40 GB machine,
-        replacing the ~ 85-150 s of the row-by-row gather loop.
+        For N ≈ 85 000 this is ≈ 25-40 s on a 40 GB machine,
+        replacing the ≈ 85-150 s of the row-by-row gather loop.
         """
         if hasattr(self, "_dense_cache"):
             return self._dense_cache
