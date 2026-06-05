@@ -4,9 +4,40 @@ Changelog
 
 (unreleased)
 ------------
+- Clean project. [Christophe Bécavin]
+- Merge branch 'main' of github.com:becavin-lab/checkatlas. [Christophe
+  Bécavin]
+- Merge pull request #57 from becavin-lab/preprocess. [Christophe
+  Becavin]
+
+  Preprocess
+- Fix Multiqcprocess. [Christophe Bécavin]
+- Add metric tag in nextflow and configure max jobs. [Christophe
+  Bécavin]
+- First commit on branch preprocess. [Christophe Bécavin]
+- Release: version 0.7.8 🚀 [Christophe Bécavin]
+- Expand installation section in README. [Christophe Becavin]
+
+  Added installation instructions for Conda, Docker, and R.
+- Update installation instructions in README. [Christophe Becavin]
+
+  Clarified installation instructions for checkatlas and added options for JAX optimization and MultiQC installation.
+- Merge pull request #56 from becavin-lab/gpu_jax. [Christophe Becavin]
+
+  Gpu jax
+- Merge branch 'main' into gpu_jax. [Christophe Becavin]
+- Merge pull request #55 from becavin-lab/nextflow. [Christophe Becavin]
+
+  Merge pull request #54 from becavin-lab/gpu_jax
+- Merge pull request #54 from becavin-lab/gpu_jax. [Christophe Becavin]
+
+  optimize the trustworthiness & continuity for the JAX based parallali…
+- Merge branch 'nextflow' into gpu_jax. [Christophe Becavin]
 - Release: version 0.7.7 🚀 [Christophe Bécavin]
 - Fmt and linting. [Christophe Bécavin]
 - Add multithreading on the metrics. [Christophe Bécavin]
+- Optimize the trustworthiness & continuity for the JAX based
+  parallalisation. [RitwikGanguly]
 - Add nextflow params to checkatlas --with_dag --with_timeline
   --with_report + Cleanup files. [Christophe Bécavin]
 - Move main.nf to nextflow/ and clean checkatlas folder. [Christophe
@@ -81,6 +112,9 @@ Changelog
 - Newly updated. [RitwikGanguly]
 - Atlas parameter detector updated. [RitwikGanguly]
 - Metrices updated. [RitwikGanguly]
+- Add nf tuto. [Christophe Bécavin]
+- Add softwareversion. [Christophe Bécavin]
+- General modif for metrics running. [Christophe Bécavin]
 - New files added and updated. [RitwikGanguly]
 - Add tutorial files. [Christophe Bécavin]
 - Modif spatial markdown. [Christophe Bécavin]
