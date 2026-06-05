@@ -253,8 +253,7 @@ def _jax_streaming_knn(
 
     _desc = "GPU kNN + distances (streaming)" if _do_store else "GPU kNN (streaming)"
 
-    with _tqdm(total=total_blocks, desc=_desc,
-               disable=(total_blocks < 10)) as pbar:
+    with _tqdm(total=total_blocks, desc=_desc, disable=(total_blocks < 10)) as pbar:
         for qs in range(0, n, qchunk):
             qe = min(qs + qchunk, n)
             q = jnp.asarray(X[qs:qe], dtype=jnp.float32)
@@ -271,16 +270,14 @@ def _jax_streaming_knn(
 
                 if _do_store:
                     from ._triangular import store_upper_triangle
-                    store_upper_triangle(
-                        tri_memmap._data, D_np, qs, rs, n)
+
+                    store_upper_triangle(tri_memmap._data, D_np, qs, rs, n)
 
                 ref_idx = np.arange(rs, re, dtype=np.int32)[None, :]
                 ref_idx_broad = np.broadcast_to(ref_idx, (qe - qs, re - rs))
 
-                merged_dist = np.concatenate(
-                    [running_dist[qs:qe], D_np], axis=1)
-                merged_idx = np.concatenate(
-                    [running_idx[qs:qe], ref_idx_broad], axis=1)
+                merged_dist = np.concatenate([running_dist[qs:qe], D_np], axis=1)
+                merged_idx = np.concatenate([running_idx[qs:qe], ref_idx_broad], axis=1)
 
                 topk = np.argpartition(merged_dist, k, axis=1)[:, :k]
                 running_dist[qs:qe] = np.take_along_axis(merged_dist, topk, axis=1)
@@ -391,7 +388,10 @@ def compute_neighbors(
             # Large atlas — streaming GPU kNN (query×ref chunked)
             logger.debug(
                 "Streaming GPU kNN (%.1f GB input, chunks q=%d r=%d)",
-                data_gb, 15000, 10000)
+                data_gb,
+                15000,
+                10000,
+            )
             result = _jax_streaming_knn(X_arr, n_neighbors, tri_memmap=tri_memmap)
     else:
         result = _pynndescent_knn(X_arr, n_neighbors, n_jobs=n_jobs)

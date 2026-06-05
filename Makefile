@@ -24,17 +24,23 @@ install:          ## Install the project in dev mode.
 .PHONY: fmt
 fmt:              ## Format code using black & isort.
 	@echo "Run project file formatting"
+	@echo "Run isort import sorting"
 	$(ENV_PREFIX)poetry run isort .
+	@echo "Run black code formatting"
 	$(ENV_PREFIX)poetry run flake8 --max-line-length=90 checkatlas/
+	@echo "Run black code formatting"
 	$(ENV_PREFIX)poetry run black -l 90 .	
 
 .PHONY: lint
 lint:             ## Run pep8, black, mypy linters.
 	@echo "Run project linting"
+	@echo "Run flake8 code style check"
 	$(ENV_PREFIX)poetry run flake8 --max-line-length=90 checkatlas/
 	$(ENV_PREFIX)poetry run flake8 --max-line-length=90 tests/
+	@echo "Run black code style check"
 	$(ENV_PREFIX)poetry run black -l 90 --check checkatlas/
 	$(ENV_PREFIX)poetry run black -l 90 --check tests/
+	@echo "Run mypy type checking"
 	$(ENV_PREFIX)poetry run mypy --ignore-missing-imports checkatlas/
 	$(ENV_PREFIX)poetry run mypy --ignore-missing-imports tests/
 

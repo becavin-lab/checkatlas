@@ -364,9 +364,7 @@ class TriangularMatrix:
                 for i in range(self.n):
                     n_lower = self.n - i - 1
                     if n_lower > 0:
-                        dense16[i + 1:, i] = flat[
-                            starts[i] : starts[i] + n_lower
-                        ]
+                        dense16[i + 1 :, i] = flat[starts[i] : starts[i] + n_lower]
                 return dense16
             except Exception:
                 pass  # fall through to slow path

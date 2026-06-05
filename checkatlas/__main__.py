@@ -4,7 +4,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 try:
@@ -176,7 +175,7 @@ def main() -> None:  # pragma: no cover
                 atlas.create_metric_cluster(adata, atlas_info, args)
                 atlas.create_metric_annot(adata, atlas_info, args)
                 atlas.create_metric_dimred(adata, atlas_info, args)
-            
+
         elif seurat is not None and atlas_type == seurat.SEURAT_TYPE:
             if process == check.PROCESS_TYPE[2]:  # summary
                 seurat_data = seurat.read_atlas(atlas_info)
