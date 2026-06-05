@@ -118,9 +118,7 @@ def create_seurat_data():
 
     """
 
-    url_data = (
-        "https://www.dropbox.com/s/63gnlw45jf7cje8/" "pbmc3k_final.rds?dl=1"
-    )
+    url_data = "https://www.dropbox.com/s/63gnlw45jf7cje8/" "pbmc3k_final.rds?dl=1"
     download_cmd = "curl --location -o " + f"{SEURAT_TEST_PATH} {url_data}"
     print(f"Run download : {download_cmd}")
     os.system(download_cmd)

@@ -222,11 +222,11 @@ def test_annot_metric(atlas_path):
     parser = argparse.ArgumentParser()
     parser.add_argument("--path")
     parser.add_argument("--obs_cluster")
-    parser.add_argument("--metric_annot")
+    parser.add_argument("--metric_annot", nargs="+")
     checkatlas_path = os.getcwd()
     args = parser.parse_args(['--path',checkatlas_path,
                               '--metric_annot',
-                                ["rand_index"],
+                                "rand_index",
                                 "--obs_cluster",atlas.OBS_CLUSTERS])
     folders.checkatlas_folders(checkatlas_path)
     atlas_seurat.metric_annot(seurat_data, atlas_path, args)

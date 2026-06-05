@@ -2,14 +2,23 @@
 __pycache__/
 *.py[cod]
 *$py.class
+test_result/
 dask-worker-space/
 
 # CheckAtlas_*
 tests/data/checkatlas_files/
-multiqc_*
+multiqc_data/
+multiqc_report.html
 
 # powerpoint / office
 docs/~$*
+
+# Presentation drafts
+PRESENTATION.md
+presentation.md
+
+# scFM logos / figures (downloaded from external sources, not for git)
+docs/figures/scfm_logos/
 
 # Nextflow
 .nextflow/
@@ -153,3 +162,4 @@ dmypy.json
 # MACOSX files
 .DS_Store
 
+test_result/
