@@ -162,11 +162,11 @@ def create_parser():
     nf_options.add_argument(
         "--with_report",
         nargs="?",
-        const="report.html",
-        default=None,
+        const="Checkatlas_report.html",
+        default="Checkatlas_report.html",
         metavar="FILE",
-        help="Generate a Nextflow execution report. "
-        "Optionally specify the output filename (default: report.html).",
+        help="Generate a Nextflow execution report (enabled by default). "
+        "Optionally specify the output filename (default: Checkatlas_report.html).",
     )
     nf_options.add_argument(
         "--with_dag",
@@ -181,11 +181,11 @@ def create_parser():
     nf_options.add_argument(
         "--with_timeline",
         nargs="?",
-        const="timeline.html",
-        default=None,
+        const="Checkatlas_timeline.html",
+        default="Checkatlas_timeline.html",
         metavar="FILE",
-        help="Generate a Nextflow execution timeline. "
-        "Optionally specify the output filename (default: timeline.html).",
+        help="Generate a Nextflow execution timeline (enabled by default). "
+        "Optionally specify the output filename (default: Checkatlas_timeline.html).",
     )
     return parser
 
