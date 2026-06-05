@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "checkatlas"
-version = "0.7.7"
+version = "0.7.8"
 description="One liner tool to check the quality of your single-cell atlases."
 authors = ["becavin-lab"]
 readme = "README.md"
@@ -11,6 +11,7 @@ exclude = ["tests/", ".github", "*dask-worker-space*"]
 homepage = "https://checkatlas.readthedocs.io/"
 repository = "https://github.com/becavin-lab/checkatlas/"
 documentation = "https://checkatlas.readthedocs.io/"
+
 
 
 [tool.poetry.dependencies]

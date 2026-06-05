@@ -57,6 +57,7 @@ process QC{
 
 process METRIC_CLUST{
     label 'process_metric_clust'
+    tag "${atlas_info.atlas_name}:${metric}"
 
     input:
     tuple val(atlas_info), val(metric)
@@ -77,6 +78,7 @@ process METRIC_CLUST{
 
 process METRIC_ANNOT{
     label 'process_metric_annot'
+    tag "${atlas_info.atlas_name}:${metric}"
 
     input:
     tuple val(atlas_info), val(metric)
@@ -97,6 +99,7 @@ process METRIC_ANNOT{
 
 process METRIC_DIMRED{
     label 'process_metric_dimred'
+    tag "${atlas_info.atlas_name}:${metric}"
 
     input:
     tuple val(atlas_info), val(metric)
