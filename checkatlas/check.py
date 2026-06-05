@@ -41,7 +41,7 @@ PROCESS_TYPE = [
     "metric_annot",
     "metric_dimred",
     "analyse",
-    "metric"
+    "metric",
 ]
 
 
