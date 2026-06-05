@@ -4,6 +4,7 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.7.7 🚀 [Christophe Bécavin]
 - Fmt and linting. [Christophe Bécavin]
 - Add multithreading on the metrics. [Christophe Bécavin]
 - Add nextflow params to checkatlas --with_dag --with_timeline
