@@ -26,7 +26,7 @@ More information on the [read the doc page](https://checkatlas.readthedocs.io/en
 Powered by nextflow, checkatlas can be ran in one command line:
 
 ```bash
-nextflow run main.nf --path search_folder/
+checkatlas run search_folder/
 ```
 
 The checkatlas workflow start with a fast crawl through your working directory. It detects Seurat (.rds), Scanpy (.h5ad) or cellranger (.h5) atlas files.
@@ -66,21 +66,35 @@ A single html report is produced, using MultiQC, in **checkatlas_files/Checkatla
 
 ## Installation
 
-CheckAtlas is in two parts. The checkatlas pythn module which can be downloaded with PyPi, and the checkatlas workflow which can be downloaded with nextflow.
+### PyPi
+
+The checkatlas python module can be downloaded with PyPi
 
 ```bash
 pip install checkatlas
 ```
 
-
-You need also to install a version of MultiQC with checkatlas capability (for the moment). This version of MultiQC is available at checkatlas branch of github.com:becavin-lab/MultiQC.
+To benefit from the jax optimization of metrics you should install the version corresponding to your hardware
 
 ```bash
-git clone git@github.com:becavin-lab/MultiQC.git
-cd MultiQC/
-git checkout checkatlas
-pip install .
+pip install checkatlas[cpu]        → CPU-only JAX
+pip install checkatlas[cuda13]     → NVIDIA CUDA 13
+pip install checkatlas[tpu]        → Google Cloud TPU
 ```
+
+### Conda
+
+```bash
+conda install bioconda::checkatlas
+```
+
+### Docker
+
+```bash
+docker pull quay.io/biocontainers/checkatlas
+```
+
+### R install (obsolete for now)
 
 Finally, checkatlas comes with rpy2 to perform the interface between python and R. But, it does not automatically install Seurat. So if you want to screen Seurat atlases you need to perfrom this last installation
 

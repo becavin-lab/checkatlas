@@ -4,6 +4,87 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version 0.7.7 🚀 [Christophe Bécavin]
+- Fmt and linting. [Christophe Bécavin]
+- Add multithreading on the metrics. [Christophe Bécavin]
+- Add nextflow params to checkatlas --with_dag --with_timeline
+  --with_report + Cleanup files. [Christophe Bécavin]
+- Move main.nf to nextflow/ and clean checkatlas folder. [Christophe
+  Bécavin]
+- Merge branch 'gpu_jax' of github.com:becavin-lab/checkatlas into
+  gpu_jax. [Christophe Bécavin]
+- Merge branch 'gpu_jax' of https://github.com/becavin-lab/checkatlas
+  into gpu_jax. [RitwikGanguly]
+- Optimized the overhead at dimred calculation for trustworthiness and
+  continuity. [RitwikGanguly]
+- Add guidelines for CLaude. [Christophe Bécavin]
+- Add transfer of checkatlas arguments to nextflow arguments. Metrics
+  can be specified in the nextflow pipeline. [Christophe Bécavin]
+- Optimize the dimred at float16+trainangular. [RitwikGanguly]
+- Add process=metric to run all metric calculation on one single atlas.
+  [Christophe Bécavin]
+- Add process==analyse to run all analysis on one signel atlas.
+  [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Chznge nextflow cmd lines to dopt new arguments. [Christophe Bécavin]
+- Release: version 0.7.6 🚀 [Christophe Bécavin]
+- Update poetry version in github workflows. [Christophe Bécavin]
+- Continuous integration 🔄 tests-0.7.5. [Christophe Bécavin]
+- Formatting and Linting before publishing. [Christophe Bécavin]
+- Add run argument process to run the nextflow pipeline. [Christophe
+  Bécavin]
+- Add run argument process to run the nextflow pipeline. [Christophe
+  Bécavin]
+- Add jax dependencies, remove rpy2. [Christophe Bécavin]
+- Updated the gitignore. [RitwikGanguly]
+- Updated the dimred optimization & time consuming metrices (fixed after
+  running blood atlas) [RitwikGanguly]
+- Added the docs/presentation.md & update the .gitignore.
+  [RitwikGanguly]
+- Updated the dimred calculation. [RitwikGanguly]
+- GPU_JAX pipeline fixed. [RitwikGanguly]
+- GPU_JAX implemented on checkatlas. [RitwikGanguly]
+- GPU_JAX plan for checkatlas. [RitwikGanguly]
+- Nextflow cleaning and reorganization, creation of preprocess function.
+  [Christophe Bécavin]
+- Metric params checkatlas. [RitwikGanguly]
+- Updated the dimred metric calculation. [RitwikGanguly]
+- Clustering metrices updated. [RitwikGanguly]
+- Updated the checkatlas cluster & annotation. [RitwikGanguly]
+- Add test_result to gitignore. [Christophe Bécavin]
+- Updated the annotation. [RitwikGanguly]
+- Sync checkatlas pipeline with arguments.py. [RitwikGanguly]
+- Updated annotation. [RitwikGanguly]
+- Merge branch 'buffer_new' of https://github.com/becavin-lab/checkatlas
+  into buffer_new. [RitwikGanguly]
+- Update poetry file with new multiqc. [Christophe Bécavin]
+- Updated. [RitwikGanguly]
+- Updated the checkatlas annot flow. [RitwikGanguly]
+- Added col_detector. [RitwikGanguly]
+- The notebook has been added. [RitwikGanguly]
+- Added metrics, and big update before ;erging. [RitwikGanguly]
+- Add List datasets. [Christophe Bécavin]
+- Add List datasets. [Christophe Bécavin]
+- Add List datasets. [Christophe Bécavin]
+- Add List datasets. [Christophe Bécavin]
+- Updated the dimred optimization report. [RitwikGanguly]
+- Updated dimred task assessment. [RitwikGanguly]
+- Update the cal_dimred. [RitwikGanguly]
+- Demred metrices updated. [RitwikGanguly]
+- Dimred metrices updated. [RitwikGanguly]
+- Added the dimred metrices. [RitwikGanguly]
+- Added & updated new metrices. [RitwikGanguly]
+- Newly updated. [RitwikGanguly]
+- Atlas parameter detector updated. [RitwikGanguly]
+- Metrices updated. [RitwikGanguly]
+- New files added and updated. [RitwikGanguly]
+- Add tutorial files. [Christophe Bécavin]
+- Modif spatial markdown. [Christophe Bécavin]
+- Release: version 0.7.1 🚀 [Christophe Bécavin]
 - Updates doc tables. [Christophe Bécavin]
 - Release: version 0.7.0 🚀 [Christophe Bécavin]
 - Release: version  🚀 [Christophe Bécavin]
