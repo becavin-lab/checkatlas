@@ -13,6 +13,7 @@ repository = "https://github.com/becavin-lab/checkatlas/"
 documentation = "https://checkatlas.readthedocs.io/"
 
 
+
 [tool.poetry.dependencies]
 python = ">=3.12"
 scikit-learn = ">=1.7.0"
