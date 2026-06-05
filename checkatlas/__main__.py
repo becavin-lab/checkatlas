@@ -146,7 +146,7 @@ def main() -> None:  # pragma: no cover
             or atlas_type == cellranger.CELLRANGER_TYPE_CURRENT
             or atlas_type == cellranger.CELLRANGER_TYPE_OBSOLETE
         ):
-            adata = atlas.preprocess_atlas(atlas_info)
+            adata = atlas.preprocess_atlas(atlas_info, args)
             if process == check.PROCESS_TYPE[2]:  # summary
                 atlas.create_summary_table(adata, atlas_info, args)
                 atlas.create_anndata_table(adata, atlas_info, args)
