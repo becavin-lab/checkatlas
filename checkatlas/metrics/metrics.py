@@ -1478,24 +1478,15 @@ def cal_dimred(
             sig = inspect.signature(metric_module.run)
             params = sig.parameters
 
-            # ── Materialize TriangularMatrix only when needed ───────
-            # Trust/continuity use the shared _rank_penalty helper,
-            # which needs row-sortable dense buffers.  Force
-            # to_dense() for those two so the helper doesn't have to
-            # pay the per-row gather cost on a memmap-backed
-            # TriangularMatrix.
-            _JOBLIB_METRICS = frozenset(("trustworthiness", "continuity"))
-            _high_mat = high_dim_dists
-            _low_mat = low_dim_dists
-            if metric_name in _JOBLIB_METRICS:
-                if isinstance(high_dim_dists, TriangularMatrix):
-                    _high_mat = high_dim_dists.to_dense()
-                if isinstance(low_dim_dists, TriangularMatrix):
-                    _low_mat = (
-                        low_dim_dists.to_dense()
-                        if low_dim_dists is not None
-                        else None
-                    )
+            # NOTE: We deliberately do NOT pre-materialise
+            # TriangularMatrix to dense for trust/continuity.  The
+            # shared _rank_penalty helper has a per-row CPU path
+            # that reads the memmap on demand — significantly faster
+            # than ``to_dense()`` (≈ 25-150 s depending on N) plus
+            # the sort+searchsorted loop.  The helper's own
+            # ``_decide_backend`` picks the best path for the input
+            # type (TriangularMatrix → per-row CPU, dense ndarray
+            # → JAX single-shot GPU).
 
             try:
                 kwargs = {}
@@ -1528,9 +1519,9 @@ def cal_dimred(
                 if "precomputed_low_knn_dists" in params:
                     kwargs["precomputed_low_knn_dists"] = low_knn_dists
                 if "precomputed_high_dists" in params:
-                    kwargs["precomputed_high_dists"] = _high_mat
+                    kwargs["precomputed_high_dists"] = high_dim_dists
                 if "precomputed_low_dists" in params:
-                    kwargs["precomputed_low_dists"] = _low_mat
+                    kwargs["precomputed_low_dists"] = low_dim_dists
 
                 value = metric_module.run(adata, **kwargs)
                 elapsed = round(time.time() - t_start, 3)
