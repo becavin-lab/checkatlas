@@ -9,7 +9,11 @@ checkatlas_path=/home/moccia/checkatlas
 # nextflow
 nextflow run main.nf --path=/data/analysis/data_ganguly --outdir=/data/analysis/data_moccia/checkatlas/tuto/data1/
 
-# metric (default)
+checkatlas-wf = "nextflow run main.nf" --multiqc  folder/
+
+--multiqc = Run only multiqc
+
+# metric (default) data per data
 checkatlas metric_cluster Fetal ${data_path} --debug
 checkatlas metric_annot Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug
 checkatlas metric_dimred Fetal /data/analysis/data_moccia/checkatlas/tuto/data1 --debug 
