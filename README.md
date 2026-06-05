@@ -66,6 +66,8 @@ A single html report is produced, using MultiQC, in **checkatlas_files/Checkatla
 
 ## Installation
 
+### PyPi
+
 The checkatlas python module can be downloaded with PyPi
 
 ```bash
@@ -80,6 +82,19 @@ pip install checkatlas[cuda13]     → NVIDIA CUDA 13
 pip install checkatlas[tpu]        → Google Cloud TPU
 ```
 
+### Conda
+
+```bash
+conda install bioconda::checkatlas
+```
+
+### Docker
+
+```bash
+docker pull quay.io/biocontainers/checkatlas
+```
+
+### R install (obsolete for now)
 
 Finally, checkatlas comes with rpy2 to perform the interface between python and R. But, it does not automatically install Seurat. So if you want to screen Seurat atlases you need to perfrom this last installation
 
