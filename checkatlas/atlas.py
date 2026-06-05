@@ -15,11 +15,27 @@ from sklearn.utils.fixes import _object_dtype_isnan
 try:
     from . import cellranger, check
     from .metrics import metrics
+    from .metrics._cache import load_dimred_cache, save_dimred_cache, save_knn
+    from .metrics._neighbors import NeighborResults, compute_neighbors
+    from .metrics._preprocess_context import (
+        PreprocessContext,
+        load_context,
+        make_preprocess_fingerprint,
+        save_context,
+    )
     from .utils import files, folders
     from .utils.col_detector import CheckAtlasColumnDetector
 except ImportError:
     from checkatlas import cellranger, check
     from checkatlas.metrics import metrics
+    from checkatlas.metrics._cache import load_dimred_cache, save_dimred_cache, save_knn
+    from checkatlas.metrics._neighbors import NeighborResults, compute_neighbors
+    from checkatlas.metrics._preprocess_context import (
+        PreprocessContext,
+        load_context,
+        make_preprocess_fingerprint,
+        save_context,
+    )
     from checkatlas.utils import files, folders
     from checkatlas.utils.col_detector import CheckAtlasColumnDetector
 
@@ -62,18 +78,475 @@ warnings.simplefilter(action="ignore", category=UserWarning)
 sc.settings.verbosity = 0
 
 
-def preprocess_atlas(atlas_info: dict) -> AnnData:
+_PRECOMPUTE_PROCESSES = frozenset(
+    ("preprocess", "metric_cluster", "metric_annot", "metric_dimred", "metric", "analyse")
+)
+
+
+def _metrics_enabled(metric_list):
+    """Return True if *metric_list* is non-empty and not ['none']."""
+    return bool(metric_list) and metric_list != ["none"]
+
+
+def _should_precompute(args) -> bool:
+    """Return True if at least one metric category is non-['none']."""
+    if args is None:
+        return False
+    return (
+        _metrics_enabled(args.metric_cluster)
+        or _metrics_enabled(args.metric_annot)
+        or _metrics_enabled(args.metric_dimred)
+    )
+
+
+def _wants_task(args, task: str) -> bool:
+    """Return True if *args* implies the given *task* precomputation is needed."""
+    if args is None:
+        return False
+    process = getattr(args, "process", "preprocess")
+    if process not in _PRECOMPUTE_PROCESSES:
+        return False
+    if task == "cluster":
+        return _metrics_enabled(args.metric_cluster)
+    elif task == "annot":
+        return _metrics_enabled(args.metric_annot)
+    elif task == "dimred":
+        return _metrics_enabled(args.metric_dimred)
+    return False
+
+
+def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
     """
-    Read adata, clean it, and create per-atlas temp directories
-    for cached precomputation storage.
+    Read adata, clean it, and run task-specific precomputations
+    (column detection, kNN graphs, distance matrices, etc.) based
+    on which metric categories are requested in *args*.
+
+    Precomputed artefacts are persisted under
+    ``checkatlas_files/temp/<atlas>/<task>/`` so that downstream
+    child processes (including Nextflow metric steps) can skip
+    redundant computation.
+
+    When *args* is ``None`` the function behaves exactly like the
+    legacy version: read + clean only.
 
     Returns the cleaned AnnData object.
     """
     adata = read_atlas(atlas_info)
     adata = clean_scanpy_atlas(adata, atlas_info)
-    # Note: args.path is needed for folder creation — temp dirs
-    # are created lazily by the metric functions via file_dir.
+
+    if not _should_precompute(args):
+        return adata
+
+    run_cluster = _wants_task(args, "cluster")
+    run_annot = _wants_task(args, "annot")
+    run_dimred = _wants_task(args, "dimred")
+
+    if not (run_cluster or run_annot or run_dimred):
+        return adata
+
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+    source_path = atlas_info.get(check.ATLAS_PATH_KEY, None)
+
+    # ── 1. Column detection (once) ──────────────────────────────────
+    detector = CheckAtlasColumnDetector(adata)
+    params = detector.detect_all_parameters()
+
+    ref_keys = [c for c, _ in params["annotation"]["reference"]]
+    pred_keys = [c for c, _ in params["annotation"]["predicted"]]
+    cluster_label_keys = [c for c, _ in params["clustering"]["cluster_labels"]]
+    batch_keys = [c for c, _ in params.get("batch", [])]
+    if not batch_keys:
+        batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
+
+    embedding_keys = []
+    cluster_embedding_keys = []
+    for emb, meta in params["clustering"]["embeddings"]:
+        embedding_keys.append(emb)
+        if meta.get("n_components", 0) > 3:
+            cluster_embedding_keys.append(emb)
+    # Also add ALL .obsm keys for annotation/dimred use
+    all_obsm_keys = adata.obsm_keys()
+    for key in all_obsm_keys:
+        if key not in embedding_keys:
+            embedding_keys.append(key)
+
+    k_max = 90  # covers LISI (90) and kBET (25 via subset)
+    fingerprint = make_preprocess_fingerprint(
+        adata,
+        embedding_keys=embedding_keys,
+        cluster_label_keys=cluster_label_keys,
+        batch_keys=batch_keys,
+        k_neighbors=k_max,
+        source_path=source_path,
+    )
+
+    # ── 2. Early exit: cached context still valid ──────────────────
+    temp_parent = folders.get_folder(args.path, folders.TEMP)
+    existing = load_context(atlas_name, temp_parent, fingerprint)
+    if existing is not None:
+        logger.info("Precompute context already valid — skipping recomputation")
+        return adata
+
+    # ── 3. Build fresh context ─────────────────────────────────────
+    ctx = PreprocessContext(
+        atlas_name=atlas_name,
+        fingerprint=fingerprint,
+        ref_keys=ref_keys,
+        pred_keys=pred_keys,
+        embedding_keys=embedding_keys,
+        cluster_embedding_keys=cluster_embedding_keys,
+        cluster_label_keys=cluster_label_keys,
+        batch_keys=batch_keys,
+        temp_parent_dir=temp_parent,
+        dimred_dir=os.path.join(temp_parent, atlas_name, folders.DIMRED),
+        annotation_dir=os.path.join(temp_parent, atlas_name, folders.ANNOTATION),
+        cluster_dir=os.path.join(temp_parent, atlas_name, folders.CLUSTER),
+    )
+    for d in (ctx.dimred_dir, ctx.annotation_dir, ctx.cluster_dir):
+        os.makedirs(d, exist_ok=True)
+
+    # ── 4. Task-specific precomputation ────────────────────────────
+    n_jobs = getattr(args, "n_jobs", -1) if args is not None else -1
+
+    if run_dimred:
+        _precompute_dimred(adata, ctx, k_neighbors=30, n_jobs=n_jobs)
+
+    if run_annot:
+        _precompute_annot(adata, ctx, k_neighbors=90, n_jobs=n_jobs)
+
+    if run_cluster:
+        _precompute_cluster(adata, ctx, k_neighbors=30, n_jobs=n_jobs)
+
+    # ── 5. Persist context ─────────────────────────────────────────
+    save_context(ctx)
+
     return adata
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Precompute helpers — one per task category
+# ═══════════════════════════════════════════════════════════════════════
+
+
+def _precompute_dimred(
+    adata: AnnData,
+    ctx: PreprocessContext,
+    k_neighbors: int = 90,
+    n_jobs: int = -1,
+    chunk_size: int = 1000,
+) -> None:
+    """Precompute high-dim and per-embedding dimred distance matrices + kNN.
+
+    Writes to ``ctx.dimred_dir`` in the format expected by
+    :func:`save_dimred_cache` so that :func:`cal_dimred` can reuse
+    the results via :func:`load_dimred_cache`.
+    """
+    logger.info("Precomputing dimred: %d embedding(s)", len(ctx.cluster_embedding_keys))
+
+    n_obs = adata.n_obs
+    sample_indices = np.arange(n_obs)
+    n_cells = n_obs
+
+    high_dim_key = "X"
+    if high_dim_key == "X":
+        high_dim_data = adata.X[sample_indices]
+        if hasattr(high_dim_data, "toarray"):
+            high_dim_data = high_dim_data.toarray()
+    else:
+        high_dim_data = adata.obsm[high_dim_key][sample_indices]
+
+    high_n_features = high_dim_data.shape[1]
+    use_memmap = n_cells > 10000
+
+    # ── Fingerprint for cache validation ────────────────────────
+    emb_to_eval = [k for k in ctx.cluster_embedding_keys if k != high_dim_key]
+    if not emb_to_eval:
+        logger.warning("No embeddings to precompute for dimred")
+        return
+
+    fp = make_preprocess_fingerprint(
+        adata,
+        embedding_keys=emb_to_eval,
+        cluster_label_keys=ctx.cluster_label_keys,
+        batch_keys=ctx.batch_keys,
+        k_neighbors=k_neighbors,
+        source_path=ctx.fingerprint.get("source_path"),
+    )
+
+    cached = load_dimred_cache(ctx.dimred_dir, fp, n_cells, emb_to_eval)
+    if cached is not None:
+        logger.info("Dimred cache exists — skipping recomputation")
+        return
+
+    # ── High-dim kNN ─────────────────────────────────────────────
+    logger.info("  Computing high-dim kNN (k=%d)...", k_neighbors + 1)
+    try:
+        high_knn = compute_neighbors(
+            np.asarray(high_dim_data, dtype=np.float64),
+            n_neighbors=k_neighbors + 1,
+            backend="auto",
+        )
+        high_knn_dists = high_knn.distances
+        high_knn_indices = high_knn.indices
+    except Exception as exc:
+        logger.warning("High-dim kNN failed: %s", exc)
+        from sklearn.neighbors import NearestNeighbors
+
+        nbrs = NearestNeighbors(n_neighbors=k_neighbors + 1, n_jobs=n_jobs).fit(
+            high_dim_data
+        )
+        high_knn_dists, high_knn_indices = nbrs.kneighbors(high_dim_data)
+
+    # ── High-dim distance matrix ──────────────────────────────────
+    _DIST_METRICS = frozenset(
+        ("kruskal_stress", "spearman_rho", "dCor", "trustworthiness", "continuity")
+    )
+    need_high_dists = bool(set(ctx.fingerprint.get("metric_dimred", _DIST_METRICS)) & _DIST_METRICS)
+
+    high_dim_dists = None
+    if need_high_dists:
+        if use_memmap:
+            import uuid
+
+            run_id = str(uuid.uuid4())[:8]
+            from .metrics._triangular import TriangularMatrix, store_upper_triangle
+
+            high_dists_path = os.path.join(ctx.dimred_dir, f"high_dists_{run_id}.tri")
+            high_dim_dists = TriangularMatrix(
+                n=n_cells, filepath=high_dists_path, mode="w+"
+            )
+            for i in range(0, n_cells, chunk_size):
+                end = min(i + chunk_size, n_cells)
+                from sklearn.metrics import pairwise_distances
+
+                block = pairwise_distances(
+                    high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
+                )
+                store_upper_triangle(high_dim_dists._data, block, i, 0, n_cells)
+                high_dim_dists.flush()
+        else:
+            from sklearn.metrics import pairwise_distances
+
+            high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
+            for i in range(0, n_cells, chunk_size):
+                end = min(i + chunk_size, n_cells)
+                high_dim_dists[i:end, :] = pairwise_distances(
+                    high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
+                )
+
+    # ── Per-embedding low-dim kNN + distances ────────────────────
+    low_dim_data_cache = {}
+    for emb_key in emb_to_eval:
+        low_dim_data = adata.obsm[emb_key][sample_indices]
+        low_n_cells = low_dim_data.shape[0]
+
+        logger.info("  Computing low-dim kNN for %s...", emb_key)
+        try:
+            low_knn = compute_neighbors(
+                np.asarray(low_dim_data, dtype=np.float64),
+                n_neighbors=k_neighbors + 1,
+                backend="auto",
+            )
+            low_knn_dists = low_knn.distances
+            low_knn_indices = low_knn.indices
+        except Exception:
+            from sklearn.neighbors import NearestNeighbors
+
+            nbrs_low = NearestNeighbors(
+                n_neighbors=k_neighbors + 1, n_jobs=n_jobs
+            ).fit(low_dim_data)
+            low_knn_dists, low_knn_indices = nbrs_low.kneighbors(low_dim_data)
+
+        low_dists = None
+        if need_high_dists:
+            if use_memmap:
+                import uuid
+
+                run_id = str(uuid.uuid4())[:8]
+                safe_name = emb_key.replace("/", "_").replace(" ", "_")
+                from .metrics._triangular import TriangularMatrix, store_upper_triangle
+
+                low_dists_path = os.path.join(
+                    ctx.dimred_dir, f"low_dists_{safe_name}_{run_id}.tri"
+                )
+                low_dists = TriangularMatrix(
+                    n=low_n_cells, filepath=low_dists_path, mode="w+"
+                )
+                for i in range(0, low_n_cells, chunk_size):
+                    end = min(i + chunk_size, low_n_cells)
+                    from sklearn.metrics import pairwise_distances
+
+                    block = pairwise_distances(
+                        low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
+                    )
+                    store_upper_triangle(low_dists._data, block, i, 0, low_n_cells)
+                    low_dists.flush()
+            else:
+                from sklearn.metrics import pairwise_distances
+
+                low_dists = np.zeros((low_n_cells, low_n_cells), dtype=np.float32)
+                for i in range(0, low_n_cells, chunk_size):
+                    end = min(i + chunk_size, low_n_cells)
+                    low_dists[i:end, :] = pairwise_distances(
+                        low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
+                    )
+
+        low_dim_data_cache[emb_key] = {
+            "dists": low_dists,
+            "knn_indices": low_knn_indices,
+            "knn_dists": low_knn_dists,
+        }
+
+    # ── Persist to cache ─────────────────────────────────────────
+    try:
+        save_dimred_cache(
+            ctx.dimred_dir,
+            fp,
+            high_dim_dists=high_dim_dists,
+            high_knn_dists=high_knn_dists,
+            high_knn_indices=high_knn_indices,
+            low_dim_data=low_dim_data_cache,
+            low_dim_keys=emb_to_eval,
+        )
+        logger.info("Dimred precomputation saved to %s", ctx.dimred_dir)
+    except Exception as exc:
+        logger.warning("Failed to save dimred cache: %s", exc)
+
+    # Clean up non-memmap arrays
+    if high_dim_dists is not None and not hasattr(high_dim_dists, "_filepath"):
+        del high_dim_dists
+    import gc
+
+    gc.collect()
+
+
+def _precompute_annot(
+    adata: AnnData,
+    ctx: PreprocessContext,
+    k_neighbors: int = 90,
+    n_jobs: int = -1,
+) -> None:
+    """Precompute kNN graphs and neighbour graphs for annotation metrics.
+
+    - Per-embedding kNN at k=90 (covers LISI's 90 and kBET's 25 via subset)
+    - Per-embedding ``sc.pp.neighbors`` for ``graph_connectivity``
+
+    Saves ``.npz`` files to ``ctx.annotation_dir`` and stores paths in
+    ``ctx.knn_paths`` and neighbour-graph CSRs in ``ctx.neighbor_graphs``.
+    """
+    logger.info("Precomputing annotation: %d embedding(s)", len(ctx.embedding_keys))
+    import gc
+
+    safe_name = lambda s: s.replace("/", "_").replace(" ", "_")
+
+    for emb in ctx.embedding_keys:
+        if emb not in adata.obsm:
+            continue
+        X_emb = np.asarray(adata.obsm[emb], dtype=np.float64)
+        n_cells = X_emb.shape[0]
+        k_eff = min(k_neighbors + 1, n_cells - 1)
+
+        # ── kNN graph ──────────────────────────────────────────
+        try:
+            knn = compute_neighbors(X_emb, n_neighbors=k_eff, backend="auto")
+        except Exception:
+            from sklearn.neighbors import NearestNeighbors
+
+            nbrs = NearestNeighbors(n_neighbors=k_eff, n_jobs=n_jobs).fit(X_emb)
+            dists, idx = nbrs.kneighbors(X_emb)
+            knn = NeighborResults(indices=idx, distances=dists)
+
+        sn = safe_name(emb)
+        npz_path = os.path.join(ctx.annotation_dir, f"knn_{sn}.npz")
+        save_knn(
+            ctx.annotation_dir, f"knn_{sn}", knn.indices, knn.distances
+        )
+        ctx.knn_paths[emb] = npz_path
+
+        # ── Neighbour graph for graph_connectivity ──────────────
+        key_added = f"neighbors_{emb}"
+        try:
+            sc.pp.neighbors(adata, use_rep=emb, key_added=key_added)
+            neighbor_payload = {}
+            if key_added in adata.uns:
+                neighbor_payload["uns_entry"] = {
+                    k: v
+                    for k, v in adata.uns[key_added].items()
+                    if k in ("params", "connectivities_key", "distances_key")
+                }
+                conn_key = adata.uns[key_added].get("connectivities_key", "connectivities")
+                dist_key = adata.uns[key_added].get("distances_key", "distances")
+                if conn_key in adata.obsp:
+                    neighbor_payload["connectivities"] = adata.obsp[conn_key]
+                if dist_key in adata.obsp:
+                    neighbor_payload["distances"] = adata.obsp[dist_key]
+            neighbor_payload["key_added"] = key_added
+            ctx.neighbor_graphs[emb] = neighbor_payload
+        except Exception as exc:
+            logger.warning("Failed sc.pp.neighbors for %s: %s", emb, exc)
+
+        gc.collect()
+
+    logger.info("Annotation precomputation complete (%d kNN graphs)", len(ctx.knn_paths))
+
+
+def _precompute_cluster(
+    adata: AnnData,
+    ctx: PreprocessContext,
+    k_neighbors: int = 90,
+    n_jobs: int = -1,
+    chunk_size: int = 1000,
+) -> None:
+    """Precompute per-embedding distance matrices for cluster metrics
+    (primarily ``silhouette`` via ``precomputed_dists``).  Saves as
+    upper-triangle float16 ``.tri`` files to ``ctx.cluster_dir``.
+    """
+    if not ctx.cluster_embedding_keys:
+        ctx.cluster_embedding_keys = ctx.embedding_keys
+
+    logger.info(
+        "Precomputing cluster distances: %d embedding(s)",
+        len(ctx.cluster_embedding_keys),
+    )
+    import gc
+
+    from sklearn.metrics import pairwise_distances
+
+    from .metrics._triangular import TriangularMatrix, store_upper_triangle
+
+    safe_name = lambda s: s.replace("/", "_").replace(" ", "_")
+
+    for emb in ctx.cluster_embedding_keys:
+        if emb == "X":
+            X_emb = adata.X
+            if hasattr(X_emb, "toarray"):
+                X_emb = X_emb.toarray()
+        else:
+            if emb not in adata.obsm:
+                continue
+            X_emb = np.asarray(adata.obsm[emb])
+
+        n_cells = X_emb.shape[0]
+        tri_path = os.path.join(ctx.cluster_dir, f"dist_{safe_name(emb)}.tri")
+
+        # Don't overwrite existing files
+        if os.path.exists(tri_path):
+            continue
+
+        if n_cells > 10000:
+            tri = TriangularMatrix(n=n_cells, filepath=tri_path, mode="w+")
+            for i in range(0, n_cells, chunk_size):
+                end = min(i + chunk_size, n_cells)
+                block = pairwise_distances(X_emb[i:end], X_emb, n_jobs=n_jobs)
+                store_upper_triangle(tri._data, block, i, 0, n_cells)
+            tri.flush()
+        else:
+            dists = pairwise_distances(X_emb, n_jobs=n_jobs)
+            np.save(tri_path.replace(".tri", ".npy"), dists.astype(np.float32))
+
+        gc.collect()
+
+    logger.info("Cluster precomputation complete")
 
 
 def detect_scanpy(atlas_path: str) -> dict:
@@ -523,6 +996,38 @@ def create_tsne_fig(adata: AnnData, atlas_info: dict, args: argparse.Namespace) 
             sc.pl.tsne(adata, show=False, save=tsne_path)
 
 
+def _try_load_context(atlas_info: dict, args) -> PreprocessContext | None:
+    """Build a minimal fingerprint from the currently-loaded atlas and
+    attempt to load a previously-saved :class:`PreprocessContext`.
+
+    Returns ``None`` if the context file is missing, the fingerprint
+    mismatches, or the atlas source file has changed.
+    """
+    try:
+        atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+        temp_parent = folders.get_folder(args.path, folders.TEMP)
+        source_path = atlas_info.get(check.ATLAS_PATH_KEY, None)
+
+        # Minimal fingerprint — only source file identity.
+        # fingerprint_match allows missing fields, so we only fill
+        # the fields we can cheaply determine without a full reload.
+        fp = {
+            "n_cells": 0,
+            "n_features": 0,
+            "embedding_keys": [],
+            "embedding_shapes": {},
+            "k_neighbors": 90,
+            "cluster_label_keys": [],
+            "batch_keys": [],
+        }
+        if source_path and os.path.exists(source_path):
+            fp["source_mtime"] = os.path.getmtime(source_path)
+            fp["source_path"] = source_path
+        return load_context(atlas_name, temp_parent, fp)
+    except Exception:
+        return None
+
+
 def create_metric_cluster(
     adata: AnnData, atlas_info: dict, args: argparse.Namespace
 ) -> None:
@@ -550,6 +1055,8 @@ def create_metric_cluster(
 
     logger.info("Running full clustering pipeline for %s", atlas_name)
 
+    preprocess_ctx = _try_load_context(atlas_info, args)
+
     df = metrics.cal_cluster(
         adata,
         atlas_name=atlas_name,
@@ -558,6 +1065,7 @@ def create_metric_cluster(
         n_jobs=-1,
         verbose=True,
         seed=42,
+        preprocess_context=preprocess_ctx,
     )
 
     if not df.empty:
@@ -599,19 +1107,19 @@ def create_metric_annot(
 
     logger.info("Running full annotation pipeline for %s", atlas_name)
 
-    # cal_annot auto-detects columns, runs specified metrics (ref-vs-pred
-    # plus embedding/batch/graph-dependent ones), and saves its own CSV.
+    preprocess_ctx = _try_load_context(atlas_info, args)
+
     df = metrics.cal_annot(
         adata,
         atlas_name=atlas_name,
         metric_list=args.metric_annot,
-        all=True,  # fallback: run every metric in METRICS_ANNOT
+        all=True,
         file_dir=annotation_dir,
         n_jobs=-1,
         verbose=True,
+        preprocess_context=preprocess_ctx,
     )
 
-    # Also write a MultiQC-compatible TSV in the annotation folder.
     if not df.empty:
         csv_path = files.get_file_path(
             atlas_name,
