@@ -4,6 +4,33 @@ Changelog
 
 (unreleased)
 ------------
+- Fmt and linting. [Christophe Bécavin]
+- Add multithreading on the metrics. [Christophe Bécavin]
+- Add nextflow params to checkatlas --with_dag --with_timeline
+  --with_report + Cleanup files. [Christophe Bécavin]
+- Move main.nf to nextflow/ and clean checkatlas folder. [Christophe
+  Bécavin]
+- Merge branch 'gpu_jax' of github.com:becavin-lab/checkatlas into
+  gpu_jax. [Christophe Bécavin]
+- Merge branch 'gpu_jax' of https://github.com/becavin-lab/checkatlas
+  into gpu_jax. [RitwikGanguly]
+- Optimized the overhead at dimred calculation for trustworthiness and
+  continuity. [RitwikGanguly]
+- Add guidelines for CLaude. [Christophe Bécavin]
+- Add transfer of checkatlas arguments to nextflow arguments. Metrics
+  can be specified in the nextflow pipeline. [Christophe Bécavin]
+- Optimize the dimred at float16+trainangular. [RitwikGanguly]
+- Add process=metric to run all metric calculation on one single atlas.
+  [Christophe Bécavin]
+- Add process==analyse to run all analysis on one signel atlas.
+  [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Add permanent TODO list to docs. [Christophe Bécavin]
+- Chznge nextflow cmd lines to dopt new arguments. [Christophe Bécavin]
+- Release: version 0.7.6 🚀 [Christophe Bécavin]
 - Update poetry version in github workflows. [Christophe Bécavin]
 - Continuous integration 🔄 tests-0.7.5. [Christophe Bécavin]
 - Formatting and Linting before publishing. [Christophe Bécavin]

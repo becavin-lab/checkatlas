@@ -21,13 +21,18 @@ logger.debug() should be used for every other info.
 - Clean-up metrics.cal_annot: remove unecessary preprocessing, everything should be in atlas.preprocess_atlas
 - Clean-up metrics.cal_dimred: remove unecessary preprocessing, everything should be in atlas.preprocess_atlas
 
+- Clean code, format code, lint code : make fmt and make lint
+poetry install --with dev
+
+
+
 ### Nextflow:
 - Run a process for every metrics: The multiprocessing will be managed by nextflow.
 
 
 ## Futur
 - Add specificity metrics
-
+- Create test functions : make test and tests/ folder
 
 
 

@@ -157,7 +157,9 @@ if _JAX_AVAILABLE:
         """JIT-compiled per-row searchsorted used under vmap."""
 
         @jax.jit
-        def _per_row(sorted_row: "jnp.ndarray", nbr_dists: "jnp.ndarray") -> "jnp.ndarray":
+        def _per_row(
+            sorted_row: "jnp.ndarray", nbr_dists: "jnp.ndarray"
+        ) -> "jnp.ndarray":
             return jnp.searchsorted(sorted_row, nbr_dists, side="left")
 
         def _batched(h_sorted: "jnp.ndarray", nbr_dists: "jnp.ndarray") -> "jnp.ndarray":
@@ -189,8 +191,11 @@ if _JAX_AVAILABLE:
         # Build the symmetric (n, n) f16 matrix on the host.
         # We re-use the fast path from TriangularMatrix._to_dense_f16
         # if the input looks like an upper-triangle 1-D f16 buffer.
-        if flat_upper.ndim == 1 and flat_upper.dtype == np.float16 \
-                and flat_upper.shape[0] == n * (n - 1) // 2:
+        if (
+            flat_upper.ndim == 1
+            and flat_upper.dtype == np.float16
+            and flat_upper.shape[0] == n * (n - 1) // 2
+        ):
             dense16 = np.zeros((n, n), dtype=np.float16)
             iu = np.triu_indices(n, k=1)
             dense16[iu] = flat_upper
@@ -201,9 +206,7 @@ if _JAX_AVAILABLE:
             for i in range(n):
                 n_lower = n - i - 1
                 if n_lower > 0:
-                    dense16[i + 1:, i] = flat_upper[
-                        starts[i] : starts[i] + n_lower
-                    ]
+                    dense16[i + 1 :, i] = flat_upper[starts[i] : starts[i] + n_lower]
         else:
             # Fallback: caller provided a non-standard buffer; use
             # the dense host array directly.
@@ -241,7 +244,9 @@ if _JAX_AVAILABLE:
         del dense, nbr_dists_jax, total
         return result
 
-    def _rank_penalty_jax_single_shot_f32(h: np.ndarray, nbr_dists: np.ndarray, k: int) -> float:
+    def _rank_penalty_jax_single_shot_f32(
+        h: np.ndarray, nbr_dists: np.ndarray, k: int
+    ) -> float:
         """Standard float32 single-shot path for N <= 50_000."""
         h_jax = jnp.asarray(h, dtype=jnp.float32)
         nd_jax = jnp.asarray(nbr_dists, dtype=jnp.float32)
@@ -383,10 +388,15 @@ def _decide_backend(n: int, requested: str = "auto") -> str:
     single-shot which pays the ≈ 150 s host-side symmetrize cost).
     """
     if requested in (
-        "jax_single_shot_f16", "jax_single_shot_f32", "jax_chunked", "cpu",
+        "jax_single_shot_f16",
+        "jax_single_shot_f32",
+        "jax_chunked",
+        "cpu",
     ):
         if requested.startswith("jax") and not _JAX_AVAILABLE:
-            logger.warning("JAX backend requested but JAX is unavailable — falling back to CPU")
+            logger.warning(
+                "JAX backend requested but JAX is unavailable — falling back to CPU"
+            )
             return "cpu"
         return requested
 
@@ -468,32 +478,28 @@ def rank_penalty(
         eligible, n_tri = _triangular_layout(high_dists)
         if eligible and n_tri == n:
             flat_upper = _read_triangular_upper(high_dists)  # 1D float16
-            nbr_dists = _gather_nbr_dists_from_upper(
-                flat_upper, nbr_idx, n
-            )
-            return _rank_penalty_jax_single_shot_f16(
-                flat_upper, nbr_dists, n, k
-            )
+            nbr_dists = _gather_nbr_dists_from_upper(flat_upper, nbr_idx, n)
+            return _rank_penalty_jax_single_shot_f16(flat_upper, nbr_dists, n, k)
         # If the TriangularMatrix is in an unusual layout, fall
         # through to the chunked path which uses _row_block.
         backend = "jax_chunked"
 
     # ── GPU float16 single-shot on raw float16 buffer ──
     # (Not used in production but supported for tests.)
-    if backend == "jax_single_shot_f16" and isinstance(high_dists, np.ndarray) \
-            and high_dists.dtype == np.float16 and high_dists.ndim == 1 \
-            and high_dists.shape[0] == n * (n - 1) // 2:
+    if (
+        backend == "jax_single_shot_f16"
+        and isinstance(high_dists, np.ndarray)
+        and high_dists.dtype == np.float16
+        and high_dists.ndim == 1
+        and high_dists.shape[0] == n * (n - 1) // 2
+    ):
         flat_upper = np.asarray(high_dists, dtype=np.float16).copy()
         nbr_dists = _gather_nbr_dists_from_upper(flat_upper, nbr_idx, n)
-        return _rank_penalty_jax_single_shot_f16(
-            flat_upper, nbr_dists, n, k
-        )
+        return _rank_penalty_jax_single_shot_f16(flat_upper, nbr_dists, n, k)
 
     # ── GPU chunked ──
     if backend == "jax_chunked":
-        return _rank_penalty_jax_chunked(
-            high_dists, nbr_idx, k, chunk=chunk_size
-        )
+        return _rank_penalty_jax_chunked(high_dists, nbr_idx, k, chunk=chunk_size)
 
     # ── float32 single-shot / CPU: need the full high_dists ──
     # For TriangularMatrix inputs in the CPU path, skip the
@@ -590,8 +596,6 @@ def self_excluded_knn(
         block[rows - i0, self_idx] = np.inf
         topk = np.argpartition(block, k, axis=1)[:, :k]
         row_idx = np.arange(i1 - i0)[:, None]
-        sorted_topk = topk[
-            row_idx, np.argsort(block[row_idx, topk], axis=1)
-        ]
+        sorted_topk = topk[row_idx, np.argsort(block[row_idx, topk], axis=1)]
         out[i0:i1] = sorted_topk
     return out
