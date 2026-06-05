@@ -60,9 +60,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
     """
     cellranger_out_path = os.path.dirname(atlas_info[check.ATLAS_PATH_KEY])
     cellranger_analysis_path = os.path.join(cellranger_out_path, "analysis")
-    cellranger_clust_path = os.path.join(
-        cellranger_analysis_path, "clustering"
-    )
+    cellranger_clust_path = os.path.join(cellranger_analysis_path, "clustering")
     cellranger_umap_path = os.path.join(cellranger_analysis_path, "umap")
     cellranger_tsne_path = os.path.join(cellranger_analysis_path, "tsne")
     cellranger_pca_path = os.path.join(cellranger_analysis_path, "pca")
@@ -125,9 +123,7 @@ def read_cellranger_current(atlas_info: dict) -> AnnData:
                 break
 
     # Manage multiome cellranger files
-    dim_red_path = os.path.join(
-        cellranger_analysis_path, "dimensionality_reduction"
-    )
+    dim_red_path = os.path.join(cellranger_analysis_path, "dimensionality_reduction")
     if os.path.exists(dim_red_path):
         gex_path = os.path.join(dim_red_path, "gex")
         if os.path.exists(gex_path):
@@ -177,13 +173,9 @@ def read_cellranger_obsolete(atlas_info: dict) -> AnnData:
     Returns:
         AnnData: scanpy object from cellranger
     """
-    cellranger_path = atlas_info[check.ATLAS_PATH_KEY].replace(
-        CELLRANGER_MATRIX_FILE, ""
-    )
+    cellranger_path = atlas_info[check.ATLAS_PATH_KEY].replace(CELLRANGER_MATRIX_FILE, "")
     cellranger_out_path = os.path.join(cellranger_path, os.pardir, os.pardir)
-    cellranger_analysis_path = os.path.join(
-        cellranger_out_path, "analysis_csv"
-    )
+    cellranger_analysis_path = os.path.join(cellranger_out_path, "analysis_csv")
 
     cellranger_umap_path = os.path.join(cellranger_analysis_path, "umap")
     cellranger_tsne_path = os.path.join(cellranger_analysis_path, "tsne")

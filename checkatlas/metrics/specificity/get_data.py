@@ -60,9 +60,7 @@ def mean_celltype(
         adata.varm[f"ave_celltype_counts_{partition_key}"] = np.array(
             average_by_celltype.transpose()
         )
-        adata.uns[f"ave_celltype_index_{partition_key}"] = (
-            average_by_celltype.index
-        )
+        adata.uns[f"ave_celltype_index_{partition_key}"] = average_by_celltype.index
     return average_by_celltype
 
 
@@ -100,9 +98,7 @@ def get_average_celltype_counts(adata, partition_key: str = "CellType"):
             adata.varm[f"ave_celltype_counts_{partition_key}"].transpose(),
             columns=adata.var.index,
         )
-        average_by_celltype.index = adata.uns[
-            f"ave_celltype_index_{partition_key}"
-        ]
+        average_by_celltype.index = adata.uns[f"ave_celltype_index_{partition_key}"]
     return average_by_celltype
 
 
@@ -143,9 +139,7 @@ def get_markers(markers_filename: str):
     # return markers
 
 
-def get_spe(
-    adata, spe_metric: Literal["shannon", "tau", "gini"], partition_key
-):
+def get_spe(adata, spe_metric: Literal["shannon", "tau", "gini"], partition_key):
     specs = {
         "shannon": compute.shannon_average,
         "tau": compute.tau_average,
