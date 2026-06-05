@@ -2,8 +2,8 @@ import argparse
 from importlib.resources import files
 
 try:
-    from ..metrics import annot, cluster, dimred
     from .. import atlas, check
+    from ..metrics import annot, cluster, dimred
 except ImportError:
     from checkatlas import atlas, check
     from checkatlas.metrics import annot, cluster, dimred
@@ -12,7 +12,8 @@ except ImportError:
 def create_parser():
     parser = argparse.ArgumentParser(
         prog="checkatlas",
-        usage="checkatlas [OPTIONS] process atlas_name your_search_folder/",
+        usage="checkatlas [OPTIONS] process path/ [--atlas_name ATLAS_NAME]",
+        formatter_class=argparse.RawTextHelpFormatter,
         description="CheckAtlas is a one liner tool to check the "
         "quality of your single-cell atlases. For "
         "every atlas, it produces the quality control "
@@ -28,27 +29,37 @@ def create_parser():
     parser.add_argument(
         "process",
         type=str,
-        help="Required argument: Type of process to run"
-        f" among {check.PROCESS_TYPE}",
+        help=(
+            "Process to run. Choose from:\n"
+            "  run            — launch the full Nextflow pipeline on a folder\n"
+            "  preprocess     — load and preprocess a single atlas\n"
+            "  summary        — generate summary tables and UMAP/t-SNE figures\n"
+            "  qc             — compute QC tables and plots\n"
+            "  metric_cluster — compute clustering metrics\n"
+            "  metric_annot   — compute annotation metrics\n"
+            "  metric_dimred  — compute dimensionality-reduction metrics\n"
+            "  metric         — run all metric processes on a single atlas\n"
+            "  analyse        — run all analysis processes on a single atlas\n"
+        ),
         default="",
-    )
-
-    parser.add_argument(
-        "atlas_name",
-        type=str,
-        help="Required argument: The name of the atlas to process."
-        "Atlas_name should be found in one of the samplesheet provided to"
-        "nf-checkatlas, or directly created by checkatlas.list_all_atlases()"
-        " function",
-        default=".",
     )
 
     parser.add_argument(
         "path",
         type=str,
         help="Required argument: Your folder containing "
-        "Scanpy, CellRanger and Seurat atlasesv",
+        "Scanpy, CellRanger and Seurat atlases",
         default=".",
+    )
+
+    parser.add_argument(
+        "--atlas_name",
+        type=str,
+        help="Required for all processes except 'run': name of the atlas to "
+        "process. Atlas_name should be found in one of the samplesheet "
+        "provided to nf-checkatlas, or directly created by "
+        "checkatlas.list_all_atlases() function",
+        default=None,
     )
 
     parser.add_argument(
@@ -108,34 +119,73 @@ def create_parser():
         "--metric_cluster",
         nargs="+",
         type=str,
-        #default=["davies_bouldin"],
-        default=["silhouette", "davies_bouldin","calinski_harabasz"],
-        # default=[""],
-        help="Specify the list of clustering metrics to calculate.\n"
+        default=cluster.__all__,
+        help="List of clustering metrics to calculate.\n"
+        "   By default all available clustering metrics are run.\n"
+        "   Specify one or more metrics, or 'none' to skip this category.\n"
+        "   Example: --metric_cluster silhouette\n"
         "   Example: --metric_cluster silhouette davies_bouldin\n"
-        f"   List of cluster metrics: {cluster.__all__}",
+        "   Example: --metric_cluster none\n"
+        f"   Available: {cluster.__all__}",
     )
     metric_options.add_argument(
         "--metric_annot",
         nargs="+",
         type=str,
-        # default=[],
-        # default=["rand_index"],
-        default=["rand_index","adj_mutual_info","isolated_f1_score"], 
-        help=f"Specify the list of clustering metrics to calculate."
-        f"   Example: --metric_annot rand_index"
-        f"   List of annotation metrics: {annot.__all__}",
+        default=annot.__all__,
+        help="List of annotation metrics to calculate.\n"
+        "   By default all available annotation metrics are run.\n"
+        "   Specify one or more metrics, or 'none' to skip this category.\n"
+        "   Example: --metric_annot rand_index\n"
+        "   Example: --metric_annot rand_index fowlkes_mallows\n"
+        "   Example: --metric_annot none\n"
+        f"   Available: {annot.__all__}",
     )
     metric_options.add_argument(
         "--metric_dimred",
         nargs="+",
         type=str,
-        #default=[],
-        default=["kruskal_stress","entourage"],
-        help="Specify the list of dimensionality reduction "
-        "metrics to calculate.\n"
+        default=dimred.__all__,
+        help="List of dimensionality reduction metrics to calculate.\n"
+        "   By default all available dimensionality reduction metrics are run.\n"
+        "   Specify one or more metrics, or 'none' to skip this category.\n"
         "   Example: --metric_dimred kruskal_stress\n"
-        f"   List of dim. red. metrics: {dimred.__all__}",
+        "   Example: --metric_dimred kruskal_stress spearman_rho\n"
+        "   Example: --metric_dimred none\n"
+        f"   Available: {dimred.__all__}",
+    )
+
+    # Nextflow reporting options (only used with 'run' process)
+    nf_options = parser.add_argument_group(
+        "Nextflow reporting options (only used with 'run' process)"
+    )
+    nf_options.add_argument(
+        "--with_report",
+        nargs="?",
+        const="Checkatlas_report.html",
+        default="Checkatlas_report.html",
+        metavar="FILE",
+        help="Generate a Nextflow execution report (enabled by default). "
+        "Optionally specify the output filename (default: Checkatlas_report.html).",
+    )
+    nf_options.add_argument(
+        "--with_dag",
+        nargs="?",
+        const="dag.html",
+        default=None,
+        metavar="FILE",
+        help="Generate a Nextflow pipeline DAG. "
+        "Optionally specify the output filename (default: dag.html). "
+        "Use .dot extension for Graphviz format.",
+    )
+    nf_options.add_argument(
+        "--with_timeline",
+        nargs="?",
+        const="Checkatlas_timeline.html",
+        default="Checkatlas_timeline.html",
+        metavar="FILE",
+        help="Generate a Nextflow execution timeline (enabled by default). "
+        "Optionally specify the output filename (default: Checkatlas_timeline.html).",
     )
     return parser
 

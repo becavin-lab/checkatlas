@@ -60,9 +60,9 @@ SEURAT_TO_SCANPY_OBS = {
 def detect_seurat(atlas_path: str) -> dict:
     if atlas_path.endswith(SEURAT_EXTENSION):
         atlas_info = dict()
-        atlas_info[check.ATLAS_NAME_KEY] = os.path.splitext(
-            os.path.basename(atlas_path)
-        )[0]
+        atlas_info[check.ATLAS_NAME_KEY] = os.path.splitext(os.path.basename(atlas_path))[
+            0
+        ]
         atlas_info[check.ATLAS_TYPE_KEY] = SEURAT_TYPE
         atlas_info[check.ATLAS_EXTENSION_KEY] = SEURAT_EXTENSION
         atlas_info[check.ATLAS_PATH_KEY] = atlas_path
@@ -128,9 +128,7 @@ def get_viable_obs_qc(seurat: RS4, args: argparse.Namespace) -> list:
     Returns:
         list: _description_
     """
-    r_obs = robjects.r(
-        "obs <- function(seurat){ return(colnames(seurat@meta.data))}"
-    )
+    r_obs = robjects.r("obs <- function(seurat){ return(colnames(seurat@meta.data))}")
     obs_keys = list()
     for obs_qc in args.qc_display:
         obs_qc = SCANPY_TO_SEURAT_OBS[obs_qc]
@@ -153,13 +151,10 @@ def get_viable_obs_annot(seurat: RS4, args: argparse.Namespace) -> list:
         list: _description_
     """
     obs_keys = list()
-    r_obs = robjects.r(
-        "obs <- function(seurat){ return(colnames(seurat@meta.data))}"
-    )
+    r_obs = robjects.r("obs <- function(seurat){ return(colnames(seurat@meta.data))}")
     obs_key_seurat = r_obs(seurat)
     r_annot = robjects.r(
-        "type <- function(seurat, obs_key){ "
-        "return(seurat[[obs_key]][[obs_key]])}"
+        "type <- function(seurat, obs_key){ " "return(seurat[[obs_key]][[obs_key]])}"
     )
     # Get keys from OBS_CLUSTERS
     for obs_key in obs_key_seurat:
@@ -172,9 +167,7 @@ def get_viable_obs_annot(seurat: RS4, args: argparse.Namespace) -> list:
     for obs_key in obs_keys:
         annotations = r_annot(seurat, obs_key)
         if len(annotations.levels) != 1:
-            logger.debug(
-                f"Add obs_key {obs_key} with cat {annotations.levels}"
-            )
+            logger.debug(f"Add obs_key {obs_key} with cat {annotations.levels}")
             obs_keys_final.append(obs_key)
     return sorted(obs_keys_final)
 
@@ -191,9 +184,7 @@ def get_viable_obsm(seurat, args):
     obsm_keys = list()
     # for obsm_key in adata.obsm_keys():
     #   if obsm_key in args.obsm_dimred:
-    r_obsm = robjects.r(
-        "f<-function(seurat){return(names(seurat@reductions))}"
-    )
+    r_obsm = robjects.r("f<-function(seurat){return(names(seurat@reductions))}")
     obsm_keys_r = r_obsm(seurat)
     obsm_keys = list()
     for obsm_key in obsm_keys_r:
@@ -203,9 +194,7 @@ def get_viable_obsm(seurat, args):
     return obsm_keys
 
 
-def create_summary_table(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_summary_table(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Create a table with all interesting variables
     :param seurat:
@@ -241,16 +230,12 @@ def create_summary_table(
     df_summary["NbGenes"][atlas_name] = ngenes
     df_summary["AnnData.raw"][atlas_name] = x_raw
     df_summary["AnnData.X"][atlas_name] = x_norm
-    df_summary["File_extension"][atlas_name] = atlas_info[
-        check.ATLAS_EXTENSION_KEY
-    ]
+    df_summary["File_extension"][atlas_name] = atlas_info[check.ATLAS_EXTENSION_KEY]
     df_summary["File_path"][atlas_name] = atlas_info[check.ATLAS_PATH_KEY]
     df_summary.to_csv(csv_path, index=False, sep="\t")
 
 
-def create_anndata_table(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_anndata_table(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Create a table with all AnnData-like arguments in Seurat object
     :param seurat:
@@ -269,15 +254,9 @@ def create_anndata_table(
     df_summary = pd.DataFrame(index=[atlas_name], columns=header)
 
     # Create r_functions
-    r_obs = robjects.r(
-        "obs <- function(seurat){ return(colnames(seurat@meta.data))}"
-    )
-    r_obsm = robjects.r(
-        "f<-function(seurat){return(names(seurat@reductions))}"
-    )
-    r_uns = robjects.r(
-        "uns <- function(seurat){ return(colnames(seurat@misc))}"
-    )
+    r_obs = robjects.r("obs <- function(seurat){ return(colnames(seurat@meta.data))}")
+    r_obsm = robjects.r("f<-function(seurat){return(names(seurat@reductions))}")
+    r_uns = robjects.r("uns <- function(seurat){ return(colnames(seurat@misc))}")
 
     obs_list = r_obs(seurat)
     obsm_list = r_obsm(seurat)
@@ -305,9 +284,7 @@ def create_anndata_table(
     df_summary.to_csv(csv_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_tables(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_qc_tables(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Display the atlas QC of seurat
     Search for the metadata variable which correspond
@@ -349,9 +326,7 @@ def create_qc_tables(
         df_annot.to_csv(qc_path, index=False, quoting=False, sep="\t")
 
 
-def create_qc_plots(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_qc_plots(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Display the atlas QC
     Search for the OBS variable which correspond to the toal_RNA, total_UMI,
@@ -381,9 +356,7 @@ def create_qc_plots(
     r_violin(seurat, r_obs, qc_path)
 
 
-def create_umap_fig(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_umap_fig(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Display the UMAP of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -419,9 +392,7 @@ def create_umap_fig(
         r_umap(seurat, obs_keys[0], umap_path)
 
 
-def create_tsne_fig(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_tsne_fig(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Display the TSNE of celltypes
     Search for the OBS variable which correspond to the celltype annotation
@@ -457,9 +428,7 @@ def create_tsne_fig(
         r_tsne(seurat, obs_keys[0], tsne_path)
 
 
-def create_metric_cluster(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_metric_cluster(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Calc clustering metrics
     :param seurat:
@@ -489,22 +458,23 @@ def create_metric_cluster(
                     f"Calc {metric} for {atlas_name} "
                     f"with obs {obs_key} and obsm {obsm_key_representation}"
                 )
-                metric_value = metrics.calc_metric_cluster_seurat(
+                result = metrics.calc_metric_cluster_seurat(
                     metric, seurat, obs_key, obsm_key_representation
                 )
-                dict_line[metric] = metric_value
+                if isinstance(result, tuple):
+                    metric_value, running_time = result
+                    dict_line[metric] = metric_value
+                    dict_line[f"{metric}_running_time"] = running_time
+                else:
+                    dict_line[metric] = result
             df_line = pd.DataFrame(dict_line)
-            df_cluster = pd.concat(
-                [df_cluster, df_line], ignore_index=True, axis=0
-            )
+            df_cluster = pd.concat([df_cluster, df_line], ignore_index=True, axis=0)
         df_cluster.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def create_metric_annot(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_metric_annot(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Calc annotation metrics
     :param adata:
@@ -518,7 +488,10 @@ def create_metric_annot(
         folders.get_folder(args.path, folders.ANNOTATION),
         atlas_name + check.TSV_EXTENSION,
     )
-    header = ["Annot_Sample", "Reference", "obs"] + args.metric_annot
+    metric_annot = args.metric_annot
+    if metric_annot is None:
+        metric_annot = metrics.METRICS_ANNOT
+    header = ["Annot_Sample", "Reference", "obs"] + metric_annot
     df_annot = pd.DataFrame(columns=header)
     obs_keys = get_viable_obs_annot(seurat, args)
     if len(obs_keys) > 1:
@@ -532,7 +505,7 @@ def create_metric_annot(
                     "Reference": [ref_obs],
                     "obs": [obs_key],
                 }
-                for metric in args.metric_annot:
+                for metric in metric_annot:
                     logger.debug(
                         f"Calc {metric} for {atlas_name} "
                         f"with obs {obs_key} vs ref_obs {ref_obs}"
@@ -542,17 +515,13 @@ def create_metric_annot(
                     )
                     dict_line[metric] = metric_value
                 df_line = pd.DataFrame(dict_line)
-                df_annot = pd.concat(
-                    [df_annot, df_line], ignore_index=True, axis=0
-                )
+                df_annot = pd.concat([df_annot, df_line], ignore_index=True, axis=0)
             df_annot.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
-def create_metric_dimred(
-    seurat: RS4, atlas_info: dict, args=argparse.Namespace
-) -> None:
+def create_metric_dimred(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Calc dimensionality reduction metrics
     :param adata:
@@ -581,9 +550,7 @@ def create_metric_dimred(
                 "obsm": [obsm_key],
             }
             for metric in args.metric_dimred:
-                logger.debug(
-                    f"Calc {metric} for {atlas_name} with obsm {obsm_key}"
-                )
+                logger.debug(f"Calc {metric} for {atlas_name} with obsm {obsm_key}")
                 # r_countmatrix = robjects.r(
                 #     "mat <- function(seurat)
                 #     { return(seurat@assays$RNA@counts)}"
@@ -601,9 +568,7 @@ def create_metric_dimred(
                 # metric_value = -1
                 # dict_line[metric] = str(metric_value)
             df_line = pd.DataFrame(dict_line)
-            df_dimred = pd.concat(
-                [df_dimred, df_line], ignore_index=True, axis=0
-            )
+            df_dimred = pd.concat([df_dimred, df_line], ignore_index=True, axis=0)
         df_dimred.to_csv(csv_path, index=False, sep="\t")
     else:
         logger.debug(f"No viable obsm_key was found for {atlas_name}")
