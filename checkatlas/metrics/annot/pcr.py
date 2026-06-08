@@ -105,40 +105,18 @@ def run(X, labels, n_components=50, cv=5, n_jobs=-1, verbose=True):
         cv = 3
 
     # ── Classifier selection ─────────────────────────────────────
-    # RidgeClassifier has a closed‑form solution → O(N·D²) instead of
-    # LogisticRegression's iterative O(N·D·n_classes·cv·iters).
-    # For many categories this is ~250× faster.
-    if n_batches > 20 or n_jobs == 1:
-        # RidgeClassifierCV: built-in efficient CV
-        if verbose:
-            print(f"  Using RidgeClassifierCV ({cv}-fold, " f"{n_batches} classes)...")
-        clf = RidgeClassifierCV(
-            alphas=[0.1, 1.0, 10.0],
-            cv=min(cv, 5),
-            scoring="accuracy",
-        )
-        clf.fit(X_pca, y)
-        pcr_score = float(clf.best_score_)
-    else:
-        # LogisticRegression (fewer classes, can parallelize)
-        if verbose:
-            print(f"  Running {cv}-fold cross-validation " f"(n_jobs={n_jobs})...")
-        clf = LogisticRegression(max_iter=200, random_state=0, n_jobs=n_jobs)
-        try:
-            scores = cross_val_score(
-                clf, X_pca, y, cv=cv, scoring="accuracy", n_jobs=n_jobs
-            )
-            pcr_score = float(np.mean(scores))
-        except Exception:
-            if verbose:
-                print(f"  CV failed, falling back to train/test split...")
-            from sklearn.model_selection import train_test_split
-
-            X_train, X_test, y_train, y_test = train_test_split(
-                X_pca, y, test_size=0.2, random_state=0
-            )
-            clf.fit(X_train, y_train)
-            pcr_score = float(clf.score(X_test, y_test))
+    # RidgeClassifierCV has a closed‑form solution → O(N·D²) instead
+    # of LogisticRegression's iterative O(N·D·n_classes·cv·iters).
+    # Always prefer Ridge for speed.
+    if verbose:
+        print(f"  Using RidgeClassifierCV ({cv}-fold, " f"{n_batches} classes)...")
+    clf = RidgeClassifierCV(
+        alphas=[0.1, 1.0, 10.0],
+        cv=min(cv, 5),
+        scoring="accuracy",
+    )
+    clf.fit(X_pca, y)
+    pcr_score = float(clf.best_score_)
 
     if verbose:
         print(f"  PCR score = {pcr_score:.4f}")

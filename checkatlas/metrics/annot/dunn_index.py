@@ -4,7 +4,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 
 
-def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
+def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, precomputed_dists=None):
     """
     Calculate the Dunn Index for clustering quality evaluation.
 
@@ -16,6 +16,10 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
     nearest-neighbour search) for inter-cluster distances and a chunked
     pairwise strategy for intra-cluster diameters — the full O(n²)
     distance matrix is **never** materialised in memory.
+
+    When *precomputed_dists* is provided the full path is skipped and
+    intra‑/inter‑cluster distances are computed by slicing the
+    precomputed N×N matrix — O(1) per metric call.
 
     `Dunn Index readthedocs
     <https://checkatlas.readthedocs.io/en/latest/metrics/clustering/dunn/>`__
@@ -33,20 +37,35 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
     max_samples : int, optional
         **Ignored** — kept for backward compatibility with older callers.
         The function always processes the full dataset.
+    precomputed_dists : ndarray or TriangularMatrix, optional
+        Precomputed N×N pairwise distance matrix.  When provided the
+        raw *X* is not used — distances are sliced by cluster index.
 
     Returns
     -------
     float
         Dunn Index.  Range [0, ∞); higher is better.
     """
-    if issparse(X):
-        X = X.toarray()
+    if precomputed_dists is not None:
+        if issparse(precomputed_dists):
+            precomputed_dists = precomputed_dists.toarray()
+        if verbose:
+            print("Using precomputed distances for Dunn Index...")
     else:
-        X = np.asarray(X)
+        if issparse(X):
+            X = X.toarray()
+        else:
+            X = np.asarray(X)
 
     labels = np.asarray(labels)
 
-    if len(X) != len(labels):
+    if precomputed_dists is not None:
+        if precomputed_dists.shape[0] != len(labels):
+            raise ValueError(
+                f"precomputed_dists and labels must have same length. "
+                f"Got dists: {precomputed_dists.shape[0]}, labels: {len(labels)}"
+            )
+    elif len(X) != len(labels):
         raise ValueError(
             f"X and labels must have same length. "
             f"Got X: {len(X)}, labels: {len(labels)}"
@@ -61,6 +80,38 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None):
     cluster_idx = {}
     for lbl in unique_labels:
         cluster_idx[lbl] = np.where(labels == lbl)[0]
+
+    # ── Fast path: slice precomputed N×N distance matrix ──────
+    if precomputed_dists is not None:
+        if verbose:
+            print("Using precomputed distances for Dunn Index...")
+
+        min_inter = np.inf
+        for i in range(n_clusters):
+            li = unique_labels[i]
+            idx_i = cluster_idx[li]
+            for j in range(i + 1, n_clusters):
+                lj = unique_labels[j]
+                idx_j = cluster_idx[lj]
+                d = float(precomputed_dists[idx_i][:, idx_j].min())
+                if d < min_inter:
+                    min_inter = d
+
+        max_intra = 0.0
+        for lbl in unique_labels:
+            idx = cluster_idx[lbl]
+            if len(idx) < 2:
+                continue
+            dk = float(precomputed_dists[idx][:, idx].max())
+            if dk > max_intra:
+                max_intra = dk
+
+        if max_intra == 0:
+            return 0.0
+        dunn_index = min_inter / max_intra
+        if verbose:
+            print(f"  Dunn Index = {dunn_index:.6f}")
+        return dunn_index
 
     # ── Inter-cluster: minimum distance between clusters ──────────
     # Uses NearestNeighbors (ball-tree for low-dim data) so each
