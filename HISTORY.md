@@ -4,6 +4,8 @@ Changelog
 
 (unreleased)
 ------------
+- Fix nextflow path for checkatlas project. [Christophe Bécavin]
+- Release: version 0.8.0 🚀 [Christophe Bécavin]
 - Clean project. [Christophe Bécavin]
 - Merge branch 'main' of github.com:becavin-lab/checkatlas. [Christophe
   Bécavin]
