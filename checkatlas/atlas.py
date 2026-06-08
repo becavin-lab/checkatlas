@@ -24,6 +24,7 @@ try:
         save_context,
     )
     from .utils import files, folders
+    from .utils.checkatlas_arguments import MAX_N_JOBS, cap_n_jobs
     from .utils.col_detector import CheckAtlasColumnDetector
 except ImportError:
     from checkatlas import cellranger, check
@@ -37,6 +38,7 @@ except ImportError:
         save_context,
     )
     from checkatlas.utils import files, folders
+    from checkatlas.utils.checkatlas_arguments import MAX_N_JOBS, cap_n_jobs
     from checkatlas.utils.col_detector import CheckAtlasColumnDetector
 
 """
@@ -81,6 +83,17 @@ sc.settings.verbosity = 0
 _PRECOMPUTE_PROCESSES = frozenset(
     ("preprocess", "metric_cluster", "metric_annot", "metric_dimred", "metric", "analyse")
 )
+
+
+def _resolve_n_jobs(args) -> int:
+    """Read ``args.n_jobs`` (or fall back to :data:`MAX_N_JOBS`) and cap it.
+
+    This is the single entry point every other function in this module
+    should use to obtain the n_jobs value, so the cap is enforced in
+    exactly one place and cannot be bypassed.
+    """
+    raw = getattr(args, "n_jobs", None) if args is not None else None
+    return cap_n_jobs(raw)
 
 
 def _metrics_enabled(metric_list):
@@ -160,15 +173,27 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
 
     embedding_keys = []
     cluster_embedding_keys = []
+    annotation_embedding_keys = []
     for emb, meta in params["clustering"]["embeddings"]:
         embedding_keys.append(emb)
-        if meta.get("n_components", 0) > 3:
-            cluster_embedding_keys.append(emb)
-    # Also add ALL .obsm keys for annotation/dimred use
+        cluster_embedding_keys.append(emb)
+        n_comp = meta.get("n_components", 0)
+        if n_comp > 2:
+            annotation_embedding_keys.append(emb)
+    # Also add ALL .obsm keys for dimred/cluster use;
+    # for annotation only include embeddings with > 2 components
     all_obsm_keys = adata.obsm_keys()
     for key in all_obsm_keys:
         if key not in embedding_keys:
             embedding_keys.append(key)
+        if key not in cluster_embedding_keys:
+            cluster_embedding_keys.append(key)
+        if key not in annotation_embedding_keys:
+            try:
+                if adata.obsm[key].shape[1] > 2:
+                    annotation_embedding_keys.append(key)
+            except Exception:
+                pass
 
     k_max = 90  # covers LISI (90) and kBET (25 via subset)
     fingerprint = make_preprocess_fingerprint(
@@ -178,6 +203,7 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
         batch_keys=batch_keys,
         k_neighbors=k_max,
         source_path=source_path,
+        annotation_embedding_keys=annotation_embedding_keys,
     )
 
     # ── 2. Early exit: cached context still valid ──────────────────
@@ -194,6 +220,7 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
         ref_keys=ref_keys,
         pred_keys=pred_keys,
         embedding_keys=embedding_keys,
+        annotation_embedding_keys=annotation_embedding_keys,
         cluster_embedding_keys=cluster_embedding_keys,
         cluster_label_keys=cluster_label_keys,
         batch_keys=batch_keys,
@@ -206,7 +233,7 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
         os.makedirs(d, exist_ok=True)
 
     # ── 4. Task-specific precomputation ────────────────────────────
-    n_jobs = getattr(args, "n_jobs", -1) if args is not None else -1
+    n_jobs = _resolve_n_jobs(args)
 
     if run_dimred:
         _precompute_dimred(adata, ctx, k_neighbors=30, n_jobs=n_jobs)
@@ -241,7 +268,7 @@ def _precompute_dimred(
     :func:`save_dimred_cache` so that :func:`cal_dimred` can reuse
     the results via :func:`load_dimred_cache`.
     """
-    logger.info("Precomputing dimred: %d embedding(s)", len(ctx.cluster_embedding_keys))
+    logger.info("Precomputing dimred: %d embedding(s)", len([k for k in ctx.embedding_keys if k != "X"]))
 
     n_obs = adata.n_obs
     sample_indices = np.arange(n_obs)
@@ -259,7 +286,7 @@ def _precompute_dimred(
     use_memmap = n_cells > 10000
 
     # ── Fingerprint for cache validation ────────────────────────
-    emb_to_eval = [k for k in ctx.cluster_embedding_keys if k != high_dim_key]
+    emb_to_eval = [k for k in ctx.embedding_keys if k != high_dim_key]
     if not emb_to_eval:
         logger.warning("No embeddings to precompute for dimred")
         return
@@ -434,12 +461,12 @@ def _precompute_annot(
     Saves ``.npz`` files to ``ctx.annotation_dir`` and stores paths in
     ``ctx.knn_paths`` and neighbour-graph CSRs in ``ctx.neighbor_graphs``.
     """
-    logger.info("Precomputing annotation: %d embedding(s)", len(ctx.embedding_keys))
+    logger.info("Precomputing annotation: %d embedding(s)", len(ctx.annotation_embedding_keys))
     import gc
 
     safe_name = lambda s: s.replace("/", "_").replace(" ", "_")
 
-    for emb in ctx.embedding_keys:
+    for emb in ctx.annotation_embedding_keys:
         if emb not in adata.obsm:
             continue
         X_emb = np.asarray(adata.obsm[emb], dtype=np.float64)
@@ -1062,7 +1089,7 @@ def create_metric_cluster(
         atlas_name=atlas_name,
         metric_list=args.metric_cluster,
         file_dir=cluster_dir,
-        n_jobs=-1,
+        n_jobs=_resolve_n_jobs(args),
         verbose=True,
         seed=42,
         preprocess_context=preprocess_ctx,
@@ -1115,7 +1142,7 @@ def create_metric_annot(
         metric_list=args.metric_annot,
         all=True,
         file_dir=annotation_dir,
-        n_jobs=-1,
+        n_jobs=_resolve_n_jobs(args),
         verbose=True,
         preprocess_context=preprocess_ctx,
     )
@@ -1169,7 +1196,7 @@ def create_metric_dimred(
         metric_list=args.metric_dimred,
         file_dir=cache_dir,
         use_cache=True,
-        n_jobs=-1,
+        n_jobs=_resolve_n_jobs(args),
         verbose=True,
         seed=42,
     )

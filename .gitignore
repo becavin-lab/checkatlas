@@ -17,6 +17,9 @@ docs/~$*
 PRESENTATION.md
 presentation.md
 
+# Preprocess modification strategy (local working doc)
+docs/PREPROCESS.md
+
 # scFM logos / figures (downloaded from external sources, not for git)
 docs/figures/scfm_logos/
 
@@ -163,3 +166,6 @@ dmypy.json
 .DS_Store
 
 test_result/
+
+
+tutorial/get_datasets.ipynb

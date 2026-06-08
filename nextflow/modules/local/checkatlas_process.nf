@@ -12,6 +12,7 @@ process PREPROCESS_SCANPY{
     out_info = atlas_info.atlas_name + "_PreProcess_Scanpy"
     """
     checkatlas preprocess $samplesheet --atlas_name ${atlas_info.atlas_name} \
+        --n_jobs ${params.n_jobs} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
@@ -31,6 +32,7 @@ process SUMMARY{
     """
     checkatlas summary $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --plot_celllimit ${params.plot_celllimit} \
+        --n_jobs ${params.n_jobs} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
@@ -51,6 +53,7 @@ process QC{
     checkatlas qc $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --qc_display ${params.qc_display} \
         --plot_celllimit ${params.plot_celllimit} \
+        --n_jobs ${params.n_jobs} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
@@ -72,6 +75,7 @@ process METRIC_CLUST{
     checkatlas metric_cluster $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --obs_cluster ${params.obs_cluster} \
         --metric_cluster ${metric} \
+        --n_jobs ${params.n_jobs} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
@@ -93,6 +97,7 @@ process METRIC_ANNOT{
     checkatlas metric_annot $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --obs_cluster ${params.obs_cluster} \
         --metric_annot ${metric} \
+        --n_jobs ${params.n_jobs} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
@@ -113,6 +118,7 @@ process METRIC_DIMRED{
     """
     checkatlas metric_dimred $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --metric_dimred ${metric} \
+        --n_jobs ${params.n_jobs} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
