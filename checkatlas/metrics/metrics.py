@@ -207,7 +207,7 @@ def cal_annot(
     if preprocess_context is not None:
         ref_keys = preprocess_context.ref_keys
         pred_keys = preprocess_context.pred_keys
-        embedding_keys = preprocess_context.embedding_keys
+        embedding_keys = preprocess_context.annotation_embedding_keys or preprocess_context.embedding_keys
         batch_keys = preprocess_context.batch_keys
         if not batch_keys:
             batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
@@ -1347,6 +1347,25 @@ def cal_dimred(
         high_knn_dists = _get_ndarray(high_knn_dists_jax)
         high_knn_indices = _get_ndarray(high_knn_indices_jax)
 
+        # ── Persist GPU distance matrix for cache reuse ───────
+        # save_dimred_cache only stores TriangularMatrix memmaps;
+        # convert the GPU numpy array so subsequent runs don't
+        # have to recompute this expensive (N² × D) matrix.
+        if use_cache and atlas_name:
+            _high_tri_path = os.path.join(temp_dir, "high_dists.tri")
+            _high_tri = TriangularMatrix(
+                n=n_cells, filepath=_high_tri_path, mode="w+"
+            )
+            _chunk = min(5000, n_cells)
+            for _i in range(0, n_cells, _chunk):
+                _end = min(_i + _chunk, n_cells)
+                store_upper_triangle(
+                    _high_tri._data, high_dim_dists[_i:_end, :],
+                    _i, 0, n_cells,
+                )
+            _high_tri.flush()
+            high_dim_dists = _high_tri
+
     elif _GPU_CHUNKED:
         # ── Chunked GPU path: fused kNN + distance matrix ──
         # kNN: streaming GPU, auto-detect for large atlases
@@ -1458,6 +1477,70 @@ def cal_dimred(
             low_dim_dists = _c.get("dists")
             low_knn_dists = _c["knn_dists"]
             low_knn_indices = _c["knn_indices"]
+
+            # ── Recompute missing distance matrix ─────────────
+            # Cache may have kNN but not distances (GPU numpy
+            # arrays are not persisted — save_dimred_cache only
+            # stores TriangularMatrix memmaps).  Compute the
+            # distance matrix once so every metric can share it.
+            if low_dim_dists is None and low_knn_dists is not None:
+                if _GPU_SINGLE_SHOT:
+                    import jax.numpy as _jnp
+
+                    _dists_np = pdist_squareform(low_dim_data)
+                    if use_cache and atlas_name:
+                        _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                        _tri_path = os.path.join(
+                            temp_dir, f"low_dists_{_safe}.tri"
+                        )
+                        _tri = TriangularMatrix(
+                            n=n_cells, filepath=_tri_path, mode="w+"
+                        )
+                        _chunk = min(5000, n_cells)
+                        for _i in range(0, n_cells, _chunk):
+                            _end = min(_i + _chunk, n_cells)
+                            store_upper_triangle(
+                                _tri._data, _dists_np[_i:_end, :],
+                                _i, 0, n_cells,
+                            )
+                        _tri.flush()
+                        low_dim_dists = _tri
+                        del _dists_np
+                    else:
+                        low_dim_dists = _dists_np
+                elif n_cells > 10000:
+                    _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                    _tri_path = os.path.join(
+                        temp_dir, f"low_dists_{_safe}_{run_id}.tri"
+                    )
+                    _tri = TriangularMatrix(
+                        n=n_cells, filepath=_tri_path, mode="w+"
+                    )
+                    for _i in range(0, n_cells, chunk_size):
+                        _end = min(_i + chunk_size, n_cells)
+                        _block = pairwise_distances(
+                            low_dim_data[_i:_end], low_dim_data,
+                            n_jobs=n_jobs,
+                        )
+                        store_upper_triangle(
+                            _tri._data, _block, _i, 0, n_cells
+                        )
+                    _tri.flush()
+                    low_dim_dists = _tri
+                else:
+                    need_d = bool(set(metric_list) & _DIST_METRICS)
+                    if need_d:
+                        low_dim_dists = np.zeros(
+                            (n_cells, n_cells), dtype=np.float32
+                        )
+                        for _i in range(0, n_cells, chunk_size):
+                            _end = min(_i + chunk_size, n_cells)
+                            low_dim_dists[_i:_end, :] = pairwise_distances(
+                                low_dim_data[_i:_end], low_dim_data,
+                                n_jobs=n_jobs,
+                            )
+                gc.collect()
+
         elif _GPU_SINGLE_SHOT:
             # ── GPU path: single-kernel distance + kNN ──────────
             import jax
@@ -1470,6 +1553,26 @@ def cal_dimred(
             )
             low_knn_dists = _get_ndarray(low_knn_dists_jax)
             low_knn_indices = _get_ndarray(low_knn_indices_jax)
+
+            # ── Persist GPU distance matrix for cache reuse ──
+            if use_cache and atlas_name:
+                _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                _tri_path = os.path.join(
+                    temp_dir, f"low_dists_{_safe}.tri"
+                )
+                _tri = TriangularMatrix(
+                    n=n_cells, filepath=_tri_path, mode="w+"
+                )
+                _chunk = min(5000, n_cells)
+                for _i in range(0, n_cells, _chunk):
+                    _end = min(_i + _chunk, n_cells)
+                    store_upper_triangle(
+                        _tri._data, low_dim_dists[_i:_end, :],
+                        _i, 0, n_cells,
+                    )
+                _tri.flush()
+                low_dim_dists = _tri
+
         elif _GPU_CHUNKED:
             # ── GPU for low-dim when features ≤ 200 dims ─────────
             # Low-dim embeddings (X_pca=50d, X_umap=2d) fit on GPU easily.
@@ -1487,6 +1590,26 @@ def cal_dimred(
                 )
                 low_knn_dists = _get_ndarray(low_knn_dists_jax)
                 low_knn_indices = _get_ndarray(low_knn_indices_jax)
+
+                # ── Persist GPU distance matrix for cache reuse ──
+                if use_cache and atlas_name:
+                    _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                    _tri_path = os.path.join(
+                        temp_dir, f"low_dists_{_safe}.tri"
+                    )
+                    _tri = TriangularMatrix(
+                        n=n_cells, filepath=_tri_path, mode="w+"
+                    )
+                    _chunk = min(5000, n_cells)
+                    for _i in range(0, n_cells, _chunk):
+                        _end = min(_i + _chunk, n_cells)
+                        store_upper_triangle(
+                            _tri._data, low_dim_dists[_i:_end, :],
+                            _i, 0, n_cells,
+                        )
+                    _tri.flush()
+                    low_dim_dists = _tri
+
             elif low_ndim <= 200:
                 # Fused GPU streaming kNN + optional distance matrix
                 need_low_dists = bool(set(metric_list) & _DIST_METRICS)
