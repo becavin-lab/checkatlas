@@ -207,7 +207,7 @@ def cal_annot(
     if preprocess_context is not None:
         ref_keys = preprocess_context.ref_keys
         pred_keys = preprocess_context.pred_keys
-        embedding_keys = preprocess_context.annotation_embedding_keys or preprocess_context.embedding_keys
+        embedding_keys = getattr(preprocess_context, "annotation_embedding_keys", None) or preprocess_context.embedding_keys
         batch_keys = preprocess_context.batch_keys
         if not batch_keys:
             batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
@@ -248,6 +248,29 @@ def cal_annot(
                 adata.obsp[conn_key] = payload["connectivities"]
             if dist_key in payload and dist_key not in adata.obsp:
                 adata.obsp[dist_key] = payload["distances"]
+
+        # ── Load precomputed distance matrices from cluster cache ──
+        # (same pattern as cal_cluster lines 835-855)
+        precomputed_dists = {}
+        if preprocess_context is not None:
+            _safe = lambda s: s.replace("/", "_").replace(" ", "_")
+            for emb in embedding_keys:
+                tri_path = os.path.join(
+                    preprocess_context.cluster_dir,
+                    f"dist_{_safe(emb)}.tri",
+                )
+                npy_path = tri_path.replace(".tri", ".npy")
+                if os.path.exists(tri_path):
+                    n_cells = (
+                        adata.obsm[emb].shape[0]
+                        if emb in adata.obsm
+                        else adata.n_obs
+                    )
+                    precomputed_dists[emb] = TriangularMatrix(
+                        n=n_cells, filepath=tri_path, mode="r"
+                    )
+                elif os.path.exists(npy_path):
+                    precomputed_dists[emb] = np.load(npy_path)
     else:
         # Detect columns
         detector = CheckAtlasColumnDetector(adata)
@@ -388,6 +411,8 @@ def cal_annot(
                                 kw["n_jobs"] = n_jobs
                             if "verbose" in sig.parameters:
                                 kw["verbose"] = False
+                            if "precomputed_dists" in sig.parameters and emb in precomputed_dists:
+                                kw["precomputed_dists"] = precomputed_dists[emb]
                             val = metric_module.run(X_emb, labels, **kw)
                             pair_elapsed = time.time() - pair_start
                             results.append(
