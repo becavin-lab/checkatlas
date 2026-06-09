@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 
-def run(X, labels, n_jobs=-1, verbose=True, sample_size=None):
+def run(X, labels, n_jobs=-1, verbose=True, sample_size=None, precomputed_dists=None):
     """
     Calculate the Average Silhouette Width for clustering quality.
 
@@ -27,6 +27,11 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None):
     distances *b(i)* use the squared‑Euclidean centroid‑expansion
     formula — an O(N·K·d) approximation that avoids the full O(N²)
     distance matrix entirely while preserving cluster ordering.
+
+    When *precomputed_dists* is provided the full path is skipped and
+    the N×N distance matrix is passed directly to sklearn's
+    ``silhouette_score(metric="precomputed")`` for an exact, O(1)
+    computation per call.
 
     `Average Silhouette Width readthedocs
     <https://checkatlas.readthedocs.io/en/latest/metrics/clustering/silhouette/>`__
@@ -43,12 +48,36 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None):
         Print progress.
     sample_size : int, optional
         **Ignored** — always processes every sample.
+    precomputed_dists : ndarray or TriangularMatrix, optional
+        Precomputed N×N pairwise distance matrix.  When provided the
+        raw *X* is not used.
 
     Returns
     -------
     float
         Mean silhouette coefficient.  Range [-1, 1].
     """
+    if precomputed_dists is not None:
+        if issparse(precomputed_dists):
+            precomputed_dists = precomputed_dists.toarray()
+        labels_arr = np.asarray(labels)
+        n_total = precomputed_dists.shape[0]
+        if n_total != len(labels_arr):
+            raise ValueError(
+                f"precomputed_dists and labels must have same length. "
+                f"Got dists: {n_total}, labels: {len(labels_arr)}"
+            )
+        if len(np.unique(labels_arr)) < 2:
+            return 0.0
+        if verbose:
+            print("Using precomputed distances for Silhouette...")
+        from sklearn.metrics import silhouette_score
+
+        dists = precomputed_dists
+        if hasattr(dists, "to_dense"):
+            dists = dists.to_dense()
+        return float(silhouette_score(dists, labels_arr, metric="precomputed"))
+
     if issparse(X):
         X = X.toarray()
     else:
