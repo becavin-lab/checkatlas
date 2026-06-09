@@ -160,6 +160,7 @@ def cal_annot(
     file_dir=None,
     n_jobs=-1,
     verbose=True,
+    preprocess_context=None,
 ):
     """
     Comprehensive annotation pipeline for all annotation metrics.
@@ -175,6 +176,10 @@ def cal_annot(
                        If None, saves to current working directory.
         n_jobs (int): Number of parallel jobs (-1 = all cores).
         verbose (bool): Whether to print progress information.
+        preprocess_context (PreprocessContext, optional): If provided,
+            column detection and kNN precomputation are skipped and
+            the context's precomputed data (kNN graphs, neighbour
+            graphs, batch keys) is reused.
 
     Returns:
         pd.DataFrame: Results dataframe with columns:
@@ -194,22 +199,90 @@ def cal_annot(
     if file_dir is None:
         file_dir = os.getcwd()
     else:
-        # Create directory if it doesn't exist
         os.makedirs(file_dir, exist_ok=True)
 
-    # Detect columns
-    detector = CheckAtlasColumnDetector(adata)
-    params = detector.detect_all_parameters()
+    # ── Precomputed kNN lookup (populated from context or built locally) ──
+    emb_nn = {}
 
-    ref_keys = [x[0] for x in params["annotation"]["reference"]]
-    pred_keys = [x[0] for x in params["annotation"]["predicted"]]
-    embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
+    if preprocess_context is not None:
+        ref_keys = preprocess_context.ref_keys
+        pred_keys = preprocess_context.pred_keys
+        embedding_keys = getattr(preprocess_context, "annotation_embedding_keys", None) or preprocess_context.embedding_keys
+        batch_keys = preprocess_context.batch_keys
+        if not batch_keys:
+            batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
 
-    # Detect batch keys using the column detector (semantic + statistical)
-    # Falls back to the simple 'batch' substring heuristic if detector returns nothing
-    batch_keys = [x[0] for x in params.get("batch", [])]
-    if not batch_keys:
-        batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
+        if verbose:
+            print("Using precomputed context — skipping column detection")
+            print(f"  Reference keys: {ref_keys}")
+            print(f"  Predicted keys: {pred_keys}")
+            print(f"  Embedding keys: {embedding_keys}")
+            print(f"  Batch keys: {batch_keys}")
+
+        # Load precomputed kNN from .npz files
+        for emb in embedding_keys:
+            _safe = emb.replace("/", "_").replace(" ", "_")
+            if emb in preprocess_context.knn_paths or _safe in preprocess_context.knn_paths:
+                from ._cache import load_knn
+
+                loaded = load_knn(preprocess_context.annotation_dir, f"knn_{_safe}")
+                if loaded is not None:
+                    emb_nn[emb] = NeighborResults(
+                        indices=loaded[0], distances=loaded[1]
+                    )
+
+        # Re-inject precomputed neighbour graphs for graph_connectivity
+        for emb, payload in preprocess_context.neighbor_graphs.items():
+            key_added = payload.get("key_added", f"neighbors_{emb}")
+            if key_added not in adata.uns:
+                adata.uns[key_added] = payload.get("uns_entry", {})
+            conn_key = (
+                payload.get("uns_entry", {})
+                .get("connectivities_key", "connectivities")
+            )
+            dist_key = (
+                payload.get("uns_entry", {})
+                .get("distances_key", "distances")
+            )
+            if conn_key in payload and conn_key not in adata.obsp:
+                adata.obsp[conn_key] = payload["connectivities"]
+            if dist_key in payload and dist_key not in adata.obsp:
+                adata.obsp[dist_key] = payload["distances"]
+
+        # ── Load precomputed distance matrices from cluster cache ──
+        # (same pattern as cal_cluster lines 835-855)
+        precomputed_dists = {}
+        if preprocess_context is not None:
+            _safe = lambda s: s.replace("/", "_").replace(" ", "_")
+            for emb in embedding_keys:
+                tri_path = os.path.join(
+                    preprocess_context.cluster_dir,
+                    f"dist_{_safe(emb)}.tri",
+                )
+                npy_path = tri_path.replace(".tri", ".npy")
+                if os.path.exists(tri_path):
+                    n_cells = (
+                        adata.obsm[emb].shape[0]
+                        if emb in adata.obsm
+                        else adata.n_obs
+                    )
+                    precomputed_dists[emb] = TriangularMatrix(
+                        n=n_cells, filepath=tri_path, mode="r"
+                    )
+                elif os.path.exists(npy_path):
+                    precomputed_dists[emb] = np.load(npy_path)
+    else:
+        # Detect columns
+        detector = CheckAtlasColumnDetector(adata)
+        params = detector.detect_all_parameters()
+
+        ref_keys = [x[0] for x in params["annotation"]["reference"]]
+        pred_keys = [x[0] for x in params["annotation"]["predicted"]]
+        embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
+
+        batch_keys = [x[0] for x in params.get("batch", [])]
+        if not batch_keys:
+            batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
 
     # Define metrics to run
     if metric_list is not None:
@@ -338,6 +411,8 @@ def cal_annot(
                                 kw["n_jobs"] = n_jobs
                             if "verbose" in sig.parameters:
                                 kw["verbose"] = False
+                            if "precomputed_dists" in sig.parameters and emb in precomputed_dists:
+                                kw["precomputed_dists"] = precomputed_dists[emb]
                             val = metric_module.run(X_emb, labels, **kw)
                             pair_elapsed = time.time() - pair_start
                             results.append(
@@ -358,8 +433,8 @@ def cal_annot(
             # 3. LISI (Special Case: iLISI and cLISI)
             elif metric == "lisi":
                 # ── Precompute kNN per embedding once (GPU/JAX or CPU) ──
-                emb_nn = {}
-                if _USE_JAX:
+                # Only build if not already loaded from preprocess_context
+                if not emb_nn and _USE_JAX:
                     for emb in embedding_keys:
                         X_emb = np.asarray(adata.obsm[emb], dtype=np.float64)
                         emb_nn[emb] = _cal_knn(X_emb, n_neighbors=90, backend="auto")
@@ -372,7 +447,7 @@ def cal_annot(
                                 for emb in embedding_keys:
                                     X_emb = adata.obsm[emb]
                                     pair_start = time.time()
-                                    if _USE_JAX and emb in emb_nn:
+                                    if emb in emb_nn:
                                         val = metric_module.run_with_neighbors(
                                             emb_nn[emb],
                                             adata.obs[batch],
@@ -430,7 +505,7 @@ def cal_annot(
                             for emb in embedding_keys:
                                 X_emb = adata.obsm[emb]
                                 pair_start = time.time()
-                                if _USE_JAX and emb in emb_nn:
+                                if emb in emb_nn:
                                     val = metric_module.run_with_neighbors(
                                         emb_nn[emb],
                                         adata.obs[label],
@@ -488,17 +563,32 @@ def cal_annot(
                             try:
                                 X_emb = adata.obsm[emb]
                                 pair_start = time.time()
-                                # kBET: use JAX-accelerated path with precomputed kNN
+                                # kBET: use precomputed kNN from context or JAX
                                 if (
-                                    _USE_JAX
-                                    and metric == "kbet"
+                                    metric == "kbet"
                                     and hasattr(metric_module, "run_with_neighbors")
                                 ):
-                                    X_arr = np.asarray(X_emb, dtype=np.float64)
-                                    nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
-                                    val = metric_module.run_with_neighbors(
-                                        nn, adata.obs[batch], verbose=False
-                                    )
+                                    if emb in emb_nn:
+                                        nn = emb_nn[emb]
+                                        if nn.n_neighbors > 25:
+                                            nn = nn.subset_neighbors(25)
+                                        val = metric_module.run_with_neighbors(
+                                            nn, adata.obs[batch], verbose=False
+                                        )
+                                    elif _USE_JAX:
+                                        X_arr = np.asarray(X_emb, dtype=np.float64)
+                                        nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
+                                        val = metric_module.run_with_neighbors(
+                                            nn, adata.obs[batch], verbose=False
+                                        )
+                                    else:
+                                        sig = inspect.signature(metric_module.run)
+                                        kw = {}
+                                        if "n_jobs" in sig.parameters:
+                                            kw["n_jobs"] = n_jobs
+                                        if "verbose" in sig.parameters:
+                                            kw["verbose"] = False
+                                        val = metric_module.run(X_emb, adata.obs[batch], **kw)
                                 else:
                                     sig = inspect.signature(metric_module.run)
                                     kw = {}
@@ -526,17 +616,32 @@ def cal_annot(
                         try:
                             pair_start = time.time()
                             if (
-                                _USE_JAX
-                                and metric == "kbet"
+                                metric == "kbet"
                                 and hasattr(metric_module, "run_with_neighbors")
                             ):
-                                X_arr = np.asarray(adata.X, dtype=np.float64)
-                                if hasattr(adata.X, "toarray"):
-                                    X_arr = adata.X.toarray().astype(np.float64)
-                                nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
-                                val = metric_module.run_with_neighbors(
-                                    nn, adata.obs[batch], verbose=False
-                                )
+                                if "X" in emb_nn:
+                                    nn = emb_nn["X"]
+                                    if nn.n_neighbors > 25:
+                                        nn = nn.subset_neighbors(25)
+                                    val = metric_module.run_with_neighbors(
+                                        nn, adata.obs[batch], verbose=False
+                                    )
+                                elif _USE_JAX:
+                                    X_arr = np.asarray(adata.X, dtype=np.float64)
+                                    if hasattr(adata.X, "toarray"):
+                                        X_arr = adata.X.toarray().astype(np.float64)
+                                    nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
+                                    val = metric_module.run_with_neighbors(
+                                        nn, adata.obs[batch], verbose=False
+                                    )
+                                else:
+                                    sig = inspect.signature(metric_module.run)
+                                    kw = {}
+                                    if "n_jobs" in sig.parameters:
+                                        kw["n_jobs"] = n_jobs
+                                    if "verbose" in sig.parameters:
+                                        kw["verbose"] = False
+                                    val = metric_module.run(adata.X, adata.obs[batch], **kw)
                             else:
                                 sig = inspect.signature(metric_module.run)
                                 kw = {}
@@ -692,6 +797,7 @@ def cal_cluster(
     n_jobs=-1,
     verbose=True,
     seed=42,
+    preprocess_context=None,
 ):
     """
     Comprehensive clustering assessment pipeline.
@@ -713,6 +819,9 @@ def cal_cluster(
         n_jobs (int): Number of parallel jobs (-1 = all cores).
         verbose (bool): Whether to print progress.
         seed (int): Random seed for reproducibility.
+        preprocess_context (PreprocessContext, optional): If provided,
+            column detection and distance-matrix precomputation are
+            skipped and the context's precomputed data is reused.
 
     Returns:
         pd.DataFrame: Results dataframe with columns:
@@ -731,14 +840,53 @@ def cal_cluster(
     else:
         os.makedirs(file_dir, exist_ok=True)
 
-    # Detect columns using CheckAtlasColumnDetector
-    if verbose:
-        print("Detecting embeddings and cluster labels...")
-    detector = CheckAtlasColumnDetector(adata)
-    params = detector.detect_all_parameters()
+    precomputed_dists = {}
 
-    embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
-    label_keys = [x[0] for x in params["clustering"]["cluster_labels"]]
+    if preprocess_context is not None:
+        embedding_keys = preprocess_context.cluster_embedding_keys or preprocess_context.embedding_keys
+        label_keys = preprocess_context.cluster_label_keys
+
+        if not label_keys:
+            logger.warning(
+                "No cluster labels in preprocess context. Skipping."
+            )
+            return pd.DataFrame()
+
+        if verbose:
+            print("Using precomputed context — skipping column detection")
+            print(f"  Embeddings: {embedding_keys}")
+            print(f"  Cluster labels: {label_keys}")
+
+        # Load precomputed distance matrices for silhouette
+        _safe = lambda s: s.replace("/", "_").replace(" ", "_")
+        for emb in embedding_keys:
+            tri_path = os.path.join(
+                preprocess_context.cluster_dir, f"dist_{_safe(emb)}.tri"
+            )
+            npy_path = tri_path.replace(".tri", ".npy")
+            if os.path.exists(tri_path):
+                from ._triangular import TriangularMatrix
+
+                if emb == "X":
+                    n_cells = adata.X.shape[0]
+                elif emb in adata.obsm:
+                    n_cells = adata.obsm[emb].shape[0]
+                else:
+                    n_cells = adata.n_obs
+                precomputed_dists[emb] = TriangularMatrix(
+                    n=n_cells, filepath=tri_path, mode="r"
+                )
+            elif os.path.exists(npy_path):
+                precomputed_dists[emb] = np.load(npy_path)
+    else:
+        # Detect columns using CheckAtlasColumnDetector
+        if verbose:
+            print("Detecting embeddings and cluster labels...")
+        detector = CheckAtlasColumnDetector(adata)
+        params = detector.detect_all_parameters()
+
+        embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
+        label_keys = [x[0] for x in params["clustering"]["cluster_labels"]]
 
     if verbose:
         print(f"  Detected embeddings: {embedding_keys}")
@@ -844,6 +992,10 @@ def cal_cluster(
                         kwargs["seed"] = seed
                     if "max_samples" in metric_params:
                         kwargs["max_samples"] = None  # disable subsampling
+
+                    # Pass precomputed distances for silhouette when available
+                    if "precomputed_dists" in metric_params and emb_key in precomputed_dists:
+                        kwargs["precomputed_dists"] = precomputed_dists[emb_key]
 
                     # Call the metric
                     value = metric_module.run(X_emb, labels, **kwargs)
@@ -1224,6 +1376,25 @@ def cal_dimred(
         high_knn_dists = _get_ndarray(high_knn_dists_jax)
         high_knn_indices = _get_ndarray(high_knn_indices_jax)
 
+        # ── Persist GPU distance matrix for cache reuse ───────
+        # save_dimred_cache only stores TriangularMatrix memmaps;
+        # convert the GPU numpy array so subsequent runs don't
+        # have to recompute this expensive (N² × D) matrix.
+        if use_cache and atlas_name:
+            _high_tri_path = os.path.join(temp_dir, "high_dists.tri")
+            _high_tri = TriangularMatrix(
+                n=n_cells, filepath=_high_tri_path, mode="w+"
+            )
+            _chunk = min(5000, n_cells)
+            for _i in range(0, n_cells, _chunk):
+                _end = min(_i + _chunk, n_cells)
+                store_upper_triangle(
+                    _high_tri._data, high_dim_dists[_i:_end, :],
+                    _i, 0, n_cells,
+                )
+            _high_tri.flush()
+            high_dim_dists = _high_tri
+
     elif _GPU_CHUNKED:
         # ── Chunked GPU path: fused kNN + distance matrix ──
         # kNN: streaming GPU, auto-detect for large atlases
@@ -1335,6 +1506,70 @@ def cal_dimred(
             low_dim_dists = _c.get("dists")
             low_knn_dists = _c["knn_dists"]
             low_knn_indices = _c["knn_indices"]
+
+            # ── Recompute missing distance matrix ─────────────
+            # Cache may have kNN but not distances (GPU numpy
+            # arrays are not persisted — save_dimred_cache only
+            # stores TriangularMatrix memmaps).  Compute the
+            # distance matrix once so every metric can share it.
+            if low_dim_dists is None and low_knn_dists is not None:
+                if _GPU_SINGLE_SHOT:
+                    import jax.numpy as _jnp
+
+                    _dists_np = pdist_squareform(low_dim_data)
+                    if use_cache and atlas_name:
+                        _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                        _tri_path = os.path.join(
+                            temp_dir, f"low_dists_{_safe}.tri"
+                        )
+                        _tri = TriangularMatrix(
+                            n=n_cells, filepath=_tri_path, mode="w+"
+                        )
+                        _chunk = min(5000, n_cells)
+                        for _i in range(0, n_cells, _chunk):
+                            _end = min(_i + _chunk, n_cells)
+                            store_upper_triangle(
+                                _tri._data, _dists_np[_i:_end, :],
+                                _i, 0, n_cells,
+                            )
+                        _tri.flush()
+                        low_dim_dists = _tri
+                        del _dists_np
+                    else:
+                        low_dim_dists = _dists_np
+                elif n_cells > 10000:
+                    _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                    _tri_path = os.path.join(
+                        temp_dir, f"low_dists_{_safe}_{run_id}.tri"
+                    )
+                    _tri = TriangularMatrix(
+                        n=n_cells, filepath=_tri_path, mode="w+"
+                    )
+                    for _i in range(0, n_cells, chunk_size):
+                        _end = min(_i + chunk_size, n_cells)
+                        _block = pairwise_distances(
+                            low_dim_data[_i:_end], low_dim_data,
+                            n_jobs=n_jobs,
+                        )
+                        store_upper_triangle(
+                            _tri._data, _block, _i, 0, n_cells
+                        )
+                    _tri.flush()
+                    low_dim_dists = _tri
+                else:
+                    need_d = bool(set(metric_list) & _DIST_METRICS)
+                    if need_d:
+                        low_dim_dists = np.zeros(
+                            (n_cells, n_cells), dtype=np.float32
+                        )
+                        for _i in range(0, n_cells, chunk_size):
+                            _end = min(_i + chunk_size, n_cells)
+                            low_dim_dists[_i:_end, :] = pairwise_distances(
+                                low_dim_data[_i:_end], low_dim_data,
+                                n_jobs=n_jobs,
+                            )
+                gc.collect()
+
         elif _GPU_SINGLE_SHOT:
             # ── GPU path: single-kernel distance + kNN ──────────
             import jax
@@ -1347,6 +1582,26 @@ def cal_dimred(
             )
             low_knn_dists = _get_ndarray(low_knn_dists_jax)
             low_knn_indices = _get_ndarray(low_knn_indices_jax)
+
+            # ── Persist GPU distance matrix for cache reuse ──
+            if use_cache and atlas_name:
+                _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                _tri_path = os.path.join(
+                    temp_dir, f"low_dists_{_safe}.tri"
+                )
+                _tri = TriangularMatrix(
+                    n=n_cells, filepath=_tri_path, mode="w+"
+                )
+                _chunk = min(5000, n_cells)
+                for _i in range(0, n_cells, _chunk):
+                    _end = min(_i + _chunk, n_cells)
+                    store_upper_triangle(
+                        _tri._data, low_dim_dists[_i:_end, :],
+                        _i, 0, n_cells,
+                    )
+                _tri.flush()
+                low_dim_dists = _tri
+
         elif _GPU_CHUNKED:
             # ── GPU for low-dim when features ≤ 200 dims ─────────
             # Low-dim embeddings (X_pca=50d, X_umap=2d) fit on GPU easily.
@@ -1364,6 +1619,26 @@ def cal_dimred(
                 )
                 low_knn_dists = _get_ndarray(low_knn_dists_jax)
                 low_knn_indices = _get_ndarray(low_knn_indices_jax)
+
+                # ── Persist GPU distance matrix for cache reuse ──
+                if use_cache and atlas_name:
+                    _safe = low_dim_key.replace("/", "_").replace(" ", "_")
+                    _tri_path = os.path.join(
+                        temp_dir, f"low_dists_{_safe}.tri"
+                    )
+                    _tri = TriangularMatrix(
+                        n=n_cells, filepath=_tri_path, mode="w+"
+                    )
+                    _chunk = min(5000, n_cells)
+                    for _i in range(0, n_cells, _chunk):
+                        _end = min(_i + _chunk, n_cells)
+                        store_upper_triangle(
+                            _tri._data, low_dim_dists[_i:_end, :],
+                            _i, 0, n_cells,
+                        )
+                    _tri.flush()
+                    low_dim_dists = _tri
+
             elif low_ndim <= 200:
                 # Fused GPU streaming kNN + optional distance matrix
                 need_low_dists = bool(set(metric_list) & _DIST_METRICS)
@@ -1475,15 +1750,27 @@ def cal_dimred(
             sig = inspect.signature(metric_module.run)
             params = sig.parameters
 
-            # NOTE: We deliberately do NOT pre-materialise
-            # TriangularMatrix to dense for trust/continuity.  The
-            # shared _rank_penalty helper has a per-row CPU path
-            # that reads the memmap on demand — significantly faster
-            # than ``to_dense()`` (≈ 25-150 s depending on N) plus
-            # the sort+searchsorted loop.  The helper's own
-            # ``_decide_backend`` picks the best path for the input
-            # type (TriangularMatrix → per-row CPU, dense ndarray
-            # → JAX single-shot GPU).
+            # ── Materialize TriangularMatrix only when needed ───────
+            # For N ≤ 50k cells to_dense() is cheap (~2.5 GB) and
+            # saves the _rank_penalty helper a few row-gathers.
+            # For N > 50k the dense allocation would be O(N²) and
+            # catastrophic — the helper handles TriangularMatrix
+            # natively via the GPU chunked / CPU chunked paths.
+            _DENSE_TO_DENSE_MAX_N = 50_000
+            _high_mat = high_dim_dists
+            _low_mat = low_dim_dists
+            if metric_name in ("trustworthiness", "continuity"):
+                if (
+                    isinstance(high_dim_dists, TriangularMatrix)
+                    and high_dim_dists.n <= _DENSE_TO_DENSE_MAX_N
+                ):
+                    _high_mat = high_dim_dists.to_dense()
+                if (
+                    isinstance(low_dim_dists, TriangularMatrix)
+                    and low_dim_dists is not None
+                    and low_dim_dists.n <= _DENSE_TO_DENSE_MAX_N
+                ):
+                    _low_mat = low_dim_dists.to_dense()
 
             try:
                 kwargs = {}

@@ -81,6 +81,7 @@ def main() -> None:  # pragma: no cover
             f"--outdir={args.path}",
             f"--qc_display={' '.join(args.qc_display)}",
             f"--plot_celllimit={args.plot_celllimit}",
+            f"--n_jobs={getattr(args, 'n_jobs', 48)}",
             f"--obs_cluster={' '.join(args.obs_cluster)}",
             f"--metric_cluster={_metric_nf_arg(args.metric_cluster, cluster.__all__)}",
             f"--metric_annot={_metric_nf_arg(args.metric_annot, annot.__all__)}",
@@ -146,7 +147,7 @@ def main() -> None:  # pragma: no cover
             or atlas_type == cellranger.CELLRANGER_TYPE_CURRENT
             or atlas_type == cellranger.CELLRANGER_TYPE_OBSOLETE
         ):
-            adata = atlas.preprocess_atlas(atlas_info)
+            adata = atlas.preprocess_atlas(atlas_info, args)
             if process == check.PROCESS_TYPE[2]:  # summary
                 atlas.create_summary_table(adata, atlas_info, args)
                 atlas.create_anndata_table(adata, atlas_info, args)

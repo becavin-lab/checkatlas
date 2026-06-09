@@ -9,6 +9,39 @@ except ImportError:
     from checkatlas.metrics import annot, cluster, dimred
 
 
+MAX_N_JOBS = 48
+"""Upper limit on the number of CPU threads any CheckAtlas process may
+consume.  Capped at 48 so that on a 80-core workstation at least 32
+threads remain free for other users / pipelines.  See
+:func:`cap_n_jobs` for the enforcement helper."""
+
+
+def cap_n_jobs(n_jobs):
+    """Cap *n_jobs* at :data:`MAX_N_JOBS` and treat ``None`` / ``-1``
+    as "use the system default" by resolving to the cap.
+
+    Rules:
+      * ``None``  → :data:`MAX_N_JOBS` (covers the legacy path where
+        ``getattr(args, "n_jobs", -1)`` returned the fallback).
+      * ``-1``    → :data:`MAX_N_JOBS` (sklearn / joblib convention:
+        "all available cores", capped for politeness).
+      * values > :data:`MAX_N_JOBS` → :data:`MAX_N_JOBS`.
+      * any positive integer ≤ :data:`MAX_N_JOBS` → unchanged.
+      * anything else (non-integer, zero, negative) → :data:`MAX_N_JOBS`.
+    """
+    if n_jobs is None or n_jobs == -1:
+        return MAX_N_JOBS
+    try:
+        n_jobs = int(n_jobs)
+    except (TypeError, ValueError):
+        return MAX_N_JOBS
+    if n_jobs > MAX_N_JOBS:
+        return MAX_N_JOBS
+    if n_jobs < 1:
+        return MAX_N_JOBS
+    return n_jobs
+
+
 def create_parser():
     parser = argparse.ArgumentParser(
         prog="checkatlas",
@@ -102,6 +135,17 @@ def create_parser():
         "to plot in QC, UMAP, t-SNE, etc...."
         "If plot_celllimit=0, no limit will"
         "be applied.",
+    )
+    qc_options.add_argument(
+        "--n_jobs",
+        type=int,
+        default=MAX_N_JOBS,
+        help="Maximum number of CPU threads to use for parallel jobs "
+        "(sklearn pairwise_distances, NearestNeighbors, kNN graphs, "
+        "metric dispatch). Capped at 48 so other users / pipelines "
+        "keep some cores free on a 80-core host. Pass any positive "
+        "integer <= 48 to lower the cap further; higher values are "
+        f"silently clamped to {MAX_N_JOBS}.",
     )
 
     # Arguments linked to metric
