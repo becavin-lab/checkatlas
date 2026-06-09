@@ -27,7 +27,6 @@ poetry install --with dev
 
 
 ### Nextflow:
-- Run a process for every metrics: The multiprocessing will be managed by nextflow.
 
 
 ## Futur
