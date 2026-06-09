@@ -18,6 +18,7 @@ process PREPROCESS_SCANPY{
 
 process SUMMARY{
     label 'process_summary'
+    tag "${atlas_info.atlas_name}"
 
     input:
     val atlas_info
@@ -37,6 +38,7 @@ process SUMMARY{
 
 process QC{
     label 'process_qc'
+    tag "${atlas_info.atlas_name}"
 
     input:
     val atlas_info
@@ -57,62 +59,62 @@ process QC{
 
 process METRIC_CLUST{
     label 'process_metric_clust'
-    tag "${atlas_info.atlas_name}:${metric}"
+    tag "${atlas_info.atlas_name}"
 
     input:
-    tuple val(atlas_info), val(metric)
+    val atlas_info
     path samplesheet
 
     output:
     val out_info, emit: out_info
 
     script:
-    out_info = atlas_info.atlas_name + "_Metric_Clust_" + metric
+    out_info = atlas_info.atlas_name + "_Metric_Clust"
     """
     checkatlas metric_cluster $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --obs_cluster ${params.obs_cluster} \
-        --metric_cluster ${metric} \
+        --metric_cluster ${params.metric_cluster} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
 
 process METRIC_ANNOT{
     label 'process_metric_annot'
-    tag "${atlas_info.atlas_name}:${metric}"
+    tag "${atlas_info.atlas_name}"
 
     input:
-    tuple val(atlas_info), val(metric)
+    val atlas_info
     path samplesheet
 
     output:
     val out_info, emit: out_info
 
     script:
-    out_info = atlas_info.atlas_name + "_Metric_Annot_" + metric
+    out_info = atlas_info.atlas_name + "_Metric_Annot"
     """
     checkatlas metric_annot $samplesheet --atlas_name ${atlas_info.atlas_name} \
         --obs_cluster ${params.obs_cluster} \
-        --metric_annot ${metric} \
+        --metric_annot ${params.metric_annot} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
 
 process METRIC_DIMRED{
     label 'process_metric_dimred'
-    tag "${atlas_info.atlas_name}:${metric}"
+    tag "${atlas_info.atlas_name}"
 
     input:
-    tuple val(atlas_info), val(metric)
+    val atlas_info
     path samplesheet
 
     output:
     val out_info, emit: out_info
 
     script:
-    out_info = atlas_info.atlas_name + "_Metric_Dimred_" + metric
+    out_info = atlas_info.atlas_name + "_Metric_Dimred"
     """
     checkatlas metric_dimred $samplesheet --atlas_name ${atlas_info.atlas_name} \
-        --metric_dimred ${metric} \
+        --metric_dimred ${params.metric_dimred} \
         ${params.checkatlas_debug ? '--debug' : ''}
     """
 }
