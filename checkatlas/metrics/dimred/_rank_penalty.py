@@ -22,31 +22,29 @@ Backends, in order of preference:
   available): read the 1-D memmap of the upper triangle into host RAM,
   upload to device, build a (N, N) float16 symmetric matrix on the
   device, sort along axis 1, then ``vmap(jnp.searchsorted)`` for the
-  neighbour ranks.  Memory: 2 * N^2 * 2 bytes ≈ 14 GB for N=85k on a
-  40 GB A100.
+  neighbour ranks.
 
 * **JAX GPU float32 single-shot** (N <= 50_000 and GPU available):
-  same as above but float32 for sub-50k atlases where the precision
-  matters more than the bandwidth.
+  same as above but float32 for sub-50k atlases.
 
 * **JAX GPU chunked** (N > 100_000 and GPU available): row chunks of
-  the dense (N, N) host array, sent to the device one at a time.  Used
-  for atlases too large for the single-shot path.
+  the dense (N, N) host array read from memmap, sent to the device
+  one chunk at a time.  Chunk size is computed at runtime from 80 %
+  of the free GPU memory so every atlas, regardless of total N, can
+  be processed on the GPU.  No hard upper limit on N.
 
-* **CPU** (no JAX, or no GPU, or N > 200_000): one ``np.sort(axis=1)``
-  on the dense distance matrix, then per-row ``np.searchsorted``.
+* **CPU chunked** (no JAX, or no GPU): row chunks sorted on the host
+  one at a time, with the same memory‑bounded chunking strategy.
 
 For a memmap-backed :class:`TriangularMatrix` input, the helper
 detects the storage layout (1-D float16 of length ``N·(N−1)/2``) and
-uses the float16 single-shot path on GPU.  This is the **fast path**
-used by the blood-atlas production run: a single sequential read of
-the 7 GB memmap, one upload to device, two GPU kernels (sort +
-vmap-searchsorted).
+uses the float16 single-shot path on GPU.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Tuple
 
 import numpy as np
@@ -55,12 +53,88 @@ from .._jax_utils import _GPU_AVAILABLE, _JAX_AVAILABLE, _get_ndarray
 
 logger = logging.getLogger("checkatlas")
 
-# Tunables
+# ── Tunables ──────────────────────────────────────────────────────────
 _GPU_SINGLE_SHOT_F32_MAX_N = 50_000
 _GPU_SINGLE_SHOT_F16_MAX_N = 100_000  # 2 * 100k² * 2 = 40 GB; below is safe
-_GPU_CHUNKED_MAX_N = 200_000
-_GPU_CHUNKED_CHUNK = 8_000
 _CPU_CHUNK = 5_000
+_GPU_CHUNK_FALLBACK = 500  # min rows per chunk when GPU is tight
+_GPU_CHUNK_MAX_HOST_GB = 8  # cap host-side numpy array at 8 GB
+# ── GPU memory budget when pynvml is unavailable ─────────────────────
+# Chunk size is computed so the GPU-side allocation stays under this
+# total (JIT-compiled JAX sort + vmap-searchsorted ≈ 4–5× the raw data
+# on the device).  16 GB is safe on any 40 GB GPU even with pre-existing
+# JAX compilation cache and other CUDA allocations.
+_GPU_SAFE_BUDGET_BYTES = 16 * 1024**3
+_GPU_MEM_MULTIPLIER = 4  # JAX sort + vmap overhead ≈ 4× the chunk data
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Runtime GPU memory detection
+# ═══════════════════════════════════════════════════════════════════════
+
+
+def _gpu_free_memory_bytes() -> int:
+    """Return the currently free GPU memory (device 0) in bytes.
+
+    Tries, in order: ``pynvml``, ``nvidia-smi`` subprocess, 0.
+    """
+    # 1. pynvml
+    try:
+        import pynvml
+    except ImportError:
+        pass
+    else:
+        try:
+            pynvml.nvmlInit()
+            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+            info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            return int(info.free)
+        except Exception:
+            pass
+
+    # 2. nvidia-smi subprocess
+    try:
+        import subprocess
+
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            universal_newlines=True,
+            timeout=5,
+        )
+        free_mib = float(out.strip().splitlines()[0].strip())
+        return int(free_mib * 1024 * 1024)
+    except Exception:
+        return 0
+
+
+def _gpu_chunk_size(n: int) -> int:
+    """Return the number of rows per GPU chunk for an atlas of size *n*.
+
+    When ``pynvml`` or ``nvidia-smi`` is available the chunk uses
+    **55 %** of the currently free device memory (conservative to
+    leave room for JAX's compilation cache, XLA runtime, and other
+    CUDA allocations), with a **4× multiplier** to account for
+    JAX's sort-vmap-searchsorted working set.
+
+    When GPU memory cannot be queried the chunk is computed from a
+    fixed safe budget (:data:`_GPU_SAFE_BUDGET_BYTES`, 16 GB).
+
+    The returned value is always clamped by the host‑side cap
+    (:data:`_GPU_CHUNK_MAX_HOST_GB`, 8 GB) and a minimum of
+    :data:`_GPU_CHUNK_FALLBACK` (500 rows).
+    """
+    free = _gpu_free_memory_bytes()
+    bytes_per_row = n * 4  # float32
+    max_host_chunk = int(_GPU_CHUNK_MAX_HOST_GB * 1024**3 // bytes_per_row)
+
+    if free <= 0:
+        chunk = int(_GPU_SAFE_BUDGET_BYTES / (bytes_per_row * _GPU_MEM_MULTIPLIER))
+        return max(_GPU_CHUNK_FALLBACK, min(chunk, max_host_chunk))
+
+    # Use 55 % of observed free memory so JAX compilation / XLA
+    # workspace / other CUDA allocations have breathing room.
+    chunk = int((0.55 * free) / (bytes_per_row * _GPU_MEM_MULTIPLIER))
+    return max(_GPU_CHUNK_FALLBACK, min(chunk, max_host_chunk))
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -258,6 +332,8 @@ if _JAX_AVAILABLE:
         chunk: int,
     ) -> float:
         """Chunked GPU backend for the dense case (N > 100_000)."""
+        import gc as _gc
+
         n = nbr_idx_full.shape[0]
         _batched = _per_row_searchsorted_jit()
         total = 0.0
@@ -273,8 +349,11 @@ if _JAX_AVAILABLE:
             h_sorted_chunk = _row_sort_jax(h_chunk)
             ranks = _batched(h_sorted_chunk, nd_chunk)
             excess = jnp.maximum(ranks - k, 0)
-            total += float(_get_ndarray(excess.sum()))
-            del h_chunk_np, nbr_dists_np, h_chunk, nd_chunk, h_sorted_chunk, ranks, excess
+            _excess_sum = excess.sum()
+            jax.block_until_ready(_excess_sum)
+            total += float(_get_ndarray(_excess_sum))
+            del h_chunk_np, nbr_dists_np, h_chunk, nd_chunk, h_sorted_chunk, ranks, excess, _excess_sum
+            _gc.collect()
         return total
 
 else:
@@ -344,9 +423,10 @@ def _decide_backend(n: int, requested: str = "auto") -> str:
         return "jax_single_shot_f32"
     if n <= _GPU_SINGLE_SHOT_F16_MAX_N:
         return "jax_single_shot_f16"
-    if n <= _GPU_CHUNKED_MAX_N:
-        return "jax_chunked"
-    return "cpu"
+    # All larger N use GPU chunked (row-by-row from memmap) with
+    # chunk size determined at runtime from free GPU memory.
+    # No hard upper limit.
+    return "jax_chunked"
 
 
 def rank_penalty(
@@ -354,7 +434,7 @@ def rank_penalty(
     low_neighbors: np.ndarray,
     k: int,
     use_jax: str = "auto",
-    chunk_size: int = _CPU_CHUNK,
+    chunk_size: int = -1,
 ) -> float:
     """Compute the trust/continuity rank penalty.
 
@@ -376,7 +456,9 @@ def rank_penalty(
         ``"auto"`` (default) | ``"jax_single_shot_f16"`` |
         ``"jax_single_shot_f32"`` | ``"jax_chunked"`` | ``"cpu"``.
     chunk_size : int
-        Row chunk size for the chunked backend.
+        Row chunk size for the chunked backend.  When ``-1`` (default)
+        the chunk size is computed at runtime from free GPU memory
+        (GPU chunked) or falls back to :data:`_CPU_CHUNK` (CPU).
 
     Returns
     -------
@@ -425,8 +507,14 @@ def rank_penalty(
         nbr_dists = _gather_nbr_dists_from_upper(flat_upper, nbr_idx, n)
         return _rank_penalty_jax_single_shot_f16(flat_upper, nbr_dists, n, k)
 
-    # ── GPU chunked ──
+    # ── GPU chunked: row-by-row from memmap, bounded by GPU memory ──
     if backend == "jax_chunked":
+        if chunk_size <= 0:
+            chunk_size = _gpu_chunk_size(n)
+            logger.info(
+                "GPU chunked backend: N=%d, chunk=%d rows (%.1f GB/chunk on device)",
+                n, chunk_size, chunk_size * n * 4 * 3 / 1024**3,
+            )
         return _rank_penalty_jax_chunked(high_dists, nbr_idx, k, chunk=chunk_size)
 
     # ── float32 single-shot / CPU: need the full high_dists ──

@@ -1747,21 +1747,26 @@ def cal_dimred(
             params = sig.parameters
 
             # ── Materialize TriangularMatrix only when needed ───────
-            # Trust/continuity use the shared _rank_penalty helper,
-            # which needs row-sortable dense buffers.  Force
-            # to_dense() for those two so the helper doesn't have to
-            # pay the per-row gather cost on a memmap-backed
-            # TriangularMatrix.
-            _JOBLIB_METRICS = frozenset(("trustworthiness", "continuity"))
+            # For N ≤ 50k cells to_dense() is cheap (~2.5 GB) and
+            # saves the _rank_penalty helper a few row-gathers.
+            # For N > 50k the dense allocation would be O(N²) and
+            # catastrophic — the helper handles TriangularMatrix
+            # natively via the GPU chunked / CPU chunked paths.
+            _DENSE_TO_DENSE_MAX_N = 50_000
             _high_mat = high_dim_dists
             _low_mat = low_dim_dists
-            if metric_name in _JOBLIB_METRICS:
-                if isinstance(high_dim_dists, TriangularMatrix):
+            if metric_name in ("trustworthiness", "continuity"):
+                if (
+                    isinstance(high_dim_dists, TriangularMatrix)
+                    and high_dim_dists.n <= _DENSE_TO_DENSE_MAX_N
+                ):
                     _high_mat = high_dim_dists.to_dense()
-                if isinstance(low_dim_dists, TriangularMatrix):
-                    _low_mat = (
-                        low_dim_dists.to_dense() if low_dim_dists is not None else None
-                    )
+                if (
+                    isinstance(low_dim_dists, TriangularMatrix)
+                    and low_dim_dists is not None
+                    and low_dim_dists.n <= _DENSE_TO_DENSE_MAX_N
+                ):
+                    _low_mat = low_dim_dists.to_dense()
 
             try:
                 kwargs = {}
