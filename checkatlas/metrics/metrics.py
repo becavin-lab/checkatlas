@@ -1351,8 +1351,8 @@ def cal_dimred(
             "kruskal_stress",
             "spearman_rho",
             "dCor",
-            "trustworthiness",
-            "continuity",
+            # "trustworthiness",  # Disabled: OOM issues for large atlases
+            # "continuity",  # Disabled: OOM issues for large atlases
         )
     )
 

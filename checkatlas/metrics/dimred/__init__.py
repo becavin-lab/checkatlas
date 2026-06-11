@@ -1,7 +1,7 @@
 from . import (
     avg_jaccard_dis,
     coknn,
-    continuity,
+    # continuity,  # Disabled: OOM issues for large atlases (N > 100k)
     dCor,
     den_pre,
     entourage,
@@ -9,7 +9,7 @@ from . import (
     kruskal_stress,
     lcmc,
     spearman_rho,
-    trustworthiness,
+    # trustworthiness,  # Disabled: OOM issues for large atlases (N > 100k)
 )
 
 __all__ = [
@@ -17,8 +17,8 @@ __all__ = [
     "spearman_rho",
     "entourage",
     "coknn",
-    "trustworthiness",
-    "continuity",
+    # "trustworthiness",  # Disabled: OOM issues for large atlases
+    # "continuity",  # Disabled: OOM issues for large atlases
     "dCor",
     "den_pre",
     "lcmc",
