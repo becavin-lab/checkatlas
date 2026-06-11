@@ -4,6 +4,19 @@ Changelog
 
 (unreleased)
 ------------
+- Release: version  🚀 [Christophe Bécavin]
+- Add output path in metric nextflow processes. [Christophe Bécavin]
+- Merge of preprocess and main branches. [Christophe Bécavin]
+- Updated the dimred optimization. [RitwikGanguly]
+- Update the pcr, asw and dunn_index for apply the precomputed values
+  and for pcr preferred ridge over logistic. [RitwikGanguly]
+- Integrate the old (gpu_jax) pipeline to the new preprocess pipeline.
+  [RitwikGanguly]
+- Added the [preprocess_atlas] function for the initial whole
+  preprocessing of the atlas (v1) [RitwikGanguly]
+- Go back to one nextflow process for all metrics of metric_clust.
+  [Christophe Bécavin]
+- Release: version 0.8.1 🚀 [Christophe Bécavin]
 - Fix nextflow path for checkatlas project. [Christophe Bécavin]
 - Release: version 0.8.0 🚀 [Christophe Bécavin]
 - Clean project. [Christophe Bécavin]
