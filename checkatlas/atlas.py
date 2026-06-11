@@ -11,6 +11,7 @@ import scanpy as sc
 from anndata import AnnData
 from anndata import _io as _io
 from sklearn.utils.fixes import _object_dtype_isnan
+from tqdm import tqdm
 
 try:
     from . import cellranger, check
@@ -306,7 +307,7 @@ def _precompute_dimred(
         return
 
     # ── High-dim kNN ─────────────────────────────────────────────
-    logger.info("  Computing high-dim kNN (k=%d)...", k_neighbors + 1)
+    tqdm.write(f"  Computing high-dim kNN (k={k_neighbors + 1})...")
     try:
         high_knn = compute_neighbors(
             np.asarray(high_dim_data, dtype=np.float64),
@@ -332,6 +333,7 @@ def _precompute_dimred(
 
     high_dim_dists = None
     if need_high_dists:
+        tqdm.write(f"  Computing high-dim distance matrix ({n_cells:,} x {n_cells:,})...")
         if use_memmap:
             import uuid
 
@@ -342,7 +344,11 @@ def _precompute_dimred(
             high_dim_dists = TriangularMatrix(
                 n=n_cells, filepath=high_dists_path, mode="w+"
             )
-            for i in range(0, n_cells, chunk_size):
+            for i in tqdm(
+                range(0, n_cells, chunk_size),
+                desc="  High-dim distance matrix",
+                unit="chunk",
+            ):
                 end = min(i + chunk_size, n_cells)
                 from sklearn.metrics import pairwise_distances
 
@@ -355,7 +361,11 @@ def _precompute_dimred(
             from sklearn.metrics import pairwise_distances
 
             high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
-            for i in range(0, n_cells, chunk_size):
+            for i in tqdm(
+                range(0, n_cells, chunk_size),
+                desc="  High-dim distance matrix",
+                unit="chunk",
+            ):
                 end = min(i + chunk_size, n_cells)
                 high_dim_dists[i:end, :] = pairwise_distances(
                     high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
@@ -363,11 +373,11 @@ def _precompute_dimred(
 
     # ── Per-embedding low-dim kNN + distances ────────────────────
     low_dim_data_cache = {}
-    for emb_key in emb_to_eval:
+    for emb_key in tqdm(emb_to_eval, desc="  Low-dim precompute"):
         low_dim_data = adata.obsm[emb_key][sample_indices]
         low_n_cells = low_dim_data.shape[0]
 
-        logger.info("  Computing low-dim kNN for %s...", emb_key)
+        tqdm.write(f"  kNN for {emb_key}...")
         try:
             low_knn = compute_neighbors(
                 np.asarray(low_dim_data, dtype=np.float64),
@@ -399,7 +409,12 @@ def _precompute_dimred(
                 low_dists = TriangularMatrix(
                     n=low_n_cells, filepath=low_dists_path, mode="w+"
                 )
-                for i in range(0, low_n_cells, chunk_size):
+                for i in tqdm(
+                    range(0, low_n_cells, chunk_size),
+                    desc=f"    Distances ({emb_key})",
+                    unit="chunk",
+                    leave=False,
+                ):
                     end = min(i + chunk_size, low_n_cells)
                     from sklearn.metrics import pairwise_distances
 
@@ -412,7 +427,12 @@ def _precompute_dimred(
                 from sklearn.metrics import pairwise_distances
 
                 low_dists = np.zeros((low_n_cells, low_n_cells), dtype=np.float32)
-                for i in range(0, low_n_cells, chunk_size):
+                for i in tqdm(
+                    range(0, low_n_cells, chunk_size),
+                    desc=f"    Distances ({emb_key})",
+                    unit="chunk",
+                    leave=False,
+                ):
                     end = min(i + chunk_size, low_n_cells)
                     low_dists[i:end, :] = pairwise_distances(
                         low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
@@ -466,7 +486,7 @@ def _precompute_annot(
 
     safe_name = lambda s: s.replace("/", "_").replace(" ", "_")
 
-    for emb in ctx.annotation_embedding_keys:
+    for emb in tqdm(ctx.annotation_embedding_keys, desc="  Annotation kNN + neighbors"):
         if emb not in adata.obsm:
             continue
         X_emb = np.asarray(adata.obsm[emb], dtype=np.float64)
@@ -543,7 +563,7 @@ def _precompute_cluster(
 
     safe_name = lambda s: s.replace("/", "_").replace(" ", "_")
 
-    for emb in ctx.cluster_embedding_keys:
+    for emb in tqdm(ctx.cluster_embedding_keys, desc="  Cluster distances"):
         if emb == "X":
             X_emb = adata.X
             if hasattr(X_emb, "toarray"):
@@ -562,7 +582,12 @@ def _precompute_cluster(
 
         if n_cells > 10000:
             tri = TriangularMatrix(n=n_cells, filepath=tri_path, mode="w+")
-            for i in range(0, n_cells, chunk_size):
+            for i in tqdm(
+                range(0, n_cells, chunk_size),
+                desc=f"    Distances ({emb})",
+                unit="chunk",
+                leave=False,
+            ):
                 end = min(i + chunk_size, n_cells)
                 block = pairwise_distances(X_emb[i:end], X_emb, n_jobs=n_jobs)
                 store_upper_triangle(tri._data, block, i, 0, n_cells)
