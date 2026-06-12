@@ -49,6 +49,10 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, precomputed_dists=
     if precomputed_dists is not None:
         if issparse(precomputed_dists):
             precomputed_dists = precomputed_dists.toarray()
+        if hasattr(precomputed_dists, "_get_block"):
+            _is_tri = True
+        else:
+            _is_tri = False
         if verbose:
             print("Using precomputed distances for Dunn Index...")
     else:
@@ -93,7 +97,11 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, precomputed_dists=
             for j in range(i + 1, n_clusters):
                 lj = unique_labels[j]
                 idx_j = cluster_idx[lj]
-                d = float(precomputed_dists[idx_i][:, idx_j].min())
+                if _is_tri:
+                    block = precomputed_dists._get_block(idx_i, idx_j)
+                    d = float(block.min())
+                else:
+                    d = float(precomputed_dists[np.ix_(idx_i, idx_j)].min())
                 if d < min_inter:
                     min_inter = d
 
@@ -102,7 +110,11 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, precomputed_dists=
             idx = cluster_idx[lbl]
             if len(idx) < 2:
                 continue
-            dk = float(precomputed_dists[idx][:, idx].max())
+            if _is_tri:
+                block = precomputed_dists._get_block(idx, idx)
+                dk = float(block.max())
+            else:
+                dk = float(precomputed_dists[np.ix_(idx, idx)].max())
             if dk > max_intra:
                 max_intra = dk
 

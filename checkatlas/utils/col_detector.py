@@ -142,6 +142,10 @@ _CLUSTER_LABEL_PATTERNS: Dict[str, float] = {
     # ── scVI-then-cluster ──────────────────────────────────────
     r"(?<![a-zA-Z])scvi[_\s]?clust(er)?(?![a-zA-Z])": 0.85,
     r"(?<![a-zA-Z])scanvi[_\s]?clust(er)?(?![a-zA-Z])": 0.80,
+    # ── scVI / scANVI + Leiden (deep generative clustering) ──
+    r"(?<![a-zA-Z])scvi[_\s]?leiden(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])scanvi[_\s]?leiden(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])leiden[_\s]?res[\d]+": 0.85,
     # ── Generic clustering (lower weight, high false-positive risk)
     r"(?<![a-zA-Z])cluster(s|ing)?(?![a-zA-Z])": 0.65,
     r"(?<![a-zA-Z])partition(?![a-zA-Z])": 0.55,
@@ -512,7 +516,10 @@ class CheckAtlasColumnDetector:
 
         # ── Semantic contribution (60 %) ──────────────────────────
         score += semantic["predicted_annotation"] * 0.6
-        score -= semantic["metadata"] * 0.6
+        if semantic["predicted_annotation"] > 0.9:
+            score -= semantic["metadata"] * 0.3
+        else:
+            score -= semantic["metadata"] * 0.6
 
         # ── Statistical indicators (40 %) ─────────────────────────
         n_unique = int(stats["n_unique"])
