@@ -50,26 +50,59 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, precomputed_dists=
         if issparse(precomputed_dists):
             precomputed_dists = precomputed_dists.toarray()
         if hasattr(precomputed_dists, "_get_block"):
-            _is_tri = True
+            if verbose:
+                print("Using precomputed distances for Dunn Index...")
+                print("  TriangularMatrix detected — switching to X-based path...")
+            precomputed_dists = None
         else:
-            _is_tri = False
-        if verbose:
-            print("Using precomputed distances for Dunn Index...")
+            if verbose:
+                print("Using precomputed distances for Dunn Index...")
+            if precomputed_dists.shape[0] != len(labels):
+                raise ValueError(
+                    f"precomputed_dists and labels must have same length. "
+                    f"Got dists: {precomputed_dists.shape[0]}, labels: {len(labels)}"
+                )
+            labels_arr = np.asarray(labels)
+            unique_lbl = np.unique(labels_arr)
+            n_cl = len(unique_lbl)
+            if n_cl < 2:
+                return 0.0
+            cluster_idx = {}
+            for lbl in unique_lbl:
+                cluster_idx[lbl] = np.where(labels_arr == lbl)[0]
+            min_inter = np.inf
+            for i in range(n_cl):
+                li = unique_lbl[i]
+                idx_i = cluster_idx[li]
+                for j in range(i + 1, n_cl):
+                    lj = unique_lbl[j]
+                    idx_j = cluster_idx[lj]
+                    d = float(precomputed_dists[np.ix_(idx_i, idx_j)].min())
+                    if d < min_inter:
+                        min_inter = d
+            max_intra = 0.0
+            for lbl in unique_lbl:
+                idx = cluster_idx[lbl]
+                if len(idx) < 2:
+                    continue
+                dk = float(precomputed_dists[np.ix_(idx, idx)].max())
+                if dk > max_intra:
+                    max_intra = dk
+            if max_intra == 0:
+                return 0.0
+            dunn_val = min_inter / max_intra
+            if verbose:
+                print(f"  Dunn Index = {dunn_val:.6f}")
+            return dunn_val
+
+    if issparse(X):
+        X = X.toarray()
     else:
-        if issparse(X):
-            X = X.toarray()
-        else:
-            X = np.asarray(X)
+        X = np.asarray(X)
 
     labels = np.asarray(labels)
 
-    if precomputed_dists is not None:
-        if precomputed_dists.shape[0] != len(labels):
-            raise ValueError(
-                f"precomputed_dists and labels must have same length. "
-                f"Got dists: {precomputed_dists.shape[0]}, labels: {len(labels)}"
-            )
-    elif len(X) != len(labels):
+    if len(X) != len(labels):
         raise ValueError(
             f"X and labels must have same length. "
             f"Got X: {len(X)}, labels: {len(labels)}"
@@ -85,53 +118,20 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, precomputed_dists=
     for lbl in unique_labels:
         cluster_idx[lbl] = np.where(labels == lbl)[0]
 
-    # ── Fast path: slice precomputed N×N distance matrix ──────
-    if precomputed_dists is not None:
-        if verbose:
-            print("Using precomputed distances for Dunn Index...")
-
-        min_inter = np.inf
-        for i in range(n_clusters):
-            li = unique_labels[i]
-            idx_i = cluster_idx[li]
-            for j in range(i + 1, n_clusters):
-                lj = unique_labels[j]
-                idx_j = cluster_idx[lj]
-                if _is_tri:
-                    block = precomputed_dists._get_block(idx_i, idx_j)
-                    d = float(block.min())
-                else:
-                    d = float(precomputed_dists[np.ix_(idx_i, idx_j)].min())
-                if d < min_inter:
-                    min_inter = d
-
-        max_intra = 0.0
-        for lbl in unique_labels:
-            idx = cluster_idx[lbl]
-            if len(idx) < 2:
-                continue
-            if _is_tri:
-                block = precomputed_dists._get_block(idx, idx)
-                dk = float(block.max())
-            else:
-                dk = float(precomputed_dists[np.ix_(idx, idx)].max())
-            if dk > max_intra:
-                max_intra = dk
-
-        if max_intra == 0:
-            return 0.0
-        dunn_index = min_inter / max_intra
-        if verbose:
-            print(f"  Dunn Index = {dunn_index:.6f}")
-        return dunn_index
-
     # ── Inter-cluster: minimum distance between clusters ──────────
-    # Uses NearestNeighbors (ball-tree for low-dim data) so each
-    # cross-cluster query is O(|Ci|・log|Cj|) instead of O(|Ci|・|Cj|).
+    # Pre-fit one ball-tree per cluster (22 fits) and query across
+    # all C²/2 = 231 pairs.  Each fit is O(|Ck|·log|Ck|·d), each query
+    # is O(|Ci|·log|Cj|·d).  Total ~30 s for 85k cells / 50 dims.
     inter_pairs = (n_clusters * (n_clusters - 1)) // 2
     if verbose:
         print(f"Computing Dunn Index " f"({len(X):,} samples, {n_clusters} clusters)...")
         print(f"  Inter-cluster distances ({inter_pairs} pairs)...")
+
+    trees = {}
+    for lbl in unique_labels:
+        trees[lbl] = NearestNeighbors(n_neighbors=1, algorithm="auto").fit(
+            X[cluster_idx[lbl]]
+        )
 
     min_inter = np.inf
     for i in range(n_clusters):
@@ -141,17 +141,10 @@ def run(X, labels, n_jobs=-1, verbose=True, max_samples=None, precomputed_dists=
             lj = unique_labels[j]
             Xj = X[cluster_idx[lj]]
 
-            # Fit ball-tree on one cluster, query the other for the
-            # single nearest-neighbour distance.  For low‑dimensional
-            # data ball‑tree is lightning fast → single-threaded.
             if len(Xi) <= len(Xj):
-                nn = NearestNeighbors(n_neighbors=1, algorithm="ball_tree")
-                nn.fit(Xj)
-                dists, _ = nn.kneighbors(Xi)
+                dists, _ = trees[lj].kneighbors(Xi)
             else:
-                nn = NearestNeighbors(n_neighbors=1, algorithm="ball_tree")
-                nn.fit(Xi)
-                dists, _ = nn.kneighbors(Xj)
+                dists, _ = trees[li].kneighbors(Xj)
 
             d = float(dists.min())
             if d < min_inter:
