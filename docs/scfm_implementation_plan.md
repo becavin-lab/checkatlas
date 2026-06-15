@@ -138,6 +138,8 @@ The new `cal_scfm(...)` orchestrator (in `checkatlas/metrics/scfm/run.py`) is a 
 
 The scFM embedding is added to the auto-detected `embedding_keys` list, so every metric that supports embeddings will be evaluated on it. The user's baseline embeddings (PCA, scVI) are added to the same list. This is the key design choice: **scFM and baselines are evaluated on the exact same metric engine, so any comparison is apples-to-apples**.
 
+##### Review Becavin: Lets add in our embedding detection every embedding from the scFM found (scGPT, GeneFormer, UCE, etc;..)
+
 ### 5.2 New modules in `checkatlas/metrics/scfm/`
 
 ```
@@ -150,6 +152,8 @@ scfm/
 ├── rare_types.py          # problem 5 (overprediction of common types)
 └── cross_domain.py        # problem 6
 ```
+
+##### Review Becavin: Please if you add this it has to be connected to metrics.py; It should be ran after cla_cluster and other metrics. No re-processing of adata should be performed
 
 `__init__.py` exposes:
 
@@ -303,7 +307,7 @@ A single dict (or YAML, see §11) mapping each problem ID to:
     ...
 }
 ```
-
+##### Review Becavin: also the user should be able to put its own thresholds in a modified yaml file
 Threshold source policy: **hard-coded with cited sources in `rules.py`**. Each entry records the paper and (where available) the threshold the paper used. Threshold updates are a one-line change.
 
 ### 6.3 `diagnostics.py` — `ProblemVerdict` and the nine rules
@@ -452,12 +456,17 @@ Two routes, both supported:
    - Nine-problem bar plot (matplotlib, embedded as base64 PNG)
    - The three composite scores with one-line explanations
    - Per-problem expandable sections with evidence, explanation, and reference
+##### Review Becavin: Start with route 1, and then i will help implement the second route, this is easy later.
+
 
 A small `scfm_problem_heatmaps/` subfolder contains the per-atlas bar plots, so users who prefer the static image can also browse them.
+
+And then i will help implement the second route, this is easy
 
 ### 7.3 Nextflow integration
 
 `checkatlas/nextflow/main.nf:26-32` is extended to include a new `CHECKATLAS_SCFM` workflow. It runs the SCFM process on every atlas in the samplesheet, after the standard metric processes. The output TSVs are collected and forwarded to `CREATE_REPORT` and `MULTIQC` exactly as the other tables are.
+##### Review Becavin: Not a new workflow but a new process as below invoking checkatlas scfm <atlas_path> --atlas_name <name> --scfm_embedding <emb> ...`. after all metrics are done.
 
 The minimal change to `checkatlas/nextflow/workflows/checkatlas_scanpy.nf` is a new process module that invokes `checkatlas scfm <atlas_path> --atlas_name <name> --scfm_embedding <emb> ...`. The Nextflow wrapper shells out to the CLI subprocess just as the existing metric processes do.
 
@@ -499,6 +508,9 @@ What happens, in order:
    - `cross_domain` is skipped (no `domain_key` provided) and flagged as `n/a`.
 
 3. **Layer 2 diagnostics**. `diagnostics.diagnose(df, config)` returns nine `ProblemVerdict` objects. For Aisha's Geneformer-on-PBMC run, the verdicts are:
+
+##### Review Becavin: Add a genomic diagnostic and sequencing = normal QC on the quality of the single cell. Is there enough gene per cells, percentage of mito... It is already implemented in the QC process.
+
 
    | # | Problem | Grade | Evidence |
    |---|---------|-------|----------|
@@ -544,6 +556,8 @@ This is roughly **8–10 weeks of focused work for a single engineer**, organise
 **Deliverable:** `checkatlas scfm path/ --atlas_name foo` returns "scfm pipeline not yet implemented" without crashing.
 
 ### Phase 1 — Layer 1 new metrics (3 weeks)
+
+##### Review Becavin: New metrics or just the old on reimplemented ??? Be careful ! 
 
 - `metrics/scfm/scaling.py`
 - `metrics/scfm/stability.py`
@@ -653,6 +667,7 @@ Items deferred to a future iteration:
 
 | Path | Purpose | Status |
 |------|---------|--------|
+##### Review Becavin: Not sure it is usefull
 | `checkatlas/metrics/scfm/__init__.py` | Package init, exports | New |
 | `checkatlas/metrics/scfm/run.py` | `cal_scfm` orchestrator | New |
 | `checkatlas/metrics/scfm/scaling.py` | Problem 3 | New |
@@ -661,6 +676,8 @@ Items deferred to a future iteration:
 | `checkatlas/metrics/scfm/rare_types.py` | Problem 5 | New |
 | `checkatlas/metrics/scfm/cross_domain.py` | Problem 6 | New |
 | `checkatlas/metrics/scfm/patient.py` | Problem 7 | New |
+#####
+
 | `checkatlas/scfm/__init__.py` | Package init, exports | New |
 | `checkatlas/scfm/config.py` | `SCFMConfig` dataclass | New |
 | `checkatlas/scfm/rules.py` | Literature threshold table | New |
@@ -673,8 +690,12 @@ Items deferred to a future iteration:
 | `checkatlas/utils/checkatlas_arguments.py` | New argparse group | Edit |
 | `checkatlas/utils/folders.py` | Register `scfm/` folder | Edit |
 | `checkatlas/__main__.py` | Dispatch `scfm` process | Edit |
+
+##### Review Becavin: No new workflow but a process in checkatlas_scanpy.nf
 | `checkatlas/nextflow/main.nf` | Include `CHECKATLAS_SCFM` workflow | Edit |
 | `checkatlas/nextflow/workflows/checkatlas_scanpy.nf` | New process module | Edit |
+#####
+
 | `checkatlas/nextflow/assets/multiqc_config.yml` | New table definitions | Edit |
 | `tests/test_metrics.py` | Unit tests for new metric modules | Fill in |
 | `tests/test_scfm_diagnostics.py` | One test per problem rule | New |
