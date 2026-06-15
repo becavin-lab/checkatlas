@@ -123,51 +123,53 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None, precomputed_dists=
 
         _exact_intra_mean(Xk, a_values, idx, n_jobs=n_jobs, chunk=2000)
 
-    # ── Step 2: b(i) via centroid-expansion formula ───────────────
-    # For point i and cluster C:
-    #   mean_sq_dist(i, C) = ||i||² + mean(||c||²) - 2·i·centroid
-    #   b_approx(i) = min_{C≠cl(i)} sqrt(mean_sq_dist(i, C))
+    # ── Step 2: b(i) via exact chunked mean Euclidean distance ────
+    # For each pair (Ci, Cj), compute the mean Euclidean distance from
+    # each point in Ci to all points in Cj.  This is the *exact* mean
+    # distance required by the silhouette formula, not the centroid
+    # RMS approximation which gives wrong values.
     #
-    # Pre-compute per-cluster statistics.
-    norms_sq = np.einsum("ij,ij->i", X, X)  # ||x||² per point
-
-    cluster_centroids = {}
-    cluster_mean_norms = {}
-    for lbl in unique_labels:
-        idx = np.where(labels == lbl)[0]
-        cluster_centroids[lbl] = X[idx].mean(axis=0)
-        cluster_mean_norms[lbl] = norms_sq[idx].mean()
-
+    # Chunking over Cj keeps peak memory at O(|Ci| · chunk_j) instead
+    # of O(|Ci| · |Cj|).  Total work is O(N² · d) across all pairs.
     b_values = np.full(n_total, np.inf)
 
-    # For each cluster, compute b(i) against every *other* cluster in
-    # one vectorised block (O(|Ck|·K·d)).
     for lbl_i in unique_labels:
         idx_i = np.where(labels == lbl_i)[0]
         Xi = X[idx_i]
         ni = len(idx_i)
 
-        # All data for points in this cluster
-        norms_i = norms_sq[idx_i]  # shape (ni,)
+        b_i = np.full(ni, np.inf)
+        norms_i = (Xi ** 2).sum(axis=1)  # (ni,)
 
-        # For each other cluster, compute mean_sq_dist block
         for lbl_j in unique_labels:
             if lbl_i == lbl_j:
                 continue
-            centroid_j = cluster_centroids[lbl_j]  # shape (d,)
-            mean_norm_j = cluster_mean_norms[lbl_j]
+            idx_j = np.where(labels == lbl_j)[0]
+            Xj = X[idx_j]
+            nj = len(idx_j)
 
-            # mean_sq_dist(i, Cj) = ||i||² + mean(||c||²) - 2·i·centroid_j
-            # shape: (ni,)
-            mean_sq = norms_i + mean_norm_j - 2.0 * np.dot(Xi, centroid_j)
-            # Clamp near-zero negatives (floating-point noise)
-            mean_sq = np.maximum(mean_sq, 0.0)
-            mean_dist = np.sqrt(mean_sq)
+            # Compute mean Euclidean distance from each point in Xi to
+            # all points in Xj.  Chunk over Xj to keep memory bounded.
+            sum_dist = np.zeros(ni)
+            norms_j = (Xj ** 2).sum(axis=1)
+            _chunk_j = 4000
+            for cs in range(0, nj, _chunk_j):
+                ce = min(cs + _chunk_j, nj)
+                Xjc = Xj[cs:ce]
+                norms_jc = norms_j[cs:ce]
+                # Expansion: ||Xi - Xjc||² = ||Xi||² + ||Xjc||² - 2·Xi·Xjc.T
+                dot = Xi @ Xjc.T
+                dists_sq = norms_i[:, None] + norms_jc[None, :] - 2.0 * dot
+                dists_sq = np.maximum(dists_sq, 0.0)
+                sum_dist += np.sqrt(dists_sq).sum(axis=1)
 
-            b_values[idx_i] = np.minimum(b_values[idx_i], mean_dist)
+            mean_dist = sum_dist / nj
+            b_i = np.minimum(b_i, mean_dist)
+
+        b_values[idx_i] = b_i
 
     if verbose:
-        print(f"  Completed b(i) approximation via centroid expansion.")
+        print(f"  Completed b(i) via exact chunked mean distance.")
 
     # ── Step 3: per-point silhouette ──────────────────────────────
     s = _silhouette_from_apoint(a_values, b_values)
@@ -189,6 +191,11 @@ def _exact_intra_mean(Xk, a_out, global_idx, n_jobs=1, chunk=2000):
     *other* points in the same cluster.  Uses chunked upper-triangular
     pairwise blocks so the full |Ck|×|Ck| matrix is never stored.
 
+    For each off-diagonal block (r < c), the column sums are also
+    accumulated into a_out so that points in Xc (columns) get their
+    cross-distances counted too — without this, the last chunk of
+    each cluster row misses half its distances.
+
     When JAX is available, GPU cdist replaces sklearn pairwise_distances
     for ~100× faster intra-cluster distance computation.
     """
@@ -209,7 +216,7 @@ def _exact_intra_mean(Xk, a_out, global_idx, n_jobs=1, chunk=2000):
             # block shape: (re-r) × (ce-c)
 
             if r == c:
-                # diagonal — zero out self-distances
+                # Diagonal block — zero out self-distances, sum rows.
                 dlen = block.shape[0]
                 for d in range(dlen):
                     if d < block.shape[1]:
@@ -217,17 +224,25 @@ def _exact_intra_mean(Xk, a_out, global_idx, n_jobs=1, chunk=2000):
                 with np.errstate(all="ignore"):
                     row_sum = np.nansum(block, axis=1)
                 row_cnt = (ce - c) - 1  # exclude self
+                a_out[global_idx[r:re]] += row_sum
+                counts[r:re] += row_cnt
             else:
+                # Off-diagonal block — accumulate BOTH row sums (for Xr
+                # points) and column sums (for Xc points).  Each
+                # unordered pair is counted exactly once from each
+                # direction, giving each point its full n−1 count.
                 row_sum = block.sum(axis=1)
+                col_sum = block.sum(axis=0)
                 row_cnt = ce - c
-
-            a_out[global_idx[r:re]] += row_sum
-            counts[r:re] += row_cnt
+                col_cnt = re - r
+                a_out[global_idx[r:re]] += row_sum
+                a_out[global_idx[c:ce]] += col_sum
+                counts[r:re] += row_cnt
+                counts[c:ce] += col_cnt
 
     # Normalise: a(i) = sum / (n-1)
-    for i in range(n):
-        if counts[i] > 0:
-            a_out[global_idx[i]] /= counts[i]
+    mask = counts > 0
+    a_out[global_idx[mask]] /= counts[mask]
 
 
 def _silhouette_from_apoint(a, b):
