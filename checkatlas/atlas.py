@@ -205,6 +205,8 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
         k_neighbors=k_max,
         source_path=source_path,
         annotation_embedding_keys=annotation_embedding_keys,
+        ref_keys=ref_keys,
+        pred_keys=pred_keys,
     )
 
     # ── 2. Early exit: cached context still valid ──────────────────

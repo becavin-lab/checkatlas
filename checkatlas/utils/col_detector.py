@@ -101,6 +101,10 @@ _PREDICTED_ANNOTATION_PATTERNS: Dict[str, float] = {
     r"(?<![a-zA-Z])scanvi(?![a-zA-Z])": 0.90,
     r"(?<![a-zA-Z])scgen(?![a-zA-Z])": 0.80,
     r"(?<![a-zA-Z])scvi[_\s]?tools?(?![a-zA-Z])": 0.90,
+    # ── scVI / scANVI + Leiden (deep generative clustering) ──
+    r"(?<![a-zA-Z])scvi[_\s]?leiden(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])scanvi[_\s]?leiden(?![a-zA-Z])": 0.95,
+    r"(?<![a-zA-Z])leiden[_\s]?res[\d]+": 0.85,
     # ── Generic predicted / inferred / automated ─────────────────
     r"(?<![a-zA-Z])predict(ed|ion)?(?![a-zA-Z])": 0.85,
     r"(?<![a-zA-Z])infer(red)?(?![a-zA-Z])": 0.85,

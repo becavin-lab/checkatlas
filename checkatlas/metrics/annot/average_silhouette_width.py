@@ -69,14 +69,18 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None, precomputed_dists=
             )
         if len(np.unique(labels_arr)) < 2:
             return 0.0
-        if verbose:
-            print("Using precomputed distances for Silhouette...")
-        from sklearn.metrics import silhouette_score
+        if hasattr(precomputed_dists, "to_dense"):
+            # TriangularMatrix — too large to densify (O(N²) memory).
+            # Fall through to the X-based centroid-expansion algorithm
+            # which is O(N·K·d) and avoids the full distance matrix.
+            if verbose:
+                print("TriangularMatrix detected — using X-based silhouette...")
+        else:
+            if verbose:
+                print("Using precomputed distances for Silhouette...")
+            from sklearn.metrics import silhouette_score
 
-        dists = precomputed_dists
-        if hasattr(dists, "to_dense"):
-            dists = dists.to_dense()
-        return float(silhouette_score(dists, labels_arr, metric="precomputed"))
+            return float(silhouette_score(precomputed_dists, labels_arr, metric="precomputed"))
 
     if issparse(X):
         X = X.toarray()

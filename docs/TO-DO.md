@@ -31,6 +31,12 @@ poetry install --with dev [HAVE TO DO ...]
 
 
 
+### The scFM Integration
+- how to integrate the scfms benchmarking problems to the checkatlas [*****]
+- how and what to add as a new layer for the checkatlas [****]
+- the metrics management for the checkatlas: how the user can evaluate the tasks with a agrregated metrics and values [****]
+- we will calculate metrices but there should be summarizer, that will make the QC easy for the researchers [**]
+
 ### Nextflow:
 
 
