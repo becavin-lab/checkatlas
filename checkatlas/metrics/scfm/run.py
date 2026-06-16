@@ -42,7 +42,6 @@ def cal_scfm(
     patient_key: Optional[str] = None,
     outcome_key: Optional[str] = None,
     atlas_name: str = "",
-    scaling_fractions: Sequence[float] = (0.01, 0.10, 0.50, 1.00),
     n_seeds: int = 5,
     noise_sigma: float = 0.10,
     min_domain_size: int = 50,
@@ -53,7 +52,14 @@ def cal_scfm(
     run_rare_types: bool = True,
     run_cross_domain: bool = True,
 ) -> pd.DataFrame:
-    """Run all four scfm-specific metric modules.
+    """Run all four scfm-specific metric modules on the **full atlas**.
+
+    The atlas is never subsampled (per the user instruction). All
+    four modules consume the precomputed kNN graphs and distance
+    matrices from ``preprocess_context`` when available; when the
+    context is missing, the modules fall back to local computation
+    (pynndescent kNN) without re-loading or re-processing the
+    atlas.
 
     Parameters
     ----------
@@ -66,16 +72,16 @@ def cal_scfm(
         Annotation / metadata columns. Modules that require missing
         columns are skipped silently.
     atlas_name : str
-    scaling_fractions : sequence of float
     n_seeds : int
+        Number of perturbation seeds for the stability metric.
     noise_sigma : float
-        Reserved for the gaussian-robustness function in
-        ``information_loss``. Currently not used by the four modules
-        kept after Becavin comment 7; kept for API symmetry.
+        Noise level for the stability embedding-perturbation
+        (sigma in units of per-feature std). Default 0.10.
     min_domain_size : int
     n_jobs : int
     preprocess_context : PreprocessContext, optional
-        Re-uses precomputed kNN / distance matrices.
+        Re-uses precomputed kNN / distance matrices. Built or loaded
+        by ``scfm.pipeline._load_or_build_context``.
 
     Returns
     -------
@@ -102,7 +108,6 @@ def cal_scfm(
                 ref_label=ref_label,
                 pred_label=pred_label,
                 batch_key=batch_key,
-                fractions=scaling_fractions,
                 n_jobs=n_jobs,
                 preprocess_context=preprocess_context,
             )
@@ -134,6 +139,7 @@ def cal_scfm(
                 pred_label=pred_label,
                 batch_key=batch_key,
                 n_seeds=n_seeds,
+                sigma_scale=noise_sigma,
                 n_jobs=n_jobs,
                 preprocess_context=preprocess_context,
             )
@@ -191,22 +197,31 @@ def cal_scfm(
                 min_domain_size=min_domain_size,
             )
             for _, r in df.iterrows():
-                rows.append(
-                    {
-                        "Atlas Name": atlas_name,
-                        "Task": "scfm_cross_domain",
-                        "Metric Name": "cross_domain_ari",
-                        "Embedding": str(r["Embedding"]),
-                        "Train_Domain": str(r["Train_Domain"]),
-                        "Test_Domain": str(r["Test_Domain"]),
-                        "Fraction": np.nan,
-                        "N_Cells": int(r["N_Test"]),
-                        "Value": float(r["ARI"])
-                        if pd.notna(r["ARI"])
-                        else np.nan,
-                        "Time (s)": 0.0,
-                    }
-                )
+                row = {
+                    "Atlas Name": atlas_name,
+                    "Task": "scfm_cross_domain",
+                    "Metric Name": "cross_domain_ari",
+                    "Embedding": str(r["Embedding"]),
+                    "Fraction": np.nan,
+                    # Per the user contract, N_Cells in the output
+                    # TSV is always the full-atlas size — the
+                    # per-domain N_Test lives in a separate column
+                    # (or is dropped) so downstream consumers
+                    # always see a consistent "size of the
+                    # evaluated atlas".
+                    "N_Cells": adata.n_obs,
+                    "Value": float(r["ARI"])
+                    if pd.notna(r["ARI"])
+                    else np.nan,
+                    "Time (s)": 0.0,
+                }
+                if "Test_Domain" in r.index:
+                    row["Test_Domain"] = str(r["Test_Domain"])
+                if "Train_Domain" in r.index:
+                    row["Train_Domain"] = str(r["Train_Domain"])
+                if "N_Test" in r.index:
+                    row["N_Test_Domain"] = int(r["N_Test"])
+                rows.append(row)
         except Exception as exc:
             logger.warning("cal_scfm: cross_domain failed: %s", exc)
 

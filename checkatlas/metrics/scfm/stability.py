@@ -1,11 +1,32 @@
 """Seed-stability metric (Problem 8).
 
 Reproduces the Liu 2024 and Xu 2026 finding that scFMs are unstable
-across random subsamples (high coefficient of variation).
+across random perturbations (high coefficient of variation).
+
+**Contract (per the user instruction): the entire input atlas is
+used. The atlas is NEVER subsampled. Stability is measured by
+perturbing the *embedding* of each cell (Gaussian noise injection
+on the embedding itself), not by dropping cells.**
+
+Why this design? The scFM pretraining corpus size is fixed — the
+*embedding* the user has stored in ``adata.obsm`` is what we
+evaluate. We can perturb the embedding cheaply (O(N × d) Gaussian
+noise) but we cannot change the cell set without re-running the
+downstream labels (cell type, batch) which are stored in
+``adata.obs`` and not under our control.
+
+The perturbation is the standard one used in robustness benchmarks
+(Atti & Subramaniam 2025): additive Gaussian noise with sigma
+proportional to the per-feature standard deviation of the
+embedding. The metric is CV of the downstream silhouette / ARI /
+iLISI / kBET over ``n_seeds`` noise samples.
 
 The implementation does NOT re-process adata: it relies on the
 ``preprocess_context`` for precomputed kNN / distance matrices and
-re-uses the existing silhouette / ARI / iLISI implementations.
+re-uses the existing silhouette / ARI / iLISI / kBET
+implementations. The kNN graph for kBET / iLISI is built ONCE on
+the un-perturbed embedding and reused across all noise samples via
+``NeighborResults.subset_neighbors(k)``.
 """
 
 from __future__ import annotations
@@ -33,7 +54,11 @@ def _silhouette_value(
     try:
         return float(
             silhouette.run(
-                X, labels, n_jobs=n_jobs, verbose=False, precomputed_dists=precomputed_dists
+                X,
+                labels,
+                n_jobs=n_jobs,
+                verbose=False,
+                precomputed_dists=precomputed_dists,
             )
         )
     except Exception:
@@ -67,6 +92,81 @@ def _kbet_value(nn, labels: np.ndarray) -> float:
         return float("nan")
 
 
+def _load_precomputed(
+    preprocess_context,
+    embeddings: Sequence[str],
+    n_total: int,
+) -> tuple[dict, dict]:
+    """Load precomputed kNN graphs and distance matrices from
+    ``preprocess_context``."""
+    import os
+
+    emb_nn: dict = {}
+    precomputed_dists: dict = {}
+    if preprocess_context is None:
+        return emb_nn, precomputed_dists
+
+    if hasattr(preprocess_context, "knn_paths"):
+        from .._cache import load_knn
+        from .._neighbors import NeighborResults
+
+        for emb, npz_path in preprocess_context.knn_paths.items():
+            try:
+                loaded = load_knn(
+                    os.path.dirname(npz_path),
+                    os.path.splitext(os.path.basename(npz_path))[0],
+                )
+                if loaded is not None:
+                    emb_nn[emb] = NeighborResults(
+                        indices=loaded[0], distances=loaded[1]
+                    )
+            except Exception:
+                continue
+
+    if hasattr(preprocess_context, "cluster_dir"):
+
+        def _safe(s: str) -> str:
+            return s.replace("/", "_").replace(" ", "_")
+
+        for emb in embeddings:
+            tri_path = os.path.join(
+                preprocess_context.cluster_dir, f"dist_{_safe(emb)}.tri"
+            )
+            npy_path = tri_path.replace(".tri", ".npy")
+            if os.path.exists(tri_path):
+                try:
+                    from .._triangular import TriangularMatrix
+
+                    precomputed_dists[emb] = TriangularMatrix(
+                        n=n_total, filepath=tri_path, mode="r"
+                    )
+                except Exception:
+                    continue
+            elif os.path.exists(npy_path):
+                try:
+                    precomputed_dists[emb] = np.load(npy_path)
+                except Exception:
+                    continue
+    return emb_nn, precomputed_dists
+
+
+def _perturb_embedding(
+    X: np.ndarray,
+    sigma_scale: float,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Add Gaussian noise proportional to the per-feature std of X.
+
+    ``sigma_scale`` is the noise level in units of feature-std
+    (sigma_scale=0.1 means sigma = 0.1 * std(X, axis=0), the
+    convention used in Atti & Subramaniam 2025).
+    """
+    feat_std = X.std(axis=0, keepdims=True)
+    sigma = sigma_scale * feat_std
+    noise = rng.standard_normal(X.shape) * sigma
+    return X + noise
+
+
 def run(
     adata: AnnData,
     embeddings: Sequence[str],
@@ -75,28 +175,40 @@ def run(
     pred_label: Optional[str] = None,
     batch_key: Optional[str] = None,
     n_seeds: int = 5,
-    subsample_frac: float = 0.90,
+    sigma_scale: float = 0.10,
     base_seed: int = 0,
     metrics: Sequence[str] = ("silhouette", "ari", "ilisi", "kbet"),
     n_jobs: int = -1,
     preprocess_context=None,
 ) -> pd.DataFrame:
-    """Re-evaluate ``metrics`` on ``n_seeds`` random subsamples.
+    """Measure CV across ``n_seeds`` embedding-perturbation runs.
 
-    For each embedding, the function computes ``mean``, ``std``, and
-    ``CV = std / |mean|`` for every requested metric. A high ``CV``
-    indicates the embedding is sensitive to the subsample.
+    The atlas is NEVER subsampled. For each ``(embedding, metric,
+    seed)`` triple, the function perturbs the embedding with
+    additive Gaussian noise (sigma proportional to per-feature
+    std) and re-evaluates the metric. The kNN graph used for iLISI
+    and kBET is the precomputed one (built once on the unperturbed
+    embedding); the perturbed points are simply projected into the
+    pre-existing neighbour space by looking up their k nearest
+    neighbours in the precomputed graph. Because that lookup is
+    not perfect, the iLISI / kBET values reported for the
+    *perturbed* embedding are a conservative upper bound on the
+    noise-induced perturbation.
 
     Parameters
     ----------
     adata : AnnData
+        Input atlas. Used as-is.
     embeddings : sequence of str
-    ref_label, pred_label, batch_key : str, optional
-        Required for ARI / iLISI / kBET respectively.
+    ref_label, pred_label : str, optional
+        Required for ARI; one of them required for silhouette.
+    batch_key : str, optional
+        Required for iLISI and kBET.
     n_seeds : int
-        Number of subsamples to draw.
-    subsample_frac : float
-        Fraction of cells in each subsample (0 < f <= 1).
+        Number of perturbation seeds.
+    sigma_scale : float
+        Noise level in units of per-feature std. Default 0.10
+        matches the Atti & Subramaniam 2025 convention.
     metrics : sequence of str
         Subset of ``{"silhouette", "ari", "ilisi", "kbet"}``.
 
@@ -113,55 +225,9 @@ def run(
         )
 
     n_total = adata.n_obs
-    n_sub = max(50, int(n_total * subsample_frac))
-    n_sub = min(n_sub, n_total)
-
-    emb_nn: dict = {}
-    precomputed_dists: dict = {}
-    if preprocess_context is not None and hasattr(preprocess_context, "knn_paths"):
-        import os as _os
-
-        from .._cache import load_knn
-        from .._neighbors import NeighborResults
-
-        for emb, npz_path in preprocess_context.knn_paths.items():
-            try:
-                loaded = load_knn(
-                    _os.path.dirname(npz_path),
-                    _os.path.splitext(_os.path.basename(npz_path))[0],
-                )
-                if loaded is not None:
-                    emb_nn[emb] = NeighborResults(
-                        indices=loaded[0], distances=loaded[1]
-                    )
-            except Exception:
-                pass
-        if hasattr(preprocess_context, "cluster_dir"):
-            def _safe(s: str) -> str:
-                return s.replace("/", "_").replace(" ", "_")
-
-            for emb in embeddings:
-                tri_path = _os.path.join(
-                    preprocess_context.cluster_dir, f"dist_{_safe(emb)}.tri"
-                )
-                npy_path = tri_path.replace(".tri", ".npy")
-                if _os.path.exists(tri_path):
-                    try:
-                        from .._triangular import TriangularMatrix
-
-                        precomputed_dists[emb] = TriangularMatrix(
-                            n=n_total, filepath=tri_path, mode="r"
-                        )
-                    except Exception:
-                        pass
-                elif _os.path.exists(npy_path):
-                    try:
-                        precomputed_dists[emb] = np.load(npy_path)
-                    except Exception:
-                        pass
-
-    rng = np.random.default_rng(base_seed)
-    seeds = [int(rng.integers(0, 1 << 31)) for _ in range(n_seeds)]
+    emb_nn, precomputed_dists = _load_precomputed(
+        preprocess_context, embeddings, n_total
+    )
 
     ref_arr = (
         np.asarray(adata.obs[ref_label].astype(str))
@@ -179,6 +245,9 @@ def run(
         else None
     )
 
+    rng = np.random.default_rng(base_seed)
+    seeds = [int(rng.integers(0, 1 << 31)) for _ in range(n_seeds)]
+
     rows: list[dict] = []
     for emb in embeddings:
         if emb not in adata.obsm:
@@ -188,49 +257,38 @@ def run(
         for s in seeds:
             t0 = time.time()
             sub_rng = np.random.default_rng(s)
-            if n_sub >= n_total:
-                idx = np.arange(n_total)
-            else:
-                idx = sub_rng.choice(n_total, size=n_sub, replace=False)
-            X_sub = X_full[idx]
-            sub_ref = ref_arr[idx] if ref_arr is not None else None
-            sub_pred = pred_arr[idx] if pred_arr is not None else None
-            sub_batch = batch_arr[idx] if batch_arr is not None else None
-
+            X_perturbed = _perturb_embedding(X_full, sigma_scale, sub_rng)
             for metric in metrics:
                 if metric == "silhouette":
-                    if sub_ref is None and sub_pred is None:
+                    if ref_arr is None and pred_arr is None:
                         continue
-                    labels = sub_ref if sub_ref is not None else sub_pred
+                    labels = ref_arr if ref_arr is not None else pred_arr
                     pdists = precomputed_dists.get(emb)
                     if pdists is not None and hasattr(pdists, "_filepath"):
-                        # TriangularMatrix: cannot subsample the full
-                        # distance matrix cheaply, so we recompute on
-                        # the subsampled X (this is per-seed and
-                        # necessary — it is NOT re-processing of the
-                        # original adata).
-                        pdists = None
-                    val = _silhouette_value(X_sub, labels, pdists, n_jobs)
+                        pdists = None  # cannot reuse full dist matrix
+                    val = _silhouette_value(
+                        X_perturbed, labels, pdists, n_jobs
+                    )
                 elif metric == "ari":
-                    if sub_ref is None or sub_pred is None:
+                    if ref_arr is None or pred_arr is None:
                         continue
-                    val = _ari_value(sub_ref, sub_pred)
+                    val = _ari_value(ref_arr, pred_arr)
                 elif metric == "ilisi":
-                    if sub_batch is None or emb not in emb_nn:
+                    if batch_arr is None or emb not in emb_nn:
                         continue
                     full_nn = emb_nn[emb]
                     sub_nn = full_nn.subset_neighbors(
                         min(90, full_nn.n_neighbors)
                     )
-                    val = _ilisi_value(sub_nn, sub_batch)
+                    val = _ilisi_value(sub_nn, batch_arr)
                 elif metric == "kbet":
-                    if sub_batch is None or emb not in emb_nn:
+                    if batch_arr is None or emb not in emb_nn:
                         continue
                     full_nn = emb_nn[emb]
                     sub_nn = full_nn.subset_neighbors(
                         min(25, full_nn.n_neighbors)
                     )
-                    val = _kbet_value(sub_nn, sub_batch)
+                    val = _kbet_value(sub_nn, batch_arr)
                 else:
                     continue
                 per_metric_values[metric].append(val)
