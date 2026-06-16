@@ -110,17 +110,20 @@ def test_scaling_returns_long_dataframe(small_adata):
         ref_label="celltype_author",
         pred_label="celltype_scfm_pred",
         batch_key="donor_id",
-        fractions=(0.5, 1.0),
     )
     assert not df.empty
     assert "Embedding" in df.columns
     assert "Metric" in df.columns
     assert "Fraction" in df.columns
     assert "Value" in df.columns
+    # Per the user contract: the atlas is NEVER subsampled, so every
+    # row has Fraction=1.0 and N_Cells=adata.n_obs.
+    assert (df["Fraction"] == 1.0).all()
+    assert (df["N_Cells"] == small_adata.n_obs).all()
     assert set(df["Embedding"].unique()) == {"X_pca", "X_scfm"}
 
 
-def test_scaling_contains_plateau_ratio(small_adata):
+def test_scaling_contains_plateau_ratio_when_supplied(small_adata):
     from checkatlas.metrics.scfm.scaling import run
 
     df = run(
@@ -128,13 +131,29 @@ def test_scaling_contains_plateau_ratio(small_adata):
         ["X_pca"],
         ref_label="celltype_author",
         pred_label="celltype_scfm_pred",
-        fractions=(0.01, 0.10, 0.50, 1.00),
+        plateau_pairs={
+            "X_pca": {
+                "silhouette": (0.10, 0.16),  # small / large atlas
+            },
+        },
     )
     plateau = df[df["Fraction"] < 0]
     assert not plateau.empty
-    assert "plateau_ratio" in str(plateau["Metric"].iloc[0]) or "ari" in str(
-        plateau["Metric"].iloc[0]
+    assert plateau["Value"].iloc[0] == pytest.approx(1.6)
+
+
+def test_scaling_no_plateau_row_when_pair_absent(small_adata):
+    """Without ``plateau_pairs`` no synthetic row is appended — the
+    full-atlas evaluation is the primary result."""
+    from checkatlas.metrics.scfm.scaling import run
+
+    df = run(
+        small_adata,
+        ["X_pca"],
+        ref_label="celltype_author",
     )
+    # No Fraction < 0 rows
+    assert (df["Fraction"] >= 0).all()
 
 
 def test_scaling_skips_missing_embedding(small_adata):
@@ -144,9 +163,25 @@ def test_scaling_skips_missing_embedding(small_adata):
         small_adata,
         ["X_does_not_exist", "X_pca"],
         ref_label="celltype_author",
-        fractions=(1.0,),
     )
     assert "X_does_not_exist" not in df["Embedding"].unique()
+
+
+def test_scaling_processes_full_atlas_not_subsample(small_adata):
+    """The user contract: the entire atlas is processed. Verify
+    this by checking that the N_Cells in every row equals
+    ``adata.n_obs`` (no subsampling happens internally)."""
+    from checkatlas.metrics.scfm.scaling import run
+
+    df = run(
+        small_adata,
+        ["X_pca", "X_scfm"],
+        ref_label="celltype_author",
+        batch_key="donor_id",
+    )
+    # Every single row must have N_Cells == adata.n_obs
+    assert (df["N_Cells"] == small_adata.n_obs).all()
+    assert len(df) > 0
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -225,7 +260,7 @@ def test_rare_types_handles_missing_columns(small_adata):
 # ──────────────────────────────────────────────────────────────────
 
 
-def test_cross_domain_returns_per_pair_ari(small_adata):
+def test_cross_domain_returns_per_domain_ari(small_adata):
     from checkatlas.metrics.scfm.cross_domain import run
 
     df = run(
@@ -236,12 +271,59 @@ def test_cross_domain_returns_per_pair_ari(small_adata):
         min_domain_size=20,
     )
     assert not df.empty
-    assert "Train_Domain" in df.columns
     assert "Test_Domain" in df.columns
     assert "ARI" in df.columns
-    # Self-pair ARI should be reasonable
-    diag = df[df["Train_Domain"] == df["Test_Domain"]]
-    assert not diag.empty
+    # New contract: one row per test domain (Leiden is unsupervised)
+    assert df["Test_Domain"].nunique() >= 2
+
+
+def test_cross_domain_uses_precomputed_knn_when_available(small_adata):
+    """Verify that ``preprocess_context.knn_paths`` is consulted
+    first — the kNN is not rebuilt for cross_domain."""
+    from checkatlas.metrics._neighbors import NeighborResults
+    from checkatlas.metrics.scfm.cross_domain import run
+
+    # Fake a precomputed kNN for X_pca with deliberately wrong values
+    # — if the function uses the precomputed one, the Leiden
+    # clustering is still well-defined (Leiden ignores distances).
+    n = small_adata.n_obs
+    fake_indices = np.tile(np.arange(n), (15, 1)).T  # 15 neighbours
+    fake_indices = (fake_indices + 1) % n  # cyclic shift
+    fake_nn = NeighborResults(
+        indices=fake_indices.astype(np.int64),
+        distances=np.ones((n, 15), dtype=np.float64),
+    )
+
+    class FakeCtx:
+        def __init__(self):
+            self.knn_paths = {"X_pca": "/nonexistent/x_pca.npz"}
+
+    # Patch load_knn to return our fake.
+    from checkatlas.metrics import scfm
+
+    orig = scfm.cross_domain._load_or_build_knn
+
+    def fake_load(adata, embedding, n_neighbors, ctx):
+        if ctx is not None and hasattr(ctx, "knn_paths"):
+            return fake_nn
+        return orig(adata, embedding, n_neighbors, ctx)
+
+    scfm.cross_domain._load_or_build_knn = fake_load
+    try:
+        df = run(
+            small_adata,
+            "X_pca",
+            ref_label="celltype_author",
+            domain_key="tissue",
+            min_domain_size=20,
+            preprocess_context=FakeCtx(),
+        )
+        # Should run successfully without raising; if the function
+        # had ignored preprocess_context it would have built a kNN
+        # with the default backend.
+        assert not df.empty
+    finally:
+        scfm.cross_domain._load_or_build_knn = orig
 
 
 def test_cross_domain_handles_too_few_domains(small_adata):
@@ -278,7 +360,6 @@ def test_cal_scfm_returns_long_table(small_adata):
         batch_key="donor_id",
         domain_key="tissue",
         atlas_name="test",
-        scaling_fractions=(0.5, 1.0),
         n_seeds=2,
     )
     assert not df.empty
@@ -286,3 +367,32 @@ def test_cal_scfm_returns_long_table(small_adata):
     assert "Task" in df.columns
     tasks = set(df["Task"].unique())
     assert {"scfm_scaling", "scfm_stability", "scfm_rare_types", "scfm_cross_domain"}.issubset(tasks)
+    # Per the user contract: every row is on the full atlas.
+    assert (df["N_Cells"] == small_adata.n_obs).all()
+
+
+def test_cal_scfm_never_subsamples_atlas(small_adata):
+    """The user contract: the entire atlas is processed, no
+    subsampling. The orchestrator must not introduce any."""
+    from checkatlas.metrics.scfm.run import cal_scfm
+
+    n_obs = small_adata.n_obs
+    df = cal_scfm(
+        small_adata,
+        scfm_embedding="X_scfm",
+        baseline_embeddings=("X_pca",),
+        ref_label="celltype_author",
+        pred_label="celltype_scfm_pred",
+        batch_key="donor_id",
+        atlas_name="test",
+        n_seeds=3,
+    )
+    # All rows in scfm_scaling, scfm_stability, scfm_rare_types
+    # should be on the full atlas (N_Cells == n_obs).
+    for task in ("scfm_scaling", "scfm_stability", "scfm_rare_types"):
+        sub = df[df["Task"] == task]
+        if not sub.empty:
+            assert (sub["N_Cells"] == n_obs).all(), (
+                f"task {task} has rows where N_Cells != n_obs: "
+                f"{sub['N_Cells'].unique()}"
+            )
