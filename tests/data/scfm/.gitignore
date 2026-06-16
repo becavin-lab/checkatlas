@@ -1,0 +1,4 @@
+# Large scFM test data files are downloaded separately.
+# The README in this directory documents the download procedure
+# (see tests/data/scfm/README.md).
+*.h5ad

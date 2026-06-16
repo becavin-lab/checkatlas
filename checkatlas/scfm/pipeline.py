@@ -67,21 +67,70 @@ def _auto_pick_scfm_embedding(adata: AnnData, hint: str) -> str:
     return matched[0][0]
 
 
-def _load_or_build_context(adata: AnnData, atlas_name: str, outdir: str, args) -> Optional[Any]:
-    """Build (or load) a PreprocessContext for the scfm pipeline.
+def _load_or_build_context(adata: AnnData, atlas_name: str, outdir: str, args) -> tuple[AnnData, Optional[Any]]:
+    """Load (or build) a PreprocessContext for the scfm pipeline.
 
     This is a *thin* wrapper around ``atlas.preprocess_atlas``. It
     re-uses the kNN / distance-matrix cache that the existing
     pipeline builds, satisfying Becavin comment 2 (no re-processing
     of adata).
+
+    The function ALWAYS attempts to load or build a context — it is
+    no longer gated on ``args.path`` being set. The previous behaviour
+    silently returned ``ctx=None`` for notebook and programmatic
+    callers, which forced the downstream scfm metric modules to fall
+    back to building their own kNN graphs. This broke the GPU path:
+    JAX-accelerated kNN lives in ``metrics._neighbors`` and is only
+    triggered through the preprocess pipeline.
     """
     from ..atlas import preprocess_atlas
+    from ..metrics._preprocess_context import (
+        load_context,
+        make_preprocess_fingerprint,
+    )
+
+    # Step 1: try to load a cached context from the temp folder.
+    temp_parent = folders.get_folder(outdir, folders.TEMP)
+    try:
+        fp = make_preprocess_fingerprint(
+            adata,
+            embedding_keys=list(adata.obsm.keys()),
+            cluster_label_keys=[],
+            batch_keys=[],
+            k_neighbors=90,
+            source_path=getattr(adata, "filename", None),
+        )
+        cached = load_context(atlas_name, temp_parent, fp)
+        if cached is not None:
+            logger.info(
+                "scfm: PreprocessContext cache hit for %s — "
+                "re-using precomputed kNN / distance matrices",
+                atlas_name,
+            )
+            return adata, cached
+    except Exception as exc:
+        logger.debug("scfm: load_context failed: %s", exc)
+
+    # Step 2: build a fresh context. ``preprocess_atlas`` reads adata
+    # from disk via ``atlas_info`` so we provide the h5ad path. When
+    # called from a notebook, ``adata.filename`` is set and we use it;
+    # otherwise we fall back to the in-memory AnnData (the path-only
+    # build will fail and we return ``(adata, None)`` so the metric
+    # modules can still run, just without the precomputed cache).
+    source_path = getattr(adata, "filename", None)
+    if not source_path or not os.path.exists(source_path):
+        logger.debug(
+            "scfm: no on-disk source for %s; running without "
+            "PreprocessContext (CPU-only downstream metrics)",
+            atlas_name,
+        )
+        return adata, None
 
     try:
         adata_proc = preprocess_atlas(
             {
                 check.ATLAS_NAME_KEY: atlas_name,
-                check.ATLAS_PATH_KEY: getattr(adata, "filename", None) or "",
+                check.ATLAS_PATH_KEY: source_path,
                 check.ATLAS_TYPE_KEY: "AnnData",
                 check.ATLAS_EXTENSION_KEY: ".h5ad",
             },
@@ -89,12 +138,32 @@ def _load_or_build_context(adata: AnnData, atlas_name: str, outdir: str, args) -
         )
     except Exception as exc:
         logger.debug("scfm: preprocess_atlas failed: %s", exc)
-        return None
-    return adata_proc, _try_load_context(atlas_name, outdir, adata_proc)
+        return adata, None
+
+    # Step 3: load the freshly-built context.
+    try:
+        fp = make_preprocess_fingerprint(
+            adata_proc,
+            embedding_keys=list(adata_proc.obsm.keys()),
+            cluster_label_keys=[],
+            batch_keys=[],
+            k_neighbors=90,
+            source_path=source_path,
+        )
+        ctx = load_context(atlas_name, temp_parent, fp)
+    except Exception as exc:
+        logger.debug("scfm: post-build load_context failed: %s", exc)
+        ctx = None
+
+    return adata_proc, ctx
 
 
 def _try_load_context(atlas_name: str, outdir: str, adata: AnnData) -> Optional[Any]:
-    """Try to load a PreprocessContext from the temp folder."""
+    """Try to load a PreprocessContext from the temp folder.
+
+    Kept for backwards compatibility — ``_load_or_build_context``
+    supersedes this. New code should call ``_load_or_build_context``.
+    """
     from ..metrics._preprocess_context import load_context, make_preprocess_fingerprint
 
     try:
@@ -178,11 +247,14 @@ def run_scfm_pipeline(
         if metric_name in dimred.__all__:
             existing_metric_lists.append(metric_name)
 
-    _, ctx = (
-        _load_or_build_context(adata, config.atlas_name, outdir, args)
-        if (args is not None and getattr(args, "path", None))
-        else (adata, None)
-    )
+    # ALWAYS try to load or build a PreprocessContext. The previous
+    # guard ``if (args is not None and getattr(args, "path", None))``
+    # silently dropped the context for notebook / programmatic
+    # callers, forcing the scfm metric modules to build their own kNN
+    # (CPU only). Now the pipeline always attempts the cache; the
+    # in-memory fallback returns ``(adata, None)`` only when no
+    # on-disk source is available.
+    _, ctx = _load_or_build_context(adata, config.atlas_name, outdir, args)
 
     try:
         annot_df = annot_mod.cal_annot(
@@ -247,7 +319,6 @@ def run_scfm_pipeline(
             patient_key=config.patient_key,
             outcome_key=config.outcome_key,
             atlas_name=config.atlas_name,
-            scaling_fractions=config.scaling_fractions,
             n_seeds=config.n_seeds,
             noise_sigma=config.noise_sigma,
             min_domain_size=config.min_domain_size,
