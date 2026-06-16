@@ -9,4 +9,36 @@ report_section_order:
     order: -1001
   "nf-core-checkatlas-summary":
     order: -1002
+  scfm_verdicts:
+    order: -900
+  scfm_composite:
+    order: -899
+
+custom_content:
+  scfm_verdicts:
+    file_format: "tsv"
+    section_name: "scFM QC verdicts"
+    description: >-
+      Per-atlas verdicts for the nine scFM failure modes from
+      docs/scfm_benchmarking_report.md. Each row is one
+      (atlas, problem) pair with score, grade, evidence, and
+      literature reference.
+    plot_type: "table"
+    pconfig:
+      id: "scfm_verdicts"
+      title: "scFM QC verdicts"
+      namespace: "scfm"
+  scfm_composite:
+    file_format: "tsv"
+    section_name: "scFM QC composite scores"
+    description: >-
+      Composite scores (FMF, BF, PR) and per-problem scores for
+      every scFM embedding. FMF is a 0-100 headline fitness
+      number; BF is net biology-preservation; PR is the
+      production-readiness score.
+    plot_type: "table"
+    pconfig:
+      id: "scfm_composite"
+      title: "scFM QC composite scores"
+      namespace: "scfm"
 

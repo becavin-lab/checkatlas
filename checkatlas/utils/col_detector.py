@@ -171,6 +171,21 @@ _EMBEDDING_PATTERNS: List[Tuple[str, float]] = [
     (r"^X_phate$", 0.85),
     (r"^X_pacmap$", 0.85),
     (r"^X_trimap$", 0.85),
+    # scFM-specific embeddings (Becavin comment 1: auto-detect every
+    # scFM found in adata.obsm, not just those the user spelled out).
+    # Order matters: the first match wins; specific names come first.
+    (r"^X_geneformer", 0.95),
+    (r"^X_scgpt", 0.95),
+    (r"^X_uce", 0.95),
+    (r"^X_scfoundation", 0.95),
+    (r"^X_sccello", 0.95),
+    (r"^X_scbert", 0.95),
+    (r"^X_.*scfm", 0.90),
+    (r"^X_.*fm$", 0.85),
+    (r"^X_.*foundation", 0.90),
+    (r"^X_harmony", 0.85),
+    (r"^X_bbknn", 0.85),
+    (r"^X_scanorama", 0.85),
     (r"^X_.*pca", 0.80),
     (r"^X_.*umap", 0.75),
     (r"^X_.*tsne", 0.75),

@@ -42,7 +42,10 @@ PROCESS_TYPE = [
     "metric_dimred",
     "analyse",
     "metric",
+    "scfm",
 ]
+
+SCFM_PROCESS_TYPE = "scfm"
 
 
 TSV_EXTENSION = ".tsv"

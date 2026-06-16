@@ -73,6 +73,7 @@ def create_parser():
             "  metric_dimred  — compute dimensionality-reduction metrics\n"
             "  metric         — run all metric processes on a single atlas\n"
             "  analyse        — run all analysis processes on a single atlas\n"
+            "  scfm           — run scFM quality-control (9 problems, FMF, BF, PR)\n"
         ),
         default="",
     )
@@ -230,6 +231,102 @@ def create_parser():
         metavar="FILE",
         help="Generate a Nextflow execution timeline (enabled by default). "
         "Optionally specify the output filename (default: Checkatlas_timeline.html).",
+    )
+
+    # scFM QC options (only used with 'scfm' process)
+    scfm_options = parser.add_argument_group(
+        "scFM QC options (only used with 'scfm' process)"
+    )
+    scfm_options.add_argument(
+        "--scfm_embedding",
+        type=str,
+        default="",
+        help="Embedding key for the scFM under test "
+        "(e.g. X_geneformer). Optional: scFM embeddings are also "
+        "auto-detected from adata.obsm via the column detector.",
+    )
+    scfm_options.add_argument(
+        "--baseline_embeddings",
+        nargs="+",
+        type=str,
+        default=[],
+        help="Baseline embedding keys for scFM comparison "
+        "(e.g. --baseline_embeddings X_pca X_scvi).",
+    )
+    scfm_options.add_argument(
+        "--scfm_predicted_label",
+        type=str,
+        default=None,
+        help="obs column with the scFM's predicted cell types.",
+    )
+    scfm_options.add_argument(
+        "--scfm_ref_label",
+        type=str,
+        default=None,
+        help="obs column with the author/curated reference labels.",
+    )
+    scfm_options.add_argument(
+        "--scfm_batch_key",
+        type=str,
+        default=None,
+        help="obs column with batch / donor labels (for iLISI, kBET, PCR).",
+    )
+    scfm_options.add_argument(
+        "--scfm_domain_key",
+        type=str,
+        default=None,
+        help="obs column with domain labels (species, tissue, assay) "
+        "for cross-domain generalisation metric (Problem 6).",
+    )
+    scfm_options.add_argument(
+        "--scfm_patient_key",
+        type=str,
+        default=None,
+        help="obs column with patient IDs (for Problem 7).",
+    )
+    scfm_options.add_argument(
+        "--scfm_outcome_key",
+        type=str,
+        default=None,
+        help="obs column with patient outcome (for Problem 7 outcome AUC).",
+    )
+    scfm_options.add_argument(
+        "--scfm_scaling_fractions",
+        nargs="+",
+        type=float,
+        default=[0.01, 0.10, 0.50, 1.00],
+        help="Subsample fractions for the scaling-law saturation metric. "
+        "Default: 0.01 0.10 0.50 1.00.",
+    )
+    scfm_options.add_argument(
+        "--scfm_n_seeds",
+        type=int,
+        default=5,
+        help="Number of subsample seeds for the stability metric.",
+    )
+    scfm_options.add_argument(
+        "--scfm_noise_sigma",
+        type=float,
+        default=0.10,
+        help="Noise sigma for the gaussian-robustness metric (reserved).",
+    )
+    scfm_options.add_argument(
+        "--scfm_min_domain_size",
+        type=int,
+        default=50,
+        help="Minimum number of cells per domain for cross-domain evaluation.",
+    )
+    scfm_options.add_argument(
+        "--scfm_weights",
+        type=str,
+        default=None,
+        help="Optional JSON file overriding composite-score weights.",
+    )
+    scfm_options.add_argument(
+        "--scfm_thresholds",
+        type=str,
+        default=None,
+        help="Optional YAML file overriding the diagnostic thresholds.",
     )
     return parser
 

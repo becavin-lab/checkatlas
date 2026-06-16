@@ -667,7 +667,6 @@ Items deferred to a future iteration:
 
 | Path | Purpose | Status |
 |------|---------|--------|
-##### Review Becavin: Not sure it is usefull
 | `checkatlas/metrics/scfm/__init__.py` | Package init, exports | New |
 | `checkatlas/metrics/scfm/run.py` | `cal_scfm` orchestrator | New |
 | `checkatlas/metrics/scfm/scaling.py` | Problem 3 | New |

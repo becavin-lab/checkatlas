@@ -176,6 +176,17 @@ def main() -> None:  # pragma: no cover
                 atlas.create_metric_cluster(adata, atlas_info, args)
                 atlas.create_metric_annot(adata, atlas_info, args)
                 atlas.create_metric_dimred(adata, atlas_info, args)
+            elif process == check.SCFM_PROCESS_TYPE:  # scfm
+                from .scfm.config import SCFMConfig, from_args
+                from .scfm.pipeline import run_scfm_pipeline
+
+                scfm_config = from_args(args)
+                result = run_scfm_pipeline(adata, scfm_config, args=args)
+                logger.info(
+                    "scfm QC complete for %s. Outputs in %s",
+                    atlas_name,
+                    result.get("outdir", ""),
+                )
 
         elif seurat is not None and atlas_type == seurat.SEURAT_TYPE:
             if process == check.PROCESS_TYPE[2]:  # summary

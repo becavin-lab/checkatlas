@@ -18,6 +18,10 @@ CheckAtlas is a one liner tool to check the quality of your single-cell atlases.
 quality control tables and figures which can be then processed by multiqc. CheckAtlas is able to check the quality of Scanpy, Seurat,
 and CellRanger files.
 
+**New:** CheckAtlas also includes a quality-control layer for single-cell foundation model (scFM) embeddings.
+See [docs/scfm.md](docs/scfm.md) for the full description of the nine-problem diagnostics, the
+FoundationModelFitness (FMF) score, and the per-problem A–F grades.
+
 More information on the [read the doc page](https://checkatlas.readthedocs.io/en/latest/)
 
 
@@ -38,6 +42,7 @@ Then, it goes through all atlas files and produce summary information:
 - All elements in atlas files (obs, obsm, uns, var, varm)
 - Reductions (pca, umap, tsne)
 - All metrics (clustering, annotation, dimreduction, specificity)
+- **scFM QC** (nine-problem verdict, FMF score, A–F grades) for foundation-model embeddings
 
 All tables and figs are saved in the **checkatlas_files** folder in your search folder.
 

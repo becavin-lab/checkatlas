@@ -14,6 +14,7 @@ DIMRED = "dimred"
 SPECI = "specificity"
 TEMP = "temp"
 NEXTFLOW = "temp/nextflow"
+SCFM = "scfm"
 
 
 
@@ -31,6 +32,7 @@ DICT_FOLDER = {
     DIMRED: DIMRED,
     SPECI: SPECI,
     TEMP: TEMP,
+    SCFM: SCFM,
 }
 
 logger = logging.getLogger("checkatlas")
