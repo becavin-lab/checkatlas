@@ -1,0 +1,2 @@
+atlas	scfm_embedding	baseline_embeddings	predicted_label	ref_label	batch_key	domain_key	patient_key	outcome_key	scaling_fractions	n_seeds	n_cells	n_embeddings
+pancreas_scib	X_geneformer	X_pca,X_scvi_dropin	celltype_scfm_pred	celltype	batch	tech			0.01,0.1,0.5,1.0	3	16382	4

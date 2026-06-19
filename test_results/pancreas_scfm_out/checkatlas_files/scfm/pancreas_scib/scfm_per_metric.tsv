@@ -1,0 +1,43 @@
+Atlas Name	Task	Metric Name	Embedding	Value	Time (s)	Fraction	N_Cells	Train_Domain	Test_Domain
+pancreas_scib	scfm_scaling	silhouette	X_geneformer	-0.12458480149507523	45.344	1.0	16382		
+pancreas_scib	scfm_scaling	ari	X_geneformer	0.030848325086807505	0.029	1.0	16382		
+pancreas_scib	scfm_scaling	silhouette	X_pca	0.2095392793416977	44.96	1.0	16382		
+pancreas_scib	scfm_scaling	ari	X_pca	0.030848325086807505	0.027	1.0	16382		
+pancreas_scib	scfm_scaling	silhouette	X_scvi_dropin	0.25082239508628845	44.236	1.0	16382		
+pancreas_scib	scfm_scaling	ari	X_scvi_dropin	0.030848325086807505	0.028	1.0	16382		
+pancreas_scib	scfm_stability	silhouette_mean	X_geneformer	-0.12799412230970483	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_std	X_geneformer	0.0012186428773179768	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_cv	X_geneformer	0.009521084682070406	0.0		16382		
+pancreas_scib	scfm_stability	ari_mean	X_geneformer	0.030848325086807505	0.0		16382		
+pancreas_scib	scfm_stability	ari_std	X_geneformer	0.0	0.0		16382		
+pancreas_scib	scfm_stability	ari_cv	X_geneformer	0.0	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_mean	X_pca	0.2042008232434481	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_std	X_pca	0.0002636871258902653	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_cv	X_pca	0.0012913127464520438	0.0		16382		
+pancreas_scib	scfm_stability	ari_mean	X_pca	0.030848325086807505	0.0		16382		
+pancreas_scib	scfm_stability	ari_std	X_pca	0.0	0.0		16382		
+pancreas_scib	scfm_stability	ari_cv	X_pca	0.0	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_mean	X_scvi_dropin	0.24407823072730758	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_std	X_scvi_dropin	0.00057453281698306	0.0		16382		
+pancreas_scib	scfm_stability	silhouette_cv	X_scvi_dropin	0.0023538879943166557	0.0		16382		
+pancreas_scib	scfm_stability	ari_mean	X_scvi_dropin	0.030848325086807505	0.0		16382		
+pancreas_scib	scfm_stability	ari_std	X_scvi_dropin	0.0	0.0		16382		
+pancreas_scib	scfm_stability	ari_cv	X_scvi_dropin	0.0	0.0		16382		
+pancreas_scib	scfm_rare_types	rare_f1	X_geneformer	0.0	0.0		16382		
+pancreas_scib	scfm_rare_types	common_f1	X_geneformer	0.1721761303088101	0.0		16382		
+pancreas_scib	scfm_rare_types	rare_common_gap	X_geneformer	0.1721761303088101	0.0		16382		
+pancreas_scib	scfm_rare_types	rare_f1	X_pca	0.0	0.0		16382		
+pancreas_scib	scfm_rare_types	common_f1	X_pca	0.1721761303088101	0.0		16382		
+pancreas_scib	scfm_rare_types	rare_common_gap	X_pca	0.1721761303088101	0.0		16382		
+pancreas_scib	scfm_rare_types	rare_f1	X_scvi_dropin	0.0	0.0		16382		
+pancreas_scib	scfm_rare_types	common_f1	X_scvi_dropin	0.1721761303088101	0.0		16382		
+pancreas_scib	scfm_rare_types	rare_common_gap	X_scvi_dropin	0.1721761303088101	0.0		16382		
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	celseq
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	celseq2
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	fluidigmc1
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	inDrop1
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	inDrop2
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	inDrop3
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	inDrop4
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	smarter
+pancreas_scib	scfm_cross_domain	cross_domain_ari	X_geneformer		0.0		16382	*	smartseq2

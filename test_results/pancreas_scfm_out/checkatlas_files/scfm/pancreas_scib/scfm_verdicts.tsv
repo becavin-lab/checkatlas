@@ -1,0 +1,10 @@
+atlas	problem_id	problem_name	score	grade	confidence	evidence	explanation	reference
+pancreas_scib	1	Zero-shot performance failure	n/a	n/a	n/a		No ref-vs-pred metrics available for this embedding.	Kedzierska 2024, 2025; Boiarsky 2023
+pancreas_scib	2	Baselines outperform scFM	1.0	F	high	silhouette: -0.125 vs X_pca=0.210; silhouette: -0.125 vs X_scvi_dropin=0.251	For every metric, the scFM embedding scores below the PCA baseline by more than the margin reported in Liu 2024 and Souza & Mehta 2026.	Liu 2024; Souza & Mehta 2026; DenAdel 2025
+pancreas_scib	3	Pretraining scaling laws do not apply	0.257	B	low	plateau_ratio=0.031	Performance plateaus before 10% of the data, reproducing the DenAdel 2025 scaling finding.	DenAdel 2025; Wang 2025
+pancreas_scib	4	Batch effects persist	n/a	n/a	n/a		Batch metrics not computed.	Wang, Zhang & Zhang 2025
+pancreas_scib	5	Tokenization and representation failures	0.537	C	low	rare_common_gap=0.172 (Tokenization and representation failures)	Tokenization / representation causes information loss: rare-type recall is much lower than common-type recall (scGPT CD14 finding) and dCor to raw X is below the Atti & Subramaniam 2025 band.	Atti & Subramaniam 2025; DenAdel 2025; Haber 2025
+pancreas_scib	6	Generalization failures across domains	n/a	n/a	n/a		Cross-domain values are all NaN.	Souza & Mehta 2026; Boiarsky 2023; Wenteler 2024
+pancreas_scib	7	Real-world clinical / translational failures	n/a	n/a	n/a		No --scfm_patient_key provided, patient metrics not evaluable.	Elmarakeby 2025; Csendes 2025
+pancreas_scib	8	Model stability and interpretability issues	0.0	A	high	stability_cv_mean=0.005 (Model stability and interpretability issues)	Coefficient of variation across random subsamples is above the Liu 2024 / Xu 2026 instability band on at least two metrics.	Liu 2024; Xu 2026
+pancreas_scib	9	Denoising hypothesis (linear manifold)	0.25	B	medium	baseline_competitiveness=0.00 (0/2 metrics)	scFM ≤ PCA+δ on at least 80% of metrics, matching the Souza & Mehta 2026 'denoiser only' finding.	Souza & Mehta 2026
