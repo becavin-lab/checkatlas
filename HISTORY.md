@@ -4,6 +4,19 @@ Changelog
 
 (unreleased)
 ------------
+- scfm: 'all combinations' default mode. When `checkatlas scfm <path>
+  --atlas_name X` is called with no `--scfm_*` flag, the orchestrator
+  now auto-runs all 3 per-task engines (cluster / annot / dimred) and
+  the diagnostic engine evaluates every (ref, pred, batch, scfm,
+  baseline) combination the column detector found. The output
+  TSVs (`verdicts.tsv`, `composite.tsv`, `per_metric.tsv`) get a
+  `combo_id` column and a per-row `remark` column with a
+  one-sentence scientific explanation of what the score
+  measures. `composite.tsv` has a `headline` row at the top that
+  averages across combos. New flags: `--scfm_fast` (single-combo
+  back-compat) and `--scfm_max_combos` (cap, default 27). New
+  module `checkatlas/scfm/combos.py`. 28 new tests in
+  `tests/test_scfm_combos.py` and the existing test files.
 - Release: version  🚀 [Christophe Bécavin]
 - Add output path in metric nextflow processes. [Christophe Bécavin]
 - Merge of preprocess and main branches. [Christophe Bécavin]

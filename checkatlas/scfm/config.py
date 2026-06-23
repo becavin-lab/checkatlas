@@ -80,3 +80,20 @@ def from_args(args) -> "SCFMConfig":
         weights_path=_get("scfm_weights", None),
         thresholds_path=_get("scfm_thresholds", None),
     )
+
+
+def is_user_specified(config: SCFMConfig) -> bool:
+    """Return True if the user set at least one of the
+    --scfm_* / --baseline_embeddings flags on the CLI.
+
+    Used by the orchestrator and the pipeline to decide
+    between the "single best-guess combo" path (user explicit)
+    and the "all combinations" sweep (no flag set).
+    """
+    return bool(
+        config.ref_label
+        or config.predicted_label
+        or config.batch_key
+        or config.scfm_embedding
+        or config.baseline_embeddings
+    )

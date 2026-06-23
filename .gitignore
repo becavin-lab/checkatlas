@@ -173,3 +173,5 @@ tutorial/get_datasets.ipynb
 .agents
 
 scfm_test_results/
+
+test_results/

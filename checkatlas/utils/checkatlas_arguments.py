@@ -2,10 +2,10 @@ import argparse
 from importlib.resources import files
 
 try:
-    from .. import atlas, check
+    from .. import atlas
     from ..metrics import annot, cluster, dimred
 except ImportError:
-    from checkatlas import atlas, check
+    from checkatlas import atlas
     from checkatlas.metrics import annot, cluster, dimred
 
 
@@ -235,7 +235,12 @@ def create_parser():
 
     # scFM QC options (only used with 'scfm' process)
     scfm_options = parser.add_argument_group(
-        "scFM QC options (only used with 'scfm' process)"
+        "scFM QC options (only used with 'scfm' process). "
+        "Default behaviour with no --scfm_* flag: 'all combinations' "
+        "mode — the orchestrator runs all 3 per-task engines and the "
+        "diagnostic engine evaluates every (ref, pred, batch, scfm, "
+        "baseline) combination the column detector found. Use "
+        "--scfm_fast to opt out and run only the first combo."
     )
     scfm_options.add_argument(
         "--scfm_embedding",
@@ -327,6 +332,31 @@ def create_parser():
         type=str,
         default=None,
         help="Optional YAML file overriding the diagnostic thresholds.",
+    )
+    scfm_options.add_argument(
+        "--scfm_fast",
+        action="store_true",
+        help=(
+            "When no --scfm_* flag is set, run the diagnostic "
+            "engine on only the first (ref, pred, batch, scfm, "
+            "baseline) combination the column detector finds, "
+            "instead of the default 'all combinations' sweep. "
+            "Faster, but may miss real signal if the auto-detected "
+            "'best' combo is wrong. Default: off (run all "
+            "combinations)."
+        ),
+    )
+    scfm_options.add_argument(
+        "--scfm_max_combos",
+        type=int,
+        default=27,
+        help=(
+            "Maximum number of (ref, pred, batch, scfm, baseline) "
+            "combinations to evaluate when running in 'all "
+            "combinations' mode. Default: 27 (3 ref * 1 pred * "
+            "1 batch * 3 scfm * 3 baseline). Capped to keep "
+            "compute time bounded on atlases with many columns."
+        ),
     )
     return parser
 

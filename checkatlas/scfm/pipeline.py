@@ -552,7 +552,7 @@ def run_scfm_from_cache(
         ``{"verdicts": [...], "metrics_df": ..., "out_paths": {...},
         "outdir": ...}``.
     """
-    from . import io as scfm_io
+    from . import combos, io as scfm_io
 
     if outdir is None:
         base = getattr(args, "path", ".") if args is not None else "."
@@ -564,91 +564,216 @@ def run_scfm_from_cache(
 
     n_jobs = getattr(args, "n_jobs", -1) if args is not None else -1
 
-    scfm_emb = _auto_pick_scfm_embedding(adata, config.scfm_embedding)
-    config_eff = SCFMConfig(
-        **{**config.__dict__, "scfm_embedding": scfm_emb}
-    )
-    if not scfm_emb:
-        logger.warning(
-            "scfm: no scFM embedding detected in adata.obsm; "
-            "diagnostics will be skipped (n/a)"
-        )
+    # ── Detect all (ref, pred, batch, scfm, baseline) combos ────
+    from .config import is_user_specified
 
-    # ── 1. Load per-task TSVs from disk ────────────────────────────
+    user_specified = is_user_specified(config)
+    fast_mode = bool(getattr(args, "scfm_fast", False))
+    max_combos = int(getattr(args, "scfm_max_combos", 27) or 27)
     base_path = getattr(args, "path", ".") if args is not None else "."
+
+    # The per-task TSV has already been auto-computed by the
+    # orchestrator. We need the detected dict to enumerate the
+    # combos. Re-run the column detector on the in-memory
+    # adata — it is fast (< 1 s on 16k cells).
+    from ..utils.col_detector import CheckAtlasColumnDetector
+
+    detected = CheckAtlasColumnDetector(adata).detect_all_parameters()
+    if user_specified and not fast_mode:
+        # Honour the user's explicit combo; don't expand.
+        scfm_emb = _auto_pick_scfm_embedding(adata, config.scfm_embedding)
+        baseline_embs = (
+            list(config.baseline_embeddings)
+            if config.baseline_embeddings
+            else [scfm_emb] if scfm_emb else []
+        )
+        combos_list = [
+            combos.ComboSpec.from_args(
+                ref_label=config.ref_label or "",
+                predicted_label=config.predicted_label or "",
+                batch_key=config.batch_key or "",
+                scfm_embedding=scfm_emb or "",
+                baseline_embedding=baseline_embs[0] if baseline_embs else "",
+            )
+        ]
+    else:
+        all_combos = combos.detect_all_combos(adata, detected)
+        if fast_mode:
+            combos_list = all_combos[:1]
+        else:
+            combos_list = all_combos[:max_combos]
+        if not combos_list:
+            combos_list = [combos.ComboSpec()]
+
+    logger.info(
+        "scfm: %d (ref, pred, batch, scfm, baseline) combination(s) "
+        "to evaluate for %s%s",
+        len(combos_list),
+        config.atlas_name,
+        " (--scfm_fast, single combo)" if fast_mode else "",
+    )
+
+    # ── 1. Load per-task TSVs from disk ONCE ────────────────────
     tsvs = scfm_io.load_per_task_tsvs(base_path, config.atlas_name)
 
-    long_frames: list[pd.DataFrame] = []
-    for kind, df in tsvs.items():
-        if df is None:
-            logger.info("scfm: no %s TSV for %s", kind, config.atlas_name)
-            continue
-        long = scfm_io.wide_to_long(df, kind, config.atlas_name)
-        if long.empty:
-            continue
-        long = _apply_user_overrides(long, kind, config_eff)
-        if long.empty:
-            logger.info(
-                "scfm: %s TSV rows filtered out by user --scfm_* "
-                "overrides for %s (the user named explicit ref / "
-                "predicted / batch / embedding keys; the column "
-                "detector's broader list is ignored for the scfm step)",
-                kind,
-                config.atlas_name,
-            )
-            continue
-        long_frames.append(long)
+    # ── 2. Per-combo loop ─────────────────────────────────────────
+    all_verdicts: list = []
+    all_metrics: list[pd.DataFrame] = []
+    per_combo_scores: list[dict] = []
+    for combo_idx, combo in enumerate(combos_list, start=1):
+        combo_id = combo.combo_id
         logger.info(
-            "scfm: %s TSV -> %d long rows", kind, len(long)
+            "scfm: combo [%d/%d] %s",
+            combo_idx,
+            len(combos_list),
+            combo_id,
         )
+        combo_config = combos.expand_config_for_combo(config, combo)
 
-    # ── 2. Optionally run the four scfm-specific metric modules ───
-    if _should_run_cal_scfm(config_eff):
-        try:
-            scfm_long = scfm_run.cal_scfm(
-                adata,
-                scfm_embedding=scfm_emb,
-                baseline_embeddings=config.baseline_embeddings,
-                ref_label=config.ref_label,
-                pred_label=config.predicted_label,
-                batch_key=config.batch_key,
-                domain_key=config.domain_key,
-                patient_key=config.patient_key,
-                outcome_key=config.outcome_key,
-                atlas_name=config.atlas_name,
-                n_seeds=config.n_seeds,
-                noise_sigma=config.noise_sigma,
-                min_domain_size=config.min_domain_size,
-                n_jobs=n_jobs,
-            )
-            if scfm_long is not None and not scfm_long.empty:
-                # Ensure all LONG_FORMAT_COLUMNS are present
-                for col in LONG_FORMAT_COLUMNS:
-                    if col not in scfm_long.columns:
-                        scfm_long[col] = np.nan
-                long_frames.append(scfm_long)
-                logger.info(
-                    "scfm: cal_scfm -> %d long rows", len(scfm_long)
+        long_frames: list[pd.DataFrame] = []
+        for kind, df in tsvs.items():
+            if df is None:
+                continue
+            long = scfm_io.wide_to_long(df, kind, config.atlas_name)
+            if long.empty:
+                continue
+            long = _apply_user_overrides(long, kind, combo_config)
+            if long.empty:
+                continue
+            long = long.copy()
+            long["combo_id"] = combo_id
+            long_frames.append(long)
+
+        # ── 2b. Run the four scfm-specific modules for this combo ─
+        if _should_run_cal_scfm(combo_config):
+            try:
+                scfm_long = scfm_run.cal_scfm(
+                    adata,
+                    scfm_embedding=combo.scfm_embedding or "",
+                    baseline_embeddings=(combo.baseline_embedding,)
+                    if combo.baseline_embedding
+                    else (),
+                    ref_label=combo.ref_label,
+                    pred_label=combo.predicted_label,
+                    batch_key=combo.batch_key,
+                    domain_key=combo_config.domain_key,
+                    patient_key=combo_config.patient_key,
+                    outcome_key=combo_config.outcome_key,
+                    atlas_name=config.atlas_name,
+                    n_seeds=combo_config.n_seeds,
+                    noise_sigma=combo_config.noise_sigma,
+                    min_domain_size=combo_config.min_domain_size,
+                    n_jobs=n_jobs,
                 )
-        except Exception as exc:
-            logger.warning("scfm: cal_scfm failed: %s", exc)
+                if scfm_long is not None and not scfm_long.empty:
+                    for col in LONG_FORMAT_COLUMNS:
+                        if col not in scfm_long.columns:
+                            scfm_long[col] = np.nan
+                    scfm_long = scfm_long.copy()
+                    scfm_long["combo_id"] = combo_id
+                    long_frames.append(scfm_long)
+            except Exception as exc:
+                logger.debug("scfm: combo %s cal_scfm failed: %s", combo_id, exc)
 
-    if long_frames:
-        metrics_df = pd.concat(long_frames, ignore_index=True, sort=False)
-        # Make sure the standard column set exists for downstream
-        # consumers (verdicts / report / MultiQC).
-        for col in LONG_FORMAT_COLUMNS:
-            if col not in metrics_df.columns:
-                metrics_df[col] = np.nan
+        if long_frames:
+            combo_metrics_df = pd.concat(long_frames, ignore_index=True, sort=False)
+            for col in LONG_FORMAT_COLUMNS:
+                if col not in combo_metrics_df.columns:
+                    combo_metrics_df[col] = np.nan
+        else:
+            combo_metrics_df = _empty_long_df()
+
+        combo_verdicts = diagnostics.diagnose(combo_metrics_df, combo_config)
+        for v in combo_verdicts:
+            v.combo_id = combo_id
+            v.combo = combo
+        all_verdicts.extend(combo_verdicts)
+        all_metrics.append(combo_metrics_df)
+
+        # Per-combo composite
+        from .composite import compute_all, load_weights
+
+        combo_weights = (
+            load_weights(weights_path=combo_config.weights_path)
+            if combo_config.weights_path
+            else None
+        )
+        combo_scores: dict[str, Any] = dict(
+            compute_all(combo_verdicts, weights=combo_weights)
+        )
+        n_worst = sum(
+            1 for v in combo_verdicts if v.grade in {"D", "F"}
+        )
+        combo_scores["combo_id"] = combo_id
+        combo_scores["n_worst_problems"] = n_worst
+        combo_scores["remark"] = combos.build_combo_remark(combo)
+        per_combo_scores.append(combo_scores)
+
+    # ── 3. Concatenate per-combo metrics into a single long table ─
+    if all_metrics:
+        metrics_df = pd.concat(all_metrics, ignore_index=True, sort=False)
     else:
         metrics_df = _empty_long_df()
 
-    verdicts = diagnostics.diagnose(metrics_df, config_eff)
+    # ── 4. Headline composite (mean across combos) ───────────────
+    headline_scores = combos.summarise_composite_across_combos(per_combo_scores)
+    # The "headline" row uses the mean scores; each problem's
+    # grade is the worst across combos.
+    grade_order = {"A": 0, "B": 1, "C": 2, "D": 3, "F": 4, "n/a": 5, "": 5}
+    # Initialise every problem_id with an empty grade so the
+    # headline row covers all 9 problems (even if every combo
+    # produced n/a for a given problem).
+    headline_per_problem_grade: dict[int, str] = {
+        pid: "" for pid in range(1, 10)
+    }
+    for v in all_verdicts:
+        cur = headline_per_problem_grade.get(v.problem_id, "")
+        if grade_order.get(v.grade, 5) > grade_order.get(cur, 5):
+            headline_per_problem_grade[v.problem_id] = v.grade
+    # Build a synthetic verdict set for the headline row
+    from .diagnostics import ProblemVerdict
+    headline_verdicts = [
+        ProblemVerdict(
+            problem_id=pid,
+            problem_name=f"Problem {pid}",
+            score=float("nan"),
+            confidence="n/a",
+            evidence=[],
+            explanation=(
+                f"Headline grade (worst across {headline_scores['n_combos']} "
+                f"combinations): {g if g else 'n/a'}. See per-combo "
+                f"rows for the breakdown."
+            ),
+            reference="",
+            grade=g if g else "n/a",
+        )
+        for pid, g in sorted(headline_per_problem_grade.items())
+    ]
+    for v in headline_verdicts:
+        v.combo_id = "headline"
+        v.combo = None
 
-    config_dict = _config_dict_for(config_eff, adata, scfm_emb)
-    out_paths = report.write_all(
+    # Concatenate headline + per-combo verdicts for the output file
+    final_verdicts = headline_verdicts + all_verdicts
+
+    # ── 5. Write the MultiQC-friendly TSVs ────────────────────────
+    scfm_emb_for_log: str = (
+        combos_list[0].scfm_embedding if combos_list else ""
+    ) or ""
+    config_dict = _config_dict_for(config, adata, scfm_emb_for_log)
+    config_dict["n_combos_evaluated"] = len(combos_list)
+    config_dict["headline_fmf"] = headline_scores["fmf"]
+    config_dict["headline_bf"] = headline_scores["bf"]
+    config_dict["headline_pr"] = headline_scores["pr"]
+    config_dict["headline_remark"] = headline_scores["remark"]
+    config_dict["headline_n_worst_problems"] = headline_scores["n_worst_problems"]
+
+    out_paths = report.write_all_with_combos(
         atlas_name=config.atlas_name,
-        verdicts=verdicts,
+        headline_verdicts=headline_verdicts,
+        all_verdicts=all_verdicts,
+        per_combo_scores=per_combo_scores,
+        headline_scores=headline_scores,
         metrics_df=metrics_df,
         outdir=outdir,
         weights_path=config.weights_path,
@@ -656,8 +781,10 @@ def run_scfm_from_cache(
         config_dict=config_dict,
     )
     return {
-        "verdicts": verdicts,
+        "verdicts": final_verdicts,
         "metrics_df": metrics_df,
         "out_paths": out_paths,
         "outdir": outdir,
+        "headline_scores": headline_scores,
+        "per_combo_scores": per_combo_scores,
     }

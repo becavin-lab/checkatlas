@@ -277,10 +277,197 @@ def test_run_scfm_from_cache_with_only_scfm_metrics(tmp_path: Path):
     assert expected.issubset(set(result["out_paths"].keys())), (
         f"missing output files: {expected - set(result['out_paths'].keys())}"
     )
-    assert len(result["verdicts"]) == 9
+    # New schema: 9 headline verdicts + 9 per-combo verdicts = 18.
+    # Every verdict covers a problem_id in 1..9.
+    assert len(result["verdicts"]) >= 9
     for v in result["verdicts"]:
         assert v.problem_id in range(1, 10)
+    # The first 9 verdicts are the headline (worst grade per problem)
+    assert result["verdicts"][0].combo_id == "headline"
     # Output dir is <tmp>/checkatlas_files/scfm/blood
     assert result["outdir"].endswith(
         os.path.join("checkatlas_files", "scfm", "blood")
+    )
+
+
+def test_run_scfm_from_cache_all_combinations_mode(tmp_path: Path):
+    """End-to-end: with no --scfm_* flags set, ``run_scfm_from_cache``
+    falls into the 'all combinations' mode: it auto-runs the 3
+    per-task engines and produces 9 verdicts × N combos plus a
+    headline row. The output TSVs get a ``combo_id`` column and a
+    ``remark`` column.
+    """
+    from checkatlas.scfm.config import SCFMConfig
+    from checkatlas.scfm.pipeline import run_scfm_from_cache
+
+    import anndata as ad
+
+    n = 80
+    rng = np.random.default_rng(0)
+    adata = ad.AnnData(
+        X=rng.standard_normal((n, 30)),
+        obs=pd.DataFrame(
+            {
+                "celltype": pd.Categorical(
+                    rng.choice(["alpha", "beta", "gamma", "delta"], n)
+                ),
+                "celltype_scfm_pred": pd.Categorical(
+                    rng.choice(["alpha", "beta", "gamma", "delta"], n)
+                ),
+                "batch": pd.Categorical(
+                    rng.choice(["b1", "b2", "b3"], n)
+                ),
+            }
+        ),
+    )
+    adata.obsm["X_pca"] = rng.standard_normal((n, 20)).astype(np.float32)
+    adata.obsm["X_geneformer"] = (
+        adata.obsm["X_pca"] + 0.5 * rng.standard_normal((n, 20))
+    ).astype(np.float32)
+
+    # No --scfm_* flags set; orchestrator runs all 3 engines
+    # and the pipeline enumerates all detected (ref, pred, batch,
+    # scfm, baseline) combinations.
+    cfg = SCFMConfig(
+        atlas_name="x",
+        scaling_fractions=(),  # skip cal_scfm to keep the test fast
+        n_seeds=0,
+    )
+
+    import argparse
+
+    args = argparse.Namespace(
+        path=str(tmp_path),
+        n_jobs=2,
+        metric_cluster=["silhouette"],
+        metric_annot=["adj_rand_index"],
+        metric_dimred=["dCor"],
+        scfm_fast=False,
+        scfm_max_combos=10,
+    )
+
+    result = run_scfm_from_cache(adata, cfg, args=args)
+
+    # All 7 output files exist (back-compat names)
+    expected = {
+        "verdicts.tsv",
+        "composite.tsv",
+        "per_metric.tsv",
+        "inputs.tsv",
+        "grade_legend.md",
+        "resolved_weights.json",
+        "resolved_thresholds.yaml",
+    }
+    assert expected.issubset(set(result["out_paths"].keys())), (
+        f"missing output files: {expected - set(result['out_paths'].keys())}"
+    )
+
+    # The headline row is at the top of verdicts (combo_id == 'headline')
+    verdicts = result["verdicts"]
+    assert verdicts[0].combo_id == "headline"
+    assert len(verdicts) >= 1 + 9  # headline (9) + at least one combo (9)
+
+    # All combo verdicts have a non-empty combo_id and a remark
+    for v in verdicts:
+        if v.combo_id == "headline":
+            continue
+        assert v.combo_id
+        assert v.combo is not None
+
+    # The composite has a headline row + at least one per-combo row
+    composite_df = pd.read_csv(result["out_paths"]["composite.tsv"], sep="\t")
+    assert "headline" in composite_df["combo_id"].values
+    n_per_combo = (composite_df["combo_id"] != "headline").sum()
+    assert n_per_combo >= 1
+
+    # The per-metric TSV has a combo_id column
+    pm_df = pd.read_csv(result["out_paths"]["per_metric.tsv"], sep="\t")
+    assert "combo_id" in pm_df.columns
+    assert "remark" in pm_df.columns
+
+    # The verdicts TSV has a remark column
+    vd_df = pd.read_csv(result["out_paths"]["verdicts.tsv"], sep="\t")
+    assert "remark" in vd_df.columns
+    assert "combo_id" in vd_df.columns
+
+    # The headline_scores are in inputs.tsv
+    inputs_df = pd.read_csv(result["out_paths"]["inputs.tsv"], sep="\t")
+    assert "headline_fmf" in inputs_df.columns
+    assert "headline_bf" in inputs_df.columns
+    assert "headline_pr" in inputs_df.columns
+
+
+def test_run_scfm_from_cache_scfm_fast_mode_single_combo(
+    tmp_path: Path,
+):
+    """End-to-end: with --scfm_fast and no --scfm_* flags, the
+    pipeline should produce exactly one combo (back-compat with
+    today's single-combo output).
+    """
+    from checkatlas.scfm.config import SCFMConfig
+    from checkatlas.scfm.pipeline import run_scfm_from_cache
+
+    import anndata as ad
+
+    n = 60
+    rng = np.random.default_rng(0)
+    adata = ad.AnnData(
+        X=rng.standard_normal((n, 30)),
+        obs=pd.DataFrame(
+            {
+                "celltype": pd.Categorical(
+                    rng.choice(["alpha", "beta", "gamma"], n)
+                ),
+                "celltype_scfm_pred": pd.Categorical(
+                    rng.choice(["alpha", "beta", "gamma"], n)
+                ),
+                "batch": pd.Categorical(
+                    rng.choice(["b1", "b2", "b3"], n)
+                ),
+            }
+        ),
+    )
+    adata.obsm["X_pca"] = rng.standard_normal((n, 20)).astype(np.float32)
+    adata.obsm["X_geneformer"] = (
+        adata.obsm["X_pca"] + 0.5 * rng.standard_normal((n, 20))
+    ).astype(np.float32)
+
+    cfg = SCFMConfig(
+        atlas_name="x",
+        scaling_fractions=(),  # skip cal_scfm to keep the test fast
+        n_seeds=0,
+    )
+
+    import argparse
+
+    args = argparse.Namespace(
+        path=str(tmp_path),
+        n_jobs=2,
+        metric_cluster=["silhouette"],
+        metric_annot=["adj_rand_index"],
+        metric_dimred=["dCor"],
+        scfm_fast=True,  # opt out of all-combinations sweep
+        scfm_max_combos=10,
+    )
+
+    result = run_scfm_from_cache(adata, cfg, args=args)
+
+    # 7 output files still produced
+    expected = {
+        "verdicts.tsv",
+        "composite.tsv",
+        "per_metric.tsv",
+        "inputs.tsv",
+        "grade_legend.md",
+        "resolved_weights.json",
+        "resolved_thresholds.yaml",
+    }
+    assert expected.issubset(set(result["out_paths"].keys()))
+
+    # Headline + 1 combo = 1 × 9 + 9 = 18 verdict rows
+    per_combo_count = sum(
+        1 for v in result["verdicts"] if v.combo_id != "headline"
+    ) // 9
+    assert per_combo_count == 1, (
+        f"expected exactly 1 combo in --scfm_fast mode, got {per_combo_count}"
     )

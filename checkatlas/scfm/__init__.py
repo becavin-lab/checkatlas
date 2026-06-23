@@ -13,9 +13,10 @@ Layer 1 (metric collection) can be re-used without the diagnostic
 overhead.
 """
 
-from . import config, diagnostics, grades, io, orchestrator, report, rules
+from . import combos, config, diagnostics, grades, io, orchestrator, report, rules
 
 __all__ = [
+    "combos",
     "config",
     "diagnostics",
     "grades",

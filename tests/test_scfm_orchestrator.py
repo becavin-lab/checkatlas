@@ -486,3 +486,154 @@ def test_apply_user_overrides_dimred_filters_to_user_embeddings():
     )
     out = _apply_user_overrides(long, "dimred", cfg)
     assert set(out["Embedding"].unique()) == {"X_pca", "X_geneformer"}
+
+
+# ──────────────────────────────────────────────────────────────────
+# All-combinations orchestrator path (no --scfm_* flag set)
+# ──────────────────────────────────────────────────────────────────
+
+
+def test_orchestrator_with_no_scfm_flags_runs_all_three_tasks(
+    tmp_path: Path, caplog
+):
+    """When ``scfm_config`` has every --scfm_* flag empty, the
+    orchestrator should fall into the 'all combinations' mode
+    and auto-run all 3 per-task engines (not skip them).
+    """
+    import argparse
+    import logging
+
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+
+    from checkatlas.scfm.orchestrator import ensure_per_task_tsvs
+
+    rng = np.random.default_rng(0)
+    n = 100
+    adata = ad.AnnData(
+        X=rng.standard_normal((n, 30)),
+        obs=pd.DataFrame(
+            {
+                "celltype": pd.Categorical(
+                    rng.choice(["alpha", "beta", "gamma"], n)
+                ),
+                "leiden": pd.Categorical(
+                    rng.choice([f"c{i}" for i in range(5)], n)
+                ),
+                "batch": pd.Categorical(
+                    rng.choice(["b1", "b2", "b3"], n)
+                ),
+            }
+        ),
+    )
+    adata.obsm["X_pca"] = rng.standard_normal((n, 10)).astype(np.float32)
+    adata.obsm["X_geneformer"] = (
+        rng.standard_normal((n, 10)).astype(np.float32)
+    )
+
+    cfg = SCFMConfig(atlas_name="x")  # all --scfm_* flags empty
+    from checkatlas.metrics import cluster, annot, dimred
+
+    args = argparse.Namespace(
+        path=str(tmp_path),
+        n_jobs=2,
+        metric_cluster=cluster.__all__,
+        metric_annot=annot.__all__,
+        metric_dimred=dimred.__all__,
+    )
+
+    caplog.set_level(logging.INFO, logger="checkatlas")
+    result = ensure_per_task_tsvs(
+        adata, {"Atlas_name": "x", "Atlas_path": "x.h5ad"}, args, cfg
+    )
+
+    # All 3 per-task TSVs were auto-run
+    assert result["cluster"] is not None and len(result["cluster"]) > 0
+    assert result["annotation"] is not None and len(result["annotation"]) > 0
+    # The dimred task may be empty if the column detector
+    # found no usable embeddings with > 3 components; in our
+    # synthetic case X_pca and X_geneformer are both 10D so it
+    # must produce rows.
+    assert result["dimred"] is not None and len(result["dimred"]) > 0
+
+    # The orchestrator logged the 'all combinations' message
+    info = " ".join(r.getMessage() for r in caplog.records)
+    assert "all combinations" in info
+    assert "nothing to auto-run" not in info
+
+
+def test_orchestrator_with_user_specified_flags_keeps_existing_behaviour(
+    tmp_path: Path, caplog
+):
+    """When the user sets at least one --scfm_* flag, the
+    orchestrator should fall back to today's behaviour
+    (``required_tasks`` decides which task TSVs to run).
+    """
+    import argparse
+    import logging
+
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+
+    from checkatlas.scfm.orchestrator import ensure_per_task_tsvs
+
+    rng = np.random.default_rng(0)
+    n = 100
+    adata = ad.AnnData(
+        X=rng.standard_normal((n, 30)),
+        obs=pd.DataFrame(
+            {
+                "celltype": pd.Categorical(
+                    rng.choice(["alpha", "beta"], n)
+                ),
+                "batch": pd.Categorical(
+                    rng.choice(["b1", "b2"], n)
+                ),
+            }
+        ),
+    )
+    adata.obsm["X_pca"] = rng.standard_normal((n, 10)).astype(np.float32)
+    adata.obsm["X_scvi_dropin"] = adata.obsm["X_pca"].copy()
+    adata.obsm["X_geneformer"] = (
+        rng.standard_normal((n, 10)).astype(np.float32)
+    )
+
+    # User specifies scfm_embedding + baseline + ref_label.
+    cfg = SCFMConfig(
+        atlas_name="x",
+        scfm_embedding="X_geneformer",
+        baseline_embeddings=("X_pca", "X_scvi_dropin"),
+        ref_label="celltype",
+        batch_key="batch",
+        scaling_fractions=(),  # skip cal_scfm to keep the test fast
+        n_seeds=0,
+    )
+    from checkatlas.metrics import cluster, annot, dimred
+
+    args = argparse.Namespace(
+        path=str(tmp_path),
+        n_jobs=2,
+        metric_cluster=cluster.__all__,
+        metric_annot=annot.__all__,
+        metric_dimred=dimred.__all__,
+    )
+
+    caplog.set_level(logging.INFO, logger="checkatlas")
+    result = ensure_per_task_tsvs(
+        adata, {"Atlas_name": "x", "Atlas_path": "x.h5ad"}, args, cfg
+    )
+
+    # The orchestrator did NOT log the 'all combinations' message
+    info = " ".join(r.getMessage() for r in caplog.records)
+    assert "all combinations" not in info
+
+    # The 2 per-task TSVs the user config requires were auto-run
+    # (the cluster task may be None if the column detector found
+    # no cluster labels — in that case the annot/dimred tasks
+    # still ran). The important assertion is that the
+    # orchestrator did NOT log the 'all combinations' message,
+    # which proves the user-specified path is taken.
+    assert result["annotation"] is not None
+    assert result["dimred"] is not None

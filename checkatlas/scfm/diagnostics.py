@@ -40,6 +40,8 @@ class ProblemVerdict:
     explanation: str = ""
     reference: str = ""
     grade: str = ""
+    combo_id: str = ""
+    combo: Any = None
 
     def __post_init__(self) -> None:
         if not self.grade:

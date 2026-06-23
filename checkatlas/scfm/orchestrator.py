@@ -289,8 +289,29 @@ def ensure_per_task_tsvs(
     )
 
     # ── 2. Decide which tasks are needed ──────────────────────────
+    # A "user-specified" mode is detected by the presence of any
+    # --scfm_* flag. When the user passed no flag, the
+    # orchestrator runs all 3 per-task engines (the symmetric
+    # default of `checkatlas metric_*`) and lets
+    # `combos.detect_all_combos` figure out which column x
+    # embedding combinations the diagnostic engine should
+    # evaluate.
     needed = required_tasks(scfm_config)
-    if not needed:
+    from .config import is_user_specified
+
+    user_specified = is_user_specified(scfm_config)
+    if not needed and not user_specified:
+        logger.info(
+            "scfm: no --scfm_* flags set for %s; defaulting to "
+            "'all combinations' mode — the orchestrator will run "
+            "all 3 per-task engines on every column-detector "
+            "match, and the diagnostic engine will evaluate every "
+            "(ref, pred, batch, scfm, baseline) combination. "
+            "Pass --scfm_fast for the single-combo behaviour.",
+            atlas_name,
+        )
+        needed = {_TASK_CLUSTER, _TASK_ANNOT, _TASK_DIMRED}
+    elif not needed:
         logger.info(
             "scfm: no per-task inputs were requested via --scfm_* flags "
             "for %s; nothing to auto-run",
