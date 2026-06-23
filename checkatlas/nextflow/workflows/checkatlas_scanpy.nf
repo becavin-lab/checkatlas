@@ -34,7 +34,8 @@ workflow CHECKATLAS_SCANPY{
     METRIC_CLUST(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
     METRIC_ANNOT(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
     METRIC_DIMRED(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
-
+    AADD SCFM 
+    +
     // Mix all out channels
     scanpy_out = SUMMARY.out.out_info
     scanpy_out = scanpy_out.mix(QC.out.out_info)

@@ -177,11 +177,13 @@ def main() -> None:  # pragma: no cover
                 atlas.create_metric_annot(adata, atlas_info, args)
                 atlas.create_metric_dimred(adata, atlas_info, args)
             elif process == check.SCFM_PROCESS_TYPE:  # scfm
-                from .scfm.config import SCFMConfig, from_args
-                from .scfm.pipeline import run_scfm_pipeline
+                from .scfm.config import from_args
+                from .scfm.orchestrator import ensure_per_task_tsvs
+                from .scfm.pipeline import run_scfm_from_cache
 
                 scfm_config = from_args(args)
-                result = run_scfm_pipeline(adata, scfm_config, args=args)
+                ensure_per_task_tsvs(adata, atlas_info, args, scfm_config)
+                result = run_scfm_from_cache(adata, scfm_config, args=args)
                 logger.info(
                     "scfm QC complete for %s. Outputs in %s",
                     atlas_name,
