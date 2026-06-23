@@ -491,7 +491,7 @@ def _verdict_problem_7(
         [],
         (
             "Patient-level metrics (ASW, outcome AUC) are reported "
-            "in scfm_per_metric.tsv; cross-check against Elmarakeby "
+            "in per_metric.tsv; cross-check against Elmarakeby "
             "2025 thresholds."
         ),
         p_rules.get("primary_reference", ""),

@@ -347,8 +347,8 @@ def summarise():
     logger.info("")
 
     # Show the verdicts and composite
-    verdicts_path = os.path.join(scfm_dir, "scfm_verdicts.tsv")
-    composite_path = os.path.join(scfm_dir, "scfm_composite.tsv")
+    verdicts_path = os.path.join(scfm_dir, "verdicts.tsv")
+    composite_path = os.path.join(scfm_dir, "composite.tsv")
     if os.path.exists(verdicts_path):
         logger.info("verdicts:")
         with open(verdicts_path) as f:

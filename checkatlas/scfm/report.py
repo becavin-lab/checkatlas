@@ -1,15 +1,19 @@
 """Reporting: write the scFM QC outputs.
 
-Three TSV files, all idempotent:
+Three TSV files, all idempotent, written flat into the per-atlas
+``checkatlas_files/scfm/<atlas_name>/`` folder (so the layout matches
+the per-task ``checkatlas_files/<task>/<atlas>.tsv`` pattern, with
+the atlas name in the path rather than the filename):
 
-  * ``scfm_verdicts.tsv``   — one row per (atlas, problem)
-  * ``scfm_composite.tsv``  — one row per atlas, with FMF, BF, PR
-  * ``scfm_per_metric.tsv`` — long-format raw metric values
+  * ``verdicts.tsv``        — one row per (atlas, problem)
+  * ``composite.tsv``       — one row per atlas, with FMF, BF, PR
+  * ``per_metric.tsv``      — long-format raw metric values
 
-Plus ``resolved_thresholds.yaml`` and ``resolved_weights.json`` for
-reproducibility. The TSV column names follow the existing CheckAtlas
-MultiQC conventions (lowercase, underscore-separated) so the new
-tables slot into ``assets/multiqc_config.yml`` cleanly.
+Plus ``inputs.tsv`` (one-row config snapshot), and the reproducibility
+artefacts ``resolved_thresholds.yaml``, ``resolved_weights.json``,
+``grade_legend.md``.
+
+The path is derived from ``args.path`` at runtime (not hardcoded).
 """
 
 from __future__ import annotations
@@ -50,9 +54,9 @@ def write_verdicts(
     atlas_name: str,
     outdir: str,
 ) -> Path:
-    """Write ``scfm_verdicts.tsv`` — one row per (atlas, problem)."""
+    """Write ``verdicts.tsv`` — one row per (atlas, problem)."""
     os.makedirs(outdir, exist_ok=True)
-    out = os.path.join(outdir, "scfm_verdicts.tsv")
+    out = os.path.join(outdir, "verdicts.tsv")
     rows: list[dict] = []
     for v in verdicts:
         score = float(v.score) if v.score is not None and not (
@@ -86,9 +90,9 @@ def write_composite(
     failure_rate: float = 0.0,
     runtime_factor: float = 1.0,
 ) -> Path:
-    """Write ``scfm_composite.tsv`` — one row per atlas."""
+    """Write ``composite.tsv`` — one row per atlas."""
     os.makedirs(outdir, exist_ok=True)
-    out = os.path.join(outdir, "scfm_composite.tsv")
+    out = os.path.join(outdir, "composite.tsv")
     scores = compute_all(
         verdicts,
         weights=weights,
@@ -126,7 +130,7 @@ def write_per_metric(
     outdir: str,
     atlas_name: str = "",
 ) -> Path:
-    """Write ``scfm_per_metric.tsv`` — the long-format raw metrics.
+    """Write ``per_metric.tsv`` — the long-format raw metrics.
 
     The output is a copy of the input long-format table with the
     atlas name added as a column. Missing column ``Atlas Name`` is
@@ -134,7 +138,7 @@ def write_per_metric(
     it.
     """
     os.makedirs(outdir, exist_ok=True)
-    out = os.path.join(outdir, "scfm_per_metric.tsv")
+    out = os.path.join(outdir, "per_metric.tsv")
     df = metrics_df.copy()
     if "Atlas Name" not in df.columns:
         df.insert(0, "Atlas Name", atlas_name)
@@ -146,12 +150,12 @@ def write_inputs_section(
     outdir: str,
     config_dict: dict,
 ) -> Path:
-    """Write a small ``scfm_inputs.tsv`` (one row) summarising the
+    """Write a small ``inputs.tsv`` (one row) summarising the
     inputs that were used. This is the Becavin comment-6 input-data
     sanity section.
     """
     os.makedirs(outdir, exist_ok=True)
-    out = os.path.join(outdir, "scfm_inputs.tsv")
+    out = os.path.join(outdir, "inputs.tsv")
     df = pd.DataFrame([config_dict])
     df.to_csv(out, sep="\t", index=False)
     return Path(out)
@@ -179,14 +183,26 @@ def write_all(
     runtime_factor: float = 1.0,
     config_dict: dict | None = None,
 ) -> dict[str, str]:
-    """Run every writer. Returns a dict ``{filename: path}``."""
+    """Run every writer. Returns a dict ``{filename: path}``.
+
+    Output filenames (no ``scfm_`` prefix, the atlas name is in the
+    path):
+
+        verdicts.tsv
+        composite.tsv
+        per_metric.tsv
+        inputs.tsv
+        resolved_weights.json
+        resolved_thresholds.yaml
+        grade_legend.md
+    """
     weights = load_weights(weights_path)
     rules = load_thresholds(thresholds_path)
     paths: dict[str, str] = {}
-    paths["scfm_verdicts.tsv"] = str(
+    paths["verdicts.tsv"] = str(
         write_verdicts(verdicts, atlas_name, outdir)
     )
-    paths["scfm_composite.tsv"] = str(
+    paths["composite.tsv"] = str(
         write_composite(
             atlas_name,
             verdicts,
@@ -197,7 +213,7 @@ def write_all(
             runtime_factor=runtime_factor,
         )
     )
-    paths["scfm_per_metric.tsv"] = str(
+    paths["per_metric.tsv"] = str(
         write_per_metric(metrics_df, outdir, atlas_name=atlas_name)
     )
     paths["resolved_weights.json"] = str(
@@ -211,7 +227,7 @@ def write_all(
         )
     )
     if config_dict is not None:
-        paths["scfm_inputs.tsv"] = str(
+        paths["inputs.tsv"] = str(
             write_inputs_section(outdir, config_dict)
         )
     paths["grade_legend.md"] = str(write_grade_legend(outdir))

@@ -14,7 +14,6 @@ If the h5ad is not present (e.g. the user did not download
 it), the tests skip with a clear message.
 """
 
-import os
 from pathlib import Path
 
 import numpy as np

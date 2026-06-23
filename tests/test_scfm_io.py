@@ -263,12 +263,13 @@ def test_run_scfm_from_cache_with_only_scfm_metrics(tmp_path: Path):
 
     result = run_scfm_from_cache(adata, cfg, args=args)
 
-    # All 7 output files exist
+    # All 7 output files exist (no scfm_ prefix, atlas name is in
+    # the parent path).
     expected = {
-        "scfm_verdicts.tsv",
-        "scfm_composite.tsv",
-        "scfm_per_metric.tsv",
-        "scfm_inputs.tsv",
+        "verdicts.tsv",
+        "composite.tsv",
+        "per_metric.tsv",
+        "inputs.tsv",
         "grade_legend.md",
         "resolved_weights.json",
         "resolved_thresholds.yaml",

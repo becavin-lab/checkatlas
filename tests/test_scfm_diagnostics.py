@@ -452,10 +452,10 @@ def test_report_writes_all_files(tmp_path):
         config_dict={"atlas": "x", "scfm_embedding": "X_scfm"},
     )
     for filename in (
-        "scfm_verdicts.tsv",
-        "scfm_composite.tsv",
-        "scfm_per_metric.tsv",
-        "scfm_inputs.tsv",
+        "verdicts.tsv",
+        "composite.tsv",
+        "per_metric.tsv",
+        "inputs.tsv",
         "grade_legend.md",
         "resolved_weights.json",
         "resolved_thresholds.yaml",
