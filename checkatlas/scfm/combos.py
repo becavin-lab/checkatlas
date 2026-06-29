@@ -204,6 +204,23 @@ def detect_all_combos(
     """Build the list of (ref, pred, batch, scfm, baseline) combos
     from the column detector result.
 
+    Embedding roles
+    ---------------
+    The function uses **two separate embedding lists** to honour
+    the per-task semantics the user wants:
+
+    * The **annotation** role is constrained to the
+      ``detected["clustering"]["embeddings"]`` list, which the
+      column detector has already filtered to embeddings with
+      > 3 components (so UMAP / t-SNE / draw_graph are excluded
+      — those visualisations cannot drive a kNN-based metric).
+    * The **scfm** and **baseline** roles (used by problems 2 and 9,
+      the cross-embedding comparison) include the full list of
+      ``adata.obsm`` keys — UMAP / t-SNE are valid dimred
+      candidates because the point of those problems is to
+      quantify how well any low-dim representation preserves
+      the original structure.
+
     The function is *pure* — it depends only on the AnnData and
     the detected dict, not on the SCFMConfig. Caps are applied
     per role to keep the cartesian product bounded.
@@ -211,8 +228,23 @@ def detect_all_combos(
     ref_candidates = [k for k, _ in detected["annotation"]["reference"][:max_ref]]
     pred_candidates = [k for k, _ in detected["annotation"]["predicted"][:max_pred]]
     batch_candidates = [k for k, _ in detected["batch"][:max_batch]]
-    embedding_keys = [k for k, _ in detected["clustering"]["embeddings"]]
-    scfm_keys, baseline_keys = _classify_embeddings(embedding_keys)
+
+    # The (scfm, baseline) cross-embedding comparison (problems
+    # 2 and 9) is allowed to use the full obsm list — UMAP and
+    # t-SNE are valid candidates because the metric is the
+    # preservation of the original high-dim structure, not a
+    # kNN cell-type classification. We do this by querying
+    # ``adata.obsm.keys()`` directly so the dimred role uses
+    # every key, irrespective of dimensionality.
+    #
+    # The (ref, pred, batch) keys still use the >3-component
+    # filter via the column detector's ``clustering.embeddings``
+    # list (silhouette / ARI / NMI on a UMAP is meaningless);
+    # that list is consumed by ``cal_annot`` independently of
+    # this function.
+    all_dimred_keys = list(adata.obsm.keys())
+
+    scfm_keys, baseline_keys = _classify_embeddings(all_dimred_keys)
     scfm_keys = scfm_keys[:max_scfm]
     baseline_keys = baseline_keys[:max_baseline]
 
@@ -446,8 +478,8 @@ def build_per_metric_remark(
     """
     what = {
         "silhouette": "cluster separation (1=well-separated, 0=overlapping)",
-        "davies_bouldin": "cluster separation (lower is better)",
-        "calinski_harabasz": "cluster separation (higher is better)",
+        "davies_bouldin": "cluster separation (lower=better-separated)",
+        "calinski_harabasz": "cluster separation (higher=better-separated)",
         "isolated_f1_score": "ref-vs-pred F1 (1=perfect, 0=mismatch)",
         "adj_rand_index": "ref-vs-pred ARI (1=perfect, 0=random)",
         "average_silhouette_width": "silhouette (variant used by scIB)",
@@ -464,7 +496,7 @@ def build_per_metric_remark(
         "lcmc": "local continuity meta-metric",
         "avg_jaccard_dis": "average Jaccard distance (1=perfect)",
         "ged": "graph-based embedding distance",
-        "stability_cv": "coefficient of variation across subsamples (lower=more stable)",
+        "stability_cv": "coefficient of variation across subsamples",
         "rare_f1": "F1 on rare cell types",
         "common_f1": "F1 on common cell types",
         "rare_common_gap": "F1 gap between rare and common cell types",

@@ -242,6 +242,83 @@ def test_detect_all_combos_respects_max_combos_cap():
     assert len(capped) == 1
 
 
+def test_detect_all_combos_includes_2d_umap_tsne_for_dimred_role():
+    """Bug fix: the (scfm, baseline) cross-embedding role
+    (problems 2 / 9) must include UMAP and t-SNE keys even
+    though they have ≤ 3 components, because the dimred metrics
+    are about *preservation* of the original high-dim
+    structure, not about kNN cell-type classification.
+
+    The annotation role is unaffected — the column detector
+    still excludes ≤ 3-D keys from ``clustering.embeddings``
+    (the list used by ``cal_annot``).
+    """
+    n = 100
+    rng = np.random.default_rng(0)
+    adata = ad.AnnData(
+        X=rng.standard_normal((n, 30)),
+        obs=pd.DataFrame(
+            {
+                "obs_name": pd.Categorical(
+                    [f"c{i}" for i in range(n)]
+                ),
+                "celltype": pd.Categorical(
+                    rng.choice(["alpha", "beta", "gamma"], n)
+                ),
+                "batch": pd.Categorical(
+                    rng.choice(["b1", "b2"], n)
+                ),
+            }
+        ),
+    )
+    # Mix of >3-D and 2-D / 3-D embeddings
+    adata.obsm["X_pca"] = rng.standard_normal((n, 20)).astype(np.float32)
+    adata.obsm["X_geneformer"] = (
+        rng.standard_normal((n, 20)).astype(np.float32)
+    )
+    adata.obsm["X_umap"] = rng.standard_normal((n, 2)).astype(np.float32)
+    adata.obsm["X_tsne"] = rng.standard_normal((n, 3)).astype(np.float32)
+
+    from checkatlas.utils.col_detector import CheckAtlasColumnDetector
+
+    detected = CheckAtlasColumnDetector(adata).detect_all_parameters()
+    # Confirm the column detector's own filter: UMAP/tSNE are
+    # excluded from ``clustering.embeddings`` (they have ≤ 3
+    # components) but kept in ``get_dimred_embeddings()``.
+    clustering_keys = [k for k, _ in detected["clustering"]["embeddings"]]
+    assert "X_umap" not in clustering_keys
+    assert "X_tsne" not in clustering_keys
+    assert "X_pca" in clustering_keys
+    assert "X_geneformer" in clustering_keys
+    # But get_dimred_embeddings returns all 4
+    detector = CheckAtlasColumnDetector(adata)
+    dimred_keys = detector.get_dimred_embeddings()
+    assert set(dimred_keys) >= {"X_pca", "X_geneformer", "X_umap", "X_tsne"}
+
+    # And detect_all_combos must use the full dimred list for
+    # the baseline role (problem 2 / 9 cross-embedding
+    # comparison). The scfm role is reserved for scfm-named
+    # embeddings (X_geneformer / X_scgpt / etc.), and is
+    # excluded from the baseline set (the scfm cannot be its
+    # own baseline).
+    combos_list = detect_all_combos(
+        adata, detected, max_scfm=10, max_baseline=10
+    )
+    scfm_set = {c.scfm_embedding for c in combos_list}
+    baseline_set = {c.baseline_embedding for c in combos_list}
+    # X_geneformer is the only scfm-named embedding, so it is
+    # the only scfm candidate.
+    assert scfm_set == {"X_geneformer"}
+    # X_pca, X_umap, X_tsne are the baselines. Critically,
+    # X_umap and X_tsne (≤ 3-D) are now included as valid
+    # baseline candidates, which is the bug fix.
+    assert "X_pca" in baseline_set
+    assert "X_umap" in baseline_set
+    assert "X_tsne" in baseline_set
+    # X_geneformer is the scfm, not a baseline.
+    assert "X_geneformer" not in baseline_set
+
+
 # ──────────────────────────────────────────────────────────────────
 # expand_config_for_combo
 # ──────────────────────────────────────────────────────────────────
