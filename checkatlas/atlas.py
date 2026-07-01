@@ -25,20 +25,12 @@ try:
         save_context,
     )
     from .utils import files, folders
+    from .utils import log_format
     from .utils.checkatlas_arguments import MAX_N_JOBS, cap_n_jobs
     from .utils.col_detector import CheckAtlasColumnDetector
 except ImportError:
-    from checkatlas import cellranger, check
-    from checkatlas.metrics import metrics
-    from checkatlas.metrics._cache import load_dimred_cache, save_dimred_cache, save_knn
-    from checkatlas.metrics._neighbors import NeighborResults, compute_neighbors
-    from checkatlas.metrics._preprocess_context import (
-        PreprocessContext,
-        load_context,
-        make_preprocess_fingerprint,
-        save_context,
-    )
     from checkatlas.utils import files, folders
+    from checkatlas.utils import log_format
     from checkatlas.utils.checkatlas_arguments import MAX_N_JOBS, cap_n_jobs
     from checkatlas.utils.col_detector import CheckAtlasColumnDetector
 
@@ -173,6 +165,22 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     source_path = atlas_info.get(check.ATLAS_PATH_KEY, None)
 
+    # Per-atlas timings (consumed by the summary table in __main__).
+    # Stashed on the argparse Namespace so we don't have to change
+    # every internal signature; this is a private convention used
+    # only by the four create_metric_* functions and the four
+    # _precompute_* helpers in this module.
+    timings = getattr(args, "_checkatlas_timings", None)
+    if timings is None:
+        timings = {}
+        try:
+            args._checkatlas_timings = timings
+        except (AttributeError, TypeError):
+            # args is a plain object (tests) or unmodifiable; fall
+            # back to a local dict so the per-precompute footer
+            # still works.
+            timings = {}
+
     # ── 1. Column detection (once) ──────────────────────────────────
     detector = CheckAtlasColumnDetector(adata)
     params = detector.detect_all_parameters()
@@ -229,7 +237,24 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
     temp_parent = folders.get_folder(args.path, folders.TEMP)
     existing = load_context(atlas_name, temp_parent, fingerprint)
     if existing is not None:
-        logger.info("Precompute context already valid — skipping recomputation")
+        log_format.preprocess_header(
+            logger,
+            atlas_name,
+            adata.n_obs,
+            adata.n_vars,
+            run_dimred=run_dimred,
+            run_annot=run_annot,
+            run_batch=run_batch,
+            run_cluster=run_cluster,
+            cache_hit=True,
+        )
+        timings["preprocess:cache_hit"] = 0.0
+        log_format.preprocess_footer(
+            logger,
+            atlas_name=atlas_name,
+            timings=timings,
+            cache_hit=True,
+        )
         return adata
 
     # ── 3. Build fresh context ─────────────────────────────────────
@@ -263,11 +288,31 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
     # ── 4. Task-specific precomputation ────────────────────────────
     n_jobs = _resolve_n_jobs(args)
 
+    # Banner up front so the user can see the precompute plan
+    # before the (potentially slow) artefact build starts.
+    log_format.preprocess_header(
+        logger,
+        atlas_name,
+        adata.n_obs,
+        adata.n_vars,
+        run_dimred=run_dimred,
+        run_annot=run_annot,
+        run_batch=run_batch,
+        run_cluster=run_cluster,
+        cache_hit=False,
+    )
+
     if run_dimred:
+        import time as _time
+        _t0 = _time.time()
         _precompute_dimred(adata, ctx, k_neighbors=30, n_jobs=n_jobs)
+        timings["preprocess:dimred"] = _time.time() - _t0
 
     if run_annot:
+        import time as _time
+        _t0 = _time.time()
         _precompute_annot(adata, ctx, k_neighbors=90, n_jobs=n_jobs)
+        timings["preprocess:annot"] = _time.time() - _t0
 
     # batch_correction shares kNN / neighbour-graph precompute with
     # the annotation task. The shared kNN_paths + neighbour_graphs
@@ -275,13 +320,26 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
     # adds is the batch_correction_dir entry in the context (above)
     # so downstream code can find a per-task cache root.
     if run_batch:
+        import time as _time
+        _t0 = _time.time()
         _precompute_batch_correction(adata, ctx, k_neighbors=90, n_jobs=n_jobs)
+        timings["preprocess:batch_correction"] = _time.time() - _t0
 
     if run_cluster:
+        import time as _time
+        _t0 = _time.time()
         _precompute_cluster(adata, ctx, k_neighbors=30, n_jobs=n_jobs)
+        timings["preprocess:cluster"] = _time.time() - _t0
 
     # ── 5. Persist context ─────────────────────────────────────────
     save_context(ctx)
+
+    log_format.preprocess_footer(
+        logger,
+        atlas_name=atlas_name,
+        timings=timings,
+        cache_hit=False,
+    )
 
     return adata
 
@@ -1199,8 +1257,22 @@ def create_metric_cluster(
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     cluster_dir = folders.get_folder(args.path, folders.CLUSTER)
 
-    logger.info("Running full clustering pipeline for %s", atlas_name)
+    log_format.task_header(
+        logger,
+        atlas_name=atlas_name,
+        n_obs=adata.n_obs,
+        n_vars=adata.n_vars,
+        task="cluster",
+        keys={
+            "cluster labels": list(
+                adata.obs.select_dtypes(include="category").columns
+            ),
+            "embeddings": list(adata.obsm_keys()),
+        },
+    )
 
+    import time as _time
+    _t0 = _time.time()
     preprocess_ctx = _try_load_context(atlas_info, args)
 
     df = metrics.cal_cluster(
@@ -1213,6 +1285,8 @@ def create_metric_cluster(
         seed=42,
         preprocess_context=preprocess_ctx,
     )
+    _elapsed = _time.time() - _t0
+    _csv_path = None
 
     if not df.empty:
         csv_path = files.get_file_path(
@@ -1223,9 +1297,21 @@ def create_metric_cluster(
         )
         wide_df = metrics._pivot_cluster_to_wide(df, atlas_name)
         wide_df.to_csv(csv_path, index=False, sep="\t")
-        logger.info("Clustering metrics saved to %s", csv_path)
+        _csv_path = csv_path
     else:
         logger.warning("No clustering metrics calculated for %s", atlas_name)
+
+    _timings = getattr(args, "_checkatlas_timings", None)
+    if _timings is not None:
+        _timings["metric:cluster"] = (_elapsed, len(df))
+    log_format.task_footer(
+        logger,
+        task="cluster",
+        atlas_name=atlas_name,
+        elapsed=_elapsed,
+        n_rows=len(df),
+        output_path=_csv_path,
+    )
 
 
 def create_metric_annot(
@@ -1251,8 +1337,35 @@ def create_metric_annot(
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     annotation_dir = folders.get_folder(args.path, folders.ANNOTATION)
 
-    logger.info("Running full annotation pipeline for %s", atlas_name)
+    # Detect the keys the metric engine will use so the per-task
+    # header reflects the same columns the cal_annot pipeline
+    # picked.  This is a one-shot column-detector call: cheap
+    # (sub-second on a 30k-cell atlas) and saves the user from
+    # having to read the cal_annot source to know what ran.
+    _detector = CheckAtlasColumnDetector(adata)
+    _params = _detector.detect_all_parameters()
+    _ref_keys = [c for c, _ in _params["annotation"]["reference"]]
+    _pred_keys = [c for c, _ in _params["annotation"]["predicted"]]
+    _emb_keys = [
+        k for k, meta in _params["clustering"]["embeddings"]
+        if meta.get("n_components", 0) > 2
+    ]
 
+    log_format.task_header(
+        logger,
+        atlas_name=atlas_name,
+        n_obs=adata.n_obs,
+        n_vars=adata.n_vars,
+        task="annot",
+        keys={
+            "ref keys": _ref_keys,
+            "pred keys": _pred_keys,
+            "embeddings (>2 comp)": _emb_keys,
+        },
+    )
+
+    import time as _time
+    _t0 = _time.time()
     preprocess_ctx = _try_load_context(atlas_info, args)
 
     df = metrics.cal_annot(
@@ -1265,6 +1378,8 @@ def create_metric_annot(
         verbose=True,
         preprocess_context=preprocess_ctx,
     )
+    _elapsed = _time.time() - _t0
+    _csv_path = None
 
     if not df.empty:
         csv_path = files.get_file_path(
@@ -1275,9 +1390,21 @@ def create_metric_annot(
         )
         wide_df = metrics._pivot_annot_to_wide(df, atlas_name)
         wide_df.to_csv(csv_path, index=False, sep="\t")
-        logger.info("Annotation metrics saved to %s", csv_path)
+        _csv_path = csv_path
     else:
         logger.warning("No annotation metrics calculated for %s", atlas_name)
+
+    _timings = getattr(args, "_checkatlas_timings", None)
+    if _timings is not None:
+        _timings["metric:annot"] = (_elapsed, len(df))
+    log_format.task_footer(
+        logger,
+        task="annot",
+        atlas_name=atlas_name,
+        elapsed=_elapsed,
+        n_rows=len(df),
+        output_path=_csv_path,
+    )
 
 
 def create_metric_dimred(
@@ -1301,7 +1428,19 @@ def create_metric_dimred(
 
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
 
-    logger.info("Running full dimred pipeline for %s", atlas_name)
+    log_format.task_header(
+        logger,
+        atlas_name=atlas_name,
+        n_obs=adata.n_obs,
+        n_vars=adata.n_vars,
+        task="dimred",
+        keys={
+            "embeddings (all .obsm)": list(adata.obsm_keys()),
+        },
+    )
+
+    import time as _time
+    _t0 = _time.time()
 
     dimred_dir = folders.get_folder(args.path, folders.DIMRED)
     # Per-atlas persistent cache under temp/
@@ -1319,6 +1458,8 @@ def create_metric_dimred(
         verbose=True,
         seed=42,
     )
+    _elapsed = _time.time() - _t0
+    _csv_path = None
 
     if not df.empty:
         csv_path = files.get_file_path(
@@ -1329,9 +1470,21 @@ def create_metric_dimred(
         )
         wide_df = metrics._pivot_dimred_to_wide(df, atlas_name)
         wide_df.to_csv(csv_path, index=False, sep="\t")
-        logger.info("Dimred metrics saved to %s", csv_path)
+        _csv_path = csv_path
     else:
         logger.warning("No dimred metrics calculated for %s", atlas_name)
+
+    _timings = getattr(args, "_checkatlas_timings", None)
+    if _timings is not None:
+        _timings["metric:dimred"] = (_elapsed, len(df))
+    log_format.task_footer(
+        logger,
+        task="dimred",
+        atlas_name=atlas_name,
+        elapsed=_elapsed,
+        n_rows=len(df),
+        output_path=_csv_path,
+    )
 
 
 def create_metric_batch_correction(
@@ -1363,8 +1516,37 @@ def create_metric_batch_correction(
         args.path, folders.BATCH_CORRECTION
     )
 
-    logger.info("Running full batch-correction pipeline for %s", atlas_name)
+    # Detect the keys the batch-correction pipeline will consume
+    # so the per-task header reflects the same columns the
+    # cal_batch_correction engine picked.
+    _detector = CheckAtlasColumnDetector(adata)
+    _params = _detector.detect_all_parameters()
+    _batch_keys = [c for c, _ in _params.get("batch", [])]
+    if not _batch_keys:
+        _batch_keys = [c for c in adata.obs.columns if "batch" in c.lower()]
+    _ref_keys = [c for c, _ in _params["annotation"]["reference"]]
+    _pred_keys = [c for c, _ in _params["annotation"]["predicted"]]
+    _emb_keys = [
+        k for k, meta in _params["clustering"]["embeddings"]
+        if meta.get("n_components", 0) > 2
+    ]
 
+    log_format.task_header(
+        logger,
+        atlas_name=atlas_name,
+        n_obs=adata.n_obs,
+        n_vars=adata.n_vars,
+        task="batch_correction",
+        keys={
+            "batch keys": _batch_keys,
+            "ref keys (cLISI / graph_connectivity)": _ref_keys,
+            "pred keys (cLISI / graph_connectivity)": _pred_keys,
+            "embeddings (>2 comp)": _emb_keys,
+        },
+    )
+
+    import time as _time
+    _t0 = _time.time()
     preprocess_ctx = _try_load_context(atlas_info, args)
 
     df = metrics.cal_batch_correction(
@@ -1377,6 +1559,7 @@ def create_metric_batch_correction(
         verbose=True,
         preprocess_context=preprocess_ctx,
     )
+    _elapsed = _time.time() - _t0
 
     csv_path = files.get_file_path(
         atlas_name,
@@ -1388,7 +1571,6 @@ def create_metric_batch_correction(
     if not df.empty:
         wide_df = metrics._pivot_batch_correction_to_wide(df, atlas_name)
         wide_df.to_csv(csv_path, index=False, sep="\t")
-        logger.info("Batch-correction metrics saved to %s", csv_path)
     else:
         # Always write a header-only TSV so the per-atlas file
         # exists for downstream consumers (MultiQC, scfm).
@@ -1403,6 +1585,18 @@ def create_metric_batch_correction(
             atlas_name,
             csv_path,
         )
+
+    _timings = getattr(args, "_checkatlas_timings", None)
+    if _timings is not None:
+        _timings["metric:batch_correction"] = (_elapsed, len(df))
+    log_format.task_footer(
+        logger,
+        task="batch_correction",
+        atlas_name=atlas_name,
+        elapsed=_elapsed,
+        n_rows=len(df),
+        output_path=csv_path,
+    )
 
 
 def atlas_sampling(

@@ -9,11 +9,11 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 try:
     from . import atlas, cellranger, check, seurat
     from .metrics import annot, batch_correction, cluster, dimred
-    from .utils import checkatlas_arguments, folders
+    from .utils import checkatlas_arguments, folders, log_format
 except ImportError:
     from checkatlas import atlas, cellranger, check, seurat
     from checkatlas.metrics import annot, batch_correction, cluster, dimred
-    from checkatlas.utils import checkatlas_arguments, folders
+    from checkatlas.utils import checkatlas_arguments, folders, log_format
 
 
 def _metric_nf_arg(metrics: list, all_metrics: list) -> str:
@@ -28,6 +28,23 @@ def _metric_nf_arg(metrics: list, all_metrics: list) -> str:
     if not metrics:
         return " ".join(all_metrics)
     return " ".join(metrics)
+
+
+def _print_metric_summary(adata, atlas_info, args, logger) -> None:
+    """Print the per-atlas timing summary table for the four metric tasks.
+
+    Called once per atlas after the four ``create_metric_*`` calls.
+    Skips silently if no timings were recorded (e.g. when all four
+    metric categories are disabled).
+    """
+    timings = getattr(args, "_checkatlas_timings", None)
+    if not timings:
+        return
+    log_format.print_atlas_timing_summary(
+        logger,
+        atlas_info[check.ATLAS_NAME_KEY],
+        timings,
+    )
 
 
 def main() -> None:  # pragma: no cover
@@ -143,6 +160,15 @@ def main() -> None:  # pragma: no cover
         # Run process
         process = args.process
         atlas_type = atlas_info[check.ATLAS_TYPE_KEY]
+
+        # Initialise the per-atlas timings dict on the argparse
+        # Namespace so the four create_metric_* functions and the
+        # preprocess_atlas hook can record their elapsed seconds.
+        # The print_atlas_timing_summary call below consumes the
+        # dict; private convention used only by the atlas-level
+        # pipeline.
+        args._checkatlas_timings = {}
+
         if (
             atlas_type == atlas.ANNDATA_TYPE
             or atlas_type == cellranger.CELLRANGER_TYPE_CURRENT
@@ -159,12 +185,16 @@ def main() -> None:  # pragma: no cover
                 atlas.create_qc_plots(adata, atlas_info, args)
             elif process == check.PROCESS_TYPE[4]:  # cluster metrics
                 atlas.create_metric_cluster(adata, atlas_info, args)
+                _print_metric_summary(adata, atlas_info, args, logger)
             elif process == check.PROCESS_TYPE[5]:  # annotation metrics
                 atlas.create_metric_annot(adata, atlas_info, args)
+                _print_metric_summary(adata, atlas_info, args, logger)
             elif process == check.PROCESS_TYPE[6]:  # batch-correction metrics
                 atlas.create_metric_batch_correction(adata, atlas_info, args)
+                _print_metric_summary(adata, atlas_info, args, logger)
             elif process == check.PROCESS_TYPE[7]:  # dimred metrics
                 atlas.create_metric_dimred(adata, atlas_info, args)
+                _print_metric_summary(adata, atlas_info, args, logger)
             elif process == check.PROCESS_TYPE[8]:  #  analyse
                 atlas.create_summary_table(adata, atlas_info, args)
                 atlas.create_anndata_table(adata, atlas_info, args)
@@ -176,11 +206,13 @@ def main() -> None:  # pragma: no cover
                 atlas.create_metric_annot(adata, atlas_info, args)
                 atlas.create_metric_batch_correction(adata, atlas_info, args)
                 atlas.create_metric_dimred(adata, atlas_info, args)
+                _print_metric_summary(adata, atlas_info, args, logger)
             elif process == check.PROCESS_TYPE[9]:  #  metric
                 atlas.create_metric_cluster(adata, atlas_info, args)
                 atlas.create_metric_annot(adata, atlas_info, args)
                 atlas.create_metric_batch_correction(adata, atlas_info, args)
                 atlas.create_metric_dimred(adata, atlas_info, args)
+                _print_metric_summary(adata, atlas_info, args, logger)
             elif process == check.SCFM_PROCESS_TYPE:  # scfm
                 from .scfm.config import from_args
                 from .scfm.orchestrator import ensure_per_task_tsvs
