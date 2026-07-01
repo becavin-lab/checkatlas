@@ -234,11 +234,13 @@ def run_scfm_pipeline(
         "isolated_f1_score",
         "adj_rand_index",
         "average_silhouette_width",
-        "kbet",
-        "pcr",
-        "graph_connectivity",
     ):
         if metric_name in annot_mod.__all__:
+            existing_metric_lists.append(metric_name)
+    from ..metrics import batch_correction
+
+    for metric_name in ("kbet", "pcr", "graph_connectivity"):
+        if metric_name in batch_correction.__all__:
             existing_metric_lists.append(metric_name)
     for metric_name in ("silhouette", "davies_bouldin", "calinski_harabasz"):
         if metric_name in cluster.__all__:
@@ -476,13 +478,11 @@ def _apply_user_overrides(
             keep &= long["Prediction/Input 2"].astype(str) == str(
                 config.predicted_label
             )
-        if config.batch_key:
-            mask = long["Metric Name"].astype(str).isin(
-                {"kbet", "iLISI", "pcr", "graph_connectivity"}
-            )
-            keep &= (~mask) | (
-                long["Prediction/Input 2"].astype(str) == str(config.batch_key)
-            )
+        return long[keep]
+    if kind == "batch_correction":
+        if not config.batch_key:
+            return long
+        keep = long["Prediction/Input 2"].astype(str) == str(config.batch_key)
         return long[keep]
     if kind == "cluster":
         if not config.ref_label:

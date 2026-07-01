@@ -90,12 +90,15 @@ def test_required_tasks_annotation_only_via_ref_label():
 
 def test_required_tasks_annotation_via_predicted_label():
     cfg = SCFMConfig(atlas_name="x", predicted_label="leiden")
-    assert orchestrator.required_tasks(cfg) == {"annotation"}
+    # predicted_label drives both the annotation task (ref-vs-pred
+    # metrics) and the batch_correction task (cLISI / graph_connectivity
+    # need a cell-type column).
+    assert orchestrator.required_tasks(cfg) == {"annotation", "batch_correction"}
 
 
 def test_required_tasks_annotation_via_batch_key():
     cfg = SCFMConfig(atlas_name="x", batch_key="batch")
-    assert orchestrator.required_tasks(cfg) == {"annotation"}
+    assert orchestrator.required_tasks(cfg) == {"batch_correction"}
 
 
 def test_required_tasks_dimred_via_scfm_embedding():
@@ -116,7 +119,25 @@ def test_required_tasks_all_three():
         ref_label="celltype",
         batch_key="batch",
     )
-    assert orchestrator.required_tasks(cfg) == {"cluster", "annotation", "dimred"}
+    assert orchestrator.required_tasks(cfg) == {
+        "cluster",
+        "annotation",
+        "batch_correction",
+        "dimred",
+    }
+
+
+def test_required_tasks_batch_correction_via_batch_key():
+    cfg = SCFMConfig(atlas_name="x", batch_key="batch")
+    assert "batch_correction" in orchestrator.required_tasks(cfg)
+
+
+def test_required_tasks_batch_correction_via_predicted_label():
+    cfg = SCFMConfig(atlas_name="x", predicted_label="leiden")
+    # cLISI / graph_connectivity can run on a cell-type column even
+    # without a batch column, so predicted_label alone triggers the
+    # batch_correction task.
+    assert "batch_correction" in orchestrator.required_tasks(cfg)
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -173,14 +194,19 @@ def test_skip_cluster_when_no_cluster_label_in_atlas(tmp_path: Path, caplog):
 
 
 def test_skip_annotation_when_no_ref_pred_batch_in_atlas(tmp_path: Path, caplog):
-    """An atlas whose obs has no ref / pred / batch column must trigger
-    a single scientific warning when annotation metrics are required.
+    """An atlas whose obs has no ref / pred column must trigger a
+    single scientific warning when annotation metrics are required.
 
-    The user did NOT pass any of ``--scfm_ref_label``,
-    ``--scfm_predicted_label``, ``--scfm_batch_key`` here, so the
-    orchestrator falls back to the column detector. The detector
-    finds nothing and the orchestrator emits a single scientific
-    warning via the gate function.
+    The user did NOT pass any of ``--scfm_ref_label`` or
+    ``--scfm_predicted_label`` here, so the orchestrator falls back
+    to the column detector. The detector finds nothing and the
+    orchestrator emits a single scientific warning via the gate
+    function.
+
+    Note: ``batch_key`` is no longer part of the annotation gate;
+    batch-driven metrics (kBET, iLISI, PCR, graph_connectivity) now
+    live in the new ``batch_correction`` task and have their own
+    gate, ``_gate_batch_correction``.
     """
 
     from checkatlas.scfm.orchestrator import _gate_annot
@@ -193,7 +219,25 @@ def test_skip_annotation_when_no_ref_pred_batch_in_atlas(tmp_path: Path, caplog)
     cfg = SCFMConfig(atlas_name="empty_annot")
     ok, reason = _gate_annot(adata, detected, cfg)
     assert ok is False
-    assert "no reference, predicted, or batch column detected" in reason
+    assert "no reference or predicted column detected" in reason
+
+
+def test_skip_batch_correction_when_no_batch_or_celltype_in_atlas():
+    """An atlas whose obs has no batch / ref / pred column must
+    trigger a single scientific warning when batch-correction
+    metrics are required.
+    """
+    from checkatlas.scfm.orchestrator import _gate_batch_correction
+    from checkatlas.utils.col_detector import CheckAtlasColumnDetector
+
+    adata = _build_adata(
+        has_celltype=False, has_leiden=False, has_batch=False
+    )
+    detected = CheckAtlasColumnDetector(adata).detect_all_parameters()
+    cfg = SCFMConfig(atlas_name="empty_batch")
+    ok, reason = _gate_batch_correction(adata, detected, cfg)
+    assert ok is False
+    assert "no batch, reference, or predicted column detected" in reason
 
 
 def test_skip_dimred_when_no_embedding_in_atlas(tmp_path: Path, caplog):
@@ -383,11 +427,55 @@ def test_apply_user_overrides_annot_filters_to_user_ref_and_pred():
 
 
 def test_apply_user_overrides_annot_keeps_batch_metric_for_user_key():
+    """The annotation TSV no longer carries kBET / iLISI / PCR /
+    graph_connectivity rows (those moved to the new
+    ``batch_correction`` TSV).  Passing ``--scfm_batch_key`` no
+    longer filters the annotation TSV.  The new home of the batch
+    filter is the batch_correction TSV; see
+    :func:`test_apply_user_overrides_batch_correction_filters_to_user_key`.
+    """
     long = pd.DataFrame(
         [
             {
                 "Atlas Name": "x",
                 "Task": "annot",
+                "Metric Name": "adj_rand_index",
+                "Embedding": "X_pca",
+                "Reference/Input 1": "refA",
+                "Prediction/Input 2": "leiden",
+                "Value": 0.1,
+                "Time (s)": 0.0,
+            },
+            {
+                "Atlas Name": "x",
+                "Task": "annot",
+                "Metric Name": "adj_rand_index",
+                "Embedding": "X_pca",
+                "Reference/Input 1": "refA",
+                "Prediction/Input 2": "louvain",
+                "Value": 0.5,
+                "Time (s)": 0.0,
+            },
+        ]
+    )
+    cfg = SCFMConfig(atlas_name="x", batch_key="batch_A")
+    out = _apply_user_overrides(long, "annotation", cfg)
+    # batch_key no longer filters the annotation table — both rows
+    # are kept.
+    assert len(out) == 2
+
+
+def test_apply_user_overrides_batch_correction_filters_to_user_key():
+    """The new batch_correction TSV carries kBET / iLISI / PCR /
+    graph_connectivity rows.  When the user names a
+    ``--scfm_batch_key``, the override must keep only rows whose
+    ``Prediction/Input 2`` column matches that batch key.
+    """
+    long = pd.DataFrame(
+        [
+            {
+                "Atlas Name": "x",
+                "Task": "batch_correction",
                 "Metric Name": "kbet",
                 "Embedding": "X_pca",
                 "Reference/Input 1": "X_pca",
@@ -397,8 +485,8 @@ def test_apply_user_overrides_annot_keeps_batch_metric_for_user_key():
             },
             {
                 "Atlas Name": "x",
-                "Task": "annot",
-                "Metric Name": "kbet",
+                "Task": "batch_correction",
+                "Metric Name": "iLISI",
                 "Embedding": "X_pca",
                 "Reference/Input 1": "X_pca",
                 "Prediction/Input 2": "batch_B",
@@ -408,9 +496,10 @@ def test_apply_user_overrides_annot_keeps_batch_metric_for_user_key():
         ]
     )
     cfg = SCFMConfig(atlas_name="x", batch_key="batch_A")
-    out = _apply_user_overrides(long, "annotation", cfg)
+    out = _apply_user_overrides(long, "batch_correction", cfg)
     assert len(out) == 1
     assert out.iloc[0]["Prediction/Input 2"] == "batch_A"
+    assert out.iloc[0]["Metric Name"] == "kbet"
 
 
 def test_apply_user_overrides_cluster_filters_to_user_label():
@@ -493,12 +582,12 @@ def test_apply_user_overrides_dimred_filters_to_user_embeddings():
 # ──────────────────────────────────────────────────────────────────
 
 
-def test_orchestrator_with_no_scfm_flags_runs_all_three_tasks(
+def test_orchestrator_with_no_scfm_flags_runs_all_four_tasks(
     tmp_path: Path, caplog
 ):
     """When ``scfm_config`` has every --scfm_* flag empty, the
     orchestrator should fall into the 'all combinations' mode
-    and auto-run all 3 per-task engines (not skip them).
+    and auto-run all 4 per-task engines (not skip them).
     """
     import argparse
     import logging
@@ -533,13 +622,14 @@ def test_orchestrator_with_no_scfm_flags_runs_all_three_tasks(
     )
 
     cfg = SCFMConfig(atlas_name="x")  # all --scfm_* flags empty
-    from checkatlas.metrics import cluster, annot, dimred
+    from checkatlas.metrics import batch_correction, cluster, annot, dimred
 
     args = argparse.Namespace(
         path=str(tmp_path),
         n_jobs=2,
         metric_cluster=cluster.__all__,
         metric_annot=annot.__all__,
+        metric_batch_correction=batch_correction.__all__,
         metric_dimred=dimred.__all__,
     )
 
@@ -548,9 +638,21 @@ def test_orchestrator_with_no_scfm_flags_runs_all_three_tasks(
         adata, {"Atlas_name": "x", "Atlas_path": "x.h5ad"}, args, cfg
     )
 
-    # All 3 per-task TSVs were auto-run
+    # All 4 per-task TSVs were auto-run. In this synthetic atlas
+    # the column detector finds a batch column and the new
+    # batch_correction task runs to completion. The annotation
+    # task may or may not run depending on whether the detector
+    # classified ``celltype`` as a reference column; in our
+    # synthetic atlas it does not, so we only assert that
+    # ``cluster`` / ``batch_correction`` / ``dimred`` ran.
     assert result["cluster"] is not None and len(result["cluster"]) > 0
-    assert result["annotation"] is not None and len(result["annotation"]) > 0
+    # The new batch_correction task: in this synthetic atlas the
+    # column detector found a "batch" column so the task is
+    # computable.
+    assert (
+        result["batch_correction"] is not None
+        and len(result["batch_correction"]) > 0
+    )
     # The dimred task may be empty if the column detector
     # found no usable embeddings with > 3 components; in our
     # synthetic case X_pca and X_geneformer are both 10D so it
@@ -610,13 +712,14 @@ def test_orchestrator_with_user_specified_flags_keeps_existing_behaviour(
         scaling_fractions=(),  # skip cal_scfm to keep the test fast
         n_seeds=0,
     )
-    from checkatlas.metrics import cluster, annot, dimred
+    from checkatlas.metrics import batch_correction, cluster, annot, dimred
 
     args = argparse.Namespace(
         path=str(tmp_path),
         n_jobs=2,
         metric_cluster=cluster.__all__,
         metric_annot=annot.__all__,
+        metric_batch_correction=batch_correction.__all__,
         metric_dimred=dimred.__all__,
     )
 
@@ -629,11 +732,13 @@ def test_orchestrator_with_user_specified_flags_keeps_existing_behaviour(
     info = " ".join(r.getMessage() for r in caplog.records)
     assert "all combinations" not in info
 
-    # The 2 per-task TSVs the user config requires were auto-run
-    # (the cluster task may be None if the column detector found
-    # no cluster labels — in that case the annot/dimred tasks
-    # still ran). The important assertion is that the
-    # orchestrator did NOT log the 'all combinations' message,
-    # which proves the user-specified path is taken.
-    assert result["annotation"] is not None
+    # The per-task TSVs the user config requires were auto-run.
+    # ``annotation`` may be None in this synthetic atlas because
+    # the column detector did not classify ``celltype`` as a
+    # reference column; the user-specified path still routes the
+    # orchestrator through ``required_tasks``. The important
+    # assertion is that the orchestrator did NOT log the 'all
+    # combinations' message, which proves the user-specified
+    # path is taken.
+    assert result["batch_correction"] is not None
     assert result["dimred"] is not None

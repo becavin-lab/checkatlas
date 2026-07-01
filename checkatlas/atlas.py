@@ -82,7 +82,15 @@ sc.settings.verbosity = 0
 
 
 _PRECOMPUTE_PROCESSES = frozenset(
-    ("preprocess", "metric_cluster", "metric_annot", "metric_dimred", "metric", "analyse")
+    (
+        "preprocess",
+        "metric_cluster",
+        "metric_annot",
+        "metric_batch_correction",
+        "metric_dimred",
+        "metric",
+        "analyse",
+    )
 )
 
 
@@ -109,6 +117,7 @@ def _should_precompute(args) -> bool:
     return (
         _metrics_enabled(args.metric_cluster)
         or _metrics_enabled(args.metric_annot)
+        or _metrics_enabled(getattr(args, "metric_batch_correction", None))
         or _metrics_enabled(args.metric_dimred)
     )
 
@@ -124,6 +133,8 @@ def _wants_task(args, task: str) -> bool:
         return _metrics_enabled(args.metric_cluster)
     elif task == "annot":
         return _metrics_enabled(args.metric_annot)
+    elif task == "batch_correction":
+        return _metrics_enabled(getattr(args, "metric_batch_correction", None))
     elif task == "dimred":
         return _metrics_enabled(args.metric_dimred)
     return False
@@ -153,9 +164,10 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
 
     run_cluster = _wants_task(args, "cluster")
     run_annot = _wants_task(args, "annot")
+    run_batch = _wants_task(args, "batch_correction")
     run_dimred = _wants_task(args, "dimred")
 
-    if not (run_cluster or run_annot or run_dimred):
+    if not (run_cluster or run_annot or run_batch or run_dimred):
         return adata
 
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
@@ -175,14 +187,16 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
     embedding_keys = []
     cluster_embedding_keys = []
     annotation_embedding_keys = []
+    batch_correction_embedding_keys = []
     for emb, meta in params["clustering"]["embeddings"]:
         embedding_keys.append(emb)
         cluster_embedding_keys.append(emb)
         n_comp = meta.get("n_components", 0)
         if n_comp > 2:
             annotation_embedding_keys.append(emb)
+            batch_correction_embedding_keys.append(emb)
     # Also add ALL .obsm keys for dimred/cluster use;
-    # for annotation only include embeddings with > 2 components
+    # for annotation / batch_correction only include embeddings with > 2 components
     all_obsm_keys = adata.obsm_keys()
     for key in all_obsm_keys:
         if key not in embedding_keys:
@@ -193,6 +207,7 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
             try:
                 if adata.obsm[key].shape[1] > 2:
                     annotation_embedding_keys.append(key)
+                    batch_correction_embedding_keys.append(key)
             except Exception:
                 pass
 
@@ -207,6 +222,7 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
         annotation_embedding_keys=annotation_embedding_keys,
         ref_keys=ref_keys,
         pred_keys=pred_keys,
+        batch_correction_embedding_keys=batch_correction_embedding_keys,
     )
 
     # ── 2. Early exit: cached context still valid ──────────────────
@@ -224,15 +240,24 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
         pred_keys=pred_keys,
         embedding_keys=embedding_keys,
         annotation_embedding_keys=annotation_embedding_keys,
+        batch_correction_embedding_keys=batch_correction_embedding_keys,
         cluster_embedding_keys=cluster_embedding_keys,
         cluster_label_keys=cluster_label_keys,
         batch_keys=batch_keys,
         temp_parent_dir=temp_parent,
         dimred_dir=os.path.join(temp_parent, atlas_name, folders.DIMRED),
         annotation_dir=os.path.join(temp_parent, atlas_name, folders.ANNOTATION),
+        batch_correction_dir=os.path.join(
+            temp_parent, atlas_name, folders.BATCH_CORRECTION
+        ),
         cluster_dir=os.path.join(temp_parent, atlas_name, folders.CLUSTER),
     )
-    for d in (ctx.dimred_dir, ctx.annotation_dir, ctx.cluster_dir):
+    for d in (
+        ctx.dimred_dir,
+        ctx.annotation_dir,
+        ctx.batch_correction_dir,
+        ctx.cluster_dir,
+    ):
         os.makedirs(d, exist_ok=True)
 
     # ── 4. Task-specific precomputation ────────────────────────────
@@ -243,6 +268,14 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
 
     if run_annot:
         _precompute_annot(adata, ctx, k_neighbors=90, n_jobs=n_jobs)
+
+    # batch_correction shares kNN / neighbour-graph precompute with
+    # the annotation task. The shared kNN_paths + neighbour_graphs
+    # are reused by the per-task engines; the only thing this helper
+    # adds is the batch_correction_dir entry in the context (above)
+    # so downstream code can find a per-task cache root.
+    if run_batch:
+        _precompute_batch_correction(adata, ctx, k_neighbors=90, n_jobs=n_jobs)
 
     if run_cluster:
         _precompute_cluster(adata, ctx, k_neighbors=30, n_jobs=n_jobs)
@@ -537,6 +570,65 @@ def _precompute_annot(
         gc.collect()
 
     logger.info("Annotation precomputation complete (%d kNN graphs)", len(ctx.knn_paths))
+
+
+def _precompute_batch_correction(
+    adata: AnnData,
+    ctx: PreprocessContext,
+    k_neighbors: int = 90,
+    n_jobs: int = -1,
+) -> None:
+    """Precompute kNN / neighbour-graph artefacts for the batch-correction task.
+
+    The batch-correction task (``cal_batch_correction``) consumes the
+    same kNN graphs (k=90) and ``sc.pp.neighbors`` neighbour graphs
+    that the annotation task already produces.  To keep the cache
+    footprint low and to honour the *single source of truth*
+    contract, this helper reuses the artefacts that
+    ``_precompute_annot`` writes under ``ctx.annotation_dir``.
+
+    Concretely:
+
+    * The kNN ``.npz`` files are already populated in ``ctx.knn_paths``
+      and live under ``ctx.annotation_dir``.  ``cal_batch_correction``
+      loads them from there via the ``preprocess_context`` plumbing.
+    * The neighbour graphs are already populated in
+      ``ctx.neighbor_graphs``.  ``cal_batch_correction`` re-injects
+      them into ``adata.uns`` / ``adata.obsp`` before invoking
+      ``graph_connectivity.run``.
+
+    This helper exists as a deliberate hook point: if a future
+    batch-correction-specific precomputation is needed (e.g. an
+    per-batch distance matrix), it goes here, and the per-atlas
+    cache directory is ``ctx.batch_correction_dir`` (already created
+    by :func:`preprocess_atlas`).
+    """
+    if not ctx.batch_correction_embedding_keys:
+        ctx.batch_correction_embedding_keys = (
+            ctx.annotation_embedding_keys or ctx.embedding_keys
+        )
+
+    logger.info(
+        "Precomputing batch-correction: %d embedding(s) (shared with annotation)",
+        len(ctx.batch_correction_embedding_keys),
+    )
+
+    if ctx.knn_paths:
+        logger.info(
+            "Reusing %d precomputed kNN graphs from annotation cache",
+            len(ctx.knn_paths),
+        )
+    else:
+        logger.info(
+            "No annotation kNN cache found; batch-correction metrics "
+            "will build their own kNN on the fly."
+        )
+
+    if ctx.neighbor_graphs:
+        logger.info(
+            "Reusing %d precomputed neighbour graphs from annotation cache",
+            len(ctx.neighbor_graphs),
+        )
 
 
 def _precompute_cluster(
@@ -1240,6 +1332,77 @@ def create_metric_dimred(
         logger.info("Dimred metrics saved to %s", csv_path)
     else:
         logger.warning("No dimred metrics calculated for %s", atlas_name)
+
+
+def create_metric_batch_correction(
+    adata: AnnData, atlas_info: dict, args: argparse.Namespace
+) -> None:
+    """
+    Calculate all batch-correction metrics via the comprehensive
+    ``cal_batch_correction`` pipeline.  The pipeline auto-detects
+    batch / donor / sample columns, embedding keys, and (for cLISI)
+    cell-type labels; runs every metric listed by
+    ``--metric_batch_correction``; and writes results as a
+    tab-separated file in the batch_correction folder compatible
+    with MultiQC.
+
+    Args:
+        adata (AnnData): atlas to analyse
+        atlas_info (dict): info of the atlas
+        args (argparse.Namespace): list of arguments from checkatlas workflow
+    """
+    metric_list = getattr(args, "metric_batch_correction", None)
+    if metric_list == ["none"]:
+        logger.info(
+            "Skipping batch-correction metrics (--metric_batch_correction none)"
+        )
+        return
+
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+    batch_correction_dir = folders.get_folder(
+        args.path, folders.BATCH_CORRECTION
+    )
+
+    logger.info("Running full batch-correction pipeline for %s", atlas_name)
+
+    preprocess_ctx = _try_load_context(atlas_info, args)
+
+    df = metrics.cal_batch_correction(
+        adata,
+        atlas_name=atlas_name,
+        metric_list=metric_list,
+        all=True,
+        file_dir=batch_correction_dir,
+        n_jobs=_resolve_n_jobs(args),
+        verbose=True,
+        preprocess_context=preprocess_ctx,
+    )
+
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.BATCH_CORRECTION,
+        check.TSV_EXTENSION,
+        args.path,
+    )
+
+    if not df.empty:
+        wide_df = metrics._pivot_batch_correction_to_wide(df, atlas_name)
+        wide_df.to_csv(csv_path, index=False, sep="\t")
+        logger.info("Batch-correction metrics saved to %s", csv_path)
+    else:
+        # Always write a header-only TSV so the per-atlas file
+        # exists for downstream consumers (MultiQC, scfm).
+        metric_list = metric_list or metrics.METRICS_BATCH
+        header = ["Batch_Sample", "Embedding", "Batch Key"] + list(
+            metric_list
+        )
+        pd.DataFrame(columns=header).to_csv(csv_path, index=False, sep="\t")
+        logger.warning(
+            "No batch-correction metrics calculated for %s; wrote "
+            "empty TSV with header at %s",
+            atlas_name,
+            csv_path,
+        )
 
 
 def atlas_sampling(

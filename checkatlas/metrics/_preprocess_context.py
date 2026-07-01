@@ -44,6 +44,8 @@ class PreprocessContext:
         Cache directory for dimensionality-reduction precomputation.
     annotation_dir : str
         Cache directory for annotation precomputation.
+    batch_correction_dir : str
+        Cache directory for batch-correction precomputation.
     cluster_dir : str
         Cache directory for clustering precomputation.
     knn_paths : dict[str, str]
@@ -61,6 +63,7 @@ class PreprocessContext:
     pred_keys: list[str] = field(default_factory=list)
     embedding_keys: list[str] = field(default_factory=list)
     annotation_embedding_keys: list[str] = field(default_factory=list)
+    batch_correction_embedding_keys: list[str] = field(default_factory=list)
     cluster_embedding_keys: list[str] = field(default_factory=list)
     cluster_label_keys: list[str] = field(default_factory=list)
     batch_keys: list[str] = field(default_factory=list)
@@ -69,6 +72,7 @@ class PreprocessContext:
     temp_parent_dir: str = ""
     dimred_dir: str = ""
     annotation_dir: str = ""
+    batch_correction_dir: str = ""
     cluster_dir: str = ""
 
     # ── kNN graph paths ({embedding_key -> .npz path}) ───────────
@@ -88,6 +92,7 @@ def make_preprocess_fingerprint(
     annotation_embedding_keys: list[str] | None = None,
     ref_keys: list[str] | None = None,
     pred_keys: list[str] | None = None,
+    batch_correction_embedding_keys: list[str] | None = None,
 ) -> dict:
     """Build a fingerprint uniquely identifying this precomputation.
 
@@ -115,6 +120,10 @@ def make_preprocess_fingerprint(
     fp["batch_keys"] = sorted(batch_keys)
     if annotation_embedding_keys:
         fp["annotation_embedding_keys"] = sorted(annotation_embedding_keys)
+    if batch_correction_embedding_keys:
+        fp["batch_correction_embedding_keys"] = sorted(
+            batch_correction_embedding_keys
+        )
     if ref_keys is not None:
         fp["ref_keys"] = sorted(ref_keys)
     if pred_keys is not None:
@@ -162,7 +171,14 @@ def fingerprint_match(cached: dict, current: dict) -> bool:
             if k in c_shapes and cached_shapes[k] != c_shapes[k]:
                 return False
 
-    for key in ("cluster_label_keys", "batch_keys", "annotation_embedding_keys", "ref_keys", "pred_keys"):
+    for key in (
+        "cluster_label_keys",
+        "batch_keys",
+        "annotation_embedding_keys",
+        "batch_correction_embedding_keys",
+        "ref_keys",
+        "pred_keys",
+    ):
         cv = cached.get(key)
         cr = current.get(key)
         if _non_empty(cv) and _non_empty(cr) and sorted(cv) != sorted(cr):

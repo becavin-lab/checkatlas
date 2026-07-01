@@ -33,6 +33,15 @@ def test_workingdir(path_input, expected):
             "summary",
             os.path.join("/home/checkatlas_data/", "checkatlas_files", "summary"),
         ),
+        (
+            "/home/checkatlas_data/",
+            "batch_correction",
+            os.path.join(
+                "/home/checkatlas_data/",
+                "checkatlas_files",
+                "batch_correction",
+            ),
+        ),
     ],
 )
 def test_getfolder(path_input, key_folder, expected):
@@ -43,3 +52,7 @@ def test_checkfolders():
     folders.checkatlas_folders(os.getcwd())
     path_summary_folder = os.path.join(os.getcwd(), "checkatlas_files", "summary")
     assert os.path.exists(path_summary_folder)
+    path_batch_folder = os.path.join(
+        os.getcwd(), "checkatlas_files", "batch_correction"
+    )
+    assert os.path.exists(path_batch_folder)

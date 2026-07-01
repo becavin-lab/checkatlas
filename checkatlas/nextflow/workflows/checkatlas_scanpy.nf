@@ -9,6 +9,7 @@ include { SUMMARY } from '../modules/local/checkatlas_process'
 include { QC } from '../modules/local/checkatlas_process'
 include { METRIC_CLUST } from '../modules/local/checkatlas_process'
 include { METRIC_ANNOT } from '../modules/local/checkatlas_process'
+include { METRIC_BATCH_CORRECTION } from '../modules/local/checkatlas_process'
 include { METRIC_DIMRED } from '../modules/local/checkatlas_process'
 
 
@@ -33,6 +34,7 @@ workflow CHECKATLAS_SCANPY{
     QC(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
     METRIC_CLUST(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
     METRIC_ANNOT(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
+    METRIC_BATCH_CORRECTION(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
     METRIC_DIMRED(PREPROCESS_SCANPY.out.atlas_info, ch_search_path)
     AADD SCFM 
     +
@@ -41,6 +43,7 @@ workflow CHECKATLAS_SCANPY{
     scanpy_out = scanpy_out.mix(QC.out.out_info)
     scanpy_out = scanpy_out.mix(METRIC_CLUST.out.out_info)
     scanpy_out = scanpy_out.mix(METRIC_ANNOT.out.out_info)
+    scanpy_out = scanpy_out.mix(METRIC_BATCH_CORRECTION.out.out_info)
     scanpy_out = scanpy_out.mix(METRIC_DIMRED.out.out_info)
 
     emit:

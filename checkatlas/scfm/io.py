@@ -5,21 +5,27 @@ artefacts (the wide MultiQC-style TSVs written by
 ``checkatlas.atlas.create_metric_*``) and the long-format metric
 table the scfm diagnostic engine expects.
 
-The convention in ``checkatlas_files/<task>/<atlas>.tsv``:
+    The convention in ``checkatlas_files/<task>/<atlas>.tsv``:
 
-* **cluster** — wide format, one row per ``(embedding, label_key)``,
-  columns ``Clust_Sample, obs, <metric>, <metric>_running_time, ...``.
-* **annotation** — wide format, one row per
-  ``(embedding, reference, predicted)``, columns
-  ``Annot_Sample, Reference, obs, <metric>, <metric>_running_time, ...``.
-* **dimred** — wide format, one row per ``obsm`` key, columns
-  ``Dimred_Sample, obsm, <metric>, <metric>_running_time, ...``.
+    * **cluster** — wide format, one row per ``(embedding, label_key)``,
+      columns ``Clust_Sample, obs, <metric>, <metric>_running_time, ...``.
+    * **annotation** — wide format, one row per
+      ``(embedding, reference, predicted)``, columns
+      ``Annot_Sample, Reference, obs, <metric>, <metric>_running_time, ...``.
+    * **batch_correction** — wide format, one row per
+      ``(embedding, batch_key)``, columns
+      ``Batch_Sample, Embedding, Batch Key, <metric>,
+      <metric>_running_time, ...``. The ``Metric Name`` in the wide
+      header is the long-format metric name (e.g. ``iLISI``, ``cLISI``,
+      ``kbet``, ``pcr``, ``graph_connectivity``).
+    * **dimred** — wide format, one row per ``obsm`` key, columns
+      ``Dimred_Sample, obsm, <metric>, <metric>_running_time, ...``.
 
-The function :func:`wide_to_long` converts any of these into the
-long format used by :func:`checkatlas.scfm.diagnostics.diagnose`::
+    The function :func:`wide_to_long` converts any of these into the
+    long format used by :func:`checkatlas.scfm.diagnostics.diagnose`::
 
-    [Atlas Name, Task, Metric Name, Embedding,
-     Reference/Input 1, Prediction/Input 2, Value, Time (s)]
+        [Atlas Name, Task, Metric Name, Embedding,
+         Reference/Input 1, Prediction/Input 2, Value, Time (s)]
 
 NaN / empty cells are skipped — only computed metric values are
 forwarded to the diagnostic engine. This keeps partial runs from
@@ -70,10 +76,11 @@ def load_per_task_tsvs(
     Returns
     -------
     dict
-        ``{"cluster": df|None, "annotation": df|None, "dimred": df|None}``.
+        ``{"cluster": df|None, "annotation": df|None,
+        "batch_correction": df|None, "dimred": df|None}``.
     """
     out: dict[str, Optional[pd.DataFrame]] = {}
-    for task in ("cluster", "annotation", "dimred"):
+    for task in ("cluster", "annotation", "batch_correction", "dimred"):
         p = _tsv_path(path, task, atlas_name)
         if not os.path.isfile(p):
             logger.debug("scfm: per-task TSV missing: %s", p)
@@ -187,7 +194,8 @@ def wide_to_long(
     df : pd.DataFrame
         The wide-format TSV, as written by ``create_metric_*``.
     kind : str
-        One of ``"cluster"``, ``"annotation"``, ``"dimred"``.
+        One of ``"cluster"``, ``"annotation"``,
+        ``"batch_correction"``, ``"dimred"``.
     atlas_name : str
 
     Returns
@@ -276,6 +284,31 @@ def wide_to_long(
                 )
             )
         return pd.DataFrame(rows, columns=columns) if rows else pd.DataFrame(columns=columns)
+
+    if kind == "batch_correction":
+        if "Embedding" not in df.columns or "Batch Key" not in df.columns:
+            logger.warning(
+                "scfm: batch_correction TSV missing Embedding / Batch Key columns"
+            )
+            return pd.DataFrame(columns=columns)
+        rows = []
+        for _, r in df.iterrows():
+            embedding = str(r.get("Embedding", "") or "")
+            batch_key = str(r.get("Batch Key", "") or "")
+            rows.extend(
+                _emit_long_rows(
+                    atlas_name,
+                    "batch_correction",
+                    {},
+                    embedding,
+                    embedding,
+                    batch_key,
+                    pd.DataFrame([r]).reset_index(drop=True),
+                )
+            )
+        return (
+            pd.DataFrame(rows, columns=columns) if rows else pd.DataFrame(columns=columns)
+        )
 
     if kind == "dimred":
         if "obsm" not in df.columns:

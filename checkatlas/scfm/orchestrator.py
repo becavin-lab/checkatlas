@@ -45,9 +45,10 @@ logger = logging.getLogger("checkatlas")
 
 _TASK_CLUSTER = "cluster"
 _TASK_ANNOT = "annotation"
+_TASK_BATCH = "batch_correction"
 _TASK_DIMRED = "dimred"
 
-_TASKS = (_TASK_CLUSTER, _TASK_ANNOT, _TASK_DIMRED)
+_TASKS = (_TASK_CLUSTER, _TASK_ANNOT, _TASK_BATCH, _TASK_DIMRED)
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -77,12 +78,14 @@ def required_tasks(scfm_config: SCFMConfig) -> set[str]:
     whether the scfm invocation is well-formed.
     """
     needed: set[str] = set()
-    if (
-        scfm_config.ref_label
-        or scfm_config.predicted_label
-        or scfm_config.batch_key
-    ):
+    if scfm_config.ref_label or scfm_config.predicted_label:
         needed.add(_TASK_ANNOT)
+    if scfm_config.batch_key or scfm_config.predicted_label:
+        # batch_key drives kBET / iLISI / PCR;
+        # predicted_label (or ref_label, handled below) drives cLISI /
+        # graph_connectivity. Either column is enough to make the
+        # batch_correction task useful.
+        needed.add(_TASK_BATCH)
     if scfm_config.ref_label:
         needed.add(_TASK_CLUSTER)
     if scfm_config.scfm_embedding or scfm_config.baseline_embeddings:
@@ -153,7 +156,6 @@ def _gate_annot(
     user_keys = [
         scfm_config.ref_label,
         scfm_config.predicted_label,
-        scfm_config.batch_key,
     ]
     user_keys_present = [k for k in user_keys if k and k in adata.obs.columns]
     user_keys_missing = [k for k in user_keys if k and k not in adata.obs.columns]
@@ -168,15 +170,48 @@ def _gate_annot(
 
     has_ref = bool(detected["annotation"]["reference"])
     has_pred = bool(detected["annotation"]["predicted"])
-    has_batch = bool(detected["batch"])
-    if has_ref or has_pred or has_batch:
+    if has_ref or has_pred:
         return True, ""
     return (
         False,
-        "no reference, predicted, or batch column detected in adata.obs "
-        "(detector found no celltype / annotation / leiden / donor / "
-        "sample / batch-style column matching the annotation semantic "
-        "patterns)",
+        "no reference or predicted column detected in adata.obs "
+        "(detector found no celltype / annotation / leiden-style column "
+        "matching the annotation semantic patterns)",
+    )
+
+
+def _gate_batch_correction(
+    adata: AnnData, detected: dict[str, Any], scfm_config: SCFMConfig
+) -> tuple[bool, str]:
+    """Return ``(ok, reason)`` for the batch-correction task.
+
+    The batch-correction task needs at least one of:
+
+    * a user-specified ``--scfm_batch_key`` present in ``adata.obs``, or
+    * a column detected as a batch / covariate by the column detector, or
+    * a cell-type column (ref or pred) so that cLISI and
+      ``graph_connectivity`` can run on the embedding.
+    """
+    if scfm_config.batch_key:
+        if scfm_config.batch_key in adata.obs.columns:
+            return True, ""
+        return (
+            False,
+            f"user-specified --scfm_batch_key={scfm_config.batch_key!r} "
+            f"is not present in adata.obs.columns",
+        )
+    if detected.get("batch"):
+        return True, ""
+    if (
+        detected.get("annotation", {}).get("reference")
+        or detected.get("annotation", {}).get("predicted")
+    ):
+        return True, ""
+    return (
+        False,
+        "no batch, reference, or predicted column detected in adata.obs "
+        "(detector found no donor / sample / batch / celltype-style "
+        "column matching the batch-correction semantic patterns)",
     )
 
 
@@ -213,6 +248,7 @@ def _gate_dimred(
 _GATE_FUNCS = {
     _TASK_CLUSTER: _gate_cluster,
     _TASK_ANNOT: _gate_annot,
+    _TASK_BATCH: _gate_batch_correction,
     _TASK_DIMRED: _gate_dimred,
 }
 
@@ -304,13 +340,13 @@ def ensure_per_task_tsvs(
         logger.info(
             "scfm: no --scfm_* flags set for %s; defaulting to "
             "'all combinations' mode — the orchestrator will run "
-            "all 3 per-task engines on every column-detector "
+            "all per-task engines on every column-detector "
             "match, and the diagnostic engine will evaluate every "
             "(ref, pred, batch, scfm, baseline) combination. "
             "Pass --scfm_fast for the single-combo behaviour.",
             atlas_name,
         )
-        needed = {_TASK_CLUSTER, _TASK_ANNOT, _TASK_DIMRED}
+        needed = {_TASK_CLUSTER, _TASK_ANNOT, _TASK_BATCH, _TASK_DIMRED}
     elif not needed:
         logger.info(
             "scfm: no per-task inputs were requested via --scfm_* flags "
@@ -341,6 +377,12 @@ def ensure_per_task_tsvs(
             atlas.create_metric_annot,
             lambda: (
                 "Running full annotation pipeline for %s" % atlas_name
+            ),
+        ),
+        _TASK_BATCH: (
+            atlas.create_metric_batch_correction,
+            lambda: (
+                "Running full batch-correction pipeline for %s" % atlas_name
             ),
         ),
         _TASK_DIMRED: (
@@ -433,9 +475,15 @@ def _detected_summary_for(
     if task == _TASK_ANNOT:
         ref = [k for k, _ in detected["annotation"]["reference"]]
         pred = [k for k, _ in detected["annotation"]["predicted"]]
-        batch = [k for k, _ in detected["batch"]]
         return (
-            f"{len(ref)} ref / {len(pred)} predicted / {len(batch)} batch "
+            f"{len(ref)} ref / {len(pred)} predicted column(s) in adata.obs"
+        )
+    if task == _TASK_BATCH:
+        batch = [k for k, _ in detected.get("batch", [])]
+        ref = [k for k, _ in detected["annotation"]["reference"]]
+        pred = [k for k, _ in detected["annotation"]["predicted"]]
+        return (
+            f"{len(batch)} batch / {len(ref)} ref / {len(pred)} predicted "
             f"column(s) in adata.obs"
         )
     if task == _TASK_DIMRED:

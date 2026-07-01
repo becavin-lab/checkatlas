@@ -8,11 +8,11 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
 try:
     from . import atlas, cellranger, check, seurat
-    from .metrics import annot, cluster, dimred
+    from .metrics import annot, batch_correction, cluster, dimred
     from .utils import checkatlas_arguments, folders
 except ImportError:
     from checkatlas import atlas, cellranger, check, seurat
-    from checkatlas.metrics import annot, cluster, dimred
+    from checkatlas.metrics import annot, batch_correction, cluster, dimred
     from checkatlas.utils import checkatlas_arguments, folders
 
 
@@ -85,6 +85,7 @@ def main() -> None:  # pragma: no cover
             f"--obs_cluster={' '.join(args.obs_cluster)}",
             f"--metric_cluster={_metric_nf_arg(args.metric_cluster, cluster.__all__)}",
             f"--metric_annot={_metric_nf_arg(args.metric_annot, annot.__all__)}",
+            f"--metric_batch_correction={_metric_nf_arg(getattr(args, 'metric_batch_correction', batch_correction.__all__), batch_correction.__all__)}",
             f"--metric_dimred={_metric_nf_arg(args.metric_dimred, dimred.__all__)}",
             f"--checkatlas_debug={'true' if args.debug else 'false'}",
         ]
@@ -160,9 +161,11 @@ def main() -> None:  # pragma: no cover
                 atlas.create_metric_cluster(adata, atlas_info, args)
             elif process == check.PROCESS_TYPE[5]:  # annotation metrics
                 atlas.create_metric_annot(adata, atlas_info, args)
-            elif process == check.PROCESS_TYPE[6]:  # dimred metrics
+            elif process == check.PROCESS_TYPE[6]:  # batch-correction metrics
+                atlas.create_metric_batch_correction(adata, atlas_info, args)
+            elif process == check.PROCESS_TYPE[7]:  # dimred metrics
                 atlas.create_metric_dimred(adata, atlas_info, args)
-            elif process == check.PROCESS_TYPE[7]:  #  analyse
+            elif process == check.PROCESS_TYPE[8]:  #  analyse
                 atlas.create_summary_table(adata, atlas_info, args)
                 atlas.create_anndata_table(adata, atlas_info, args)
                 atlas.create_umap_fig(adata, atlas_info, args)
@@ -171,10 +174,12 @@ def main() -> None:  # pragma: no cover
                 atlas.create_qc_plots(adata, atlas_info, args)
                 atlas.create_metric_cluster(adata, atlas_info, args)
                 atlas.create_metric_annot(adata, atlas_info, args)
+                atlas.create_metric_batch_correction(adata, atlas_info, args)
                 atlas.create_metric_dimred(adata, atlas_info, args)
-            elif process == check.PROCESS_TYPE[8]:  #  metric
+            elif process == check.PROCESS_TYPE[9]:  #  metric
                 atlas.create_metric_cluster(adata, atlas_info, args)
                 atlas.create_metric_annot(adata, atlas_info, args)
+                atlas.create_metric_batch_correction(adata, atlas_info, args)
                 atlas.create_metric_dimred(adata, atlas_info, args)
             elif process == check.SCFM_PROCESS_TYPE:  # scfm
                 from .scfm.config import from_args
@@ -207,7 +212,10 @@ def main() -> None:  # pragma: no cover
             elif process == check.PROCESS_TYPE[5]:  # annotation metrics
                 seurat_data = seurat.read_atlas(atlas_info)
                 seurat.create_metric_annot(seurat_data, atlas_info, args)
-            elif process == check.PROCESS_TYPE[6]:  # dimred metrics
+            elif process == check.PROCESS_TYPE[6]:  # batch-correction metrics
+                seurat_data = seurat.read_atlas(atlas_info)
+                seurat.create_metric_batch_correction(seurat_data, atlas_info, args)
+            elif process == check.PROCESS_TYPE[7]:  # dimred metrics
                 seurat_data = seurat.read_atlas(atlas_info)
                 seurat.create_metric_dimred(seurat_data, atlas_info, args)
         else:

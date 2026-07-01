@@ -227,6 +227,45 @@ def test_cluster_metric(atlas_info):
     assert os.path.exists(csv_path)
 
 
+@given("atlas_info", [datasets.get_scanpy_atlas_info()])
+def test_batch_correction_metric(atlas_info):
+    """The batch-correction task must write a per-atlas TSV under
+    ``checkatlas_files/batch_correction/``.
+
+    The test atlas (``pbmc3k_scanpy``) has ``louvain`` and
+    ``leiden`` columns but no ``batch`` column.  ``kbet`` /
+    ``iLISI`` / ``PCR`` need a batch column to produce rows, so
+    we run ``lisi`` alone, which falls back to cLISI on the
+    cell-type column when no batch is present.
+    """
+    adata = atlas.read_atlas(atlas_info)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path")
+    parser.add_argument("--obs_cluster")
+    parser.add_argument("--metric_batch_correction")
+    checkatlas_path = os.getcwd()
+    args = parser.parse_args(
+        [
+            "--path",
+            checkatlas_path,
+            "--metric_batch_correction",
+            ["lisi"],
+            "--obs_cluster",
+            atlas.OBS_CLUSTERS,
+        ]
+    )
+    folders.checkatlas_folders(checkatlas_path)
+    atlas.create_metric_batch_correction(adata, atlas_info, args)
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+    csv_path = files.get_file_path(
+        atlas_name,
+        folders.BATCH_CORRECTION,
+        check.TSV_EXTENSION,
+        args.path,
+    )
+    assert os.path.exists(csv_path)
+
+
 # @given("atlas_info", [datasets.get_scanpy_atlas_info()])
 # def test_annot_metric(atlas_info):
 #     adata = atlas.read_atlas(atlas_info)

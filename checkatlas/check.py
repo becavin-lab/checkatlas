@@ -39,6 +39,7 @@ PROCESS_TYPE = [
     "qc",
     "metric_cluster",
     "metric_annot",
+    "metric_batch_correction",
     "metric_dimred",
     "analyse",
     "metric",

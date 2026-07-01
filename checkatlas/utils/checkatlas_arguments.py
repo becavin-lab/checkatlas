@@ -3,10 +3,10 @@ from importlib.resources import files
 
 try:
     from .. import atlas
-    from ..metrics import annot, cluster, dimred
+    from ..metrics import annot, batch_correction, cluster, dimred
 except ImportError:
     from checkatlas import atlas
-    from checkatlas.metrics import annot, cluster, dimred
+    from checkatlas.metrics import annot, batch_correction, cluster, dimred
 
 
 MAX_N_JOBS = 48
@@ -64,16 +64,17 @@ def create_parser():
         type=str,
         help=(
             "Process to run. Choose from:\n"
-            "  run            — launch the full Nextflow pipeline on a folder\n"
-            "  preprocess     — load and preprocess a single atlas\n"
-            "  summary        — generate summary tables and UMAP/t-SNE figures\n"
-            "  qc             — compute QC tables and plots\n"
-            "  metric_cluster — compute clustering metrics\n"
-            "  metric_annot   — compute annotation metrics\n"
-            "  metric_dimred  — compute dimensionality-reduction metrics\n"
-            "  metric         — run all metric processes on a single atlas\n"
-            "  analyse        — run all analysis processes on a single atlas\n"
-            "  scfm           — run scFM quality-control (9 problems, FMF, BF, PR)\n"
+            "  run                     — launch the full Nextflow pipeline on a folder\n"
+            "  preprocess              — load and preprocess a single atlas\n"
+            "  summary                 — generate summary tables and UMAP/t-SNE figures\n"
+            "  qc                      — compute QC tables and plots\n"
+            "  metric_cluster          — compute clustering metrics\n"
+            "  metric_annot            — compute annotation metrics\n"
+            "  metric_batch_correction — compute batch-correction / integration metrics\n"
+            "  metric_dimred           — compute dimensionality-reduction metrics\n"
+            "  metric                  — run all metric processes on a single atlas\n"
+            "  analyse                 — run all analysis processes on a single atlas\n"
+            "  scfm                    — run scFM quality-control (9 problems, FMF, BF, PR)\n"
         ),
         default="",
     )
@@ -185,6 +186,19 @@ def create_parser():
         "   Example: --metric_annot rand_index fowlkes_mallows\n"
         "   Example: --metric_annot none\n"
         f"   Available: {annot.__all__}",
+    )
+    metric_options.add_argument(
+        "--metric_batch_correction",
+        nargs="+",
+        type=str,
+        default=batch_correction.__all__,
+        help="List of batch-correction / integration-quality metrics to calculate.\n"
+        "   By default all available batch-correction metrics are run.\n"
+        "   Specify one or more metrics, or 'none' to skip this category.\n"
+        "   Example: --metric_batch_correction kbet lisi\n"
+        "   Example: --metric_batch_correction kbet pcr graph_connectivity\n"
+        "   Example: --metric_batch_correction none\n"
+        f"   Available: {batch_correction.__all__}",
     )
     metric_options.add_argument(
         "--metric_dimred",

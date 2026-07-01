@@ -112,6 +112,28 @@ process METRIC_ANNOT{
     """
 }
 
+process METRIC_BATCH_CORRECTION{
+    label 'process_metric_batch_correction'
+    tag "${atlas_info.atlas_name}"
+
+    input:
+    val atlas_info
+    path samplesheet
+
+    output:
+    val out_info, emit: out_info
+    path "${samplesheet}/checkatlas_files/batch_correction/${atlas_info.atlas_name}.tsv", optional: true, emit: batch_correction_tsv
+
+    script:
+    out_info = atlas_info.atlas_name + "_Metric_BatchCorrection"
+    """
+    checkatlas metric_batch_correction $samplesheet --atlas_name ${atlas_info.atlas_name} \
+        --metric_batch_correction ${params.metric_batch_correction} \
+        --n_jobs ${params.n_jobs} \
+        ${params.checkatlas_debug ? '--debug' : ''}
+    """
+}
+
 process METRIC_DIMRED{
     label 'process_metric_dimred'
     tag "${atlas_info.atlas_name}"

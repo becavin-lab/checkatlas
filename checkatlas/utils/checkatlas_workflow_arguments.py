@@ -1,7 +1,7 @@
 import argparse
 
 from checkatlas import atlas, checkatlas_workflow
-from checkatlas.metrics import annot, cluster, dimred
+from checkatlas.metrics import annot, batch_correction, cluster, dimred
 
 
 def create_parser():
@@ -108,6 +108,17 @@ def create_parser():
         help=f"Specify the list of clustering metrics to calculate."
         f"   Example: --metric_annot rand_index"
         f"   List of annotation metrics: {annot.__all__}",
+    )
+    metric_options.add_argument(
+        "--metric_batch_correction",
+        nargs="+",
+        type=str,
+        # default=[],
+        default=[],
+        help=f"Specify the list of batch-correction / integration "
+        f"metrics to calculate.\n"
+        f"   Example: --metric_batch_correction kbet lisi\n"
+        f"   List of batch-correction metrics: {batch_correction.__all__}",
     )
     metric_options.add_argument(
         "--metric_dimred",

@@ -10,6 +10,7 @@ UMAP = "umap"
 TSNE = "tsne"
 CLUSTER = "cluster"
 ANNOTATION = "annotation"
+BATCH_CORRECTION = "batch_correction"
 DIMRED = "dimred"
 SPECI = "specificity"
 TEMP = "temp"
@@ -29,6 +30,7 @@ DICT_FOLDER = {
     TSNE: TSNE,
     CLUSTER: CLUSTER,
     ANNOTATION: ANNOTATION,
+    BATCH_CORRECTION: BATCH_CORRECTION,
     DIMRED: DIMRED,
     SPECI: SPECI,
     TEMP: TEMP,

@@ -14,7 +14,7 @@ except (ImportError, OSError):
     robjects = None
 from sklearn.preprocessing import LabelEncoder
 
-from . import annot, cluster, dimred
+from . import annot, batch_correction, cluster, dimred
 from ._cache import (
     compute_fingerprint,
     load_dimred_cache,
@@ -30,6 +30,7 @@ from ._triangular import TriangularMatrix, store_upper_triangle
 
 METRICS_CLUST = cluster.__all__
 METRICS_ANNOT = annot.__all__
+METRICS_BATCH = batch_correction.__all__
 METRICS_DIMRED = dimred.__all__
 
 
@@ -136,6 +137,46 @@ def _pivot_dimred_to_wide(df, atlas_name):
     return result_df[col_order]
 
 
+def _pivot_batch_correction_to_wide(df, atlas_name):
+    """Pivot long-format batch-correction results to MultiQC-compatible wide format.
+
+    Converts a DataFrame with columns [Atlas Name, Metric Name,
+    Embedding, Batch Key, Value, Time (s)] into a wide table headed
+    by [Batch_Sample, Embedding, Batch Key, <metric>, <metric>_running_time, ...]
+    where each row is one unique (Embedding, Batch Key) combination.
+
+    The ``Metric Name`` column is the long-format name (e.g. ``iLISI``,
+    ``cLISI``, ``kbet``, ``pcr``, ``graph_connectivity``); each value
+    gets its own column in the wide output. ``iLISI`` and ``cLISI`` are
+    distinguished by which ``Batch Key`` row they live in
+    (batch column vs cell-type column).
+    """
+    if df.empty:
+        return df
+    metric_names = sorted(df["Metric Name"].unique())
+    wide_rows = []
+    for (emb, batch), group in df.groupby(["Embedding", "Batch Key"]):
+        row = {
+            "Batch_Sample": f"{atlas_name}_{emb}_{batch}",
+            "Embedding": emb,
+            "Batch Key": batch,
+        }
+        for _, r in group.iterrows():
+            metric = r["Metric Name"]
+            row[metric] = r["Value"]
+            row[f"{metric}_running_time"] = r["Time (s)"]
+        wide_rows.append(row)
+    result_df = pd.DataFrame(wide_rows)
+    value_cols = []
+    for m in metric_names:
+        value_cols.append(m)
+        value_cols.append(f"{m}_running_time")
+    col_order = ["Batch_Sample", "Embedding", "Batch Key"] + [
+        c for c in value_cols if c in result_df.columns
+    ]
+    return result_df[col_order]
+
+
 logger = logging.getLogger("checkatlas")
 
 if robjects is not None:
@@ -188,12 +229,6 @@ def cal_annot(
     import inspect
 
     from ..utils.col_detector import CheckAtlasColumnDetector
-    from ._jax_utils import _GPU_AVAILABLE as _cal_gpu
-    from ._jax_utils import _JAX_AVAILABLE as _cal_jax
-    from ._neighbors import NeighborResults, _clear_neighbors_cache
-    from ._neighbors import compute_neighbors as _cal_knn
-
-    _USE_JAX = _cal_jax and _cal_gpu
 
     # Set file directory
     if file_dir is None:
@@ -201,76 +236,40 @@ def cal_annot(
     else:
         os.makedirs(file_dir, exist_ok=True)
 
-    # ── Precomputed kNN lookup (populated from context or built locally) ──
-    emb_nn = {}
-
     if preprocess_context is not None:
         ref_keys = preprocess_context.ref_keys
         pred_keys = preprocess_context.pred_keys
-        embedding_keys = getattr(preprocess_context, "annotation_embedding_keys", None) or preprocess_context.embedding_keys
-        batch_keys = preprocess_context.batch_keys
-        if not batch_keys:
-            batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
+        embedding_keys = (
+            getattr(preprocess_context, "annotation_embedding_keys", None)
+            or preprocess_context.embedding_keys
+        )
 
         if verbose:
             print("Using precomputed context — skipping column detection")
             print(f"  Reference keys: {ref_keys}")
             print(f"  Predicted keys: {pred_keys}")
             print(f"  Embedding keys: {embedding_keys}")
-            print(f"  Batch keys: {batch_keys}")
-
-        # Load precomputed kNN from .npz files
-        for emb in embedding_keys:
-            _safe = emb.replace("/", "_").replace(" ", "_")
-            if emb in preprocess_context.knn_paths or _safe in preprocess_context.knn_paths:
-                from ._cache import load_knn
-
-                loaded = load_knn(preprocess_context.annotation_dir, f"knn_{_safe}")
-                if loaded is not None:
-                    emb_nn[emb] = NeighborResults(
-                        indices=loaded[0], distances=loaded[1]
-                    )
-
-        # Re-inject precomputed neighbour graphs for graph_connectivity
-        for emb, payload in preprocess_context.neighbor_graphs.items():
-            key_added = payload.get("key_added", f"neighbors_{emb}")
-            if key_added not in adata.uns:
-                adata.uns[key_added] = payload.get("uns_entry", {})
-            conn_key = (
-                payload.get("uns_entry", {})
-                .get("connectivities_key", "connectivities")
-            )
-            dist_key = (
-                payload.get("uns_entry", {})
-                .get("distances_key", "distances")
-            )
-            if conn_key in payload and conn_key not in adata.obsp:
-                adata.obsp[conn_key] = payload["connectivities"]
-            if dist_key in payload and dist_key not in adata.obsp:
-                adata.obsp[dist_key] = payload["distances"]
 
         # ── Load precomputed distance matrices from cluster cache ──
-        # (same pattern as cal_cluster lines 835-855)
         precomputed_dists = {}
-        if preprocess_context is not None:
-            _safe = lambda s: s.replace("/", "_").replace(" ", "_")
-            for emb in embedding_keys:
-                tri_path = os.path.join(
-                    preprocess_context.cluster_dir,
-                    f"dist_{_safe(emb)}.tri",
+        _safe = lambda s: s.replace("/", "_").replace(" ", "_")
+        for emb in embedding_keys:
+            tri_path = os.path.join(
+                preprocess_context.cluster_dir,
+                f"dist_{_safe(emb)}.tri",
+            )
+            npy_path = tri_path.replace(".tri", ".npy")
+            if os.path.exists(tri_path):
+                n_cells = (
+                    adata.obsm[emb].shape[0]
+                    if emb in adata.obsm
+                    else adata.n_obs
                 )
-                npy_path = tri_path.replace(".tri", ".npy")
-                if os.path.exists(tri_path):
-                    n_cells = (
-                        adata.obsm[emb].shape[0]
-                        if emb in adata.obsm
-                        else adata.n_obs
-                    )
-                    precomputed_dists[emb] = TriangularMatrix(
-                        n=n_cells, filepath=tri_path, mode="r"
-                    )
-                elif os.path.exists(npy_path):
-                    precomputed_dists[emb] = np.load(npy_path)
+                precomputed_dists[emb] = TriangularMatrix(
+                    n=n_cells, filepath=tri_path, mode="r"
+                )
+            elif os.path.exists(npy_path):
+                precomputed_dists[emb] = np.load(npy_path)
     else:
         # Detect columns
         detector = CheckAtlasColumnDetector(adata)
@@ -279,10 +278,7 @@ def cal_annot(
         ref_keys = [x[0] for x in params["annotation"]["reference"]]
         pred_keys = [x[0] for x in params["annotation"]["predicted"]]
         embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
-
-        batch_keys = [x[0] for x in params.get("batch", [])]
-        if not batch_keys:
-            batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
+        precomputed_dists = {}
 
     # Define metrics to run
     if metric_list is not None:
@@ -316,12 +312,6 @@ def cal_annot(
     # Embedding + Labels
     emb_label_metrics = ["average_silhouette_width", "dunn_index"]
 
-    # Batch / Integration (adata + batch/label)
-    batch_metrics = ["kbet", "pcr"]  # lisi is special (iLISI vs cLISI)
-
-    # Graph Connectivity (adata + neighbors)
-    graph_metrics = ["graph_connectivity"]
-
     # Bio Conservation (adata_before, adata_after) - Skipping for single adata pipeline
     # unless we define strategy.
     bio_metrics = ["cell_cycle_conservation", "highly_variable_genes"]
@@ -353,18 +343,11 @@ def cal_annot(
                         if ref == pred:
                             continue
                         try:
-                            # Preprocess labels
                             labels_true = adata.obs[ref]
                             labels_pred = adata.obs[pred]
-                            # Convert to numeric if needed (some metrics handle it, some don't)
-                            # Most sklearn metrics handle strings, but let's be safe or rely on metric impl
-                            # checkatlas metrics usually take raw inputs or handle conversion
-                            # But calc_metric_annot_scanpy uses annotation_to_num.
-                            # We should probably use that helper or do it here.
                             l_pred, l_true = annotation_to_num(labels_pred, labels_true)
 
                             pair_start = time.time()
-                            # Build kwargs dynamically
                             sig = inspect.signature(metric_module.run)
                             kw = {}
                             if "n_jobs" in sig.parameters:
@@ -392,8 +375,6 @@ def cal_annot(
             elif metric in emb_label_metrics:
                 if not embedding_keys:
                     continue
-                # Run for both ref and pred labels? Usually for predicted clusters.
-                # But ASW can be run on ground truth too.
                 targets = list(set(ref_keys + pred_keys))
                 for emb in embedding_keys:
                     if emb not in adata.obsm:
@@ -402,8 +383,6 @@ def cal_annot(
                     for label in targets:
                         try:
                             labels = adata.obs[label]
-                            # Convert to numeric for ASW/Dunn?
-                            # ASW handles labels.
                             pair_start = time.time()
                             sig = inspect.signature(metric_module.run)
                             kw = {}
@@ -411,7 +390,10 @@ def cal_annot(
                                 kw["n_jobs"] = n_jobs
                             if "verbose" in sig.parameters:
                                 kw["verbose"] = False
-                            if "precomputed_dists" in sig.parameters and emb in precomputed_dists:
+                            if (
+                                "precomputed_dists" in sig.parameters
+                                and emb in precomputed_dists
+                            ):
                                 kw["precomputed_dists"] = precomputed_dists[emb]
                             val = metric_module.run(X_emb, labels, **kw)
                             pair_elapsed = time.time() - pair_start
@@ -430,16 +412,234 @@ def cal_annot(
                                 f"Failed to calculate {metric} for {emb} vs {label}: {e}"
                             )
 
-            # 3. LISI (Special Case: iLISI and cLISI)
-            elif metric == "lisi":
-                # ── Precompute kNN per embedding once (GPU/JAX or CPU) ──
-                # Only build if not already loaded from preprocess_context
+            # 3. Bio Conservation
+            elif metric in bio_metrics:
+                logger.info(f"Skipping {metric} as it requires 'adata_before'.")
+
+            else:
+                logger.warning(f"Metric {metric} not categorized in pipeline.")
+
+        except Exception as e:
+            logger.error(f"Error running metric {metric}: {e}")
+
+        metric_elapsed = time.time() - metric_start_time
+        pbar.set_postfix_str(f"Time: {metric_elapsed:.2f}s", refresh=True)
+
+    df = pd.DataFrame(results)
+
+    # Save MultiQC-compatible wide format to file_dir if provided
+    if not df.empty and file_dir is not None and atlas_name is not None:
+        os.makedirs(file_dir, exist_ok=True)
+        wide_df = _pivot_annot_to_wide(df, atlas_name)
+        wide_path = os.path.join(file_dir, f"{atlas_name}.tsv")
+        wide_df.to_csv(wide_path, sep="\t", index=False)
+        logger.info("MultiQC-compatible annotation table saved to %s", wide_path)
+
+    return df
+
+
+def cal_batch_correction(
+    adata,
+    atlas_name=None,
+    metric_list=None,
+    all=False,
+    file_dir=None,
+    n_jobs=-1,
+    verbose=True,
+    preprocess_context=None,
+):
+    """
+    Comprehensive batch-correction / integration-quality pipeline.
+
+    Computes per-(embedding, batch-key) scores for the four
+    integration metrics:
+
+      - ``kbet``  : k-nearest-neighbour batch-effect test (rejection
+        rate, lower is better)
+      - ``lisi``  : Local Inverse Simpson's Index, evaluated in two
+        flavours: ``iLISI`` (batch labels, higher is better) and
+        ``cLISI`` (cell-type labels, lower is better)
+      - ``pcr``   : principal-component regression of batch labels
+        (lower is better)
+      - ``graph_connectivity`` : fraction of cells in the largest
+        connected component of the per-label kNN graph (higher is
+        better)
+
+    Inputs (auto-detected via :class:`CheckAtlasColumnDetector` or
+    supplied through a :class:`PreprocessContext`):
+
+      - ``batch_keys``   : obs columns with batch / donor / sample /
+        covariate labels (used for kBET, iLISI, PCR)
+      - ``ref_keys + pred_keys`` : ref / pred cell-type columns (used
+        for cLISI and graph_connectivity)
+      - ``embedding_keys``: adata.obsm keys with > 2 components
+
+    Parameters
+    ----------
+    adata : AnnData
+    atlas_name : str, optional
+        Atlas name for the long-format ``Atlas Name`` column.
+    metric_list : list of str, optional
+        Subset of metrics to compute. Defaults to
+        :data:`METRICS_BATCH` when ``all`` is True.
+    all : bool
+        If True, run every metric in :data:`METRICS_BATCH`.
+    file_dir : str, optional
+        Directory for the per-atlas wide-format TSV
+        (``<atlas_name>.tsv``). Falls back to ``os.getcwd()``.
+    n_jobs : int
+    verbose : bool
+    preprocess_context : PreprocessContext, optional
+        When provided, column detection is skipped and the cached
+        kNN graphs / neighbour graphs are reused.
+
+    Returns
+    -------
+    pd.DataFrame
+        Long-format table with columns
+        ``[Atlas Name, Metric Name, Embedding, Batch Key,
+        Value, Time (s)]``.
+
+        ``Embedding`` is the obsm key the metric was evaluated on
+        (or ``"X"`` for the raw expression matrix). ``Batch Key``
+        is the obs column whose labels drove the metric (batch
+        column for iLISI / kBET / PCR; cell-type column for cLISI
+        and graph_connectivity).
+    """
+    import inspect
+
+    from ..utils.col_detector import CheckAtlasColumnDetector
+    from ._jax_utils import _GPU_AVAILABLE as _cal_gpu
+    from ._jax_utils import _JAX_AVAILABLE as _cal_jax
+    from ._neighbors import NeighborResults
+    from ._neighbors import compute_neighbors as _cal_knn
+
+    _USE_JAX = _cal_jax and _cal_gpu
+
+    if file_dir is None:
+        file_dir = os.getcwd()
+    else:
+        os.makedirs(file_dir, exist_ok=True)
+
+    emb_nn: dict = {}
+
+    if preprocess_context is not None:
+        ref_keys = preprocess_context.ref_keys
+        pred_keys = preprocess_context.pred_keys
+        embedding_keys = (
+            getattr(preprocess_context, "batch_correction_embedding_keys", None)
+            or getattr(preprocess_context, "annotation_embedding_keys", None)
+            or preprocess_context.embedding_keys
+        )
+        batch_keys = preprocess_context.batch_keys
+        if not batch_keys:
+            batch_keys = [
+                col for col in adata.obs.columns if "batch" in col.lower()
+            ]
+
+        if verbose:
+            print("Using precomputed context — skipping column detection")
+            print(f"  Reference keys: {ref_keys}")
+            print(f"  Predicted keys: {pred_keys}")
+            print(f"  Embedding keys: {embedding_keys}")
+            print(f"  Batch keys: {batch_keys}")
+
+        for emb in embedding_keys:
+            _safe = emb.replace("/", "_").replace(" ", "_")
+            if (
+                emb in preprocess_context.knn_paths
+                or _safe in preprocess_context.knn_paths
+            ):
+                from ._cache import load_knn
+
+                loaded = load_knn(
+                    preprocess_context.annotation_dir, f"knn_{_safe}"
+                )
+                if loaded is not None:
+                    emb_nn[emb] = NeighborResults(
+                        indices=loaded[0], distances=loaded[1]
+                    )
+
+        for emb, payload in preprocess_context.neighbor_graphs.items():
+            key_added = payload.get("key_added", f"neighbors_{emb}")
+            if key_added not in adata.uns:
+                adata.uns[key_added] = payload.get("uns_entry", {})
+            conn_key = (
+                payload.get("uns_entry", {})
+                .get("connectivities_key", "connectivities")
+            )
+            dist_key = (
+                payload.get("uns_entry", {})
+                .get("distances_key", "distances")
+            )
+            if conn_key in payload and conn_key not in adata.obsp:
+                adata.obsp[conn_key] = payload["connectivities"]
+            if dist_key in payload and dist_key not in adata.obsp:
+                adata.obsp[dist_key] = payload["distances"]
+    else:
+        detector = CheckAtlasColumnDetector(adata)
+        params = detector.detect_all_parameters()
+        ref_keys = [x[0] for x in params["annotation"]["reference"]]
+        pred_keys = [x[0] for x in params["annotation"]["predicted"]]
+        embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
+        batch_keys = [x[0] for x in params.get("batch", [])]
+        if not batch_keys:
+            batch_keys = [
+                col for col in adata.obs.columns if "batch" in col.lower()
+            ]
+
+    if metric_list is not None:
+        metrics_list = [m for m in metric_list if m in METRICS_BATCH]
+    elif all:
+        metrics_list = METRICS_BATCH
+    else:
+        metrics_list = ["kbet", "iLISI", "graph_connectivity"]
+        metrics_list = [m for m in metrics_list if m in METRICS_BATCH]
+
+    if not metrics_list:
+        return pd.DataFrame(
+            columns=[
+                "Atlas Name",
+                "Metric Name",
+                "Embedding",
+                "Batch Key",
+                "Value",
+                "Time (s)",
+            ]
+        )
+
+    results: list[dict] = []
+
+    # LISI gets special handling: the ``lisi`` module dispatches to
+    # iLISI (batch) and cLISI (cell-type) based on which labels are
+    # passed in. We treat the two flavours as separate ``Metric Name``
+    # values to preserve the long-format compatibility the scfm
+    # diagnostic engine and MultiQC expect.
+    batch_metrics = ["kbet", "pcr", "graph_connectivity"]
+
+    pbar = tqdm(
+        metrics_list,
+        desc="Calculating Batch-Correction Metrics",
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]",
+    )
+
+    for metric in pbar:
+        metric_start_time = time.time()
+        pbar.set_description(f"Processing: {metric}")
+
+        metric_module = getattr(batch_correction, metric)
+
+        try:
+            # ── LISI: iLISI on batch keys, cLISI on cell-type keys ─
+            if metric == "lisi":
                 if not emb_nn and _USE_JAX:
                     for emb in embedding_keys:
                         X_emb = np.asarray(adata.obsm[emb], dtype=np.float64)
-                        emb_nn[emb] = _cal_knn(X_emb, n_neighbors=90, backend="auto")
+                        emb_nn[emb] = _cal_knn(
+                            X_emb, n_neighbors=90, backend="auto"
+                        )
 
-                # iLISI: needs batch
+                # iLISI: per batch column
                 if batch_keys:
                     for batch in batch_keys:
                         try:
@@ -468,8 +668,8 @@ def cal_annot(
                                         {
                                             "Atlas Name": atlas_name,
                                             "Metric Name": "iLISI",
-                                            "Reference/Input 1": emb,
-                                            "Prediction/Input 2": batch,
+                                            "Embedding": emb,
+                                            "Batch Key": batch,
                                             "Value": val,
                                             "Time (s)": round(pair_elapsed, 3),
                                         }
@@ -482,22 +682,26 @@ def cal_annot(
                                     kw["n_jobs"] = n_jobs
                                 if "verbose" in sig.parameters:
                                     kw["verbose"] = False
-                                val = metric_module.run(adata.X, adata.obs[batch], **kw)
+                                val = metric_module.run(
+                                    adata.X, adata.obs[batch], **kw
+                                )
                                 pair_elapsed = time.time() - pair_start
                                 results.append(
                                     {
                                         "Atlas Name": atlas_name,
                                         "Metric Name": "iLISI",
-                                        "Reference/Input 1": "X",
-                                        "Prediction/Input 2": batch,
+                                        "Embedding": "X",
+                                        "Batch Key": batch,
                                         "Value": val,
                                         "Time (s)": round(pair_elapsed, 3),
                                     }
                                 )
                         except Exception as e:
-                            logger.warning(f"Failed to calculate iLISI for {batch}: {e}")
+                            logger.warning(
+                                f"Failed to calculate iLISI for {batch}: {e}"
+                            )
 
-                # cLISI: needs cell type (ref or pred)
+                # cLISI: per cell-type column (ref or pred)
                 targets = list(set(ref_keys + pred_keys))
                 for label in targets:
                     try:
@@ -518,14 +722,16 @@ def cal_annot(
                                         kw["n_jobs"] = n_jobs
                                     if "verbose" in sig.parameters:
                                         kw["verbose"] = False
-                                    val = metric_module.run(X_emb, adata.obs[label], **kw)
+                                    val = metric_module.run(
+                                        X_emb, adata.obs[label], **kw
+                                    )
                                 pair_elapsed = time.time() - pair_start
                                 results.append(
                                     {
                                         "Atlas Name": atlas_name,
                                         "Metric Name": "cLISI",
-                                        "Reference/Input 1": emb,
-                                        "Prediction/Input 2": label,
+                                        "Embedding": emb,
+                                        "Batch Key": label,
                                         "Value": val,
                                         "Time (s)": round(pair_elapsed, 3),
                                     }
@@ -544,17 +750,19 @@ def cal_annot(
                                 {
                                     "Atlas Name": atlas_name,
                                     "Metric Name": "cLISI",
-                                    "Reference/Input 1": "X",
-                                    "Prediction/Input 2": label,
+                                    "Embedding": "X",
+                                    "Batch Key": label,
                                     "Value": val,
                                     "Time (s)": round(pair_elapsed, 3),
                                 }
                             )
                     except Exception as e:
-                        logger.warning(f"Failed to calculate cLISI for {label}: {e}")
+                        logger.warning(
+                            f"Failed to calculate cLISI for {label}: {e}"
+                        )
 
-            # 4. Batch Metrics (kBET, PCR) — evaluate per (embedding × batch)
-            elif metric in batch_metrics:
+            # ── kBET / PCR: per (embedding, batch key) ─────────────
+            elif metric in ("kbet", "pcr"):
                 if not batch_keys:
                     continue
                 for batch in batch_keys:
@@ -563,7 +771,6 @@ def cal_annot(
                             try:
                                 X_emb = adata.obsm[emb]
                                 pair_start = time.time()
-                                # kBET: use precomputed kNN from context or JAX
                                 if (
                                     metric == "kbet"
                                     and hasattr(metric_module, "run_with_neighbors")
@@ -577,7 +784,9 @@ def cal_annot(
                                         )
                                     elif _USE_JAX:
                                         X_arr = np.asarray(X_emb, dtype=np.float64)
-                                        nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
+                                        nn = _cal_knn(
+                                            X_arr, n_neighbors=25, backend="auto"
+                                        )
                                         val = metric_module.run_with_neighbors(
                                             nn, adata.obs[batch], verbose=False
                                         )
@@ -588,7 +797,9 @@ def cal_annot(
                                             kw["n_jobs"] = n_jobs
                                         if "verbose" in sig.parameters:
                                             kw["verbose"] = False
-                                        val = metric_module.run(X_emb, adata.obs[batch], **kw)
+                                        val = metric_module.run(
+                                            X_emb, adata.obs[batch], **kw
+                                        )
                                 else:
                                     sig = inspect.signature(metric_module.run)
                                     kw = {}
@@ -596,21 +807,24 @@ def cal_annot(
                                         kw["n_jobs"] = n_jobs
                                     if "verbose" in sig.parameters:
                                         kw["verbose"] = False
-                                    val = metric_module.run(X_emb, adata.obs[batch], **kw)
+                                    val = metric_module.run(
+                                        X_emb, adata.obs[batch], **kw
+                                    )
                                 pair_elapsed = time.time() - pair_start
                                 results.append(
                                     {
                                         "Atlas Name": atlas_name,
                                         "Metric Name": metric,
-                                        "Reference/Input 1": emb,
-                                        "Prediction/Input 2": batch,
+                                        "Embedding": emb,
+                                        "Batch Key": batch,
                                         "Value": val,
                                         "Time (s)": round(pair_elapsed, 3),
                                     }
                                 )
                             except Exception as e:
                                 logger.warning(
-                                    f"Failed to calculate {metric} for {emb} vs {batch}: {e}"
+                                    f"Failed to calculate {metric} for "
+                                    f"{emb} vs {batch}: {e}"
                                 )
                     else:
                         try:
@@ -630,7 +844,9 @@ def cal_annot(
                                     X_arr = np.asarray(adata.X, dtype=np.float64)
                                     if hasattr(adata.X, "toarray"):
                                         X_arr = adata.X.toarray().astype(np.float64)
-                                    nn = _cal_knn(X_arr, n_neighbors=25, backend="auto")
+                                    nn = _cal_knn(
+                                        X_arr, n_neighbors=25, backend="auto"
+                                    )
                                     val = metric_module.run_with_neighbors(
                                         nn, adata.obs[batch], verbose=False
                                     )
@@ -641,7 +857,9 @@ def cal_annot(
                                         kw["n_jobs"] = n_jobs
                                     if "verbose" in sig.parameters:
                                         kw["verbose"] = False
-                                    val = metric_module.run(adata.X, adata.obs[batch], **kw)
+                                    val = metric_module.run(
+                                        adata.X, adata.obs[batch], **kw
+                                    )
                             else:
                                 sig = inspect.signature(metric_module.run)
                                 kw = {}
@@ -649,14 +867,16 @@ def cal_annot(
                                     kw["n_jobs"] = n_jobs
                                 if "verbose" in sig.parameters:
                                     kw["verbose"] = False
-                                val = metric_module.run(adata.X, adata.obs[batch], **kw)
+                                val = metric_module.run(
+                                    adata.X, adata.obs[batch], **kw
+                                )
                             pair_elapsed = time.time() - pair_start
                             results.append(
                                 {
                                     "Atlas Name": atlas_name,
                                     "Metric Name": metric,
-                                    "Reference/Input 1": "X",
-                                    "Prediction/Input 2": batch,
+                                    "Embedding": "X",
+                                    "Batch Key": batch,
                                     "Value": val,
                                     "Time (s)": round(pair_elapsed, 3),
                                 }
@@ -666,17 +886,19 @@ def cal_annot(
                                 f"Failed to calculate {metric} for {batch}: {e}"
                             )
 
-            # 5. Graph Connectivity
-            elif metric in graph_metrics:
-                # We need embeddings AND labels
+            # ── graph_connectivity: per (embedding, cell-type) ─────
+            elif metric == "graph_connectivity":
                 targets = list(set(ref_keys + pred_keys))
-
+                if not targets:
+                    logger.info(
+                        "graph_connectivity: no ref / pred cell-type column "
+                        "detected; skipping."
+                    )
+                    continue
                 if embedding_keys:
                     for emb in embedding_keys:
-                        # Calculate neighbors for this embedding
                         key_added = f"neighbors_{emb}"
                         try:
-                            # Ensure neighbors are calculated
                             import scanpy as sc
 
                             sc.pp.neighbors(adata, use_rep=emb, key_added=key_added)
@@ -703,23 +925,21 @@ def cal_annot(
                                 results.append(
                                     {
                                         "Atlas Name": atlas_name,
-                                        "Metric Name": metric,
-                                        "Reference/Input 1": emb,
-                                        "Prediction/Input 2": label,
+                                        "Metric Name": "graph_connectivity",
+                                        "Embedding": emb,
+                                        "Batch Key": label,
                                         "Value": val,
                                         "Time (s)": round(pair_elapsed, 3),
                                     }
                                 )
                             except Exception as e:
                                 logger.warning(
-                                    f"Failed to calculate {metric} for {emb} vs {label}: {e}"
+                                    f"Failed to calculate graph_connectivity "
+                                    f"for {emb} vs {label}: {e}"
                                 )
                 else:
-                    # No embeddings found, use default neighbors (X or PCA)
-                    # We still need labels
                     for label in targets:
                         try:
-                            # metric_module.run will calculate neighbors if 'neighbors' key missing
                             pair_start = time.time()
                             sig = inspect.signature(metric_module.run)
                             kw = {"label_key": label}
@@ -732,56 +952,51 @@ def cal_annot(
                             results.append(
                                 {
                                     "Atlas Name": atlas_name,
-                                    "Metric Name": metric,
-                                    "Reference/Input 1": "Default",
-                                    "Prediction/Input 2": label,
+                                    "Metric Name": "graph_connectivity",
+                                    "Embedding": "Default",
+                                    "Batch Key": label,
                                     "Value": val,
                                     "Time (s)": round(pair_elapsed, 3),
                                 }
                             )
                         except Exception as e:
                             logger.warning(
-                                f"Failed to calculate {metric} for Default vs {label}: {e}"
+                                f"Failed to calculate graph_connectivity "
+                                f"for Default vs {label}: {e}"
                             )
 
-            # 6. Bio Conservation
-            elif metric in bio_metrics:
-                # Requires adata_before.
-                # If we don't have it, we can't run it properly.
-                # We'll skip for now or log warning.
-                logger.info(f"Skipping {metric} as it requires 'adata_before'.")
-
             else:
-                logger.warning(f"Metric {metric} not categorized in pipeline.")
+                logger.warning(
+                    f"Metric {metric} not categorized in batch_correction pipeline."
+                )
 
         except Exception as e:
-            logger.error(f"Error running metric {metric}: {e}")
+            logger.error(f"Error running batch-correction metric {metric}: {e}")
 
-        # Calculate and display metric execution time
         metric_elapsed = time.time() - metric_start_time
         pbar.set_postfix_str(f"Time: {metric_elapsed:.2f}s", refresh=True)
 
     df = pd.DataFrame(results)
 
-    # Save MultiQC-compatible wide format to file_dir if provided
     if not df.empty and file_dir is not None and atlas_name is not None:
         os.makedirs(file_dir, exist_ok=True)
-        wide_df = _pivot_annot_to_wide(df, atlas_name)
+        wide_df = _pivot_batch_correction_to_wide(df, atlas_name)
         wide_path = os.path.join(file_dir, f"{atlas_name}.tsv")
         wide_df.to_csv(wide_path, sep="\t", index=False)
-        logger.info("MultiQC-compatible annotation table saved to %s", wide_path)
+        logger.info(
+            "MultiQC-compatible batch-correction table saved to %s", wide_path
+        )
 
-    # Clear LISI and kBET kNN caches to free memory
     try:
-        from .annot import lisi as _lisi
+        from .batch_correction import kbet as _kbet
 
-        _lisi._clear_knn_cache()
+        _kbet._clear_knn_cache()
     except Exception:
         pass
     try:
-        from .annot import kbet as _kbet
+        from .batch_correction import lisi as _lisi
 
-        _kbet._clear_knn_cache()
+        _lisi._clear_knn_cache()
     except Exception:
         pass
 

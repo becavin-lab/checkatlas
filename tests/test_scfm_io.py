@@ -102,6 +102,40 @@ def _dimred_wide() -> pd.DataFrame:
     )
 
 
+def _batch_correction_wide() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "Batch_Sample": "blood_X_pca__scvi_batch",
+                "Embedding": "X_pca",
+                "Batch Key": "_scvi_batch",
+                "iLISI": 0.017,
+                "iLISI_running_time": 0.103,
+                "kbet": 0.996,
+                "kbet_running_time": 0.059,
+            },
+            {
+                "Batch_Sample": "blood_X_pca_assay",
+                "Embedding": "X_pca",
+                "Batch Key": "assay",
+                "iLISI": 0.005,
+                "iLISI_running_time": 0.099,
+                "kbet": 0.116,
+                "kbet_running_time": 0.059,
+            },
+            {
+                "Batch_Sample": "blood_X_scvi_assay",
+                "Embedding": "X_scvi",
+                "Batch Key": "assay",
+                "cLISI": 0.50,
+                "cLISI_running_time": 0.123,
+                "graph_connectivity": 0.30,
+                "graph_connectivity_running_time": 0.05,
+            },
+        ]
+    )
+
+
 def test_wide_cluster_to_long():
     df = _cluster_wide()
     long = io.wide_to_long(df, "cluster", "blood")
@@ -147,6 +181,29 @@ def test_wide_dimred_to_long():
     assert long["Prediction/Input 2"].eq("").all()
 
 
+def test_wide_batch_correction_to_long():
+    df = _batch_correction_wide()
+    long = io.wide_to_long(df, "batch_correction", "blood")
+    assert set(long["Task"].unique()) == {"batch_correction"}
+    # Embedding column = the obsm key the metric was run on.
+    assert set(long["Embedding"].unique()) == {"X_pca", "X_scvi"}
+    # ``Reference/Input 1`` mirrors the Embedding key (matches the
+    # long-format convention used by the diagnostic engine).
+    assert set(long["Reference/Input 1"].unique()) == {"X_pca", "X_scvi"}
+    # Batch key column (iLISI / kbet on batch columns, cLISI /
+    # graph_connectivity on cell-type columns) is preserved.
+    assert set(long["Prediction/Input 2"].unique()) == {
+        "_scvi_batch",
+        "assay",
+    }
+    # The four batch-correction metric names are all present.
+    assert {"iLISI", "kbet", "cLISI", "graph_connectivity"} <= set(
+        long["Metric Name"]
+    )
+    # Every row has a non-NaN value.
+    assert long["Value"].notna().all()
+
+
 def test_wide_to_long_skips_nan_values():
     df = _cluster_wide()
     # Add a row where silhouette is NaN
@@ -183,7 +240,12 @@ def test_wide_to_long_empty_input():
 
 def test_load_per_task_tsvs_missing(tmp_path: Path):
     tsvs = io.load_per_task_tsvs(str(tmp_path), "nonexistent")
-    assert tsvs == {"cluster": None, "annotation": None, "dimred": None}
+    assert tsvs == {
+        "cluster": None,
+        "annotation": None,
+        "batch_correction": None,
+        "dimred": None,
+    }
 
 
 def test_load_per_task_tsvs_present(tmp_path: Path):

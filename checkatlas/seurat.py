@@ -521,6 +521,40 @@ def create_metric_annot(seurat: RS4, atlas_info: dict, args=argparse.Namespace) 
         logger.debug(f"No viable obs_key was found for {atlas_name}")
 
 
+def create_metric_batch_correction(
+    seurat: RS4, atlas_info: dict, args=argparse.Namespace
+) -> None:
+    """
+    Calc batch-correction / integration-quality metrics for a Seurat atlas.
+
+    The AnnData-side implementation lives in
+    :func:`checkatlas.atlas.create_metric_batch_correction`.  For
+    Seurat the integration pipeline uses rpy2 to compute the same
+    kBET, iLISI / cLISI, PCR, and graph_connectivity values; the
+    Seurat support is still being wired up so the function emits a
+    single scientific warning and writes an empty per-atlas TSV so
+    the multi-task pipeline keeps moving.
+
+    :param seurat: Seurat rpy2 object
+    :param atlas_info: info dict on the atlas
+    :param args: checkatlas CLI args
+    """
+    atlas_name = atlas_info[check.ATLAS_NAME_KEY]
+    csv_path = os.path.join(
+        folders.get_folder(args.path, folders.BATCH_CORRECTION),
+        atlas_name + check.TSV_EXTENSION,
+    )
+    metric_list = getattr(args, "metric_batch_correction", None) or []
+    header = ["Batch_Sample", "Embedding", "Batch Key"] + metric_list
+    pd.DataFrame(columns=header).to_csv(csv_path, index=False, sep="\t")
+    logger.warning(
+        "Batch-correction metrics are not yet implemented for Seurat "
+        "(atlas=%s); wrote empty TSV at %s.",
+        atlas_name,
+        csv_path,
+    )
+
+
 def create_metric_dimred(seurat: RS4, atlas_info: dict, args=argparse.Namespace) -> None:
     """
     Calc dimensionality reduction metrics
