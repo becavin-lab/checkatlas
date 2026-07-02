@@ -13,6 +13,13 @@ try:
 except ImportError:
     pass
 
+_TRIANGULAR_DENSE_THRESHOLD = 30_000
+"""At or below this number of cells, :func:`TriangularMatrix.to_dense` is
+called to produce a full float32 matrix for sklearn's vectorised
+``silhouette_score(metric="precomputed")``.  Above the threshold the
+chunked :func:`_silhouette_from_triangular` path is taken to avoid
+materialising the full N×N dense array."""
+
 
 def run(X, labels, n_jobs=-1, verbose=True, sample_size=None, precomputed_dists=None):
     """
@@ -70,11 +77,19 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None, precomputed_dists=
         if len(np.unique(labels_arr)) < 2:
             return 0.0
         if hasattr(precomputed_dists, "to_dense"):
-            # TriangularMatrix — too large to densify (O(N²) memory).
-            # Fall through to the X-based centroid-expansion algorithm
-            # which is O(N·K·d) and avoids the full distance matrix.
-            if verbose:
-                print("TriangularMatrix detected — using X-based silhouette...")
+            if precomputed_dists.n <= _TRIANGULAR_DENSE_THRESHOLD:
+                if verbose:
+                    print("TriangularMatrix — densifying for Silhouette (sklearn)...")
+                dense = precomputed_dists.to_dense()
+                from sklearn.metrics import silhouette_score
+
+                return float(silhouette_score(dense, labels_arr, metric="precomputed"))
+            else:
+                if verbose:
+                    print("TriangularMatrix — computing Silhouette from precomputed distances...")
+                return _silhouette_from_triangular(
+                    precomputed_dists, labels_arr, verbose=verbose
+                )
         else:
             if verbose:
                 print("Using precomputed distances for Silhouette...")
@@ -183,6 +198,75 @@ def run(X, labels, n_jobs=-1, verbose=True, sample_size=None, precomputed_dists=
 # ═══════════════════════════════════════════════════════════════════════
 # Helpers
 # ═══════════════════════════════════════════════════════════════════════
+
+
+def _silhouette_from_triangular(tri, labels, verbose=True):
+    """Compute silhouette score from a TriangularMatrix distance matrix.
+
+    Reads full rows from *tri* in chunks of ``_ROW_CHUNK`` so that
+    at most ``chunk_size × N`` float64 values are in memory at once.
+    For each row the mean distance to every cluster is computed
+    vectorised via column-indexed means.
+
+    Total work is O(N²) element reads (not O(N²·d) recomputation),
+    so this is roughly *d*× faster than recomputing from raw X
+    when the distance matrix has already been precomputed.
+    """
+    n = tri.shape[0]
+    labels = np.asarray(labels)
+    unique_labels = np.unique(labels)
+    n_clusters = len(unique_labels)
+
+    if n_clusters < 2:
+        return 0.0
+
+    cluster_idx = {lbl: np.where(labels == lbl)[0] for lbl in unique_labels}
+    cluster_sizes = {lbl: len(idx) for lbl, idx in cluster_idx.items()}
+
+    a_values = np.zeros(n, dtype=np.float64)
+    b_values = np.full(n, np.inf, dtype=np.float64)
+
+    _ROW_CHUNK = 1000
+    n_chunks = (n + _ROW_CHUNK - 1) // _ROW_CHUNK
+
+    from tqdm import tqdm
+
+    pbar = tqdm(
+        total=n_chunks,
+        desc="  Silhouette (precomputed)",
+        disable=not verbose,
+    )
+
+    for start in range(0, n, _ROW_CHUNK):
+        end = min(start + _ROW_CHUNK, n)
+        block = tri[start:end].astype(np.float64)
+        row_labels = labels[start:end]
+
+        for lbl, idx in cluster_idx.items():
+            nk = cluster_sizes[lbl]
+            col_means = block[:, idx].mean(axis=1)
+
+            mask_in = row_labels == lbl
+            if np.any(mask_in) and nk > 1:
+                a_global_idx = np.arange(start, end)[mask_in]
+                a_values[a_global_idx] = col_means[mask_in] * nk / (nk - 1)
+
+            mask_out = row_labels != lbl
+            if np.any(mask_out):
+                b_global_idx = np.arange(start, end)[mask_out]
+                b_values[b_global_idx] = np.minimum(
+                    b_values[b_global_idx], col_means[mask_out]
+                )
+
+        pbar.update(1)
+
+    pbar.close()
+
+    denom = np.maximum(a_values, b_values)
+    mask = denom > 0
+    s = np.zeros(n)
+    s[mask] = (b_values[mask] - a_values[mask]) / denom[mask]
+    return float(np.mean(s))
 
 
 def _exact_intra_mean(Xk, a_out, global_idx, n_jobs=1, chunk=2000):

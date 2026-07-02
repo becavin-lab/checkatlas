@@ -426,7 +426,11 @@ def _precompute_dimred(
 
     high_dim_dists = None
     if need_high_dists:
-        tqdm.write(f"  Computing high-dim distance matrix ({n_cells:,} x {n_cells:,})...")
+        tqdm.write(
+            "  Computing high-dim distance matrix"
+            f" ({n_cells:,} x {n_cells:,})"
+            " [shared with dimred + cluster metrics]..."
+        )
         if use_memmap:
             import uuid
 
@@ -437,6 +441,12 @@ def _precompute_dimred(
             high_dim_dists = TriangularMatrix(
                 n=n_cells, filepath=high_dists_path, mode="w+"
             )
+            x_cluster_dists = None
+            if ctx.cluster_dir:
+                x_cluster_path = os.path.join(ctx.cluster_dir, "dist_X.tri")
+                x_cluster_dists = TriangularMatrix(
+                    n=n_cells, filepath=x_cluster_path, mode="w+"
+                )
             for i in tqdm(
                 range(0, n_cells, chunk_size),
                 desc="  High-dim distance matrix",
@@ -450,6 +460,11 @@ def _precompute_dimred(
                 )
                 store_upper_triangle(high_dim_dists._data, block, i, 0, n_cells)
                 high_dim_dists.flush()
+                if x_cluster_dists is not None:
+                    store_upper_triangle(x_cluster_dists._data, block, i, 0, n_cells)
+                    x_cluster_dists.flush()
+            if x_cluster_dists is not None:
+                del x_cluster_dists
         else:
             from sklearn.metrics import pairwise_distances
 
@@ -463,10 +478,15 @@ def _precompute_dimred(
                 high_dim_dists[i:end, :] = pairwise_distances(
                     high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
                 )
+            if ctx.cluster_dir:
+                np.save(
+                    os.path.join(ctx.cluster_dir, "dist_X.npy"),
+                    high_dim_dists.astype(np.float32),
+                )
 
     # ── Per-embedding low-dim kNN + distances ────────────────────
     low_dim_data_cache = {}
-    for emb_key in tqdm(emb_to_eval, desc="  Low-dim precompute"):
+    for emb_key in tqdm(emb_to_eval, desc="  Low-dim precompute (shared with cluster metrics)"):
         low_dim_data = adata.obsm[emb_key][sample_indices]
         low_n_cells = low_dim_data.shape[0]
 
@@ -502,9 +522,17 @@ def _precompute_dimred(
                 low_dists = TriangularMatrix(
                     n=low_n_cells, filepath=low_dists_path, mode="w+"
                 )
+                cluster_dists = None
+                if ctx.cluster_dir:
+                    cluster_path = os.path.join(
+                        ctx.cluster_dir, f"dist_{safe_name}.tri"
+                    )
+                    cluster_dists = TriangularMatrix(
+                        n=low_n_cells, filepath=cluster_path, mode="w+"
+                    )
                 for i in tqdm(
                     range(0, low_n_cells, chunk_size),
-                    desc=f"    Distances ({emb_key})",
+                    desc=f"    Distances ({emb_key}) [dimred + cluster]",
                     unit="chunk",
                     leave=False,
                 ):
@@ -516,19 +544,30 @@ def _precompute_dimred(
                     )
                     store_upper_triangle(low_dists._data, block, i, 0, low_n_cells)
                     low_dists.flush()
+                    if cluster_dists is not None:
+                        store_upper_triangle(cluster_dists._data, block, i, 0, low_n_cells)
+                        cluster_dists.flush()
+                if cluster_dists is not None:
+                    del cluster_dists
             else:
                 from sklearn.metrics import pairwise_distances
 
                 low_dists = np.zeros((low_n_cells, low_n_cells), dtype=np.float32)
                 for i in tqdm(
                     range(0, low_n_cells, chunk_size),
-                    desc=f"    Distances ({emb_key})",
+                    desc=f"    Distances ({emb_key}) [dimred + cluster]",
                     unit="chunk",
                     leave=False,
                 ):
                     end = min(i + chunk_size, low_n_cells)
                     low_dists[i:end, :] = pairwise_distances(
                         low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
+                    )
+                if ctx.cluster_dir:
+                    safe_name = emb_key.replace("/", "_").replace(" ", "_")
+                    np.save(
+                        os.path.join(ctx.cluster_dir, f"dist_{safe_name}.npy"),
+                        low_dists.astype(np.float32),
                     )
 
         low_dim_data_cache[emb_key] = {
@@ -703,10 +742,6 @@ def _precompute_cluster(
     if not ctx.cluster_embedding_keys:
         ctx.cluster_embedding_keys = ctx.embedding_keys
 
-    logger.info(
-        "Precomputing cluster distances: %d embedding(s)",
-        len(ctx.cluster_embedding_keys),
-    )
     import gc
 
     from sklearn.metrics import pairwise_distances
@@ -714,6 +749,34 @@ def _precompute_cluster(
     from .metrics._triangular import TriangularMatrix, store_upper_triangle
 
     safe_name = lambda s: s.replace("/", "_").replace(" ", "_")
+
+    skippable = 0
+    for emb in ctx.cluster_embedding_keys:
+        tri_path = os.path.join(ctx.cluster_dir, f"dist_{safe_name(emb)}.tri")
+        npy_path = tri_path.replace(".tri", ".npy")
+        if os.path.exists(tri_path) or os.path.exists(npy_path):
+            skippable += 1
+
+    if skippable > 0:
+        logger.info(
+            "Reusing %d distance matrix(s) already computed by dimred precompute",
+            skippable,
+        )
+
+    pending = len(ctx.cluster_embedding_keys) - skippable
+    if pending == 0:
+        logger.info(
+            "All %d cluster distance matrix(s) already available"
+            " from dimred precompute; skipping cluster precompute",
+            len(ctx.cluster_embedding_keys),
+        )
+        return
+
+    logger.info(
+        "Precomputing cluster distances: %d embedding(s) (%d already cached from dimred)",
+        len(ctx.cluster_embedding_keys),
+        skippable,
+    )
 
     for emb in tqdm(ctx.cluster_embedding_keys, desc="  Cluster distances"):
         if emb == "X":
@@ -727,9 +790,10 @@ def _precompute_cluster(
 
         n_cells = X_emb.shape[0]
         tri_path = os.path.join(ctx.cluster_dir, f"dist_{safe_name(emb)}.tri")
+        npy_path = tri_path.replace(".tri", ".npy")
 
-        # Don't overwrite existing files
-        if os.path.exists(tri_path):
+        # Skip if already computed (e.g. by dimred precompute)
+        if os.path.exists(tri_path) or os.path.exists(npy_path):
             continue
 
         if n_cells > 10000:
@@ -746,7 +810,7 @@ def _precompute_cluster(
             tri.flush()
         else:
             dists = pairwise_distances(X_emb, n_jobs=n_jobs)
-            np.save(tri_path.replace(".tri", ".npy"), dists.astype(np.float32))
+            np.save(npy_path, dists.astype(np.float32))
 
         gc.collect()
 

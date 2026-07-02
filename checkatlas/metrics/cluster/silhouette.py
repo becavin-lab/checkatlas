@@ -3,6 +3,9 @@ from sklearn.metrics import pairwise_distances, silhouette_score
 from tqdm import tqdm
 
 
+_TRIANGULAR_DENSE_THRESHOLD = 30_000
+
+
 def run(
     count_repr,
     annotations,
@@ -34,7 +37,7 @@ def run(
         Whether to show progress during computation.
     :param batch_size: int, optional (default=1000)
         Batch size for chunked distance computation.
-    :param precomputed_dists: np.ndarray or memmap, optional
+    :param precomputed_dists: np.ndarray or TriangularMatrix, optional
         Precomputed pairwise distance matrix. If provided, skips distance computation.
     :return: float
         The mean Silhouette Coefficient over all samples.
@@ -46,6 +49,18 @@ def run(
 
     # Path 1: Use precomputed distances (fastest, no recomputation)
     if precomputed_dists is not None:
+        if hasattr(precomputed_dists, "to_dense"):
+            if precomputed_dists.n <= _TRIANGULAR_DENSE_THRESHOLD:
+                if verbose:
+                    print("TriangularMatrix — densifying for Silhouette (sklearn)...")
+                dense = precomputed_dists.to_dense()
+                return float(silhouette_score(dense, annotations, metric="precomputed"))
+            else:
+                if verbose:
+                    print("TriangularMatrix — computing Silhouette from precomputed distances...")
+                from ..annot.average_silhouette_width import _silhouette_from_triangular
+
+                return _silhouette_from_triangular(precomputed_dists, annotations, verbose=verbose)
         if verbose:
             print("Using precomputed distances for Silhouette...")
         return silhouette_score(precomputed_dists, annotations, metric="precomputed")
