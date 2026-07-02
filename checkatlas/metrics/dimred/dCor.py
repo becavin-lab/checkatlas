@@ -16,6 +16,7 @@ def run(
     verbose=True,
     batch_size=1000,
     sample_pairs=1000000,
+    max_cells_for_dcor=None,
     precomputed_high_dists=None,
     precomputed_low_dists=None,
 ):
@@ -35,8 +36,11 @@ def run(
         n_jobs (int): Number of parallel jobs.
         verbose (bool): Whether to print progress.
         batch_size (int): Batch size for chunked processing.
-        sample_pairs (int): Number of cells to sample for dCor (smaller subset for double-centering).
-                           dCor requires O(n^2) memory for centering, so we sample cells, not pairs.
+        sample_pairs (int): Legacy name.  Kept for backward compatibility;
+            ignored if ``max_cells_for_dcor`` is provided.
+        max_cells_for_dcor (int, optional): Maximum number of cells to
+            subsample before double-centering.  dCor requires O(n^2)
+            memory for centering, so we cap n at this value.  Default 5_000.
         precomputed_high_dists (np.ndarray or memmap): Precomputed high-dim distance matrix.
         precomputed_low_dists (np.ndarray or memmap): Precomputed low-dim distance matrix.
 
@@ -100,8 +104,9 @@ def run(
         )
 
     # 2. For dCor, we need to subsample CELLS (not pairs) because double-centering requires full submatrix
-    # dCor on 5000 cells needs ~200MB for centering. Limit to sample_pairs (interpreted as n_cells here).
-    max_cells_for_dcor = min(5000, sample_pairs // 1000) if sample_pairs else 5000
+    # dCor on 5000 cells needs ~200MB for centering.
+    if max_cells_for_dcor is None:
+        max_cells_for_dcor = 5000
 
     if n_cells > max_cells_for_dcor:
         if verbose:

@@ -1566,15 +1566,95 @@ def cal_dimred(
             "kruskal_stress",
             "spearman_rho",
             "dCor",
-            # "trustworthiness",  # Disabled: OOM issues for large atlases
-            # "continuity",  # Disabled: OOM issues for large atlases
+            "trustworthiness",  # OOM-safe via the per-row memmap path
+            "continuity",       # OOM-safe via the per-row memmap path
         )
     )
 
     _low_dim_precomputed = {}  # collect for saving to cache later
 
     if _from_cache:
-        pass  # precomputation already loaded
+        # ── Recompute high-dim distances on cache hit if missing ─
+        # Old cache files may have been written by the CPU path,
+        # which never persisted high-dists (only TriangularMatrix
+        # memmaps are saved by save_dimred_cache).  When the metric
+        # list includes distance-based metrics (kruskal_stress,
+        # spearman_rho, dCor, trust, continuity) we need the full
+        # high-dim distance matrix.  Recompute it on the GPU and
+        # persist to the cache so future runs skip this entirely.
+        if (
+            high_dim_dists is None
+            and bool(set(metric_list) & _DIST_METRICS)
+        ):
+            _high_tri_path = (
+                os.path.join(temp_dir, "high_dists.tri")
+                if use_cache and atlas_name
+                else None
+            )
+
+            if _GPU_SINGLE_SHOT:
+                if verbose:
+                    print(
+                        "  [CACHE] Reconstructing high-dim distances on GPU "
+                        "(single-shot, missing from prior cache)..."
+                    )
+                _dists_np = pdist_squareform(high_dim_data)
+                if _high_tri_path is not None:
+                    _high_tri = TriangularMatrix(
+                        n=n_cells, filepath=_high_tri_path, mode="w+"
+                    )
+                    _chunk = min(5000, n_cells)
+                    for _i in range(0, n_cells, _chunk):
+                        _end = min(_i + _chunk, n_cells)
+                        store_upper_triangle(
+                            _high_tri._data, _dists_np[_i:_end, :],
+                            _i, 0, n_cells,
+                        )
+                    _high_tri.flush()
+                    high_dim_dists = _high_tri
+                    del _dists_np
+                else:
+                    high_dim_dists = _dists_np
+                gc.collect()
+            elif _GPU_CHUNKED:
+                if verbose:
+                    print(
+                        "  [CACHE] Reconstructing high-dim distances on GPU "
+                        "(chunked, missing from prior cache)..."
+                    )
+                if _high_tri_path is None:
+                    _high_tri_path = os.path.join(
+                        temp_dir, f"high_dists_{run_id}.tri"
+                    )
+                high_dim_dists = TriangularMatrix(
+                    n=n_cells, filepath=_high_tri_path, mode="w+"
+                )
+                import numpy as _np
+                _knn_res = compute_neighbors(
+                    _np.asarray(high_dim_data, dtype=_np.float64),
+                    n_neighbors=k_neighbors + 1,
+                    backend="auto",
+                    tri_memmap=high_dim_dists,
+                )
+                high_knn_dists = _knn_res.distances
+                high_knn_indices = _knn_res.indices
+                high_dim_dists.flush()
+                gc.collect()
+            else:
+                # No GPU: CPU fallback.  Slow but functional.
+                if verbose:
+                    print(
+                        "  [CACHE] Reconstructing high-dim distances on CPU "
+                        "(no GPU available)..."
+                    )
+                from sklearn.metrics import pairwise_distances
+                high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
+                for _i in range(0, n_cells, chunk_size):
+                    _end = min(_i + chunk_size, n_cells)
+                    high_dim_dists[_i:_end, :] = pairwise_distances(
+                        high_dim_data[_i:_end], high_dim_data, n_jobs=n_jobs
+                    )
+                np.fill_diagonal(high_dim_dists, 0)
 
     elif _GPU_SINGLE_SHOT:
         import jax.numpy as jnp
@@ -1949,7 +2029,7 @@ def cal_dimred(
                 gc.collect()
 
         # ── Capture precomputed low-dim data for cache ────────
-        if use_cache and atlas_name and not _from_cache:
+        if use_cache and atlas_name:
             _low_dim_precomputed[low_dim_key] = {
                 "dists": low_dim_dists,
                 "knn_indices": low_knn_indices,
@@ -1965,27 +2045,15 @@ def cal_dimred(
             sig = inspect.signature(metric_module.run)
             params = sig.parameters
 
-            # ── Materialize TriangularMatrix only when needed ───────
-            # For N ≤ 50k cells to_dense() is cheap (~2.5 GB) and
-            # saves the _rank_penalty helper a few row-gathers.
-            # For N > 50k the dense allocation would be O(N²) and
-            # catastrophic — the helper handles TriangularMatrix
-            # natively via the GPU chunked / CPU chunked paths.
-            _DENSE_TO_DENSE_MAX_N = 50_000
-            _high_mat = high_dim_dists
-            _low_mat = low_dim_dists
-            if metric_name in ("trustworthiness", "continuity"):
-                if (
-                    isinstance(high_dim_dists, TriangularMatrix)
-                    and high_dim_dists.n <= _DENSE_TO_DENSE_MAX_N
-                ):
-                    _high_mat = high_dim_dists.to_dense()
-                if (
-                    isinstance(low_dim_dists, TriangularMatrix)
-                    and low_dim_dists is not None
-                    and low_dim_dists.n <= _DENSE_TO_DENSE_MAX_N
-                ):
-                    _low_mat = low_dim_dists.to_dense()
+            # ── TriangularMatrix is passed through as-is ────────────
+            # The _rank_penalty helper handles TriangularMatrix inputs
+            # natively via the per-row CPU read / GPU chunked paths
+            # (see checkatlas/metrics/dimred/_rank_penalty.py).  For
+            # large memmap-backed matrices, that per-row path is the
+            # fastest documented backend — faster than materialising a
+            # full dense N×N float32 buffer via to_dense() (which would
+            # be ≈ 10 GB for N=50_000 and a hard OOM for N=100_000+).
+            # We therefore do NOT call to_dense() here, regardless of N.
 
             try:
                 kwargs = {}
@@ -2050,14 +2118,17 @@ def cal_dimred(
             pbar.update(1)
 
         if low_dim_dists is not None:
-            try:
-                if isinstance(low_dim_dists, TriangularMatrix):
-                    _safe_close_triangular(low_dim_dists)
-                else:
-                    _safe_close_memmap(low_dim_dists)
-            except Exception:
-                pass
-            # Persist when caching; delete otherwise
+            # When caching, defer the close until AFTER save_dimred_cache
+            # has moved/renamed the file.  Closing here invalidates the
+            # mmap that save_triangular still needs to operate on.
+            if not use_cache:
+                try:
+                    if isinstance(low_dim_dists, TriangularMatrix):
+                        _safe_close_triangular(low_dim_dists)
+                    else:
+                        _safe_close_memmap(low_dim_dists)
+                except Exception:
+                    pass
             if not use_cache:
                 if low_dists_path and os.path.exists(low_dists_path):
                     try:
@@ -2070,18 +2141,14 @@ def cal_dimred(
 
     pbar.close()
 
-    if high_dim_dists is not None:
-        try:
-            if isinstance(high_dim_dists, TriangularMatrix):
-                _safe_close_triangular(high_dim_dists)
-            else:
-                _safe_close_memmap(high_dim_dists)
-        except Exception:
-            pass
-        gc.collect()
-
     # ── Save to persistent cache ──
-    if use_cache and atlas_name and not _from_cache and high_dim_dists is not None:
+    # On a fresh run we save the full precomputation.  On a cache hit
+    # we still save IF we had to recompute anything (e.g. the high-dim
+    # distances were missing from the prior cache); in that case the
+    # fingerprint is unchanged but the augmented cache will be valid
+    # for future runs.
+    _save_cache = use_cache and atlas_name and high_dim_dists is not None
+    if _save_cache:
         _low_info = {}
         for emb in low_dim_keys:
             _low_info[emb] = {
@@ -2105,6 +2172,28 @@ def cal_dimred(
             )
         except Exception as exc:
             logger.warning("Failed to save dimred cache: %s", exc)
+
+    # Now safe to close any memmaps — save_dimred_cache has either
+    # moved them to their canonical location or copied the data.
+    if high_dim_dists is not None:
+        try:
+            if isinstance(high_dim_dists, TriangularMatrix):
+                _safe_close_triangular(high_dim_dists)
+            else:
+                _safe_close_memmap(high_dim_dists)
+        except Exception:
+            pass
+        gc.collect()
+
+    # Close any low-dim memmaps (deferred from the per-embedding loop
+    # so save_dimred_cache could read them above).
+    for emb in low_dim_keys:
+        _ld = _low_dim_precomputed.get(emb, {}).get("dists")
+        if _ld is not None and isinstance(_ld, TriangularMatrix):
+            try:
+                _safe_close_triangular(_ld)
+            except Exception:
+                pass
 
     # Delete leftover temp files (only when NOT caching)
     if not use_cache:

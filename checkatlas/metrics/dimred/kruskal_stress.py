@@ -1,5 +1,3 @@
-import gc
-
 import numpy as np
 import scanpy as sc
 from sklearn.metrics import pairwise_distances
@@ -34,7 +32,7 @@ def run(
         seed (int): Random seed for reproducibility.
         n_jobs (int): Number of parallel jobs.
         verbose (bool): Whether to print progress.
-        batch_size (int): Batch size for chunked processing.
+        batch_size (int): Batch size for row-chunked reads of TriangularMatrix inputs.
         sample_pairs (int): Number of distance pairs to sample for large datasets (default: 1M).
                            Set to None to use all pairs.
         precomputed_high_dists (np.ndarray or memmap): Precomputed high-dim distance matrix.
@@ -48,37 +46,31 @@ def run(
         Lower is better (0 means perfect preservation of distances).
     """
 
-    # 1. Use Precomputed Distances if available
     if precomputed_high_dists is not None and precomputed_low_dists is not None:
         if verbose:
             print("Using precomputed distance matrices...")
-        high_dim_dists = precomputed_high_dists
-        low_dim_dists = precomputed_low_dists
-        n_cells = high_dim_dists.shape[0]
+        high_dists = precomputed_high_dists
+        low_dists = precomputed_low_dists
     else:
-        # Fallback to local computation
         if verbose:
             print("Precomputed distances not provided. Calculating locally...")
 
-        # Check keys
         if low_dim_key not in adata.obsm.keys():
             if verbose:
                 print(f"Calculating {low_dim_key}...")
             sc.tl.umap(adata, n_components=2, random_state=seed)
 
-        # Prepare Data
         n_obs = adata.n_obs
         if n_samples is not None and n_samples < n_obs:
             if verbose:
                 print(f"Subsampling {n_samples} cells...")
             np.random.seed(seed)
-            indices = np.random.choice(n_obs, n_samples, replace=False)
+            sample_idx = np.random.choice(n_obs, n_samples, replace=False)
         else:
-            indices = np.arange(n_obs)
+            sample_idx = np.arange(n_obs)
 
-        # High Dim Data
         if high_dim_key == "X":
-            high_dim_data = adata.X[indices]
+            high_dim_data = adata.X[sample_idx]
             if hasattr(high_dim_data, "toarray"):
                 high_dim_data = high_dim_data.toarray()
         else:
@@ -86,161 +78,202 @@ def run(
                 if verbose:
                     print(f"Calculating {high_dim_key}...")
                 sc.tl.pca(adata, random_state=seed)
-            high_dim_data = adata.obsm[high_dim_key][indices]
+            high_dim_data = adata.obsm[high_dim_key][sample_idx]
 
-        low_dim_data = adata.obsm[low_dim_key][indices]
-        n_cells = high_dim_data.shape[0]
+        low_dim_data = adata.obsm[low_dim_key][sample_idx]
 
-        # Compute Distances
-        high_dim_dists = _compute_distances_chunked(
+        high_dists = _compute_distances_chunked(
             high_dim_data, n_jobs, batch_size, "High-Dim Dists", verbose
         )
-        low_dim_dists = _compute_distances_chunked(
+        low_dists = _compute_distances_chunked(
             low_dim_data, n_jobs, batch_size, "Low-Dim Dists", verbose
         )
 
-    # 2. Calculate stress using memory-efficient approach
-    n_pairs_total = n_cells * (n_cells - 1) // 2
+    n = high_dists.shape[0]
+    n_pairs_total = n * (n - 1) // 2
 
     if sample_pairs is not None and sample_pairs < n_pairs_total:
-        # Sampling-based approach
         if verbose:
             print(
-                f"Using sampling-based stress calculation (sampling {sample_pairs:,} of {n_pairs_total:,} pairs)..."
+                f"Using sampling-based stress calculation "
+                f"(sampling {sample_pairs:,} of {n_pairs_total:,} pairs)..."
             )
         stress = _sampled_kruskal_stress(
-            high_dim_dists, low_dim_dists, sample_pairs, seed, verbose
+            high_dists, low_dists, sample_pairs, seed, verbose
         )
     else:
-        # Full computation
         if verbose:
             print(f"Computing full Kruskal stress ({n_pairs_total:,} pairs)...")
         stress = _chunked_kruskal_stress(
-            high_dim_dists, low_dim_dists, batch_size, verbose
+            high_dists, low_dists, batch_size, verbose
         )
 
     return stress
 
 
+def _upper_tri_row_starts(n: int) -> np.ndarray:
+    """Return the start index of each row in a flat row-major upper-triangle buffer.
+
+    ``starts[i]`` is the flat index where ``D[i, i+1]`` begins.  Used to
+    convert a flat upper-triangle index into a (row, col) pair.
+    """
+    starts = np.empty(n + 1, dtype=np.int64)
+    starts[0] = 0
+    if n > 1:
+        counts = np.arange(n - 1, 0, -1, dtype=np.int64)  # length n-1
+        starts[1 : 1 + len(counts)] = np.cumsum(counts)
+    starts[n] = n * (n - 1) // 2
+    return starts
+
+
+def _flat_to_ij(flat_idx: np.ndarray, n: int) -> tuple:
+    """Convert a flat upper-triangle index into a (row, col) pair.
+
+    Inverse of the row-major formula used in :class:`TriangularMatrix`:
+    given ``flat_idx = row*n - row*(row+1)/2 + (col - row - 1)``,
+    recover ``(row, col)``.
+    """
+    row_starts = _upper_tri_row_starts(n)
+    rows = np.searchsorted(row_starts, flat_idx, side="right") - 1
+    rows = np.clip(rows, 0, n - 2)
+    cols = flat_idx - row_starts[rows] + rows + 1
+    return rows.astype(np.int64), cols.astype(np.int64)
+
+
+def _gather_pairs(dists, rows: np.ndarray, cols: np.ndarray) -> np.ndarray:
+    """Element-wise distance lookup that works for ndarray, memmap, and TriangularMatrix."""
+    if hasattr(dists, "_get_elements"):
+        return dists._get_elements(rows, cols)
+    return np.asarray(dists)[rows, cols]
+
+
 def _sampled_kruskal_stress(high_dists, low_dists, n_pairs, seed, verbose=True):
-    """Compute Kruskal stress by sampling distance pairs."""
+    """Compute Kruskal stress by sampling distance pairs (vectorised)."""
     n = high_dists.shape[0]
+    n_pairs_total = n * (n - 1) // 2
+    n_pairs = min(n_pairs, n_pairs_total)
 
-    np.random.seed(seed)
-
-    # Generate random upper-triangle indices
     if verbose:
-        print("Generating random pair indices...")
+        print("Sampling random pair indices...")
 
-    sampled_pairs = set()
-    while len(sampled_pairs) < n_pairs:
-        remaining = n_pairs - len(sampled_pairs)
-        rows = np.random.randint(0, n - 1, size=int(remaining * 1.2))
-        cols = np.random.randint(0, n, size=int(remaining * 1.2))
-        mask = rows < cols
-        rows, cols = rows[mask], cols[mask]
-        for r, c in zip(rows, cols):
-            if len(sampled_pairs) >= n_pairs:
-                break
-            sampled_pairs.add((r, c))
+    rng = np.random.default_rng(seed)
+    flat_idx = rng.choice(n_pairs_total, size=n_pairs, replace=False)
+    flat_idx.sort()
+    rows, cols = _flat_to_ij(flat_idx, n)
 
-    # Extract sampled distances
     if verbose:
         print("Extracting sampled distance pairs...")
-    sampled_pairs = list(sampled_pairs)
-    rows = np.array([p[0] for p in sampled_pairs])
-    cols = np.array([p[1] for p in sampled_pairs])
 
-    # Extract in batches for memmap efficiency
-    H = np.empty(len(sampled_pairs), dtype=np.float32)
-    L = np.empty(len(sampled_pairs), dtype=np.float32)
+    H = _gather_pairs(high_dists, rows, cols).astype(np.float32, copy=False)
+    L = _gather_pairs(low_dists, rows, cols).astype(np.float32, copy=False)
 
-    extract_batch_size = 100000
-    for i in range(0, len(sampled_pairs), extract_batch_size):
-        end = min(i + extract_batch_size, len(sampled_pairs))
-        batch_rows = rows[i:end]
-        batch_cols = cols[i:end]
-        H[i:end] = high_dists[batch_rows, batch_cols]
-        L[i:end] = low_dists[batch_rows, batch_cols]
-
-    # Normalize
     if verbose:
         print("Normalizing distances...")
-    H_max = np.max(H)
-    L_max = np.max(L)
 
-    if H_max > 0:
-        H_norm = H / H_max
-    else:
-        H_norm = H
+    H_max = float(H.max())
+    L_max = float(L.max())
+    H_norm = H / H_max if H_max > 0 else H
+    L_norm = L / L_max if L_max > 0 else L
 
-    if L_max > 0:
-        L_norm = L / L_max
-    else:
-        L_norm = L
-
-    # Calculate Stress
     if verbose:
         print("Calculating stress score...")
-    numerator = np.sum(np.square(H_norm - L_norm))
-    denominator = np.sum(np.square(L_norm))
 
-    # Cleanup
-    del H, L, H_norm, L_norm, sampled_pairs, rows, cols
-    gc.collect()
+    diff_sq = (H_norm - L_norm) ** 2
+    numerator = float(diff_sq.sum())
+    denominator = float((L_norm ** 2).sum())
 
     if denominator == 0:
         return 0.0
-
-    stress = np.sqrt(numerator / denominator)
-    return stress
+    return float(np.sqrt(numerator / denominator))
 
 
 def _chunked_kruskal_stress(high_dists, low_dists, batch_size, verbose=True):
-    """Compute Kruskal stress by processing upper triangle in chunks."""
+    """Compute Kruskal stress on the full upper triangle via row-chunked reads.
+
+    For each row block we issue a single block-read on the distance
+    matrices, so the per-block cost is one C-level call regardless of
+    the block's row count.  The row-loop that the previous version used
+    (one row at a time) is replaced by a single loop over row-blocks.
+    """
     n = high_dists.shape[0]
 
-    # First pass: find max values for normalization
     if verbose:
-        print("Finding max distances for normalization...")
+        print("Finding max distances for normalization (row-chunked)...")
+
     H_max = 0.0
     L_max = 0.0
+    for i0 in tqdm(range(0, n, batch_size), desc="  H/L max", disable=not verbose):
+        i1 = min(n, i0 + batch_size)
+        H_block = _row_block_upper(high_dists, i0, i1)
+        L_block = _row_block_upper(low_dists, i0, i1)
+        H_max = max(H_max, float(H_block.max()))
+        L_max = max(L_max, float(L_block.max()))
 
-    for i in tqdm(range(n - 1), desc="Finding max", disable=not verbose):
-        H_row = high_dists[i, i + 1 :]
-        L_row = low_dists[i, i + 1 :]
-        H_max = max(H_max, np.max(H_row))
-        L_max = max(L_max, np.max(L_row))
+    if H_max <= 0:
+        H_max = 1.0
+    if L_max <= 0:
+        L_max = 1.0
 
-    # Second pass: compute stress
     if verbose:
-        print("Computing stress values...")
+        print("Computing stress values (row-chunked)...")
+
     numerator = 0.0
     denominator = 0.0
-
-    for i in tqdm(range(n - 1), desc="Computing stress", disable=not verbose):
-        H_row = high_dists[i, i + 1 :]
-        L_row = low_dists[i, i + 1 :]
-
-        # Normalize
-        if H_max > 0:
-            H_norm = H_row / H_max
-        else:
-            H_norm = H_row
-
-        if L_max > 0:
-            L_norm = L_row / L_max
-        else:
-            L_norm = L_row
-
-        numerator += np.sum(np.square(H_norm - L_norm))
-        denominator += np.sum(np.square(L_norm))
+    for i0 in tqdm(range(0, n, batch_size), desc="  stress", disable=not verbose):
+        i1 = min(n, i0 + batch_size)
+        H_block = _row_block_upper(high_dists, i0, i1) / H_max
+        L_block = _row_block_upper(low_dists, i0, i1) / L_max
+        diff = H_block - L_block
+        numerator += float((diff * diff).sum())
+        denominator += float((L_block * L_block).sum())
 
     if denominator == 0:
         return 0.0
+    return float(np.sqrt(numerator / denominator))
 
-    stress = np.sqrt(numerator / denominator)
-    return stress
+
+def _row_block_upper(dists, i0: int, i1: int) -> np.ndarray:
+    """Return the strict upper-triangle of rows ``[i0, i1)`` as a 1-D array.
+
+    The returned array is the row-major concatenation of
+    ``D[i, i+1], D[i, i+2], ..., D[i, n-1]`` for ``i = i0, ..., i1-1``.
+    For a :class:`TriangularMatrix` input this maps to a single
+    contiguous read of the underlying memmap for those rows.  For a
+    dense ndarray the strict upper triangle is sliced in-place.
+
+    The 1-D layout matches :func:`np.triu_indices(n, k=1)`'s row-major
+    order so the metric can sum / mean over the result directly.
+    """
+    n = dists.shape[0]
+    if i0 >= n:
+        return np.zeros(0, dtype=np.float32)
+    if i1 > n:
+        i1 = n
+
+    block = _block(dists, i0, i1, i0, n)
+    if block.size == 0:
+        return np.zeros(0, dtype=np.float32)
+
+    # block shape: (i1-i0, n-i0).  The strict upper triangle for rows
+    # [i0, i1) is the elements block[i-i0, j-i0] for j > i.  Since the
+    # columns j=i0..n-1 correspond to block columns 0..(n-1-i0), the
+    # strict-upper mask is j > i ⇔ (j-i0) > (i-i0).
+    n_cols = n - i0
+    col_idx = np.arange(n_cols)[None, :]   # (1, n_cols)
+    row_off = np.arange(i1 - i0)[:, None]  # (i1-i0, 1)
+    mask = col_idx > row_off
+    return block[mask].astype(np.float32, copy=False)
+
+
+def _block(dists, i0: int, i1: int, j0: int, j1: int) -> np.ndarray:
+    """Read a (rows, cols) block.  Works for ndarray, memmap, and TriangularMatrix."""
+    if hasattr(dists, "_get_block"):
+        rows = np.arange(i0, i1, dtype=np.int64)
+        cols = np.arange(j0, j1, dtype=np.int64)
+        return np.asarray(dists._get_block(rows, cols))
+    if hasattr(dists, "_to_dense_f16") and not isinstance(dists, np.ndarray):
+        return dists._to_dense_f16()[i0:i1, j0:j1].astype(np.float32, copy=False)
+    return np.asarray(dists)[i0:i1, j0:j1]
 
 
 def _compute_distances_chunked(

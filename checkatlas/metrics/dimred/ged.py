@@ -1,8 +1,7 @@
 import numpy as np
 import scanpy as sc
-from joblib import Parallel, delayed
-from sklearn.neighbors import NearestNeighbors
-from tqdm import tqdm
+
+from ._overlap import _overlap_count
 
 
 def run(
@@ -29,7 +28,7 @@ def run(
         k_neighbors (int): Number of neighbors to consider.
         n_samples (int): Number of samples to subsample for calculation.
         seed (int): Random seed for reproducibility.
-        n_jobs (int): Number of parallel jobs.
+        n_jobs (int): Number of parallel jobs. (Unused: computation is vectorised.)
         verbose (bool): Whether to print progress.
         precomputed_high_knn (np.ndarray): Precomputed k-NN indices for high-dim data.
         precomputed_low_knn (np.ndarray): Precomputed k-NN indices for low-dim data.
@@ -42,42 +41,31 @@ def run(
         Lower is better (0 means identical graphs, 1 means completely different graphs).
     """
 
-    # 1. Use Precomputed Neighbors if available
     if precomputed_high_knn is not None and precomputed_low_knn is not None:
         if verbose:
             print("Using precomputed k-NN graphs...")
-        indices_high = precomputed_high_knn
-        indices_low = precomputed_low_knn
-        n_cells = indices_high.shape[0]
-
-        # Precomputed (from metrics.py) includes self. Slice it.
-        indices_high = indices_high[:, 1:]
-        indices_low = indices_low[:, 1:]
+        indices_high = np.asarray(precomputed_high_knn)[:, 1 : k_neighbors + 1]
+        indices_low = np.asarray(precomputed_low_knn)[:, 1 : k_neighbors + 1]
     else:
-        # Fallback to local computation
         if verbose:
             print("Precomputed k-NN not provided. Calculating locally...")
 
-        # Check keys
         if low_dim_key not in adata.obsm.keys():
             if verbose:
                 print(f"Calculating {low_dim_key}...")
             sc.tl.umap(adata, n_components=2, random_state=seed)
 
-        # Prepare Data
-        # Subsampling
         n_obs = adata.n_obs
         if n_samples is not None and n_samples < n_obs:
             if verbose:
                 print(f"Subsampling {n_samples} cells...")
             np.random.seed(seed)
-            indices = np.random.choice(n_obs, n_samples, replace=False)
+            sample_idx = np.random.choice(n_obs, n_samples, replace=False)
         else:
-            indices = np.arange(n_obs)
+            sample_idx = np.arange(n_obs)
 
-        # High Dim Data
         if high_dim_key == "X":
-            high_dim_data = adata.X[indices]
+            high_dim_data = adata.X[sample_idx]
             if hasattr(high_dim_data, "toarray"):
                 high_dim_data = high_dim_data.toarray()
         else:
@@ -85,12 +73,10 @@ def run(
                 if verbose:
                     print(f"Calculating {high_dim_key}...")
                 sc.tl.pca(adata, random_state=seed)
-            high_dim_data = adata.obsm[high_dim_key][indices]
+            high_dim_data = adata.obsm[high_dim_key][sample_idx]
 
-        low_dim_data = adata.obsm[low_dim_key][indices]
-        n_cells = high_dim_data.shape[0]
+        from sklearn.neighbors import NearestNeighbors
 
-        # Fit Nearest Neighbors
         query_k = k_neighbors + 1
 
         if verbose:
@@ -99,28 +85,24 @@ def run(
             high_dim_data
         )
         _, indices_high = nbrs_high.kneighbors(high_dim_data)
+        indices_high = indices_high[:, 1 : k_neighbors + 1]
+
+        low_dim_data = adata.obsm[low_dim_key][sample_idx]
 
         if verbose:
             print(f"Building Low-Dim Graph (k={k_neighbors})...")
-        nbrs_low = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(low_dim_data)
+        nbrs_low = NearestNeighbors(n_neighbors=query_k, n_jobs=n_jobs).fit(
+            low_dim_data
+        )
         _, indices_low = nbrs_low.kneighbors(low_dim_data)
+        indices_low = indices_low[:, 1 : k_neighbors + 1]
 
-        # Slice off self-match
-        indices_high = indices_high[:, 1:]
-        indices_low = indices_low[:, 1:]
+    if verbose:
+        print("Calculating Graph Edit Distance (vectorised)...")
 
-    # 4. Calculate Graph Edit Distance (Parallel)
-    total_edges_possible = n_cells * k_neighbors * 2  # Total edges in Graph A + Graph B
-
-    def _symmetric_diff(high_row, low_row):
-        return len(set(high_row).symmetric_difference(set(low_row)))
-
-    sym_diffs = Parallel(n_jobs=n_jobs)(
-        delayed(_symmetric_diff)(indices_high[i], indices_low[i])
-        for i in tqdm(range(n_cells), desc="Calculating Graph Edits", disable=not verbose)
-    )
-    total_symmetric_difference = sum(sym_diffs)
-
-    # 5. Normalize
-    ged_score = total_symmetric_difference / total_edges_possible
-    return ged_score
+    n_cells = indices_high.shape[0]
+    intersection = _overlap_count(indices_low, indices_high).astype(np.float64)
+    sym_diff = 2.0 * k_neighbors - 2.0 * intersection
+    total_sym_diff = float(sym_diff.sum())
+    total_edges_possible = n_cells * k_neighbors * 2
+    return total_sym_diff / total_edges_possible

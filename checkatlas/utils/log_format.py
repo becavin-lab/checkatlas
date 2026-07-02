@@ -213,8 +213,7 @@ def preprocess_header(
             f"{mark(run_cluster)} cluster"
         ),
         (
-            f"cache: {'HIT (skipping per-task precompute)'
-                     if cache_hit else 'MISS (building per-task artefacts now)'}"
+            f"cache: {'HIT (skipping per-task precompute)' if cache_hit else 'MISS (building per-task artefacts now)'}"
         ),
     ]
     log_box(logger, logging.INFO, f"checkatlas [preprocess] ─ {atlas_name}", body)
