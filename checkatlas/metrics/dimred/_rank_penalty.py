@@ -59,7 +59,7 @@ from typing import Any, Tuple
 
 import numpy as np
 
-from .._jax_utils import _GPU_AVAILABLE, _JAX_AVAILABLE, _get_ndarray
+from .._jax_utils import _GPU_AVAILABLE, _JAX_AVAILABLE, _get_ndarray, _gpu_free_memory_bytes
 
 logger = logging.getLogger("checkatlas")
 
@@ -76,46 +76,6 @@ _GPU_CHUNK_MAX_HOST_GB = 8  # cap host-side numpy array at 8 GB
 # JAX compilation cache and other CUDA allocations.
 _GPU_SAFE_BUDGET_BYTES = 16 * 1024**3
 _GPU_MEM_MULTIPLIER = 4  # JAX sort + vmap overhead ≈ 4× the chunk data
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# Runtime GPU memory detection
-# ═══════════════════════════════════════════════════════════════════════
-
-
-def _gpu_free_memory_bytes() -> int:
-    """Return the currently free GPU memory (device 0) in bytes.
-
-    Tries, in order: ``pynvml``, ``nvidia-smi`` subprocess, 0.
-    """
-    # 1. pynvml
-    try:
-        import pynvml
-    except ImportError:
-        pass
-    else:
-        try:
-            pynvml.nvmlInit()
-            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-            info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-            return int(info.free)
-        except Exception:
-            pass
-
-    # 2. nvidia-smi subprocess
-    try:
-        import subprocess
-
-        out = subprocess.check_output(
-            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
-            universal_newlines=True,
-            timeout=5,
-        )
-        free_mib = float(out.strip().splitlines()[0].strip())
-        return int(free_mib * 1024 * 1024)
-    except Exception:
-        return 0
-
 
 def _gpu_chunk_size(n: int) -> int:
     """Return the number of rows per GPU chunk for an atlas of size *n*.

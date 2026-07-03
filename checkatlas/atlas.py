@@ -17,6 +17,7 @@ try:
     from . import cellranger, check
     from .metrics import metrics
     from .metrics._cache import load_dimred_cache, save_dimred_cache, save_knn
+    from .metrics._jax_utils import _GPU_AVAILABLE, _JAX_AVAILABLE, cdist_chunked
     from .metrics._neighbors import NeighborResults, compute_neighbors
     from .metrics._preprocess_context import (
         PreprocessContext,
@@ -426,11 +427,14 @@ def _precompute_dimred(
 
     high_dim_dists = None
     if need_high_dists:
+        _use_gpu = _JAX_AVAILABLE and _GPU_AVAILABLE
+        backend_label = "GPU (JAX)" if _use_gpu else f"CPU (n_jobs={n_jobs})"
         tqdm.write(
             "  Computing high-dim distance matrix"
             f" ({n_cells:,} x {n_cells:,})"
             " [shared with dimred + cluster metrics]..."
         )
+        tqdm.write(f"  Backend: {backend_label}")
         if use_memmap:
             import uuid
 
@@ -447,22 +451,46 @@ def _precompute_dimred(
                 x_cluster_dists = TriangularMatrix(
                     n=n_cells, filepath=x_cluster_path, mode="w+"
                 )
-            for i in tqdm(
-                range(0, n_cells, chunk_size),
-                desc="  High-dim distance matrix",
-                unit="chunk",
-            ):
-                end = min(i + chunk_size, n_cells)
-                from sklearn.metrics import pairwise_distances
 
-                block = pairwise_distances(
-                    high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
+            if _use_gpu:
+                _last_flush = [0]
+
+                def _store_block(block, qs, rs):
+                    store_upper_triangle(high_dim_dists._data, block, qs, rs, n_cells)
+                    if x_cluster_dists is not None:
+                        store_upper_triangle(x_cluster_dists._data, block, qs, rs, n_cells)
+                    _last_flush[0] += 1
+                    if _last_flush[0] % 20 == 0:
+                        high_dim_dists.flush()
+                        if x_cluster_dists is not None:
+                            x_cluster_dists.flush()
+
+                cdist_chunked(
+                    np.asarray(high_dim_data, dtype=np.float32),
+                    np.asarray(high_dim_data, dtype=np.float32),
+                    metric="euclidean",
+                    block_callback=_store_block,
                 )
-                store_upper_triangle(high_dim_dists._data, block, i, 0, n_cells)
                 high_dim_dists.flush()
                 if x_cluster_dists is not None:
-                    store_upper_triangle(x_cluster_dists._data, block, i, 0, n_cells)
                     x_cluster_dists.flush()
+            else:
+                for i in tqdm(
+                    range(0, n_cells, chunk_size),
+                    desc="  High-dim distance matrix [CPU]",
+                    unit="chunk",
+                ):
+                    end = min(i + chunk_size, n_cells)
+                    from sklearn.metrics import pairwise_distances
+
+                    block = pairwise_distances(
+                        high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
+                    )
+                    store_upper_triangle(high_dim_dists._data, block, i, 0, n_cells)
+                    high_dim_dists.flush()
+                    if x_cluster_dists is not None:
+                        store_upper_triangle(x_cluster_dists._data, block, i, 0, n_cells)
+                        x_cluster_dists.flush()
             if x_cluster_dists is not None:
                 del x_cluster_dists
         else:
@@ -471,7 +499,7 @@ def _precompute_dimred(
             high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
             for i in tqdm(
                 range(0, n_cells, chunk_size),
-                desc="  High-dim distance matrix",
+                desc="  High-dim distance matrix [CPU]",
                 unit="chunk",
             ):
                 end = min(i + chunk_size, n_cells)
@@ -530,23 +558,48 @@ def _precompute_dimred(
                     cluster_dists = TriangularMatrix(
                         n=low_n_cells, filepath=cluster_path, mode="w+"
                     )
-                for i in tqdm(
-                    range(0, low_n_cells, chunk_size),
-                    desc=f"    Distances ({emb_key}) [dimred + cluster]",
-                    unit="chunk",
-                    leave=False,
-                ):
-                    end = min(i + chunk_size, low_n_cells)
-                    from sklearn.metrics import pairwise_distances
 
-                    block = pairwise_distances(
-                        low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
+                if _use_gpu:
+                    _last_flush_low = [0]
+
+                    def _store_low_block(block, qs, rs):
+                        store_upper_triangle(low_dists._data, block, qs, rs, low_n_cells)
+                        if cluster_dists is not None:
+                            store_upper_triangle(cluster_dists._data, block, qs, rs, low_n_cells)
+                        _last_flush_low[0] += 1
+                        if _last_flush_low[0] % 20 == 0:
+                            low_dists.flush()
+                            if cluster_dists is not None:
+                                cluster_dists.flush()
+
+                    tqdm.write(f"    Distances ({emb_key}) [GPU]...")
+                    cdist_chunked(
+                        np.asarray(low_dim_data, dtype=np.float32),
+                        np.asarray(low_dim_data, dtype=np.float32),
+                        metric="euclidean",
+                        block_callback=_store_low_block,
                     )
-                    store_upper_triangle(low_dists._data, block, i, 0, low_n_cells)
                     low_dists.flush()
                     if cluster_dists is not None:
-                        store_upper_triangle(cluster_dists._data, block, i, 0, low_n_cells)
                         cluster_dists.flush()
+                else:
+                    for i in tqdm(
+                        range(0, low_n_cells, chunk_size),
+                        desc=f"    Distances ({emb_key}) [dimred + cluster] [CPU]",
+                        unit="chunk",
+                        leave=False,
+                    ):
+                        end = min(i + chunk_size, low_n_cells)
+                        from sklearn.metrics import pairwise_distances
+
+                        block = pairwise_distances(
+                            low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
+                        )
+                        store_upper_triangle(low_dists._data, block, i, 0, low_n_cells)
+                        low_dists.flush()
+                        if cluster_dists is not None:
+                            store_upper_triangle(cluster_dists._data, block, i, 0, low_n_cells)
+                            cluster_dists.flush()
                 if cluster_dists is not None:
                     del cluster_dists
             else:
@@ -555,7 +608,7 @@ def _precompute_dimred(
                 low_dists = np.zeros((low_n_cells, low_n_cells), dtype=np.float32)
                 for i in tqdm(
                     range(0, low_n_cells, chunk_size),
-                    desc=f"    Distances ({emb_key}) [dimred + cluster]",
+                    desc=f"    Distances ({emb_key}) [dimred + cluster] [CPU]",
                     unit="chunk",
                     leave=False,
                 ):
@@ -772,6 +825,8 @@ def _precompute_cluster(
         )
         return
 
+    _use_gpu = _JAX_AVAILABLE and _GPU_AVAILABLE
+
     logger.info(
         "Precomputing cluster distances: %d embedding(s) (%d already cached from dimred)",
         len(ctx.cluster_embedding_keys),
@@ -798,16 +853,34 @@ def _precompute_cluster(
 
         if n_cells > 10000:
             tri = TriangularMatrix(n=n_cells, filepath=tri_path, mode="w+")
-            for i in tqdm(
-                range(0, n_cells, chunk_size),
-                desc=f"    Distances ({emb})",
-                unit="chunk",
-                leave=False,
-            ):
-                end = min(i + chunk_size, n_cells)
-                block = pairwise_distances(X_emb[i:end], X_emb, n_jobs=n_jobs)
-                store_upper_triangle(tri._data, block, i, 0, n_cells)
-            tri.flush()
+
+            if _use_gpu:
+                _last_flush_cluster = [0]
+
+                def _store_cluster_block(block, qs, rs):
+                    store_upper_triangle(tri._data, block, qs, rs, n_cells)
+                    _last_flush_cluster[0] += 1
+                    if _last_flush_cluster[0] % 20 == 0:
+                        tri.flush()
+
+                cdist_chunked(
+                    np.asarray(X_emb, dtype=np.float32),
+                    np.asarray(X_emb, dtype=np.float32),
+                    metric="euclidean",
+                    block_callback=_store_cluster_block,
+                )
+                tri.flush()
+            else:
+                for i in tqdm(
+                    range(0, n_cells, chunk_size),
+                    desc=f"    Distances ({emb}) [CPU]",
+                    unit="chunk",
+                    leave=False,
+                ):
+                    end = min(i + chunk_size, n_cells)
+                    block = pairwise_distances(X_emb[i:end], X_emb, n_jobs=n_jobs)
+                    store_upper_triangle(tri._data, block, i, 0, n_cells)
+                tri.flush()
         else:
             dists = pairwise_distances(X_emb, n_jobs=n_jobs)
             np.save(npy_path, dists.astype(np.float32))

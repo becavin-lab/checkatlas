@@ -14,6 +14,7 @@ automatically.
 
 import functools
 import logging
+import math
 from typing import Any, Callable, Literal, Optional
 
 import numpy as np
@@ -273,3 +274,176 @@ def is_gpu_available() -> bool:
 def is_jax_available() -> bool:
     """Check if JAX is available (even CPU-only)."""
     return _JAX_AVAILABLE
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# GPU memory detection
+# ═══════════════════════════════════════════════════════════════════════
+
+
+def _gpu_free_memory_bytes() -> int:
+    """Return the currently free GPU memory (device 0) in bytes.
+
+    Tries, in order: ``pynvml``, ``nvidia-smi`` subprocess, 0.
+    """
+    try:
+        import pynvml
+    except ImportError:
+        pass
+    else:
+        try:
+            pynvml.nvmlInit()
+            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+            info = pynvml.nvmlDeviceGetMemoryInfo(handle)
+            return int(info.free)
+        except Exception:
+            pass
+
+    try:
+        import subprocess
+
+        out = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
+            universal_newlines=True,
+            timeout=5,
+        )
+        free_mib = float(out.strip().splitlines()[0].strip())
+        return int(free_mib * 1024 * 1024)
+    except Exception:
+        return 0
+
+
+def get_usable_gpu_memory_bytes() -> int:
+    """Return 80 % of currently free GPU memory (bytes), or 0 if no GPU."""
+    if not (_JAX_AVAILABLE and _GPU_AVAILABLE):
+        return 0
+    free = _gpu_free_memory_bytes()
+    if free <= 0:
+        return 0
+    return int(free * 0.80)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Chunked GPU distance computation (2‑axis chunking)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+def cdist_chunked(
+    X1: np.ndarray,
+    X2: np.ndarray,
+    metric: str = "euclidean",
+    *,
+    max_memory_bytes: Optional[int] = None,
+    block_callback: Optional[Callable[[np.ndarray, int, int], None]] = None,
+) -> Optional[np.ndarray]:
+    """Pairwise distance matrix computed in GPU‑sized chunks.
+
+    When *block_callback* is provided, each ``(q_chunk × r_chunk)``
+    sub‑matrix is passed to the callback as a float32 numpy array
+    together with its global row / column offsets.  The full ``(M × N)``
+    matrix is **never** materialised — the caller is responsible for
+    streaming the blocks to disk (e.g. a ``TriangularMatrix`` memmap).
+
+    When *block_callback* is ``None`` the function returns the complete
+    ``(M × N)`` float32 numpy array.  This is only safe when the output
+    fits in host memory; prefer the callback path for N > 30 000.
+
+    The chunk sizes are chosen so that the peak GPU memory used by each
+    block stays below *max_memory_bytes* (or 80 % of the free GPU memory
+    reported by the driver).  If no GPU is available the function
+    returns ``None`` so the caller can fall back to a CPU path.
+
+    Parameters
+    ----------
+    X1 : shape (M, d)
+        Query points.
+    X2 : shape (N, d)
+        Reference points.
+    metric : str
+        ``"euclidean"`` or ``"cosine"``.
+    max_memory_bytes : int | None
+        Hard cap on GPU memory per block.  ``None`` auto‑detects.
+    block_callback : Callable | None
+        ``callback(block: np.ndarray, row_start: int, col_start: int)``
+        invoked for each chunk.
+        *block* is ``(q_chunk, r_chunk)`` float32.
+
+    Returns
+    -------
+    np.ndarray | None
+        Full ``(M, N)`` float32 matrix when *block_callback* is
+        ``None``, or ``None`` when streaming via callback, or ``None``
+        when GPU is unavailable.
+    """
+    if not is_gpu_available():
+        return None
+
+    M, d = X1.shape
+    N, _ = X2.shape
+
+    usable = max_memory_bytes or get_usable_gpu_memory_bytes()
+    if usable <= 0:
+        return None
+
+    _SAFETY = 1.4
+    budget = usable / _SAFETY
+    bytes_per_elem = 4  # float32
+
+    if d > 100:
+        target = max(int(budget // bytes_per_elem), 1)
+        side = int(math.sqrt(float(d) * float(d) + float(target)) - d)
+        q_chunk = max(min(side, M), 1)
+        r_chunk = max(min(side, N), 1)
+    else:
+        r_data_bytes = N * d * bytes_per_elem
+        remaining = budget - r_data_bytes - (2 * 1024 * 1024)
+        if remaining > 0:
+            max_q = int(remaining // (d * bytes_per_elem + N * bytes_per_elem))
+            q_chunk = min(max_q, M)
+        else:
+            q_chunk = min(500, M)
+        q_chunk = max(q_chunk, 1)
+        r_chunk = N
+
+    import jax.numpy as jnp
+
+    _cdist = _cdist_jax
+
+    n_q_blocks = (M + q_chunk - 1) // q_chunk
+    n_r_blocks = (N + r_chunk - 1) // r_chunk
+    total_blocks = n_q_blocks * n_r_blocks
+
+    from tqdm import tqdm
+
+    _pbar = tqdm(
+        total=total_blocks,
+        desc="  GPU distance blocks",
+        unit="block",
+        disable=(total_blocks < 4),
+    )
+
+    if block_callback is None:
+        result = np.zeros((M, N), dtype=np.float32)
+
+    for qs in range(0, M, q_chunk):
+        qe = min(qs + q_chunk, M)
+        q_data = jnp.asarray(X1[qs:qe], dtype=jnp.float32)
+
+        for rs in range(0, N, r_chunk):
+            re = min(rs + r_chunk, N)
+            r_data = jnp.asarray(X2[rs:re], dtype=jnp.float32)
+
+            block = np.array(_cdist(q_data, r_data, metric=metric), dtype=np.float32)
+
+            if block_callback is not None:
+                block_callback(block, qs, rs)
+            else:
+                result[qs:qe, rs:re] = block
+
+            _pbar.update(1)
+
+    _pbar.close()
+
+    if block_callback is not None:
+        return None
+    return result
