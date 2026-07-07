@@ -90,9 +90,9 @@ class TriangularMatrix:
         ``row_starts[i]`` is the index in ``_data`` where ``D[i, i+1]``
         begins.  The row ends at ``row_starts[i+1]`` (or ``_tri_size``).
         """
-        row_starts = np.zeros(self.n + 1, dtype=np.int64)
-        for i in range(self.n):
-            row_starts[i] = i * self.n - i * (i + 1) // 2
+        i = np.arange(self.n, dtype=np.int64)
+        row_starts = np.empty(self.n + 1, dtype=np.int64)
+        row_starts[: self.n] = i * self.n - i * (i + 1) // 2
         row_starts[self.n] = self._tri_size
         return row_starts
 
@@ -325,11 +325,17 @@ class TriangularMatrix:
         triangle.  Used by both ``to_dense`` and ``to_dense_f16``.
 
         Fast path (the memmap case): single sequential read of the
-        1-D upper-triangle buffer, scatter to upper triangle, then
-        row-by-row mirror into the lower triangle using the
-        pre-computed ``_row_starts``.  This is ~2.5× faster than the
-        ``dense += dense.T`` (transpose + add) approach because the
-        transpose materialises a full copy.
+        1-D upper-triangle buffer, then a row-by-row fill that
+        populates the upper triangle and mirrors to the lower
+        triangle in a single pass.  The row-by-row fill uses the
+        pre-computed ``_row_starts`` to slice the contiguous
+        upper-triangle buffer, avoiding both the massive
+        ``np.triu_indices(N, k=1)`` allocation (which builds two
+        int64 index arrays of size N·(N-1)/2 each — 7.2 GB at N=30 000)
+        and the separate upper-fill / mirror passes.  The single
+        Python loop with a slice assignment per row is bounded by
+        the 900 MB of data movement for N=30 000, dominated by
+        the strided column writes, not the Python overhead.
 
         Slow path: per-row gather via ``_get_row`` for any object that
         isn't backed by a contiguous 1-D float16 buffer of the right
@@ -348,23 +354,19 @@ class TriangularMatrix:
                 flat = np.asarray(data, dtype=np.float16).copy()
                 # 2. Dense float16 (N, N) buffer, zero-initialised.
                 dense16 = np.zeros((self.n, self.n), dtype=np.float16)
-                # 3. Scatter the flat read into the upper triangle.
-                iu = np.triu_indices(self.n, k=1)
-                if iu[0].shape[0] == flat.shape[0]:
-                    dense16[iu] = flat
-                else:
-                    raise ValueError("flat length mismatch")
-                # 4. Symmetrise via row-by-row mirror: for each row i,
-                #    copy the upper-triangle elements (already in
-                #    ``dense16[i, i+1:]``) into the lower-triangle
-                #    positions (``dense16[i+1:, i]``).  This is just
-                #    a contiguous slice assignment per row, so it
-                #    bypasses the costly transpose + add.
+                # 3+4. Fill upper and mirror to lower in a single
+                #      row-by-row pass via the pre-computed row starts.
+                #      This avoids the 7.2 GB int64 index arrays that
+                #      np.triu_indices(N, k=1) would materialise and
+                #      keeps peak memory at ~3 GB instead of ~10 GB at
+                #      N=30 000.
                 starts = self._row_starts
                 for i in range(self.n):
-                    n_lower = self.n - i - 1
-                    if n_lower > 0:
-                        dense16[i + 1 :, i] = flat[starts[i] : starts[i] + n_lower]
+                    n_upper = self.n - i - 1
+                    if n_upper > 0:
+                        upper = flat[starts[i] : starts[i + 1]]
+                        dense16[i, i + 1 :] = upper
+                        dense16[i + 1 :, i] = upper
                 return dense16
             except Exception:
                 pass  # fall through to slow path

@@ -30,6 +30,46 @@ def _metric_nf_arg(metrics: list, all_metrics: list) -> str:
     return " ".join(metrics)
 
 
+
+def _warn_metric_flags_on_analyse(args, logger) -> None:
+    """Warn if the user passed ``--metric_*`` flags to ``analyse``.
+
+    The ``analyse`` process always runs every metric for every available
+    task.  Passing ``--metric_cluster silhouette`` does NOT limit the run
+    to that metric — it only changes the subset of cluster metrics while
+    still running all four tasks.  Point the user to the per-task
+    sub-commands instead.
+    """
+    _FLAG_TASKS = {
+        "metric_cluster": ("metric_cluster", "cluster"),
+        "metric_annot": ("metric_annot", "annotation"),
+        "metric_batch_correction": ("metric_batch_correction", "batch correction"),
+        "metric_dimred": ("metric_dimred", "dimensionality reduction"),
+    }
+    _DEFAULTS = {
+        "metric_cluster": cluster.__all__,
+        "metric_annot": annot.__all__,
+        "metric_batch_correction": batch_correction.__all__,
+        "metric_dimred": dimred.__all__,
+    }
+    warnings = []
+    for arg_name, (subcmd, display_name) in _FLAG_TASKS.items():
+        val = getattr(args, arg_name, None)
+        default = _DEFAULTS.get(arg_name)
+        if default is not None and val is not None and val != default:
+            warnings.append(
+                f"  --{arg_name} was passed to 'analyse', "
+                f"but 'analyse' always runs all metrics for all tasks.\n"
+                f"  To compute only {display_name} metrics, "
+                f"use: checkatlas {subcmd} --atlas_name={args.atlas_name} ..."
+            )
+    if warnings:
+        logger.warning(
+            "'analyse' runs all enabled metric tasks regardless of --metric_* flags.\n"
+            + "\n".join(warnings)
+        )
+
+
 def _print_metric_summary(adata, atlas_info, args, logger) -> None:
     """Print the per-atlas timing summary table for the four metric tasks.
 
@@ -196,6 +236,7 @@ def main() -> None:  # pragma: no cover
                 atlas.create_metric_dimred(adata, atlas_info, args)
                 _print_metric_summary(adata, atlas_info, args, logger)
             elif process == check.PROCESS_TYPE[8]:  #  analyse
+                _warn_metric_flags_on_analyse(args, logger)
                 atlas.create_summary_table(adata, atlas_info, args)
                 atlas.create_anndata_table(adata, atlas_info, args)
                 atlas.create_umap_fig(adata, atlas_info, args)
