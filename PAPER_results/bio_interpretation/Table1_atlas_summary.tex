@@ -1,0 +1,26 @@
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Atlas-level summary of CheckAtlas benchmark results.}
+Scores are min-max scaled per metric within each task (0=worst, 1=best).
+Overall score is the unweighted mean across the four tasks.
+Atlas names are abbreviated; \textit{TS\_} prefix indicates Tabula Sapiens atlas.
+\emph{lung\_2M} (2.3 million cells) is the largest atlas with partial metrics.}
+\label{tab:atlas_summary}
+\small
+\begin{tabular}{l r r c c c c c c}
+\toprule
+\textbf{Atlas} & \textbf{Cells} & \textbf{Genes} & \textbf{Cluster} & \textbf{Annotation} & \textbf{Batch} & \textbf{Dimred} & \textbf{Overall} & \textbf{Runtime} \\
+\midrule
+TS\_neural & 3k & 60,606 & 0.453 & 0.506 & 0.177 & 0.520 & 0.414 & 1m 7s \\
+TS\_skin & 18k & 60,606 & 0.405 & 0.495 & 0.256 & 0.432 & 0.397 & 7m 19s \\
+bone\_marrow & 27k & 60,606 & 0.396 & 0.420 & 0.221 & 0.358 & 0.349 & 20m 39s \\
+liver & 22k & 60,606 & 0.373 & 0.482 & 0.176 & 0.401 & 0.358 & 14m 39s \\
+blood\_pbmc & 44k & 21,649 & 0.000 & 0.000 & 0.297 & 0.219 & 0.129 & 12m 14s \\
+blood & 85k & 60,606 & 0.468 & 0.515 & 0.220 & 0.292 & 0.374 & 1h 23m \\
+lung & 348k & 29,824 & 0.000 & 0.000 & 0.251 & 0.245 & 0.124 & 21m 13s \\
+TS\_immune & 592k & 60,606 & 0.407 & 0.496 & 0.276 & 0.428 & 0.402 & 1h 27m \\
+lung\_2M & 2.3M & 55,329 & 0.000 & 0.025 & 0.283 & 0.330 & 0.160 & 2h 0m \\
+\bottomrule
+\end{tabular}
+\end{table}

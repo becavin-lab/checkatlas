@@ -1,0 +1,31 @@
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Batch-vs-biology tradeoff across atlas embeddings.}
+iLISI measures batch mixing (higher=better), cLISI measures cell-type purity (lower=better).
+kBET and PCR measure specific aspects of batch effect removal.
+Batch score = mean(iLISI, 1-kBET, 1-PCR). Bio score = 1-cLISI. Overall = mean(Batch, Bio).}
+\label{tab:batch_vs_bio}
+\small
+\begin{tabular}{l l c c c c c c c}
+\toprule
+\textbf{Atlas} & \textbf{Embedding} & \textbf{iLISI$\uparrow$} & \textbf{cLISI$\downarrow$} & \textbf{kBET$\downarrow$} & \textbf{PCR$\downarrow$} & \textbf{Batch} & \textbf{Bio} & \textbf{Overall} \\
+\midrule
+TS\_immune & X_pca & 0.044 & 0.006 & 0.781 & 0.644 & 0.207 & 0.994 & 0.600 \\
+TS\_immune & X_scvi & 0.124 & 0.006 & 0.671 & 0.484 & 0.323 & 0.994 & 0.658 \\
+TS\_neural & X_pca & 0.043 & 0.020 & 0.665 & 0.874 & 0.168 & 0.980 & 0.574 \\
+TS\_neural & X_scvi & 0.049 & 0.018 & 0.668 & 0.860 & 0.174 & 0.982 & 0.578 \\
+TS\_skin & X_pca & 0.161 & 0.017 & 0.685 & 0.897 & 0.193 & 0.983 & 0.588 \\
+TS\_skin & X_scvi & 0.273 & 0.012 & 0.592 & 0.883 & 0.266 & 0.988 & 0.627 \\
+blood & X_pca & 0.040 & 0.009 & 0.724 & 0.868 & 0.149 & 0.991 & 0.570 \\
+blood & X_scvi & 0.199 & 0.010 & 0.672 & 0.740 & 0.262 & 0.990 & 0.626 \\
+blood\_pbmc & X_pca & 0.342 & 0.012 & 0.830 & 0.741 & 0.257 & 0.988 & 0.622 \\
+bone\_marrow & X_pca & 0.080 & 0.013 & 0.819 & 0.895 & 0.122 & 0.987 & 0.554 \\
+bone\_marrow & X_scvi & 0.261 & 0.014 & 0.662 & 0.758 & 0.280 & 0.986 & 0.633 \\
+liver & X_pca & 0.057 & 0.014 & 0.752 & 0.941 & 0.122 & 0.986 & 0.554 \\
+liver & X_scvi & 0.209 & 0.015 & 0.694 & 0.919 & 0.199 & 0.985 & 0.592 \\
+lung & X_pca & 0.158 & 0.002 & 0.900 & 0.561 & 0.232 & 0.998 & 0.615 \\
+lung\_2M & X_scanvi_emb & 0.102 & 0.008 & 0.738 & 0.553 & 0.270 & 0.992 & 0.631 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,24 @@
+
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Dimensionality reduction quality per atlas.}
+Global = mean(scaled spearman\_rho, dCor). Local = mean(scaled coKNN, entourage, lcmc, den\_pre, kruskal\_stress, avg\_jaccard\_dis, ged).
+Higher is always better after direction-aware min-max scaling.}
+\label{tab:dimred_summary}
+\small
+\begin{tabular}{l c c c c c c c}
+\toprule
+\textbf{Atlas} & \textbf{Emb.} & \textbf{Global} & \textbf{Local} & \textbf{Spearman$\rho$} & \textbf{dCor} & \textbf{CoKNN} & \textbf{LCMC} \\
+\midrule
+TS\_immune & 5 & 0.446 & 0.423 & 0.435 & 0.773 & 0.036 & 0.064 \\
+TS\_neural & 5 & 0.760 & 0.451 & 0.641 & 0.893 & 0.048 & 0.073 \\
+TS\_skin & 3 & 0.515 & 0.408 & 0.347 & 0.887 & 0.036 & 0.062 \\
+blood & 5 & 0.582 & 0.209 & 0.492 & 0.846 & 0.010 & 0.017 \\
+blood\_pbmc & 1 & 0.434 & 0.157 & 0.443 & 0.757 & 0.013 & 0.023 \\
+bone\_marrow & 5 & 0.470 & 0.326 & 0.437 & 0.791 & 0.028 & 0.048 \\
+liver & 5 & 0.548 & 0.359 & 0.473 & 0.831 & 0.030 & 0.051 \\
+lung & 1 & 0.348 & 0.216 & 0.295 & 0.785 & 0.008 & 0.015 \\
+lung\_2M & 2 & 0.119 & 0.390 & 0.210 & 0.654 & 0.028 & 0.051 \\
+\bottomrule
+\end{tabular}
+\end{table}
