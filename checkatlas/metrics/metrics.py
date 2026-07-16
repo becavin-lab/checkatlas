@@ -236,6 +236,8 @@ def cal_annot(
     else:
         os.makedirs(file_dir, exist_ok=True)
 
+    _subsample_indices = None
+
     if preprocess_context is not None:
         ref_keys = preprocess_context.ref_keys
         pred_keys = preprocess_context.pred_keys
@@ -244,6 +246,38 @@ def cal_annot(
             or preprocess_context.embedding_keys
         )
 
+        if not ref_keys and not pred_keys:
+            logger.warning(
+                "No reference or predicted annotation keys in preprocess context. Skipping."
+            )
+            return pd.DataFrame()
+
+        # ── Warn when one annotation key type is missing ──────────
+        _ref_pred_names = [
+            "adj_mutual_info",
+            "adj_rand_index",
+            "fowlkes_mallows",
+            "isolated_f1_score",
+            "mutual_info",
+            "normalized_mutual_info",
+            "rand_index",
+            "vmeasure",
+        ]
+        if not pred_keys and ref_keys:
+            logger.warning(
+                "No predicted annotation keys detected. "
+                "Skipping ref-vs-pred metrics (%s). "
+                "Running embedding-label metrics on reference keys only.",
+                ", ".join(_ref_pred_names),
+            )
+        elif not ref_keys and pred_keys:
+            logger.warning(
+                "No reference annotation keys detected. "
+                "Skipping ref-vs-pred metrics (%s). "
+                "Running embedding-label metrics on predicted keys only.",
+                ", ".join(_ref_pred_names),
+            )
+
         if verbose:
             print("Using precomputed context — skipping column detection")
             print(f"  Reference keys: {ref_keys}")
@@ -251,6 +285,10 @@ def cal_annot(
             print(f"  Embedding keys: {embedding_keys}")
 
         # ── Load precomputed distance matrices from cluster cache ──
+        # Large atlases (>300k cells) use core-set subsampling; the
+        # .tri files were built on the subsample, not the full dataset.
+        _subsample_indices = getattr(preprocess_context, "subsample_indices", None)
+        _ss_n = len(_subsample_indices) if _subsample_indices is not None else 0
         precomputed_dists = {}
         _safe = lambda s: s.replace("/", "_").replace(" ", "_")
         for emb in embedding_keys:
@@ -260,11 +298,12 @@ def cal_annot(
             )
             npy_path = tri_path.replace(".tri", ".npy")
             if os.path.exists(tri_path):
-                n_cells = (
-                    adata.obsm[emb].shape[0]
-                    if emb in adata.obsm
-                    else adata.n_obs
-                )
+                if _ss_n:
+                    n_cells = _ss_n
+                elif emb in adata.obsm:
+                    n_cells = adata.obsm[emb].shape[0]
+                else:
+                    n_cells = adata.n_obs
                 precomputed_dists[emb] = TriangularMatrix(
                     n=n_cells, filepath=tri_path, mode="r"
                 )
@@ -279,6 +318,35 @@ def cal_annot(
         pred_keys = [x[0] for x in params["annotation"]["predicted"]]
         embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
         precomputed_dists = {}
+
+    # ── Warn when one annotation key type is missing ──────────────
+    # Ref-vs-pred metrics (8 total) need both reference and predicted
+    # columns.  Embedding-label metrics (average_silhouette_width,
+    # dunn_index) only need one label set per embedding.
+    _ref_pred_names = [
+        "adj_mutual_info",
+        "adj_rand_index",
+        "fowlkes_mallows",
+        "isolated_f1_score",
+        "mutual_info",
+        "normalized_mutual_info",
+        "rand_index",
+        "vmeasure",
+    ]
+    if not pred_keys and ref_keys:
+        logger.warning(
+            "No predicted annotation keys detected. "
+            "Skipping ref-vs-pred metrics (%s). "
+            "Running embedding-label metrics on reference keys only.",
+            ", ".join(_ref_pred_names),
+        )
+    elif not ref_keys and pred_keys:
+        logger.warning(
+            "No reference annotation keys detected. "
+            "Skipping ref-vs-pred metrics (%s). "
+            "Running embedding-label metrics on predicted keys only.",
+            ", ".join(_ref_pred_names),
+        )
 
     # Define metrics to run
     if metric_list is not None:
@@ -376,13 +444,19 @@ def cal_annot(
                 if not embedding_keys:
                     continue
                 targets = list(set(ref_keys + pred_keys))
+                if not targets:
+                    continue
                 for emb in embedding_keys:
                     if emb not in adata.obsm:
                         continue
                     X_emb = adata.obsm[emb]
+                    if _subsample_indices is not None:
+                        X_emb = X_emb[_subsample_indices]
                     for label in targets:
                         try:
                             labels = adata.obs[label]
+                            if _subsample_indices is not None:
+                                labels = labels.iloc[_subsample_indices].values
                             pair_start = time.time()
                             sig = inspect.signature(metric_module.run)
                             kw = {}
@@ -587,6 +661,22 @@ def cal_batch_correction(
             batch_keys = [
                 col for col in adata.obs.columns if "batch" in col.lower()
             ]
+
+    if not embedding_keys and not batch_keys and not ref_keys and not pred_keys:
+        logger.warning(
+            "No batch, reference, predicted, or embedding keys available. "
+            "Skipping batch-correction metrics."
+        )
+        return pd.DataFrame(
+            columns=[
+                "Atlas Name",
+                "Metric Name",
+                "Embedding",
+                "Batch Key",
+                "Value",
+                "Time (s)",
+            ]
+        )
 
     if metric_list is not None:
         metrics_list = [m for m in metric_list if m in METRICS_BATCH]
@@ -1056,6 +1146,7 @@ def cal_cluster(
         os.makedirs(file_dir, exist_ok=True)
 
     precomputed_dists = {}
+    _ss_indices = None
 
     if preprocess_context is not None:
         embedding_keys = preprocess_context.cluster_embedding_keys or preprocess_context.embedding_keys
@@ -1072,7 +1163,11 @@ def cal_cluster(
             print(f"  Embeddings: {embedding_keys}")
             print(f"  Cluster labels: {label_keys}")
 
-        # Load precomputed distance matrices for silhouette
+        # Load precomputed distance matrices for silhouette.
+        # Large atlases use core-set subsampling; account for .tri
+        # files built on the subset.
+        _ss_indices = getattr(preprocess_context, "subsample_indices", None)
+        _ss_n = len(_ss_indices) if _ss_indices is not None else 0
         _safe = lambda s: s.replace("/", "_").replace(" ", "_")
         for emb in embedding_keys:
             tri_path = os.path.join(
@@ -1082,7 +1177,9 @@ def cal_cluster(
             if os.path.exists(tri_path):
                 from ._triangular import TriangularMatrix
 
-                if emb == "X":
+                if _ss_n:
+                    n_cells = _ss_n
+                elif emb == "X":
                     n_cells = adata.X.shape[0]
                 elif emb in adata.obsm:
                     n_cells = adata.obsm[emb].shape[0]
@@ -1167,6 +1264,9 @@ def cal_cluster(
                 continue
             X_emb = np.asarray(adata.obsm[emb_key])
 
+        if _ss_indices is not None:
+            X_emb = X_emb[_ss_indices]
+
         for label_key in label_keys:
             if label_key not in adata.obs.columns:
                 logger.warning(
@@ -1176,6 +1276,8 @@ def cal_cluster(
                 continue
 
             labels = np.asarray(adata.obs[label_key])
+            if _ss_indices is not None:
+                labels = labels[_ss_indices]
 
             # Check we have at least 2 clusters
             n_unique = len(np.unique(labels))
@@ -1467,8 +1569,11 @@ def cal_dimred(
 
     low_dim_keys = [k for k in low_dim_keys if k != high_dim_key]
     if not low_dim_keys:
-        if verbose:
-            print(f"  No embeddings to compare " f"(only key is {high_dim_key}).")
+        logger.warning(
+            "No low-dim embeddings to evaluate (only high-dim key '%s' present). "
+            "Skipping dimred metrics.",
+            high_dim_key,
+        )
         return pd.DataFrame()
 
     n_obs = adata.n_obs
@@ -1486,7 +1591,12 @@ def cal_dimred(
             high_dim_data = high_dim_data.toarray()
     else:
         if high_dim_key not in adata.obsm_keys():
-            raise ValueError(f"High-dim key '{high_dim_key}' not found in adata.obsm.")
+            logger.warning(
+                "High-dim key '%s' not found in adata.obsm. "
+                "Skipping dimred metrics.",
+                high_dim_key,
+            )
+            return pd.DataFrame()
         high_dim_data = adata.obsm[high_dim_key][sample_indices]
 
     high_n_features = high_dim_data.shape[1]
@@ -1538,6 +1648,19 @@ def cal_dimred(
             high_knn_indices = _cached["high_knn_indices"]
             _cache_low_dim = _cached["low_dim"]
             _from_cache = True
+            # Large atlases: the cached data was built on a core-set
+            # subsample.  Re-extract high_dim_data and adjust n_cells
+            # so all downstream computation uses the same subset.
+            _cached_subsample = _cached.get("subsample_indices")
+            if _cached_subsample is not None:
+                sample_indices = _cached_subsample
+                n_cells = len(sample_indices)
+                if high_dim_key == "X":
+                    high_dim_data = adata.X[sample_indices]
+                    if hasattr(high_dim_data, "toarray"):
+                        high_dim_data = high_dim_data.toarray()
+                else:
+                    high_dim_data = adata.obsm[high_dim_key][sample_indices]
             if verbose:
                 print("  [CACHE HIT] Reusing precomputed distances & kNN")
 
@@ -1899,8 +2022,8 @@ def cal_dimred(
 
         elif _GPU_CHUNKED:
             # ── GPU for low-dim when features ≤ 200 dims ─────────
-            # Low-dim embeddings (X_pca=50d, X_umap=2d) fit on GPU easily.
-            # High-dim X (60k genes) needs CPU memmap for N×N storage.
+            # Low-dim embeddings fit on GPU easily.
+            # High-dim raw data needs CPU memmap for N×N storage.
             low_ndim = low_dim_data.shape[1]
             if low_ndim <= 200 and n_cells <= 50000:
                 # One-shot GPU: small feature dim → N² fits

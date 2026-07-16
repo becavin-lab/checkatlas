@@ -16,7 +16,7 @@ from tqdm import tqdm
 try:
     from . import cellranger, check
     from .metrics import metrics
-    from .metrics._cache import load_dimred_cache, save_dimred_cache, save_knn
+    from .metrics._cache import compute_fingerprint, load_dimred_cache, save_dimred_cache, save_knn
     from .metrics._jax_utils import _GPU_AVAILABLE, _JAX_AVAILABLE, cdist_chunked
     from .metrics._neighbors import NeighborResults, compute_neighbors
     from .metrics._preprocess_context import (
@@ -68,6 +68,22 @@ OBS_QC = [
 ]
 
 logger = logging.getLogger("checkatlas")
+
+# ── Optional GPU-accelerated PCA via rapids-singlecell / cuML ────
+_RAPIDS_AVAILABLE: bool = False
+try:
+    import cupy as cp  # noqa: F401
+    import rmm
+    from rmm.allocators.cupy import rmm_cupy_allocator
+
+    import rapids_singlecell as rsc  # noqa: F401
+
+    rmm.reinitialize(managed_memory=True, pool_allocator=False, devices=0)
+    cp.cuda.set_allocator(rmm_cupy_allocator)
+    _RAPIDS_AVAILABLE = True
+    logger.info("rapids-singlecell / cuML available — GPU PCA enabled")
+except ImportError:
+    logger.info("rapids-singlecell not available — using CPU PCA (scanpy)")
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 warnings.simplefilter(action="ignore", category=UserWarning)
@@ -349,6 +365,69 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
 # Precompute helpers — one per task category
 # ═══════════════════════════════════════════════════════════════════════
 
+_LARGE_ATLAS_THRESHOLD = 300_000
+_PCA_HIGH_DIM_KEY = "X_pca"
+_LARGE_ATLAS_PCA_COMPONENTS = 50
+_CORESET_SIZE = 50_000
+_CORESET_MIN_PER_CLUSTER = 100
+_CORESET_SEED = 42
+
+
+def _stratified_subsample(
+    cluster_labels: np.ndarray,
+    n_total: int,
+    M: int = _CORESET_SIZE,
+    min_per_cluster: int = _CORESET_MIN_PER_CLUSTER,
+    seed: int = _CORESET_SEED,
+) -> np.ndarray:
+    """Stratified core-set subsampling proportional to cluster sizes.
+
+    Guarantees at least *min_per_cluster* cells per cluster (capped
+    at the cluster's actual size), then allocates the remainder of
+    *M* targets proportionally across clusters.
+
+    Returns sorted integer indices into the original (0 … n_total-1)
+    range.
+    """
+    rng = np.random.RandomState(seed)
+    unique, counts = np.unique(cluster_labels, return_counts=True)
+
+    proportions = counts.astype(np.float64) / n_total
+    allocated = np.maximum(min_per_cluster, (proportions * M).astype(int))
+    allocated = np.minimum(allocated, counts)
+
+    if allocated.sum() > M:
+        scale = M / allocated.sum()
+        allocated = np.maximum(1, (allocated * scale).astype(int))
+        allocated = np.minimum(allocated, counts)
+
+    surplus = M - allocated.sum()
+    if surplus > 0:
+        available = counts - allocated
+        extra = np.minimum(available, (proportions * surplus).astype(int))
+        allocated += extra
+
+    deficit = M - allocated.sum()
+    if deficit > 0:
+        remaining_capacity = counts - allocated
+        order = np.argsort(remaining_capacity)[::-1]
+        for idx in order:
+            if deficit <= 0:
+                break
+            take = min(remaining_capacity[idx], deficit)
+            allocated[idx] += take
+            deficit -= take
+
+    indices: list[int] = []
+    for i, n_samp in enumerate(allocated):
+        if n_samp == 0:
+            continue
+        mask = np.where(cluster_labels == unique[i])[0]
+        chosen = rng.choice(mask, size=n_samp, replace=False)
+        indices.extend(chosen.tolist())
+
+    return np.sort(np.array(indices, dtype=np.int64))
+
 
 def _precompute_dimred(
     adata: AnnData,
@@ -363,13 +442,40 @@ def _precompute_dimred(
     :func:`save_dimred_cache` so that :func:`cal_dimred` can reuse
     the results via :func:`load_dimred_cache`.
     """
-    logger.info("Precomputing dimred: %d embedding(s)", len([k for k in ctx.embedding_keys if k != "X"]))
-
     n_obs = adata.n_obs
     sample_indices = np.arange(n_obs)
     n_cells = n_obs
 
     high_dim_key = "X"
+    if n_cells > _LARGE_ATLAS_THRESHOLD:
+        logger.info(
+            "Large atlas (%d cells): computing PCA (%d components) as high-dim space",
+            n_cells,
+            _LARGE_ATLAS_PCA_COMPONENTS,
+        )
+        if _RAPIDS_AVAILABLE:
+            logger.info(
+                        "Using the rapids-singlecell GPU Acceleration ...",
+                    )
+            rsc.get.anndata_to_GPU(adata)
+            rsc.pp.pca(
+                adata,
+                n_comps=_LARGE_ATLAS_PCA_COMPONENTS,
+                zero_center=False,
+            )
+            rsc.get.anndata_to_CPU(adata)
+        else:
+            logger.info(
+                        "Using the CPU fallback with Randomized SVD Solver ...",
+                        )
+            sc.pp.pca(
+                adata,
+                n_comps=_LARGE_ATLAS_PCA_COMPONENTS,
+                zero_center=False,
+                use_highly_variable=False,
+                svd_solver="randomized"
+            )
+        high_dim_key = _PCA_HIGH_DIM_KEY
     if high_dim_key == "X":
         high_dim_data = adata.X[sample_indices]
         if hasattr(high_dim_data, "toarray"):
@@ -381,16 +487,31 @@ def _precompute_dimred(
     use_memmap = n_cells > 10000
 
     # ── Fingerprint for cache validation ────────────────────────
+    # Use compute_fingerprint directly so n_features reflects the
+    # actual high-dim reference (e.g. PCA components), not
+    # adata.n_vars (raw gene count).  This keeps the fingerprint
+    # consistent with cal_dimred's cache lookup.
     emb_to_eval = [k for k in ctx.embedding_keys if k != high_dim_key]
+    logger.info(
+        "Dimred high-dim key=%s (%d features), %d low-dim embedding(s) to evaluate",
+        high_dim_key, high_n_features, len(emb_to_eval),
+    )
     if not emb_to_eval:
         logger.warning("No embeddings to precompute for dimred")
         return
 
-    fp = make_preprocess_fingerprint(
-        adata,
+    _emb_shapes = {}
+    for k in emb_to_eval:
+        try:
+            _emb_shapes[k] = tuple(adata.obsm[k][sample_indices].shape)
+        except Exception:
+            _emb_shapes[k] = (-1, -1)
+
+    fp = compute_fingerprint(
+        n_cells=n_cells,
+        n_features=high_n_features,
         embedding_keys=emb_to_eval,
-        cluster_label_keys=ctx.cluster_label_keys,
-        batch_keys=ctx.batch_keys,
+        embedding_shapes=_emb_shapes,
         k_neighbors=k_neighbors,
         source_path=ctx.fingerprint.get("source_path"),
     )
@@ -419,46 +540,82 @@ def _precompute_dimred(
         )
         high_knn_dists, high_knn_indices = nbrs.kneighbors(high_dim_data)
 
+    # ── Core-set subsample for large atlases (>300k cells) ──
+    subsample_indices: Optional[np.ndarray] = None
+    if n_cells > _LARGE_ATLAS_THRESHOLD:
+        cluster_key = ctx.cluster_label_keys[0] if ctx.cluster_label_keys else None
+        if cluster_key is not None and cluster_key in adata.obs.columns:
+            cluster_labels = adata.obs[cluster_key].values.astype(str)
+            n_clusters = len(np.unique(cluster_labels))
+            logger.info(
+                "Stratified core-set subsample: %d cells from %d clusters",
+                _CORESET_SIZE,
+                n_clusters,
+            )
+        else:
+            cluster_labels = np.zeros(n_cells, dtype=int)
+            logger.info(
+                "No cluster labels found — using uniform subsample of %d cells",
+                _CORESET_SIZE,
+            )
+        subsample_indices = _stratified_subsample(
+            cluster_labels, n_cells, M=_CORESET_SIZE,
+        )
+        ctx.subsample_indices = subsample_indices
+        logger.info(
+            "Core-set: %d cells selected for distance matrices (%d × %d vs %d × %d full)",
+            len(subsample_indices),
+            len(subsample_indices), len(subsample_indices), n_cells, n_cells,
+        )
+
     # ── High-dim distance matrix ──────────────────────────────────
+    _FULL_DIST_METRICS = frozenset(
+        ("kruskal_stress", "spearman_rho", "dCor")
+    )
     _DIST_METRICS = frozenset(
         ("kruskal_stress", "spearman_rho", "dCor", "trustworthiness", "continuity")
     )
     need_high_dists = bool(set(ctx.fingerprint.get("metric_dimred", _DIST_METRICS)) & _DIST_METRICS)
+    need_full_dists = bool(set(ctx.fingerprint.get("metric_dimred", _DIST_METRICS)) & _FULL_DIST_METRICS)
+
+    if need_high_dists and subsample_indices is not None:
+        high_dim_data = high_dim_data[subsample_indices]
 
     high_dim_dists = None
     if need_high_dists:
+        _dist_n = len(subsample_indices) if subsample_indices is not None else n_cells
         _use_gpu = _JAX_AVAILABLE and _GPU_AVAILABLE
         backend_label = "GPU (JAX)" if _use_gpu else f"CPU (n_jobs={n_jobs})"
         tqdm.write(
             "  Computing high-dim distance matrix"
-            f" ({n_cells:,} x {n_cells:,})"
+            f" ({_dist_n:,} x {_dist_n:,})"
             " [shared with dimred + cluster metrics]..."
         )
         tqdm.write(f"  Backend: {backend_label}")
-        if use_memmap:
+        if use_memmap or subsample_indices is not None:
             import uuid
-
             run_id = str(uuid.uuid4())[:8]
             from .metrics._triangular import TriangularMatrix, store_upper_triangle
 
             high_dists_path = os.path.join(ctx.dimred_dir, f"high_dists_{run_id}.tri")
             high_dim_dists = TriangularMatrix(
-                n=n_cells, filepath=high_dists_path, mode="w+"
+                n=_dist_n, filepath=high_dists_path, mode="w+"
             )
             x_cluster_dists = None
             if ctx.cluster_dir:
-                x_cluster_path = os.path.join(ctx.cluster_dir, "dist_X.tri")
+                safe_hd = high_dim_key.replace("/", "_").replace(" ", "_")
+                x_cluster_path = os.path.join(ctx.cluster_dir, f"dist_{safe_hd}.tri")
                 x_cluster_dists = TriangularMatrix(
-                    n=n_cells, filepath=x_cluster_path, mode="w+"
+                    n=_dist_n, filepath=x_cluster_path, mode="w+"
                 )
 
             if _use_gpu:
                 _last_flush = [0]
 
                 def _store_block(block, qs, rs):
-                    store_upper_triangle(high_dim_dists._data, block, qs, rs, n_cells)
+                    store_upper_triangle(high_dim_dists._data, block, qs, rs, _dist_n)
                     if x_cluster_dists is not None:
-                        store_upper_triangle(x_cluster_dists._data, block, qs, rs, n_cells)
+                        store_upper_triangle(x_cluster_dists._data, block, qs, rs, _dist_n)
                     _last_flush[0] += 1
                     if _last_flush[0] % 20 == 0:
                         high_dim_dists.flush()
@@ -476,33 +633,33 @@ def _precompute_dimred(
                     x_cluster_dists.flush()
             else:
                 for i in tqdm(
-                    range(0, n_cells, chunk_size),
+                    range(0, _dist_n, chunk_size),
                     desc="  High-dim distance matrix [CPU]",
                     unit="chunk",
                 ):
-                    end = min(i + chunk_size, n_cells)
+                    end = min(i + chunk_size, _dist_n)
                     from sklearn.metrics import pairwise_distances
 
                     block = pairwise_distances(
                         high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
                     )
-                    store_upper_triangle(high_dim_dists._data, block, i, 0, n_cells)
+                    store_upper_triangle(high_dim_dists._data, block, i, 0, _dist_n)
                     high_dim_dists.flush()
                     if x_cluster_dists is not None:
-                        store_upper_triangle(x_cluster_dists._data, block, i, 0, n_cells)
+                        store_upper_triangle(x_cluster_dists._data, block, i, 0, _dist_n)
                         x_cluster_dists.flush()
             if x_cluster_dists is not None:
                 del x_cluster_dists
         else:
             from sklearn.metrics import pairwise_distances
 
-            high_dim_dists = np.zeros((n_cells, n_cells), dtype=np.float32)
+            high_dim_dists = np.zeros((_dist_n, _dist_n), dtype=np.float32)
             for i in tqdm(
-                range(0, n_cells, chunk_size),
+                range(0, _dist_n, chunk_size),
                 desc="  High-dim distance matrix [CPU]",
                 unit="chunk",
             ):
-                end = min(i + chunk_size, n_cells)
+                end = min(i + chunk_size, _dist_n)
                 high_dim_dists[i:end, :] = pairwise_distances(
                     high_dim_data[i:end], high_dim_data, n_jobs=n_jobs
                 )
@@ -513,7 +670,7 @@ def _precompute_dimred(
                 )
 
     # ── Per-embedding low-dim kNN + distances ────────────────────
-    low_dim_data_cache = {}
+    low_dim_data_cache: dict[str, dict] = {}
     for emb_key in tqdm(emb_to_eval, desc="  Low-dim precompute (shared with cluster metrics)"):
         low_dim_data = adata.obsm[emb_key][sample_indices]
         low_n_cells = low_dim_data.shape[0]
@@ -535,9 +692,15 @@ def _precompute_dimred(
             ).fit(low_dim_data)
             low_knn_dists, low_knn_indices = nbrs_low.kneighbors(low_dim_data)
 
+        low_dist_data = low_dim_data
+        low_dist_n = low_n_cells
+        if need_high_dists and subsample_indices is not None:
+            low_dist_data = low_dim_data[subsample_indices]
+            low_dist_n = _dist_n
+
         low_dists = None
         if need_high_dists:
-            if use_memmap:
+            if use_memmap or subsample_indices is not None:
                 import uuid
 
                 run_id = str(uuid.uuid4())[:8]
@@ -548,7 +711,7 @@ def _precompute_dimred(
                     ctx.dimred_dir, f"low_dists_{safe_name}_{run_id}.tri"
                 )
                 low_dists = TriangularMatrix(
-                    n=low_n_cells, filepath=low_dists_path, mode="w+"
+                    n=low_dist_n, filepath=low_dists_path, mode="w+"
                 )
                 cluster_dists = None
                 if ctx.cluster_dir:
@@ -556,16 +719,16 @@ def _precompute_dimred(
                         ctx.cluster_dir, f"dist_{safe_name}.tri"
                     )
                     cluster_dists = TriangularMatrix(
-                        n=low_n_cells, filepath=cluster_path, mode="w+"
+                        n=low_dist_n, filepath=cluster_path, mode="w+"
                     )
 
                 if _use_gpu:
                     _last_flush_low = [0]
 
                     def _store_low_block(block, qs, rs):
-                        store_upper_triangle(low_dists._data, block, qs, rs, low_n_cells)
+                        store_upper_triangle(low_dists._data, block, qs, rs, low_dist_n)
                         if cluster_dists is not None:
-                            store_upper_triangle(cluster_dists._data, block, qs, rs, low_n_cells)
+                            store_upper_triangle(cluster_dists._data, block, qs, rs, low_dist_n)
                         _last_flush_low[0] += 1
                         if _last_flush_low[0] % 20 == 0:
                             low_dists.flush()
@@ -574,8 +737,8 @@ def _precompute_dimred(
 
                     tqdm.write(f"    Distances ({emb_key}) [GPU]...")
                     cdist_chunked(
-                        np.asarray(low_dim_data, dtype=np.float32),
-                        np.asarray(low_dim_data, dtype=np.float32),
+                        np.asarray(low_dist_data, dtype=np.float32),
+                        np.asarray(low_dist_data, dtype=np.float32),
                         metric="euclidean",
                         block_callback=_store_low_block,
                     )
@@ -584,37 +747,37 @@ def _precompute_dimred(
                         cluster_dists.flush()
                 else:
                     for i in tqdm(
-                        range(0, low_n_cells, chunk_size),
+                        range(0, low_dist_n, chunk_size),
                         desc=f"    Distances ({emb_key}) [dimred + cluster] [CPU]",
                         unit="chunk",
                         leave=False,
                     ):
-                        end = min(i + chunk_size, low_n_cells)
+                        end = min(i + chunk_size, low_dist_n)
                         from sklearn.metrics import pairwise_distances
 
                         block = pairwise_distances(
-                            low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
+                            low_dist_data[i:end], low_dist_data, n_jobs=n_jobs
                         )
-                        store_upper_triangle(low_dists._data, block, i, 0, low_n_cells)
+                        store_upper_triangle(low_dists._data, block, i, 0, low_dist_n)
                         low_dists.flush()
                         if cluster_dists is not None:
-                            store_upper_triangle(cluster_dists._data, block, i, 0, low_n_cells)
+                            store_upper_triangle(cluster_dists._data, block, i, 0, low_dist_n)
                             cluster_dists.flush()
                 if cluster_dists is not None:
                     del cluster_dists
             else:
                 from sklearn.metrics import pairwise_distances
 
-                low_dists = np.zeros((low_n_cells, low_n_cells), dtype=np.float32)
+                low_dists = np.zeros((low_dist_n, low_dist_n), dtype=np.float32)
                 for i in tqdm(
-                    range(0, low_n_cells, chunk_size),
+                    range(0, low_dist_n, chunk_size),
                     desc=f"    Distances ({emb_key}) [dimred + cluster] [CPU]",
                     unit="chunk",
                     leave=False,
                 ):
-                    end = min(i + chunk_size, low_n_cells)
+                    end = min(i + chunk_size, low_dist_n)
                     low_dists[i:end, :] = pairwise_distances(
-                        low_dim_data[i:end], low_dim_data, n_jobs=n_jobs
+                        low_dist_data[i:end], low_dist_data, n_jobs=n_jobs
                     )
                 if ctx.cluster_dir:
                     safe_name = emb_key.replace("/", "_").replace(" ", "_")
@@ -628,6 +791,8 @@ def _precompute_dimred(
             "knn_indices": low_knn_indices,
             "knn_dists": low_knn_dists,
         }
+        if subsample_indices is not None:
+            low_dim_data_cache[emb_key]["subsample_indices"] = subsample_indices
 
     # ── Persist to cache ─────────────────────────────────────────
     try:
@@ -639,6 +804,7 @@ def _precompute_dimred(
             high_knn_indices=high_knn_indices,
             low_dim_data=low_dim_data_cache,
             low_dim_keys=emb_to_eval,
+            subsample_indices=subsample_indices,
         )
         logger.info("Dimred precomputation saved to %s", ctx.dimred_dir)
     except Exception as exc:
@@ -843,7 +1009,6 @@ def _precompute_cluster(
                 continue
             X_emb = np.asarray(adata.obsm[emb])
 
-        n_cells = X_emb.shape[0]
         tri_path = os.path.join(ctx.cluster_dir, f"dist_{safe_name(emb)}.tri")
         npy_path = tri_path.replace(".tri", ".npy")
 
@@ -851,14 +1016,19 @@ def _precompute_cluster(
         if os.path.exists(tri_path) or os.path.exists(npy_path):
             continue
 
-        if n_cells > 10000:
-            tri = TriangularMatrix(n=n_cells, filepath=tri_path, mode="w+")
+        # Large-atlas core-set: reuse same subsample indices
+        if ctx.subsample_indices is not None:
+            X_emb = X_emb[ctx.subsample_indices]
+        n_emb = X_emb.shape[0]
+
+        if n_emb > 10000:
+            tri = TriangularMatrix(n=n_emb, filepath=tri_path, mode="w+")
 
             if _use_gpu:
                 _last_flush_cluster = [0]
 
                 def _store_cluster_block(block, qs, rs):
-                    store_upper_triangle(tri._data, block, qs, rs, n_cells)
+                    store_upper_triangle(tri._data, block, qs, rs, n_emb)
                     _last_flush_cluster[0] += 1
                     if _last_flush_cluster[0] % 20 == 0:
                         tri.flush()
@@ -872,14 +1042,14 @@ def _precompute_cluster(
                 tri.flush()
             else:
                 for i in tqdm(
-                    range(0, n_cells, chunk_size),
+                    range(0, n_emb, chunk_size),
                     desc=f"    Distances ({emb}) [CPU]",
                     unit="chunk",
                     leave=False,
                 ):
-                    end = min(i + chunk_size, n_cells)
+                    end = min(i + chunk_size, n_emb)
                     block = pairwise_distances(X_emb[i:end], X_emb, n_jobs=n_jobs)
-                    store_upper_triangle(tri._data, block, i, 0, n_cells)
+                    store_upper_triangle(tri._data, block, i, 0, n_emb)
                 tri.flush()
         else:
             dists = pairwise_distances(X_emb, n_jobs=n_jobs)
@@ -1394,6 +1564,17 @@ def create_metric_cluster(
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
     cluster_dir = folders.get_folder(args.path, folders.CLUSTER)
 
+    # Detect cluster labels and embedding keys via the column
+    # detector so the per-task header shows only the columns the
+    # metric engine will actually consume (matching the pattern
+    # used by create_metric_annot and create_metric_batch_correction).
+    _detector = CheckAtlasColumnDetector(adata)
+    _params = _detector.detect_all_parameters()
+    _cluster_labels = [c for c, _ in _params["clustering"]["cluster_labels"]]
+    _emb_keys = [
+        k for k, _ in _params["clustering"]["embeddings"]
+    ]
+
     log_format.task_header(
         logger,
         atlas_name=atlas_name,
@@ -1401,12 +1582,16 @@ def create_metric_cluster(
         n_vars=adata.n_vars,
         task="cluster",
         keys={
-            "cluster labels": list(
-                adata.obs.select_dtypes(include="category").columns
-            ),
-            "embeddings": list(adata.obsm_keys()),
+            "cluster labels": _cluster_labels,
+            "embeddings": _emb_keys,
         },
     )
+
+    if not _cluster_labels:
+        logger.warning(
+            "No cluster labels detected in adata.obs. Skipping clustering metrics."
+        )
+        return
 
     import time as _time
     _t0 = _time.time()
@@ -1488,6 +1673,13 @@ def create_metric_annot(
         if meta.get("n_components", 0) > 2
     ]
 
+    if not _ref_keys and not _pred_keys:
+        logger.warning(
+            "No reference or predicted annotation keys detected in adata.obs. "
+            "Skipping annotation metrics."
+        )
+        return
+
     log_format.task_header(
         logger,
         atlas_name=atlas_name,
@@ -1565,6 +1757,13 @@ def create_metric_dimred(
 
     atlas_name = atlas_info[check.ATLAS_NAME_KEY]
 
+    _obsm_keys = list(adata.obsm_keys())
+    if not _obsm_keys:
+        logger.warning(
+            "No embedding keys in adata.obsm. Skipping dimred metrics."
+        )
+        return
+
     log_format.task_header(
         logger,
         atlas_name=atlas_name,
@@ -1572,7 +1771,7 @@ def create_metric_dimred(
         n_vars=adata.n_vars,
         task="dimred",
         keys={
-            "embeddings (all .obsm)": list(adata.obsm_keys()),
+            "embeddings (all .obsm)": _obsm_keys,
         },
     )
 
@@ -1585,10 +1784,18 @@ def create_metric_dimred(
         folders.get_folder(args.path, folders.TEMP), atlas_name, "dimred"
     )
 
+    # Large-atlas (>300k cells): use X_pca (PCA-reduced components) as
+    # the high-dim reference, matching what _precompute_dimred already
+    # stored in the cache.
+    high_dim_key = "X"
+    if adata.n_obs > _LARGE_ATLAS_THRESHOLD and _PCA_HIGH_DIM_KEY in adata.obsm:
+        high_dim_key = _PCA_HIGH_DIM_KEY
+
     df = metrics.cal_dimred(
         adata,
         atlas_name=atlas_name,
         metric_list=args.metric_dimred,
+        high_dim_key=high_dim_key,
         file_dir=cache_dir,
         use_cache=True,
         n_jobs=_resolve_n_jobs(args),
@@ -1667,6 +1874,13 @@ def create_metric_batch_correction(
         k for k, meta in _params["clustering"]["embeddings"]
         if meta.get("n_components", 0) > 2
     ]
+
+    if not _emb_keys and not _batch_keys and not _ref_keys and not _pred_keys:
+        logger.warning(
+            "No batch, reference, predicted, or embedding keys detected. "
+            "Skipping batch-correction metrics."
+        )
+        return
 
     log_format.task_header(
         logger,

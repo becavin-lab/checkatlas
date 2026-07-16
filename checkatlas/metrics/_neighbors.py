@@ -142,7 +142,8 @@ def _jax_exact_knn(
     chunked in the query axis.
 
     **Falls back to pynndescent CPU when the input data size exceeds
-    GPU memory** (e.g. 85k cells × 60k genes ≈ 20 GB on GPU).
+    GPU memory** (e.g. a large atlas with many genes can easily
+    require >20 GB on GPU).
     """
     import functools
 
@@ -176,6 +177,11 @@ def _jax_exact_knn(
         )
 
     # ── Medium atlas: chunked GPU (10k query rows at a time) ──────
+    # Clamp chunk_size so the (chunk × n) distance matrix per chunk
+    # stays under ~2 GB even for large n (safety net for n ≤ 200k).
+    _MAX_CHUNK_BYTES = 2 * 1024**3
+    _max_rows = max(200, int(_MAX_CHUNK_BYTES / (n * 4)))
+    chunk_size = min(chunk_size, _max_rows)
     db = jnp.asarray(X, dtype=jnp.float32)
     all_dists = []
     all_idx = []
@@ -216,7 +222,7 @@ def _jax_streaming_knn(
 
     This is the scib‑metrics *external‑memory kNN* pattern, but with
     two‑axis chunking to avoid ``db = jnp.asarray(X)`` for high‑dim
-    gene expression data (e.g. 85 k × 60 k = 20 GB on GPU).
+    gene expression data that would exhaust GPU memory.
 
     Parameters
     ----------
@@ -291,6 +297,70 @@ def _jax_streaming_knn(
     running_idx = np.take_along_axis(running_idx, sort_idx, axis=1)
 
     return NeighborResults(indices=running_idx, distances=running_dist)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Faiss GPU/CPU — approximate kNN for large atlases (n > 100 k)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+def _faiss_knn(
+    X: np.ndarray,
+    n_neighbors: int,
+    n_jobs: int = -1,
+) -> NeighborResults:
+    """Faiss approximate kNN with GPU acceleration and CPU fallback.
+
+    Uses ``IndexIVFFlat`` — fast k‑means training on CPU (~10 s for
+    600k cells), GPU‑accelerated search (~8 s for 600k queries).
+    Returns actual Euclidean distances (Faiss returns squared L2).
+
+    Fallback chain: Faiss GPU → Faiss CPU → pynndescent.
+    """
+    try:
+        import faiss
+    except ImportError:
+        logger.debug("Faiss not available — falling back to pynndescent")
+        return _pynndescent_knn(X, n_neighbors, n_jobs=n_jobs)
+
+    n, d = X.shape
+    X_f32 = np.asarray(X, dtype=np.float32)
+    k = min(n_neighbors, n)
+
+    nlist = min(256, max(16, int(4 * (n**0.5))))
+    nprobe = max(4, int(nlist * 0.15))
+
+    try:
+        quantizer = faiss.IndexFlatL2(d)
+        index = faiss.IndexIVFFlat(quantizer, d, nlist)
+        index.train(X_f32)
+        index.add(X_f32)
+        index.nprobe = nprobe
+
+        _HAS_GPU = hasattr(faiss, "StandardGpuResources")
+        if _HAS_GPU:
+            try:
+                res = faiss.StandardGpuResources()
+                gpu_index = faiss.index_cpu_to_gpu(res, 0, index)
+                batch = max(5000, int(20_000_000 / n))
+                all_D, all_I = [], []
+                for i in range(0, n, batch):
+                    end = min(i + batch, n)
+                    dst, idx = gpu_index.search(X_f32[i:end], k)
+                    all_D.append(dst)
+                    all_I.append(idx)
+                D = np.concatenate(all_D)
+                indices = np.concatenate(all_I)
+            except Exception:
+                logger.debug("Faiss GPU search failed — trying CPU", exc_info=True)
+                D, indices = index.search(X_f32, k)
+        else:
+            D, indices = index.search(X_f32, k)
+
+        return NeighborResults(indices=indices, distances=np.sqrt(D.astype(np.float64)))
+    except Exception:
+        logger.debug("Faiss KNN failed — falling back to pynndescent", exc_info=True)
+        return _pynndescent_knn(X, n_neighbors, n_jobs=n_jobs)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -379,20 +449,38 @@ def compute_neighbors(
             f"Unknown backend '{backend}'. Use 'auto', 'jax', or 'pynndescent'."
         )
 
-    if use_jax:
-        # ── Select GPU path based on input size ─────────────────
-        data_gb = (X_arr.shape[0] * X_arr.shape[1] * 4) / (1024**3)
+    n, d = X_arr.shape
+
+    if backend in ("jax", "pynndescent"):
+        # ── Explicit backend: honour user choice regardless of n ──
+        if backend == "jax":
+            data_gb = (n * d * 4) / (1024**3)
+            if data_gb <= 10.0:
+                result = _jax_exact_knn(X_arr, n_neighbors)
+            else:
+                result = _jax_streaming_knn(X_arr, n_neighbors, tri_memmap=tri_memmap)
+        else:
+            result = _pynndescent_knn(X_arr, n_neighbors, n_jobs=n_jobs)
+    elif use_jax and n <= 100_000:
+        # ── Small / medium atlas: JAX GPU (exact or streaming) ──
+        data_gb = (n * d * 4) / (1024**3)
         if data_gb <= 10.0:
             result = _jax_exact_knn(X_arr, n_neighbors)
         else:
-            # Large atlas — streaming GPU kNN (query×ref chunked)
             logger.debug(
-                "Streaming GPU kNN (%.1f GB input, chunks q=%d r=%d)",
+                "Streaming GPU kNN (%.1f GB input, n=%d, chunks q=%d r=%d)",
                 data_gb,
+                n,
                 15000,
                 10000,
             )
             result = _jax_streaming_knn(X_arr, n_neighbors, tri_memmap=tri_memmap)
+    elif n > 100_000:
+        # ── Large atlas: Faiss GPU ANN (~30 s for 600k cells) ──
+        logger.debug(
+            "Large atlas (n=%d): Faiss approximate kNN (GPU if available)", n
+        )
+        result = _faiss_knn(X_arr, n_neighbors, n_jobs=n_jobs)
     else:
         result = _pynndescent_knn(X_arr, n_neighbors, n_jobs=n_jobs)
 

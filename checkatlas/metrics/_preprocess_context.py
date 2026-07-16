@@ -81,6 +81,9 @@ class PreprocessContext:
     # ── Precomputed neighbour graphs for graph_connectivity ──────
     neighbor_graphs: dict[str, dict] = field(default_factory=dict)
 
+    # ── Large-atlas core-set indices (>300k cells) ───────────────
+    subsample_indices: Optional[np.ndarray] = None
+
 
 def make_preprocess_fingerprint(
     adata,

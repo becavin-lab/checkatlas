@@ -193,6 +193,7 @@ def save_dimred_cache(
     high_knn_indices: np.ndarray,
     low_dim_data: dict,
     low_dim_keys: list,
+    subsample_indices: Optional[np.ndarray] = None,
 ) -> None:
     """Save all precomputed dimred data to *cache_dir*.
 
@@ -210,6 +211,14 @@ def save_dimred_cache(
         save_triangular(cache_dir, "high_dists", high_dim_dists)
     save_knn(cache_dir, "knn_high", high_knn_indices, high_knn_dists)
 
+    # Subsample indices for large-atlas core-set protocol
+    if subsample_indices is not None:
+        np.save(
+            os.path.join(cache_dir, "subsample_indices.npy"),
+            subsample_indices.astype(np.int64),
+        )
+        fp["subsample_n"] = int(len(subsample_indices))
+
     # Low-dim per embedding
     for emb in low_dim_keys:
         info = low_dim_data.get(emb, {})
@@ -223,6 +232,12 @@ def save_dimred_cache(
                 f"knn_low_{safe_name}",
                 info["knn_indices"],
                 info["knn_dists"],
+            )
+        emb_subsample = info.get("subsample_indices")
+        if emb_subsample is not None:
+            np.save(
+                os.path.join(cache_dir, f"subsample_indices_{safe_name}.npy"),
+                emb_subsample.astype(np.int64),
             )
 
     logger.info("Precomputed dimred data cached for reuse at %s", cache_dir)
@@ -239,10 +254,23 @@ def load_dimred_cache(
     Partial cache is valid — distance matrices may be missing (for
     GPU one‑shot atlases where they live in RAM), but kNN data must
     be present.
+
+    When the cache was produced by the core‑set subsampling protocol
+    (large atlases > 300k cells) the distance matrices have a smaller
+    *n* matching the subsample size read from ``subsample_indices.npy``.
     """
     cached_fp = read_fingerprint(cache_dir)
     if cached_fp is None or not fingerprint_matches(cached_fp, fp):
         return None
+
+    # ── Subsample indices (optional — large-atlas core-set) ──
+    subsample_indices: Optional[np.ndarray] = None
+    sub_path = os.path.join(cache_dir, "subsample_indices.npy")
+    if os.path.exists(sub_path):
+        subsample_indices = np.load(sub_path).astype(np.int64)
+        dist_n = int(len(subsample_indices))
+    else:
+        dist_n = n_cells
 
     # ── High-dim kNN (required) ──
     knn_high = load_knn(cache_dir, "knn_high")
@@ -252,7 +280,7 @@ def load_dimred_cache(
     high_knn_indices, high_knn_dists = knn_high
 
     # ── High-dim distance matrix (optional — may be None for GPU one‑shot) ──
-    high_dim_dists = load_triangular(cache_dir, "high_dists", n=n_cells)
+    high_dim_dists = load_triangular(cache_dir, "high_dists", n=dist_n)
 
     # ── Low-dim per embedding (kNN required, distances optional) ──
     low_dim_data = {}
@@ -263,12 +291,16 @@ def load_dimred_cache(
             logger.debug("Cache miss: missing low-dim kNN for %s", emb)
             return None
         low_indices, low_dists_knn = knn_low
-        low_tri = load_triangular(cache_dir, f"low_dists_{safe_name}", n=n_cells)
-        low_dim_data[emb] = {
+        low_tri = load_triangular(cache_dir, f"low_dists_{safe_name}", n=dist_n)
+        entry: dict = {
             "dists": low_tri,  # may be None
             "knn_indices": low_indices,
             "knn_dists": low_dists_knn,
         }
+        emb_sub_path = os.path.join(cache_dir, f"subsample_indices_{safe_name}.npy")
+        if os.path.exists(emb_sub_path):
+            entry["subsample_indices"] = np.load(emb_sub_path).astype(np.int64)
+        low_dim_data[emb] = entry
 
     logger.info("Cache HIT — reusing precomputed dimred data from %s", cache_dir)
     return {
@@ -276,4 +308,5 @@ def load_dimred_cache(
         "high_knn_indices": high_knn_indices,
         "high_knn_dists": high_knn_dists,
         "low_dim": low_dim_data,
+        "subsample_indices": subsample_indices,
     }

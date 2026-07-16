@@ -405,6 +405,14 @@ def cdist_chunked(
         q_chunk = max(q_chunk, 1)
         r_chunk = N
 
+    # Clamp chunks so the (q × r) distance block stays under ~2 GB on GPU.
+    # For a 50k core-set with 200-dim PCA, the quadratic formula above can
+    # produce q_chunk = r_chunk = 50000 → 50k×50k float32 ≈ 10 GB per block.
+    _MAX_BLOCK_BYTES = 2 * 1024**3
+    _max_block_elems = _MAX_BLOCK_BYTES // bytes_per_elem
+    q_chunk = min(q_chunk, max(200, _max_block_elems // r_chunk))
+    r_chunk = min(r_chunk, max(200, _max_block_elems // q_chunk))
+
     import jax.numpy as jnp
 
     _cdist = _cdist_jax

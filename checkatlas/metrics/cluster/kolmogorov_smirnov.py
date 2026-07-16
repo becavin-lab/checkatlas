@@ -1,5 +1,5 @@
 import numpy as np
-from joblib import Parallel, delayed
+from sklearn.utils.parallel import Parallel, delayed
 from scipy.sparse import issparse
 from scipy.stats import ks_2samp
 from tqdm import tqdm
