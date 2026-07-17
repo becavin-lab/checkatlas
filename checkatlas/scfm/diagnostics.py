@@ -323,11 +323,11 @@ def _verdict_problem_4(
             "No --scfm_batch_key provided, batch metrics not evaluable.",
             p_rules.get("primary_reference", ""),
         )
-    kbet_v = _safe_get(df, metric="kbet", embedding=config.scfm_embedding)
-    ilisi_v = _safe_get(df, metric="iLISI", embedding=config.scfm_embedding)
-    pcr_v = _safe_get(df, metric="pcr", embedding=config.scfm_embedding)
+    kbet_v = _safe_get(df, metric="kbet", embedding=config.scfm_embedding, task="batch_correction")
+    ilisi_v = _safe_get(df, metric="iLISI", embedding=config.scfm_embedding, task="batch_correction")
+    pcr_v = _safe_get(df, metric="pcr", embedding=config.scfm_embedding, task="batch_correction")
     gc_v = _safe_get(
-        df, metric="graph_connectivity", embedding=config.scfm_embedding
+        df, metric="graph_connectivity", embedding=config.scfm_embedding, task="batch_correction"
     )
     scores: list[float] = []
     evidence: list[str] = []

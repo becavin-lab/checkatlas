@@ -180,20 +180,25 @@ def run(
     metrics: Sequence[str] = ("silhouette", "ari", "ilisi", "kbet"),
     n_jobs: int = -1,
     preprocess_context=None,
+    subset_indices: Optional[np.ndarray] = None,
 ) -> pd.DataFrame:
     """Measure CV across ``n_seeds`` embedding-perturbation runs.
 
-    The atlas is NEVER subsampled. For each ``(embedding, metric,
-    seed)`` triple, the function perturbs the embedding with
-    additive Gaussian noise (sigma proportional to per-feature
-    std) and re-evaluates the metric. The kNN graph used for iLISI
-    and kBET is the precomputed one (built once on the unperturbed
-    embedding); the perturbed points are simply projected into the
-    pre-existing neighbour space by looking up their k nearest
-    neighbours in the precomputed graph. Because that lookup is
-    not perfect, the iLISI / kBET values reported for the
-    *perturbed* embedding are a conservative upper bound on the
-    noise-induced perturbation.
+    For large atlases, ``subset_indices`` can provide a core-set
+    of cell indices for O(N^2) operations (silhouette). The
+    embedding is perturbed only on the subset; label-based
+    metrics (ARI, iLISI, kBET) use the full atlas.
+
+    The perturbation is the standard one used in robustness
+    benchmarks (Atti & Subramaniam 2025): additive Gaussian noise
+    with sigma proportional to the per-feature standard deviation
+    of the embedding. The metric is CV of the downstream
+    silhouette / ARI / iLISI / kBET over ``n_seeds`` noise
+    samples.
+
+    The kNN graph for kBET / iLISI is built once on the
+    un-perturbed embedding and reused across all noise samples
+    via ``NeighborResults.subset_neighbors(k)``.
 
     Parameters
     ----------
@@ -253,21 +258,29 @@ def run(
         if emb not in adata.obsm:
             continue
         X_full = adata.obsm[emb]
+        # Apply core-set subsampling for O(N^2) operations on large atlases
+        X_for_sil = X_full
+        labels_for_sil = ref_arr if ref_arr is not None else pred_arr
+        if subset_indices is not None and subset_indices.size < n_total:
+            X_for_sil = X_full[subset_indices]
+            if labels_for_sil is not None:
+                labels_for_sil = labels_for_sil[subset_indices]
         per_metric_values: dict[str, list[float]] = {m: [] for m in metrics}
         for s in seeds:
             t0 = time.time()
             sub_rng = np.random.default_rng(s)
-            X_perturbed = _perturb_embedding(X_full, sigma_scale, sub_rng)
+            # Perturb the full (or subset) embedding
+            X_to_perturb = X_for_sil if "silhouette" in metrics or subset_indices is not None else X_full
+            X_perturbed = _perturb_embedding(X_to_perturb, sigma_scale, sub_rng)
             for metric in metrics:
                 if metric == "silhouette":
-                    if ref_arr is None and pred_arr is None:
+                    if labels_for_sil is None:
                         continue
-                    labels = ref_arr if ref_arr is not None else pred_arr
                     pdists = precomputed_dists.get(emb)
                     if pdists is not None and hasattr(pdists, "_filepath"):
                         pdists = None  # cannot reuse full dist matrix
                     val = _silhouette_value(
-                        X_perturbed, labels, pdists, n_jobs
+                        X_perturbed, labels_for_sil, pdists, n_jobs
                     )
                 elif metric == "ari":
                     if ref_arr is None or pred_arr is None:

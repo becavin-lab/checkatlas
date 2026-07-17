@@ -99,6 +99,7 @@ _PRECOMPUTE_PROCESSES = frozenset(
         "metric_dimred",
         "metric",
         "analyse",
+        "scfm",
     )
 )
 
@@ -123,6 +124,10 @@ def _should_precompute(args) -> bool:
     """Return True if at least one metric category is non-['none']."""
     if args is None:
         return False
+    process = getattr(args, "process", "preprocess")
+    # The scfm process always needs precomputations for all four tasks
+    if process == "scfm":
+        return True
     return (
         _metrics_enabled(args.metric_cluster)
         or _metrics_enabled(args.metric_annot)
@@ -138,6 +143,11 @@ def _wants_task(args, task: str) -> bool:
     process = getattr(args, "process", "preprocess")
     if process not in _PRECOMPUTE_PROCESSES:
         return False
+    # The scfm pipeline needs all four per-task metric engines
+    # (cluster, annot, batch_correction, dimred) so always
+    # precompute all tasks when process is "scfm".
+    if process == "scfm":
+        return True
     if task == "cluster":
         return _metrics_enabled(args.metric_cluster)
     elif task == "annot":

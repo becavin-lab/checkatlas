@@ -298,7 +298,7 @@ def _make_synth_metrics():
             },
             {
                 "Atlas Name": "x",
-                "Task": "annot",
+                "Task": "batch_correction",
                 "Metric Name": "kbet",
                 "Embedding": "X_scfm",
                 "Value": 0.55,
@@ -306,7 +306,7 @@ def _make_synth_metrics():
             },
             {
                 "Atlas Name": "x",
-                "Task": "annot",
+                "Task": "batch_correction",
                 "Metric Name": "iLISI",
                 "Embedding": "X_scfm",
                 "Value": 0.20,
@@ -375,14 +375,14 @@ def test_diagnose_problem_4_triggers_on_kbet_and_ilisi():
         [
             {
                 "Atlas Name": "x",
-                "Task": "annot",
+                "Task": "batch_correction",
                 "Metric Name": "kbet",
                 "Embedding": "X_scfm",
                 "Value": 0.70,
             },
             {
                 "Atlas Name": "x",
-                "Task": "annot",
+                "Task": "batch_correction",
                 "Metric Name": "iLISI",
                 "Embedding": "X_scfm",
                 "Value": 0.20,

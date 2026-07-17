@@ -11,6 +11,12 @@ pipeline. It follows Becavin comment 2 strictly:
     ``cal_cluster`` / ``cal_annot`` / ``cal_dimred`` calls, using
     the same precomputed artefacts.
 
+For large atlases (>300k cells), core-set subsampling is applied
+via the same ``_stratified_subsample`` protocol used by the main
+pipeline. The subsample indices from ``preprocess_context`` are
+reused when available; otherwise a uniform subsample to
+``_CORESET_SIZE`` (50k) is used.
+
 The function returns a long-format DataFrame with the same column
 schema as the existing ``cal_*`` pipelines (``[Atlas Name, Metric
 Name, Embedding, ..., Value, Time (s)]``) so the result can be
@@ -28,6 +34,69 @@ import pandas as pd
 from anndata import AnnData
 
 logger = logging.getLogger("checkatlas")
+
+_LARGE_ATLAS_THRESHOLD = 300_000
+_CORESET_SIZE = 50_000
+_CORESET_MIN_PER_CLUSTER = 100
+_CORESET_SEED = 42
+
+
+def _resolve_cell_limit(
+    adata: AnnData,
+    preprocess_context,
+) -> tuple[AnnData, Optional[np.ndarray], int]:
+    """Apply core-set subsampling for large atlases (>300k cells).
+
+    Returns ``(adata, subsample_indices, n_cells)`` where
+    ``adata`` is unchanged (the atlas is never modified in-place),
+    ``subsample_indices`` is the array of cell indices to use (or
+    ``None`` if subsampling is not needed), and ``n_cells`` is the
+    number of cells after subsampling.
+
+    When ``preprocess_context`` carries precomputed
+    ``subsample_indices`` those are reused directly.
+    """
+    n_cells = adata.n_obs
+    if n_cells <= _LARGE_ATLAS_THRESHOLD:
+        return adata, None, n_cells
+
+    if (
+        preprocess_context is not None
+        and hasattr(preprocess_context, "subsample_indices")
+        and preprocess_context.subsample_indices is not None
+    ):
+        logger.info(
+            "scfm: reusing precomputed core-set subsample (%d cells) from preprocess_context",
+            len(preprocess_context.subsample_indices),
+        )
+        return adata, preprocess_context.subsample_indices, len(
+            preprocess_context.subsample_indices
+        )
+
+    rng = np.random.default_rng(_CORESET_SEED)
+    indices = rng.choice(n_cells, size=_CORESET_SIZE, replace=False)
+    indices = np.sort(indices)
+    logger.info(
+        "scfm: large atlas (%d cells) — applying uniform core-set subsample to %d cells",
+        n_cells,
+        _CORESET_SIZE,
+    )
+    return adata, indices, _CORESET_SIZE
+
+
+def _subsample_array(arr: np.ndarray, indices: Optional[np.ndarray]) -> np.ndarray:
+    """Return ``arr[indices]`` if indices are given, else ``arr`` unchanged."""
+    if indices is None:
+        return arr
+    return arr[indices]
+
+
+def _subsample_embedding(
+    adata: AnnData, embedding_key: str, indices: Optional[np.ndarray]
+) -> np.ndarray:
+    """Return the embedding array, optionally subsampled."""
+    X = adata.obsm[embedding_key]
+    return _subsample_array(X, indices)
 
 
 def cal_scfm(
@@ -52,14 +121,15 @@ def cal_scfm(
     run_rare_types: bool = True,
     run_cross_domain: bool = True,
 ) -> pd.DataFrame:
-    """Run all four scfm-specific metric modules on the **full atlas**.
+    """Run all four scfm-specific metric modules.
 
-    The atlas is never subsampled (per the user instruction). All
-    four modules consume the precomputed kNN graphs and distance
-    matrices from ``preprocess_context`` when available; when the
-    context is missing, the modules fall back to local computation
-    (pynndescent kNN) without re-loading or re-processing the
-    atlas.
+    For atlases larger than 300k cells, core-set subsampling is
+    applied so the scaling and stability modules operate on a
+    manageable subset. The subsample indices from
+    ``preprocess_context`` are reused when available; otherwise a
+    uniform random sample of 50k cells is drawn. The rare_types
+    and cross_domain modules always run on the full atlas (they
+    are not O(N^2) operations).
 
     Parameters
     ----------
@@ -90,6 +160,9 @@ def cal_scfm(
     """
     from . import cross_domain, rare_types, scaling, stability
 
+    # Apply core-set subsampling for large atlases (>300k cells)
+    _, subset_indices, n_eff = _resolve_cell_limit(adata, preprocess_context)
+
     all_embeddings: list[str] = []
     if scfm_embedding in adata.obsm:
         all_embeddings.append(scfm_embedding)
@@ -110,6 +183,7 @@ def cal_scfm(
                 batch_key=batch_key,
                 n_jobs=n_jobs,
                 preprocess_context=preprocess_context,
+                subset_indices=subset_indices,
             )
             for _, r in df.iterrows():
                 rows.append(
@@ -142,6 +216,7 @@ def cal_scfm(
                 sigma_scale=noise_sigma,
                 n_jobs=n_jobs,
                 preprocess_context=preprocess_context,
+                subset_indices=subset_indices,
             )
             for _, r in df.iterrows():
                 rows.append(
@@ -151,7 +226,7 @@ def cal_scfm(
                         "Metric Name": f"{r['Metric']}_{r['Statistic']}",
                         "Embedding": str(r["Embedding"]),
                         "Fraction": np.nan,
-                        "N_Cells": adata.n_obs,
+                        "N_Cells": n_eff,
                         "Value": float(r["Value"])
                         if pd.notna(r["Value"])
                         else np.nan,

@@ -260,8 +260,10 @@ def main() -> None:  # pragma: no cover
                 from .scfm.pipeline import run_scfm_from_cache
 
                 scfm_config = from_args(args)
-                ensure_per_task_tsvs(adata, atlas_info, args, scfm_config)
-                result = run_scfm_from_cache(adata, scfm_config, args=args)
+                _, detected = ensure_per_task_tsvs(adata, atlas_info, args, scfm_config)
+                result = run_scfm_from_cache(
+                    adata, scfm_config, args=args, detected=detected
+                )
                 logger.info(
                     "scfm QC complete for %s. Outputs in %s",
                     atlas_name,

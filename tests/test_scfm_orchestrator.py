@@ -346,7 +346,7 @@ def test_existing_tsv_is_reused_not_recomputed(tmp_path: Path, caplog):
         "cluster TSV present" in m and "skipping auto-run" in m
         for m in info_msgs
     )
-    assert result["cluster"] is not None
+    assert result[0]["cluster"] is not None
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -645,19 +645,19 @@ def test_orchestrator_with_no_scfm_flags_runs_all_four_tasks(
     # classified ``celltype`` as a reference column; in our
     # synthetic atlas it does not, so we only assert that
     # ``cluster`` / ``batch_correction`` / ``dimred`` ran.
-    assert result["cluster"] is not None and len(result["cluster"]) > 0
+    assert result[0]["cluster"] is not None and len(result[0]["cluster"]) > 0
     # The new batch_correction task: in this synthetic atlas the
     # column detector found a "batch" column so the task is
     # computable.
     assert (
-        result["batch_correction"] is not None
-        and len(result["batch_correction"]) > 0
+        result[0]["batch_correction"] is not None
+        and len(result[0]["batch_correction"]) > 0
     )
     # The dimred task may be empty if the column detector
     # found no usable embeddings with > 3 components; in our
     # synthetic case X_pca and X_geneformer are both 10D so it
     # must produce rows.
-    assert result["dimred"] is not None and len(result["dimred"]) > 0
+    assert result[0]["dimred"] is not None and len(result[0]["dimred"]) > 0
 
     # The orchestrator logged the 'all combinations' message
     info = " ".join(r.getMessage() for r in caplog.records)
@@ -740,5 +740,5 @@ def test_orchestrator_with_user_specified_flags_keeps_existing_behaviour(
     # assertion is that the orchestrator did NOT log the 'all
     # combinations' message, which proves the user-specified
     # path is taken.
-    assert result["batch_correction"] is not None
-    assert result["dimred"] is not None
+    assert result[0]["batch_correction"] is not None
+    assert result[0]["dimred"] is not None

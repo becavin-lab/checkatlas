@@ -88,6 +88,23 @@ def _load_or_build_context(adata: AnnData, atlas_name: str, outdir: str, args) -
         load_context,
         make_preprocess_fingerprint,
     )
+    from ..utils.col_detector import CheckAtlasColumnDetector
+
+    source_path = getattr(adata, "filename", None)
+
+    # Auto-detect cluster label keys for proper fingerprint matching.
+    cluster_label_keys: list[str] = []
+    try:
+        detector = CheckAtlasColumnDetector(adata)
+        detected = detector.detect_all_parameters()
+        cluster_label_keys = [
+            c for c, _ in detected.get("clustering", {}).get("cluster_labels", [])
+        ]
+        batch_keys = [
+            c for c, _ in detected.get("batch", [])
+        ]
+    except Exception:
+        batch_keys = []
 
     # Step 1: try to load a cached context from the temp folder.
     temp_parent = folders.get_folder(outdir, folders.TEMP)
@@ -95,10 +112,10 @@ def _load_or_build_context(adata: AnnData, atlas_name: str, outdir: str, args) -
         fp = make_preprocess_fingerprint(
             adata,
             embedding_keys=list(adata.obsm.keys()),
-            cluster_label_keys=[],
-            batch_keys=[],
+            cluster_label_keys=cluster_label_keys,
+            batch_keys=batch_keys,
             k_neighbors=90,
-            source_path=getattr(adata, "filename", None),
+            source_path=source_path,
         )
         cached = load_context(atlas_name, temp_parent, fp)
         if cached is not None:
@@ -236,11 +253,6 @@ def run_scfm_pipeline(
         "average_silhouette_width",
     ):
         if metric_name in annot_mod.__all__:
-            existing_metric_lists.append(metric_name)
-    from ..metrics import batch_correction
-
-    for metric_name in ("kbet", "pcr", "graph_connectivity"):
-        if metric_name in batch_correction.__all__:
             existing_metric_lists.append(metric_name)
     for metric_name in ("silhouette", "davies_bouldin", "calinski_harabasz"):
         if metric_name in cluster.__all__:
@@ -437,13 +449,17 @@ def _should_run_cal_scfm(config: SCFMConfig) -> bool:
     ``cal_scfm`` is the only metric engine the scfm step runs from
     scratch; the per-task TSVs (cluster / annotation / dimred) are
     always loaded from disk.
+
+    Scaling runs when an scfm embedding is available. Stability runs
+    when n_seeds > 0 AND an embedding is available. Rare types runs
+    when ref_label AND predicted_label are available. Cross-domain
+    runs when domain_key AND ref_label AND an embedding are available.
     """
-    return bool(
-        config.scaling_fractions
-        or config.n_seeds > 0
-        or config.ref_label
-        or config.predicted_label
-        or config.domain_key
+    has_emb = bool(config.scfm_embedding)
+    return (
+        (has_emb and (config.n_seeds > 0))
+        or (config.ref_label and config.predicted_label)
+        or (config.domain_key and config.ref_label and has_emb)
     )
 
 
@@ -509,6 +525,7 @@ def run_scfm_from_cache(
     args=None,
     *,
     outdir: Optional[str] = None,
+    detected: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Run the scfm QC pipeline on one AnnData, loading per-task
     metric results from disk when they are available.
@@ -545,6 +562,9 @@ def run_scfm_from_cache(
         Output directory. Defaults to
         ``checkatlas_files/scfm/<atlas_name>/`` under
         ``args.path``.
+    detected : dict, optional
+        Pre-computed column-detector output from the orchestrator.
+        When provided, avoids a redundant re-run.
 
     Returns
     -------
@@ -574,11 +594,12 @@ def run_scfm_from_cache(
 
     # The per-task TSV has already been auto-computed by the
     # orchestrator. We need the detected dict to enumerate the
-    # combos. Re-run the column detector on the in-memory
-    # adata — it is fast (< 1 s on 16k cells).
-    from ..utils.col_detector import CheckAtlasColumnDetector
-
-    detected = CheckAtlasColumnDetector(adata).detect_all_parameters()
+    # combos. Use the pre-computed dict from the orchestrator if
+    # available; otherwise re-run the column detector on the
+    # in-memory adata (fast: < 1 s on 16k cells).
+    if detected is None:
+        from ..utils.col_detector import CheckAtlasColumnDetector
+        detected = CheckAtlasColumnDetector(adata).detect_all_parameters()
     if user_specified and not fast_mode:
         # Honour the user's explicit combo; don't expand.
         scfm_emb = _auto_pick_scfm_embedding(adata, config.scfm_embedding)
@@ -613,10 +634,13 @@ def run_scfm_from_cache(
         " (--scfm_fast, single combo)" if fast_mode else "",
     )
 
-    # ── 1. Load per-task TSVs from disk ONCE ────────────────────
+    # ── 1. Load preprocess context for GPU-accelerated metrics ───
+    _, ctx = _load_or_build_context(adata, config.atlas_name, outdir, args)
+
+    # ── 2. Load per-task TSVs from disk ONCE ────────────────────
     tsvs = scfm_io.load_per_task_tsvs(base_path, config.atlas_name)
 
-    # ── 2. Per-combo loop ─────────────────────────────────────────
+    # ── 3. Per-combo loop ─────────────────────────────────────────
     all_verdicts: list = []
     all_metrics: list[pd.DataFrame] = []
     per_combo_scores: list[dict] = []
@@ -644,7 +668,7 @@ def run_scfm_from_cache(
             long["combo_id"] = combo_id
             long_frames.append(long)
 
-        # ── 2b. Run the four scfm-specific modules for this combo ─
+        # ── 3b. Run the four scfm-specific modules for this combo ─
         if _should_run_cal_scfm(combo_config):
             try:
                 scfm_long = scfm_run.cal_scfm(
@@ -664,6 +688,7 @@ def run_scfm_from_cache(
                     noise_sigma=combo_config.noise_sigma,
                     min_domain_size=combo_config.min_domain_size,
                     n_jobs=n_jobs,
+                    preprocess_context=ctx,
                 )
                 if scfm_long is not None and not scfm_long.empty:
                     for col in LONG_FORMAT_COLUMNS:

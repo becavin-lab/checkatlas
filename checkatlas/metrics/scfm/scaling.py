@@ -183,15 +183,18 @@ def run(
     n_jobs: int = -1,
     preprocess_context=None,
     plateau_pairs: Optional[dict] = None,
+    subset_indices: Optional[np.ndarray] = None,
 ) -> pd.DataFrame:
-    """Evaluate ``metric_subset`` on the **full atlas** for each embedding.
+    """Evaluate ``metric_subset`` for each embedding.
 
-    The full input ``adata`` is consumed as-is — no subsampling, no
-    re-processing, no re-detection of columns. Precomputed kNN graphs
-    and distance matrices from ``preprocess_context`` are reused
-    without modification. When the context is missing, the
-    silhouette fallback falls back to ``pynndescent`` (CPU) for the
-    distance matrix.
+    For large atlases, ``subset_indices`` can provide a core-set
+    of cell indices to use for O(N^2) operations (silhouette).
+    Label-based metrics (ARI, iLISI) always use the full atlas
+    since they are not O(N^2).
+
+    When ``subset_indices`` is provided, the silhouette value is
+    computed on the subset; the result is still reported as
+    applying to the full atlas (``N_Cells=adata.n_obs``).
 
     Parameters
     ----------
@@ -265,13 +268,24 @@ def run(
             logger.debug("scaling: embedding %s not in adata.obsm", emb)
             continue
         X_full = adata.obsm[emb]
+        # Apply core-set subsampling for O(N^2) operations on large atlases
+        X_for_metrics = X_full
+        labels_for_sil = labels
+        if subset_indices is not None and subset_indices.size < n_total:
+            X_for_metrics = X_full[subset_indices]
+            if labels is not None:
+                labels_for_sil = labels[subset_indices]
+            logger.debug(
+                "scaling: using %d-cell subset for %s (out of %d total)",
+                subset_indices.size, emb, n_total,
+            )
         for metric in metric_subset:
             t0 = time.time()
             if metric == "silhouette":
-                if labels is None:
+                if labels_for_sil is None:
                     continue
                 pdists = precomputed_dists.get(emb)
-                val = _silhouette_value(X_full, labels, pdists, n_jobs)
+                val = _silhouette_value(X_for_metrics, labels_for_sil, pdists, n_jobs)
             elif metric == "ari":
                 if ref_arr is None or pred_arr is None:
                     continue

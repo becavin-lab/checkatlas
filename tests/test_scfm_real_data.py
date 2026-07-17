@@ -151,7 +151,7 @@ def test_pancreas_scfm_diagnostics_runs():
         rows.append(
             {
                 "Atlas Name": "pancreas_scib",
-                "Task": "annot",
+                "Task": "batch_correction",
                 "Metric Name": "kbet",
                 "Embedding": emb,
                 "Reference/Input 1": emb,

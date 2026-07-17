@@ -263,7 +263,7 @@ def ensure_per_task_tsvs(
     atlas_info: dict,
     args,
     scfm_config: SCFMConfig,
-) -> dict[str, Optional[Any]]:
+) -> tuple[dict[str, Optional[Any]], dict[str, Any]]:
     """Ensure the wide-format per-task TSVs needed by the scfm
     diagnostic engine exist on disk. If any are missing and the atlas
     has the required keys, auto-run the corresponding
@@ -288,10 +288,12 @@ def ensure_per_task_tsvs(
 
     Returns
     -------
-    dict
-        ``{"cluster": df|None, "annotation": df|None, "dimred": df|None}``,
-        refreshed after the auto-runs. ``None`` for any task that
-        could not be computed.
+    tuple
+        ``(tsvs_dict, detected_dict)`` where ``tsvs_dict`` is
+        ``{"cluster": df|None, "annotation": df|None,
+        "batch_correction": df|None, "dimred": df|None}`` and
+        ``detected_dict`` is the column-detector output shared
+        with the pipeline to avoid redundant re-detection.
     """
     atlas_name = scfm_config.atlas_name
     base_path = getattr(args, "path", ".") if args is not None else "."
@@ -355,7 +357,7 @@ def ensure_per_task_tsvs(
         )
         return scfm_io.load_per_task_tsvs(
             base_path, atlas_name, verbose=False
-        )
+        ), detected
 
     # ── 3. Inspect existing TSVs ──────────────────────────────────
     # We use verbose=False for the orchestrator's internal load to
@@ -453,7 +455,7 @@ def ensure_per_task_tsvs(
     # lines itself.
     return scfm_io.load_per_task_tsvs(
         base_path, atlas_name, verbose=False
-    )
+    ), detected
 
 
 def _detected_summary_for(

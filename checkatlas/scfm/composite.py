@@ -175,6 +175,7 @@ def fmf(verdicts, weights: dict[str, Any]) -> float:
 
 
 def bf(
+    verdicts=None,
     *,
     clisi_norm: float = 0.5,
     graph_connectivity_norm: float = 0.5,
@@ -185,12 +186,33 @@ def bf(
 ) -> float:
     """Net biology-preservation score in [0, 1].
 
-    Higher is better. ``ilisi_penalty_norm`` is *subtracted* (it
-    represents batch leakage) and the result is clipped to [0, 1].
+    Higher is better. When ``verdicts`` is provided, the score is
+    derived from actual problem verdicts (problems 1, 4, 5):
+    problem-1 (zero-shot) reflects label-transfer accuracy; problem-4
+    (batch effects) penalises batch leakage; problem-5 (tokenization)
+    reflects representation quality. When ``verdicts`` is not
+    provided, the hard-coded defaults are used (for backwards
+    compatibility).
     """
     if weights is None:
         weights = DEFAULT_WEIGHTS
     w = weights.get("bf", {})
+    if verdicts is not None:
+        by_id = {v.problem_id: v for v in verdicts}
+        p1 = _safe_score(by_id.get(1).score if 1 in by_id else float("nan"))
+        p4 = _safe_score(by_id.get(4).score if 4 in by_id else float("nan"))
+        p5 = _safe_score(by_id.get(5).score if 5 in by_id else float("nan"))
+        cell_cc = _safe_score(0.0)
+        hvg = _safe_score(0.0)
+        pos = (
+            float(w.get("cLISI", 1.0)) * float(p1)
+            + float(w.get("graph_connectivity", 1.0)) * float(p5)
+            + float(w.get("cell_cycle", 0.5)) * float(cell_cc)
+            + float(w.get("hvg_overlap", 0.5)) * float(hvg)
+        )
+        neg = float(w.get("iLISI_penalty", 1.0)) * (1.0 - float(p4))
+        raw = pos - neg
+        return float(max(0.0, min(1.0, raw)))
     pos = (
         float(w.get("cLISI", 1.0)) * float(clisi_norm)
         + float(w.get("graph_connectivity", 1.0)) * float(graph_connectivity_norm)
@@ -259,7 +281,11 @@ def compute_all(
         weights = DEFAULT_WEIGHTS
     return {
         "fmf": fmf(verdicts, weights),
-        "bf": bf(ilisi_penalty_norm=ilisi_penalty_norm, weights=weights),
+        "bf": bf(
+            verdicts=verdicts,
+            ilisi_penalty_norm=ilisi_penalty_norm,
+            weights=weights,
+        ),
         "pr": pr(
             failure_rate=failure_rate,
             runtime_factor=runtime_factor,
