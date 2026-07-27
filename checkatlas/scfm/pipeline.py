@@ -100,6 +100,10 @@ def _load_or_build_context(adata: AnnData, atlas_name: str, outdir: str, args) -
         cluster_label_keys = [
             c for c, _ in detected.get("clustering", {}).get("cluster_labels", [])
         ]
+        ref_keys = [
+            c for c, _ in detected.get("annotation", {}).get("reference", [])
+        ]
+        cluster_label_keys = cluster_label_keys + [r for r in ref_keys if r not in cluster_label_keys]
         batch_keys = [
             c for c, _ in detected.get("batch", [])
         ]

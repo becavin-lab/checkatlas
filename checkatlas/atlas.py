@@ -215,6 +215,7 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
     ref_keys = [c for c, _ in params["annotation"]["reference"]]
     pred_keys = [c for c, _ in params["annotation"]["predicted"]]
     cluster_label_keys = [c for c, _ in params["clustering"]["cluster_labels"]]
+    cluster_label_keys = cluster_label_keys + [r for r in ref_keys if r not in cluster_label_keys]
     batch_keys = [c for c, _ in params.get("batch", [])]
     if not batch_keys:
         batch_keys = [col for col in adata.obs.columns if "batch" in col.lower()]
@@ -1581,6 +1582,8 @@ def create_metric_cluster(
     _detector = CheckAtlasColumnDetector(adata)
     _params = _detector.detect_all_parameters()
     _cluster_labels = [c for c, _ in _params["clustering"]["cluster_labels"]]
+    _ref_labels = [c for c, _ in _params["annotation"]["reference"]]
+    _all_labels = _cluster_labels + [r for r in _ref_labels if r not in _cluster_labels]
     _emb_keys = [
         k for k, _ in _params["clustering"]["embeddings"]
     ]
@@ -1592,12 +1595,12 @@ def create_metric_cluster(
         n_vars=adata.n_vars,
         task="cluster",
         keys={
-            "cluster labels": _cluster_labels,
+            "cluster labels": _all_labels,
             "embeddings": _emb_keys,
         },
     )
 
-    if not _cluster_labels:
+    if not _all_labels:
         logger.warning(
             "No cluster labels detected in adata.obs. Skipping clustering metrics."
         )

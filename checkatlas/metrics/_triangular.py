@@ -75,6 +75,31 @@ class TriangularMatrix:
         # Cache for row index computation
         self._row_starts = self._precompute_row_starts()
 
+    @staticmethod
+    def n_from_file(filepath: str) -> int:
+        """Infer ``n`` (number of cells) from the size of a ``.tri`` file.
+
+        The file stores ``n·(n−1)//2`` float16 elements (2 bytes each).
+        Solves the quadratic ``n² − n − 2 × tri_size = 0`` for ``n``.
+
+        Returns 0 if the file is missing or has an unexpected size.
+        """
+        import math
+        import os
+
+        if not os.path.exists(filepath):
+            return 0
+        file_bytes = os.path.getsize(filepath)
+        bytes_per_elem = np.dtype(np.float16).itemsize
+        tri_size = file_bytes // bytes_per_elem
+        # n*(n-1)//2 = tri_size  →  n² − n − 2·tri_size = 0
+        discriminant = 1 + 8 * tri_size
+        n = int((1 + math.isqrt(discriminant)) // 2)
+        # Verify round-trip
+        if n * (n - 1) // 2 != tri_size:
+            return 0
+        return n
+
     @property
     def shape(self) -> tuple:
         return (self.n, self.n)

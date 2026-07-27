@@ -130,6 +130,10 @@ def _gate_cluster(
         col in adata.obs.columns
         for col, _ in detected["clustering"]["cluster_labels"]
     )
+    has_ref_label = any(
+        col in adata.obs.columns
+        for col, _ in detected["annotation"]["reference"]
+    )
     if scfm_config.ref_label:
         if scfm_config.ref_label in adata.obs.columns:
             return True, ""
@@ -138,11 +142,11 @@ def _gate_cluster(
             f"user-specified --scfm_ref_label={scfm_config.ref_label!r} "
             f"is not present in adata.obs.columns",
         )
-    if has_cluster_label:
+    if has_cluster_label or has_ref_label:
         return True, ""
     return (
         False,
-        "no cluster-label column detected in adata.obs "
+        "no cluster-label or reference-annotation column detected in adata.obs "
         "(detector found no leiden / louvain / seurat_clusters / "
         "celltype / annotation-style column matching the cluster "
         "semantic patterns)",
@@ -470,9 +474,11 @@ def _detected_summary_for(
     """
     if task == _TASK_CLUSTER:
         keys = [k for k, _ in detected["clustering"]["cluster_labels"]]
+        refs = [k for k, _ in detected["annotation"]["reference"]]
+        all_keys = keys + [r for r in refs if r not in keys]
         return (
-            f"{len(keys)} cluster label(s) in adata.obs"
-            + (f": {keys[:3]}{'...' if len(keys) > 3 else ''}" if keys else "")
+            f"{len(all_keys)} cluster label(s) in adata.obs"
+            + (f": {all_keys[:3]}{'...' if len(all_keys) > 3 else ''}" if all_keys else "")
         )
     if task == _TASK_ANNOT:
         ref = [k for k, _ in detected["annotation"]["reference"]]

@@ -304,9 +304,19 @@ def cal_annot(
                     n_cells = adata.obsm[emb].shape[0]
                 else:
                     n_cells = adata.n_obs
-                precomputed_dists[emb] = TriangularMatrix(
-                    n=n_cells, filepath=tri_path, mode="r"
-                )
+                file_n = TriangularMatrix.n_from_file(tri_path)
+                if file_n == n_cells:
+                    precomputed_dists[emb] = TriangularMatrix(
+                        n=n_cells, filepath=tri_path, mode="r"
+                    )
+                else:
+                    logger.warning(
+                        "Skipping stale distance matrix %s "
+                        "(file N=%d does not match expected N=%d)",
+                        tri_path,
+                        file_n,
+                        n_cells,
+                    )
             elif os.path.exists(npy_path):
                 precomputed_dists[emb] = np.load(npy_path)
     else:
@@ -1185,9 +1195,19 @@ def cal_cluster(
                     n_cells = adata.obsm[emb].shape[0]
                 else:
                     n_cells = adata.n_obs
-                precomputed_dists[emb] = TriangularMatrix(
-                    n=n_cells, filepath=tri_path, mode="r"
-                )
+                file_n = TriangularMatrix.n_from_file(tri_path)
+                if file_n == n_cells:
+                    precomputed_dists[emb] = TriangularMatrix(
+                        n=n_cells, filepath=tri_path, mode="r"
+                    )
+                else:
+                    logger.warning(
+                        "Skipping stale distance matrix %s "
+                        "(file N=%d does not match expected N=%d)",
+                        tri_path,
+                        file_n,
+                        n_cells,
+                    )
             elif os.path.exists(npy_path):
                 precomputed_dists[emb] = np.load(npy_path)
     else:
@@ -1199,6 +1219,8 @@ def cal_cluster(
 
         embedding_keys = [x[0] for x in params["clustering"]["embeddings"]]
         label_keys = [x[0] for x in params["clustering"]["cluster_labels"]]
+        ref_keys = [x[0] for x in params["annotation"]["reference"]]
+        label_keys = label_keys + [r for r in ref_keys if r not in label_keys]
 
     if verbose:
         print(f"  Detected embeddings: {embedding_keys}")
