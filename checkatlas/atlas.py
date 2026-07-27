@@ -238,7 +238,11 @@ def preprocess_atlas(atlas_info: dict, args=None) -> AnnData:
         if key not in embedding_keys:
             embedding_keys.append(key)
         if key not in cluster_embedding_keys:
-            cluster_embedding_keys.append(key)
+            try:
+                if adata.obsm[key].shape[1] > 3:
+                    cluster_embedding_keys.append(key)
+            except Exception:
+                pass
         if key not in annotation_embedding_keys:
             try:
                 if adata.obsm[key].shape[1] > 2:

@@ -1162,6 +1162,13 @@ def cal_cluster(
         embedding_keys = preprocess_context.cluster_embedding_keys or preprocess_context.embedding_keys
         label_keys = preprocess_context.cluster_label_keys
 
+        # Exclude <4-dim embeddings (UMAP, t‑SNE) — useless for
+        # kNN-based cluster metrics and double the workload.
+        embedding_keys = [
+            k for k in embedding_keys
+            if k == "X" or (k in adata.obsm and adata.obsm[k].shape[1] > 3)
+        ]
+
         if not label_keys:
             logger.warning(
                 "No cluster labels in preprocess context. Skipping."
