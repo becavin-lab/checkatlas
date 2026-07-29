@@ -17,7 +17,7 @@ import scanpy as sc
 
 warnings.filterwarnings("ignore")
 
-DATA_DIR = "/data/analysis/data_ganguly"
+DATA_DIR = os.environ.get("SCFM_DATA_DIR", "/data/analysis/data_ganguly")
 
 EXPECTED_EMBEDDINGS = [
     ("X_tf_sapiens", 2048),

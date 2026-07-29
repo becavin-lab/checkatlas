@@ -47,7 +47,7 @@ from anndata import AnnData
 
 warnings.filterwarnings("ignore")
 
-DATA_DIR = "/data/analysis/data_ganguly"
+DATA_DIR = os.environ.get("SCFM_DATA_DIR", "/data/analysis/data_ganguly")
 MULTISFM_DIR = os.path.join(DATA_DIR, "TF_scfm", "multiscfm")
 os.makedirs(MULTISFM_DIR, exist_ok=True)
 

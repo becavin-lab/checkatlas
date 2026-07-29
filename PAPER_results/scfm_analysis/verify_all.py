@@ -11,7 +11,7 @@ import scanpy as sc
 
 warnings.filterwarnings("ignore")
 
-DATA_DIR = "/data/analysis/data_ganguly"
+DATA_DIR = os.environ.get("SCFM_DATA_DIR", "/data/analysis/data_ganguly")
 
 files = [
     "blood_TF_scfm.h5ad",

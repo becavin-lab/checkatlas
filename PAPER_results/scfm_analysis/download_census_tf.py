@@ -25,7 +25,7 @@ from cellxgene_census.experimental import get_all_available_embeddings
 
 warnings.filterwarnings("ignore")
 
-DATA_DIR = "/data/analysis/data_ganguly"
+DATA_DIR = os.environ.get("SCFM_DATA_DIR", "/data/analysis/data_ganguly")
 TF_SFM_DIR = os.path.join(DATA_DIR, "TF_scfm")
 os.makedirs(TF_SFM_DIR, exist_ok=True)
 
